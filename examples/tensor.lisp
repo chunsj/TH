@@ -75,35 +75,35 @@
   (print ($setp x y)))
 
 ;; copy elements from other tensor
-(let ((x ($tensor '(1 2 3 4)))
-      (y ($tensor '((5 4) (3 2)))))
+(let ((x (tensor '(1 2 3 4)))
+      (y (tensor '((5 4) (3 2)))))
   (print x)
   (print y)
   ($copy x y)
   (print x)
   (print y)
-  (print ($copy ($int x) '(123 234 345 456)))
+  (print ($copy (tensor.int x) '(123 234 345 456)))
   (print x))
 
 ;; fill values
-(let ((x ($tensor 3 3)))
+(let ((x (tensor 3 3)))
   ($fill x 123)
   (print x)
-  ($zero x)
+  (print ($zero x))
   (print x)
-  ($one x)
+  (print ($one x))
   (print x))
 
 ;; resizing
-(let ((x ($tensor '((1 2 3) (3 4 5))))
-      (y ($tensor 3 3)))
+(let ((x (tensor '((1 2 3) (3 4 5))))
+      (y (tensor 3 3)))
   (print x)
   (print ($resize x '(4 4)))
   (print ($resize x '(2 2)))
   (print ($resize x y)))
 
 ;; narrow - start and size
-(let ((x ($tensor 5 6)))
+(let ((x (tensor 5 6)))
   ($zero x)
   (print x)
   (-> ($narrow x 0 1 3)
@@ -116,11 +116,11 @@
   (print x))
 
 ;; subview - multiple start and size per dimension
-(let ((x ($tensor '((1 2 3 4 5 6)
-                    (2 3 4 5 6 7)
-                    (3 4 5 6 7 8)
-                    (4 5 6 7 8 9)
-                    (0 0 0 0 0 0)))))
+(let ((x (tensor '((1 2 3 4 5 6)
+                   (2 3 4 5 6 7)
+                   (3 4 5 6 7 8)
+                   (4 5 6 7 8 9)
+                   (0 0 0 0 0 0)))))
   (print x)
   (print ($subview x 1 3 2 3))
   (setf ($subview x 1 3 2 3) '(11 12 13 14 15 16 17 18 19))
@@ -128,7 +128,7 @@
   (print x))
 
 ;; select
-(let ((x ($tensor '((1 2 3) (4 5 6) (7 8 9)))))
+(let ((x (tensor '((1 2 3) (4 5 6) (7 8 9)))))
   (print x)
   (print ($select x 0 1))
   (print ($ x 1))
@@ -137,11 +137,11 @@
   (print x))
 
 ;; query with dimension index size pairs or subview
-(let ((x ($tensor '((1 2 3 4 5 6)
-                    (2 3 4 5 6 7)
-                    (3 4 5 6 7 8)
-                    (4 5 6 7 8 9)
-                    (0 0 0 0 0 0)))))
+(let ((x (tensor '((1 2 3 4 5 6)
+                   (2 3 4 5 6 7)
+                   (3 4 5 6 7 8)
+                   (4 5 6 7 8 9)
+                   (0 0 0 0 0 0)))))
   (print x)
   (print ($ x '(1 3) '(2 3)))
   (setf ($ x '(1 3) '(2 3)) '(11 12 13 14 15 16 17 18 19))
@@ -149,7 +149,7 @@
   (print x))
 
 ;; general selection
-(let ((x ($zeros 5 6)))
+(let ((x (zeros 5 6)))
   (print x)
   (setf ($ x 0 2) 1)
   (print x)
@@ -157,29 +157,29 @@
   (print x)
   (setf ($ x '((0 5) (3 1))) -1)
   (print x)
-  (setf ($ x '((0 5) (1 1))) ($range 1 5))
+  (setf ($ x '((0 5) (1 1))) (range 1 5))
   (print x)
   (setf ($ x ($lt x 0)) -2)
   (print x))
 
 ;; index-select - creates a new storage, not sharing
-(let ((x ($tensor '((1 2 3) (4 5 6) (7 8 9)))))
+(let ((x (tensor '((1 2 3) (4 5 6) (7 8 9)))))
   (print x)
-  (print ($index-select x 0 '(0 1)))
-  (let ((y ($index-select x 1 '(1 2))))
+  (print ($index x 0 '(0 1)))
+  (let ((y ($index x 1 '(1 2))))
     (print y)
     ($fill y 0)
     (print y)
     (print x)))
 
 ;; index-copy - set copies elements into selected index location
-(let ((x ($tensor '((1 2 3 4) (2 3 4 5) (3 4 5 6) (4 5 6 7) (5 6 7 8))))
-      (y ($tensor 5 2)))
+(let ((x (tensor '((1 2 3 4) (2 3 4 5) (3 4 5 6) (4 5 6 7) (5 6 7 8))))
+      (y (tensor 5 2)))
   ($fill ($select y 1 0) -1)
   ($fill ($select y 1 1) -2)
   (print x)
   (print y)
-  ($index-copy x 1 '(0 3) y)
+  (setf ($index x 1 '(0 3)) y)
   (print x))
 
 ;; index-add

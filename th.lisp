@@ -2,6 +2,8 @@
 
 (defgeneric $empty (object)
   (:documentation "Returns empty new object from object type."))
+(defgeneric $list (object)
+  (:documentation "Returns contents of object as a list."))
 
 (defgeneric $handle (object)
   (:documentation "Returns native handle of the object."))
@@ -98,7 +100,87 @@
 (defgeneric $expand! (tensor &rest sizes)
   (:documentation "Returns a tensor whose singleton dimension can be expanded."))
 
-(defgeneric $set (tensor source)
+(defgeneric $set (tensor source &optional offset size stride)
   (:documentation "Sets the storage contents of source to tensor."))
 (defgeneric $setp (tensor source)
   (:documentation "Checks whether tensor is set with source."))
+
+(defgeneric $sizep (tensor other)
+  (:documentation "Checks whether tensor has the same size of other or other dimension."))
+
+(defgeneric $zero (tensor)
+  (:documentation "Returns a new tensor of whose elements of tensor as zero."))
+(defgeneric $zero! (tensor)
+  (:documentation "Fills elements of tensor as zero."))
+(defgeneric $one (tensor)
+  (:documentation "Fills elements of tensor as one."))
+(defgeneric $one! (tensor)
+  (:documentation "Returns a new tensor of whose elements of tensor as one."))
+
+(defgeneric $subview (tensor &rest index-sizes)
+  (:documentation "Returns a new tensor which is a subview of the tensor."))
+
+(defgeneric $compare (spec a b)
+  (:documentation "Returns a byte tensor as boolean for given comparison spec."))
+(defgeneric $lt (a b)
+  (:documentation "Returns a byte tensor as boolean for elementwise a < b."))
+(defgeneric $le (a b)
+  (:documentation "Returns a byte tensor as boolean for elementwise a <= b."))
+(defgeneric $gt (a b)
+  (:documentation "Returns a byte tensor as boolean for elementwise a > b."))
+(defgeneric $ge (a b)
+  (:documentation "Returns a byte tensor as boolean for elementwise a >= b."))
+(defgeneric $eq (a b)
+  (:documentation "Returns a byte tensor as boolean for elementwise a = b."))
+(defgeneric $ne (a b)
+  (:documentation "Returns a byte tensor as boolean for elementwise a ~= b."))
+
+(defgeneric $index (tensor dimension index)
+  (:documentation "Returns a new tensor with contents selected by index along dimension."))
+
+(defgeneric $gather (tensor dimension indices)
+  (:documentation "Returns a new tensor by gathering elements from indices along dimension."))
+(defgeneric $scatter (tensor dimension indices value)
+  (:documentation "Writes value specified by indices along dimension."))
+
+(defgeneric $masked (tensor mask)
+  (:documentation "Returns one dimensional tensor with elements selected by mask."))
+
+(defgeneric $nonzero (tensor)
+  (:documentation "Returns a long tensor which contains indices of nonzero elements."))
+
+(defgeneric $repeat (tensor &rest sizes)
+  (:documentation "Returns a new tensor with repeated tensors of grid defined by sizes."))
+
+(defgeneric $squeeze (tensor &optional dimension)
+  (:documentation "Returns a new tensor with singleton dimension removed."))
+(defgeneric $squeeze! (tensor &optional dimension)
+  (:documentation "Returns a tensor with singleton dimension removed."))
+(defgeneric $unsqueeze (tensor dimension)
+  (:documentation "Returns a new tensor with singleton dimension."))
+(defgeneric $unsqueeze! (tensor dimension)
+  (:documentation "Returns a tensor with singleton dimension."))
+
+(defgeneric $permute (tensor &rest dimensions)
+  (:documentation "Returns a new tensor where the dimensions are permuted as specified."))
+
+(defgeneric $fmap (fn tensor &rest tensors)
+  (:documentation "Applies fn elementwise where only non-nil result will be updated."))
+
+(defgeneric $split (tensor size &optional dimension)
+  (:documentation "Splits tensor by size along dimension."))
+(defgeneric $chunk (tensor n &optional dimension)
+  (:documentation "Splits tensor by n approximately equal partitions along dimension."))
+
+(defgeneric $cat (dimension tensor &rest tensors)
+  (:documentation "Returns a new tensor which is a concatenation of tensors along dimension."))
+
+(defgeneric $diag (tensor &optional k)
+  (:documentation "Returns a new diagonal matrix from tensor."))
+(defgeneric $diag! (tensor &optional k)
+  (:documentation "Returns a diagonal matrix from tensor."))
+
+(defgeneric $eye (tensor m &optional n)
+  (:documentation "Returns a new identity matrix of size m by n"))
+(defgeneric $eye! (tensor m &optional n)
+  (:documentation "Returns a identity matrix of size m by n"))

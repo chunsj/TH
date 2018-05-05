@@ -301,3 +301,7 @@
 (defmethod $copy ((storage storage.double) (src storage.double))
   (th-double-storage-copy ($handle storage) ($handle src))
   storage)
+
+(defmethod $list ((storage storage))
+  (loop :for i :from 0 :below ($count storage) :collect ($ storage i)))
+(defmethod $list ((storage list)) storage)
