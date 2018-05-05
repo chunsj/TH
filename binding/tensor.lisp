@@ -113,13 +113,16 @@
   tensor)
 
 (defmethod $view ((tensor tensor) &rest sizes)
-  (tensor-new-view tensor sizes))
+  (cond (($tensorp ($0 sizes)) (tensor-new-view tensor ($size ($0 sizes))))
+        (t (tensor-new-view tensor sizes))))
 
 (defmethod $expand ((tensor tensor) &rest sizes)
-  (tensor-new-expand tensor sizes))
+  (cond (($tensorp ($0 sizes)) (tensor-new-expand tensor ($size ($0 sizes))))
+        (t (tensor-new-expand tensor sizes))))
 
 (defmethod $expand! ((tensor tensor) &rest sizes)
-  (tensor-expand tensor tensor sizes)
+  (cond (($tensorp ($0 sizes)) (tensor-expand tensor tensor ($size ($0 sizes))))
+        (t (tensor-expand tensor tensor sizes)))
   tensor)
 
 (defmethod $set ((tensor tensor) (source tensor) &optional offset size stride)
@@ -354,13 +357,22 @@
 (defmethod (setf $masked) ((value number) (tensor tensor) (mask tensor.byte))
   (tensor-masked-fill tensor mask value)
   value)
+(defmethod (setf $masked) ((value number) (tensor tensor) (mask list))
+  (tensor-masked-fill tensor (tensor.byte mask) value)
+  value)
 
 (defmethod (setf $masked) ((value tensor) (tensor tensor) (mask tensor.byte))
   (tensor-masked-copy tensor mask value)
   value)
+(defmethod (setf $masked) ((value tensor) (tensor tensor) (mask list))
+  (tensor-masked-copy tensor (tensor.byte mask) value)
+  value)
 
 (defmethod (setf $masked) ((value list) (tensor tensor) (mask tensor.byte))
   (tensor-masked-copy tensor mask (make-tensor-args (type-of tensor) (list value)))
+  value)
+(defmethod (setf $masked) ((value list) (tensor tensor) (mask list))
+  (tensor-masked-copy tensor (tensor.byte mask) (make-tensor-args (type-of tensor) (list value)))
   value)
 
 (defmethod $nonzero ((tensor tensor)) (tensor-non-zero tensor))
@@ -487,12 +499,12 @@
     ($copy urtensor (apply #'$expand xtensor ($size urtensor)))
     result))
 
-(defmethod $squeeze ((tensor tensor) &optional (dimension -1))
+(defmethod $squeeze ((tensor tensor) &optional dimension)
   (let ((result ($empty tensor)))
     (tensor-squeeze result tensor dimension)
     result))
 
-(defmethod $squeeze! ((tensor tensor) &optional (dimension -1))
+(defmethod $squeeze! ((tensor tensor) &optional dimension)
   (tensor-squeeze tensor tensor dimension)
   tensor)
 

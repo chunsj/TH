@@ -182,24 +182,14 @@
   (setf ($index x 1 '(0 3)) y)
   (print x))
 
-;; index-add
-(let ((x ($tensor '((1 2 3 4) (2 3 4 5) (3 4 5 6) (4 5 6 7) (5 6 7 8))))
-      (y ($tensor 5 2)))
-  ($fill ($select y 1 0) -10)
-  ($fill ($select y 1 1) -100)
-  (print x)
-  (print y)
-  ($index-add x 1 '(0 3) y)
-  (print x))
-
 ;; index-fill
-(let ((x ($tensor '((1 2 3 4) (2 3 4 5) (3 4 5 6) (4 5 6 7) (5 6 7 8)))))
+(let ((x (tensor '((1 2 3 4) (2 3 4 5) (3 4 5 6) (4 5 6 7) (5 6 7 8)))))
   (print x)
-  ($index-fill x 1 '(0 3) 123)
+  (setf ($index x 1 '(0 3)) 123)
   (print x))
 
 ;; gather
-(let ((x ($tensor 5 5)))
+(let ((x (tensor 5 5)))
   (loop :for i :from 0 :below ($count x)
         :do (setf ($ ($storage x) i) i))
   (print x)
@@ -207,9 +197,9 @@
   (print ($gather x 1 '((0 1) (1 2) (2 3) (3 4) (4 0)))))
 
 ;; scatter
-(let ((x ($tensor 5 5))
-      (y ($tensor '((11 21 31 41 51) (12 22 32 42 52)))))
-  ($zero x)
+(let ((x (tensor 5 5))
+      (y (tensor '((11 21 31 41 51) (12 22 32 42 52)))))
+  ($zero! x)
   (print x)
   ($scatter x 0 '((0 1 2 3 4) (1 2 3 4 0)) y)
   (print x)
@@ -217,44 +207,44 @@
   (print x))
 
 ;; masked-select
-(let ((x ($tensor 3 4))
+(let ((x (tensor 3 4))
       (mask '((1 0 1 0 0 0) (1 1 0 0 0 1)))
-      (z ($tensor)))
+      (z (tensor)))
   (loop :for i :from 0 :below ($count x)
         :do (setf ($ ($storage x) i) (1+ i)))
   (print x)
-  (print ($masked-select x mask))
-  ($set z ($masked-select x mask))
+  (print ($masked x mask))
+  ($set z ($masked x mask))
   (print z)
   ($fill z -123)
   (print z)
   (print x))
 
 ;; masked-copy
-(let ((x ($tensor 3 4))
+(let ((x (tensor 3 4))
       (mask '((1 0 1 0 0 0) (1 1 0 0 0 1)))
-      (z ($tensor '(101 102 103 104 105))))
+      (z (tensor '(101 102 103 104 105))))
   (loop :for i :from 0 :below ($count x)
         :do (setf ($ ($storage x) i) (1+ i)))
   (print x)
-  ($masked-copy x mask z)
+  (setf ($masked x mask) z)
   (print x))
 
 ;; masked-fill
-(let ((x ($tensor 3 4))
+(let ((x (tensor 3 4))
       (mask '((1 0 1 0 0 0) (1 1 0 0 0 1))))
   (loop :for i :from 0 :below ($count x)
         :do (setf ($ ($storage x) i) (1+ i)))
   (print x)
-  ($masked-fill x mask -123)
+  (setf ($masked x mask) -123)
   (print x))
 
 ;; nonzero
-(print ($nonzero ($tensor '((1 2 0 3 4) (0 0 1 0 0)))))
+(print ($nonzero (tensor '((1 2 0 3 4) (0 0 1 0 0)))))
 
 ;; expand
-(let ((x ($tensor 10 1))
-      (y ($tensor 10 2)))
+(let ((x (tensor 10 1))
+      (y (tensor 10 2)))
   (loop :for i :from 0 :below ($count x)
         :do (setf ($ ($storage x) i) (1+ i)))
   (print x)
@@ -264,25 +254,26 @@
   (print ($expand x y)))
 
 ;; repeat - not implemented yet
+(print ($repeat (tensor '(1 2)) 3 2))
 
 ;; squeeze
-(let ((x ($tensor 2 1 2 1 2)))
+(let ((x (tensor 2 1 2 1 2)))
   (print ($size x))
   (print ($size ($squeeze x)))
   (print ($size ($squeeze x 1))))
 
 ;; view
-(let ((x ($tensor '(0 0 0 0))))
+(let ((x (tensor '(0 0 0 0))))
   (print x)
   (print ($view x 2 2))
-  (print ($view x ($tensor 2 2))))
+  (print ($view x (tensor 2 2))))
 
 ;; transpose
-(let ((x ($tensor '((1 2 3) (4 5 6)))))
+(let ((x (tensor '((1 2 3) (4 5 6)))))
   (print x)
   (print ($transpose x)))
-(let ((x ($tensor 3 4)))
-  ($zero x)
+(let ((x (tensor 3 4)))
+  ($zero! x)
   ($fill ($select x 1 2) 7)
   (print x)
   (let ((y ($transpose x)))
@@ -292,65 +283,66 @@
     (print x)))
 
 ;; permute
-(let ((x ($tensor 3 4 2 5)))
+(let ((x (tensor 3 4 2 5)))
   (print ($size x))
   (print ($size ($permute x 1 2 0 3))))
 
 ;; unfold
-(let ((x ($tensor 7)))
+(let ((x (tensor 7)))
   (loop :for i :from 1 :to 7 :do (setf ($ x (1- i)) i))
   (print x)
   (print ($unfold x 0 2 1))
   (print ($unfold x 0 2 2)))
 
-;; apply
-(let ((x ($zeros 3 3)))
-  ($apply (lambda (i v) (if (< i 5) i v)) x)
+;; fmap
+(let ((x (zeros 3 3))
+      (n 0))
+  ($fmap (lambda (v) (* 0.5 3.1416 (incf n))) x)
   (print x)
-  ($apply (lambda (i v) (declare (ignore i)) (sin v)) x)
+  ($fmap (lambda (v) (sin v)) x)
   (print x))
 
-;; map
-(let ((x ($tensor 3 3))
-      (y ($tensor 9))
-      (z ($tensor '(0 1 2 3 4 5 6 7 8))))
+;; fmap
+(let ((x (tensor 3 3))
+      (y (tensor 9))
+      (z (tensor '(0 1 2 3 4 5 6 7 8))))
   (loop :for i :from 1 :to 9 :do (setf ($ ($storage x) (1- i)) i
                                        ($ ($storage y) (1- i)) i))
   (print x)
   (print y)
   (print z)
-  ($map (lambda (i vx vy) (declare (ignore i)) (* vx vy)) x y)
+  ($fmap (lambda (vx vy) (* vx vy)) x y)
   (print x)
-  ($map (lambda (i xx yy zz) (declare (ignore i)) (+ xx yy zz)) x y z)
+  ($fmap (lambda (xx yy zz) (+ xx yy zz)) x y z)
   (print x))
 
 ;; split
-(let ((x ($tensor 3 4 5)))
+(let ((x (zeros 3 4 5)))
   (print ($split x 2 0))
   (print ($split x 2 1))
   (print ($split x 2 2)))
 
 ;; chunk
-(let ((x ($tensor 3 4 5)))
+(let ((x (ones 3 4 5)))
   (print ($chunk x 2 0))
   (print ($chunk x 2 1))
   (print ($chunk x 2 2)))
 
 ;; concat
-(print ($concat 0 ($ones 3) ($zeros 3)))
-(print ($concat 1 ($ones 3) ($zeros 3)))
-(print ($concat 0 ($ones 3 3) ($zeros 1 3)))
-(print ($concat 1 ($ones 3 4) ($zeros 3 2)))
+(print ($cat 0 (ones 3) (zeros 3)))
+(print ($cat 1 (ones 3) (zeros 3)))
+(print ($cat 0 (ones 3 3) (zeros 1 3)))
+(print ($cat 1 (ones 3 4) (zeros 3 2)))
 
 ;; diag
-(print ($diag ($tensor '(1 2 3 4))))
-(print ($diag ($ones 3 3)))
+(print ($diag (tensor '(1 2 3 4))))
+(print ($diag (ones 3 3)))
 
 ;; eye
-(print ($eye 2))
-(print ($eye 3 4))
-(print ($eye ($bytex 3 3)))
-(print ($eye ($bytex 10 10) 3 4))
+(print (eye 2))
+(print (eye 3 4))
+(print ($eye (tensor.byte) 3))
+(print ($eye (tensor.byte 10 20) 3 4))
 
 ;; histc
 (print ($histc ($tensor '(1 2 3 4 4 5 6 10 9 2 3 4 1 2 3 4 5 6 7 8 9 10))))
