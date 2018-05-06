@@ -28,6 +28,7 @@
            #:arange
            #:rnd
            #:rndn
+           #:rndperm
            #:$validp
            #:$seed
            #:$random
@@ -92,10 +93,16 @@
            #:$chunk
            #:$cat
            #:$repeat
+           #:$reshape
+           #:$reshape!
            #:$diag
            #:$diag!
            #:$eye
            #:$eye!
+           #:$tril
+           #:$tril!
+           #:$triu
+           #:$triu!
            #:$compare
            #:$lt
            #:$le

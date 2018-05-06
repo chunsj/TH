@@ -154,6 +154,11 @@
 (defgeneric $cat (dimension tensor &rest tensors)
   (:documentation "Returns a new tensor which is a concatenation of tensors along dimension."))
 
+(defgeneric $reshape (tensor &rest sizes)
+  (:documentation "Returns a new tensor of sizes shape, elements copied from tensor."))
+(defgeneric $reshape! (tensor &rest sizes)
+  (:documentation "Returns a tensor of sizes shape, elements copied from tensor."))
+
 (defgeneric $diag (tensor &optional k)
   (:documentation "Returns a new diagonal matrix from tensor."))
 (defgeneric $diag! (tensor &optional k)
@@ -163,6 +168,16 @@
   (:documentation "Returns a new identity matrix of size m by n"))
 (defgeneric $eye! (tensor m &optional n)
   (:documentation "Returns a identity matrix of size m by n"))
+
+(defgeneric $tril (tensor &optional k)
+  (:documentation "Returns a new tensor with lower triangular part."))
+(defgeneric $tril! (tensor &optional k)
+  (:documentation "Returns a tensor with lower triangular part."))
+
+(defgeneric $triu (tensor &optional k)
+  (:documentation "Returns a new tensor with upper triangular part."))
+(defgeneric $triu! (tensor &optional k)
+  (:documentation "Returns a tensor with upper triangular part."))
 
 (defgeneric $compare (spec a b)
   (:documentation "Returns a byte tensor as boolean for given comparison spec."))
@@ -186,3 +201,83 @@
   (:documentation "Applies fn elementwise where only non-nil result will be updated, new tensor."))
 (defgeneric $fmap! (fn tensor &rest tensors)
   (:documentation "Applies fn elementwise where only non-nil result will be updated on 1st tensor"))
+
+(defgeneric $abs (x) (:documentation "Returns abs of elements of the given tensor."))
+(defgeneric $abs! (x) (:documentation "Returns an in-place replaced abs of elements."))
+
+(defgeneric $sign (x) (:documentation "Returns a signum of the elements of given tensor."))
+(defgeneric $sign! (x) (:documentation "Returns an in-place replaced signums."))
+
+(defgeneric $acos (x) (:documentation "Returns acos of the elements"))
+(defgeneric $acos! (x) (:documentation "Returns an in-place replaced acos values."))
+
+(defgeneric $asin (x) (:documentation "Returns asin of the elements."))
+(defgeneric $asin! (x) (:documentation "Returns an in-place replaced asin values."))
+
+(defgeneric $atan (y) (:documentation "Returns atan of the elements."))
+(defgeneric $atan! (y) (:documentation "Returns an in-place replaced atan values."))
+
+(defgeneric $atan2 (y x) (:documentation "Returns atan2 of the elements"))
+(defgeneric $atan2! (y x) (:documentation "Returns an in-place replaces atan2 values at y."))
+
+(defgeneric $ceil (x) (:documentation "Returns ceil of the elements."))
+(defgeneric $ceil! (x) (:documentation "Returns an in-place replaced ceil values."))
+
+(defgeneric $cos (x) (:documentation "Returns cos of the elements."))
+(defgeneric $cos! (x) (:documentation "Returns an in-place replaced cos values."))
+
+(defgeneric $cosh (x) (:documentation "Returns cosh of the elements."))
+(defgeneric $cosh! (x) (:documentation "Returns an in-place replaced cosh values."))
+
+(defgeneric $exp (x) (:documentation "Returns exp of the elements."))
+(defgeneric $exp! (x) (:documentation "Returns an in-place replaced exp values."))
+
+(defgeneric $floor (x) (:documentation "Returns floor of the elements."))
+(defgeneric $floor! (x) (:documentation "Returns an in-place replaced floor values."))
+
+(defgeneric $log (x) (:documentation "Returns log of the elements."))
+(defgeneric $log! (x) (:documentation "Return an in-place replaced log values."))
+
+(defgeneric $log1p (x) (:documentation "Returns log(1+x) of the elements."))
+(defgeneric $log1p! (x) (:documentation "Returns an in-place replaced log(1+x) values."))
+
+(defgeneric $neg (x) (:documentation "Returns negation of the elements."))
+(defgeneric $neg! (x) (:documentation "Returns an in-place replaced negated values."))
+
+(defgeneric $cinv (x) (:documentation "Returns 1/x of the elements."))
+(defgeneric $cinv! (x) (:documentation "Returns an in-place replaced 1/x values."))
+
+(defgeneric $expt (x n) (:documentation "Returns expt/pow of the elements."))
+(defgeneric $expt! (x n) (:documentation "Returns an in-place replaced expt/pow values."))
+
+(defgeneric $round (x) (:documentation "Returns rounded value of the elements."))
+(defgeneric $round! (x) (:documentation "Returns an in-place replaced rounded values."))
+
+(defgeneric $sin (x) (:documentation "Returns sin of the elements."))
+(defgeneric $sin! (x) (:documentation "Returns an in-place replaced sin values."))
+
+(defgeneric $sinh (x) (:documentation "Returns sinh of the elements."))
+(defgeneric $sinh! (x) (:documentation "Returns an in-place replaced sinh values."))
+
+(defgeneric $sqrt (x) (:documentation "Returns sqrt of the elements."))
+(defgeneric $sqrt! (x) (:documentation "Returns an in-place replaced sqrt values."))
+
+(defgeneric $rsqrt (x) (:documentation "Returns 1/sqrt(x) of the elements."))
+(defgeneric $rsqrt! (x) (:documentation "Returns an in-place replaces 1/sqrt(x) values."))
+
+(defgeneric $tan (x) (:documentation "Returns tan of the elements."))
+(defgeneric $tan! (x) (:documentation "Returns an in-place replaced tan values."))
+
+(defgeneric $tanh (x) (:documentation "Returns tanh of the elements."))
+(defgeneric $tanh! (x) (:documentation "Returns an in-place replaced tanh values."))
+
+(defgeneric $sigmoid (x) (:documentation "Returns sigmoid of the elements."))
+(defgeneric $sigmoid! (x) (:documentation "Returns an in-place replaced sigmoid values."))
+
+(defgeneric $trunc (x) (:documentation "Returns the integral part of the elements."))
+(defgeneric $trunc! (x) (:documentation "Returns an in-place replaced integral values"))
+
+(defgeneric $frac (x) (:documentation "Returns the fractional part of the elements."))
+(defgeneric $frac! (x) (:documentation "Returns an in-place replaced fractional values."))
+
+(defgeneric $equal (x y) (:documentation "Compares the elements of x and y"))

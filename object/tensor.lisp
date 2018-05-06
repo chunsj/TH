@@ -121,6 +121,12 @@
     (tensor-randn tensor sizes)
     tensor))
 
+(defun rndperm (n)
+  "Returns random permutation of integers from 1 to n."
+  (let ((result (tensor)))
+    (tensor-rand-perm result n)
+    result))
+
 (defun range (from to &optional (step 1) type)
   (let* ((type (or type *default-tensor-class*))
          (tensor (make-tensor type)))

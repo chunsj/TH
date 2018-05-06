@@ -917,3 +917,30 @@
   (declare (ignore others))
   (tensor-masked-copy tensor location (make-tensor-args (type-of tensor) (list value)))
   value)
+
+(defmethod $reshape ((tensor tensor) &rest sizes)
+  (let ((result ($empty tensor)))
+    (tensor-reshape result tensor (storage.long sizes))
+    result))
+
+(defmethod $reshape! ((tensor tensor) &rest sizes)
+  (tensor-reshape tensor tensor (storage.long sizes))
+  tensor)
+
+(defmethod $tril ((tensor tensor) &optional (k 0))
+  (let ((result ($empty tensor)))
+    (tensor-tri-l result tensor k)
+    result))
+
+(defmethod $tril! ((tensor tensor) &optional (k 0))
+  (tensor-tri-l tensor tensor k)
+  tensor)
+
+(defmethod $triu ((tensor tensor) &optional (k 0))
+  (let ((result ($empty tensor)))
+    (tensor-tri-u result tensor k)
+    result))
+
+(defmethod $triu! ((tensor tensor) &optional (k 0))
+  (tensor-tri-u tensor tensor k)
+  tensor)
