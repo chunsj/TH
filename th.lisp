@@ -281,3 +281,71 @@
 (defgeneric $frac! (x) (:documentation "Returns an in-place replaced fractional values."))
 
 (defgeneric $equal (x y) (:documentation "Compares the elements of x and y"))
+
+(defgeneric $clamp (x min max) (:documentation "Returns a new tensor clamped between min and max."))
+(defgeneric $clamp! (x min max) (:documentation "Clamps tensor elements between min and max."))
+
+(defgeneric $fmod (x value) (:documentation "Returns fmod of elements."))
+(defgeneric $fmod! (x value) (:documentation "Returns in-place replaced fmod values."))
+
+(defgeneric $rem (x value) (:documentation "Returns remainder of elements."))
+(defgeneric $rem! (x value) (:documentation "Returns in-place replaces remainder values."))
+
+(defgeneric $axpy (α x y) (:documentation "Returns a new tensor of αx + y."))
+(defgeneric $axpy! (α x y) (:documentation "Returns y = αx + y."))
+
+(defgeneric $gemv (α m x β y) (:documentation "Returns α(mx) + βy"))
+(defgeneric $gemv! (α m x β y) (:documentation "Returns y = α(mx) + βy"))
+
+(defgeneric $ger (α x y m) (:documentation "Returns α(x@y') + m"))
+(defgeneric $ger! (α x y m) (:documentation "Returns m = α(x@y') + m"))
+
+(defgeneric $gemm (α x y β z) (:documentation "Returns α(x@y) + βz"))
+(defgeneric $gemm! (α x y β z) (:documentation "Returns z = α(x@y) + βz"))
+
+(defgeneric $add (y x) (:documentation "Returns a new tensor of y + x."))
+(defgeneric $add! (y x) (:documentation "Returns y = y + x."))
+
+(defgeneric $sub (y x) (:documentation "Returns a new tensor of y - x."))
+(defgeneric $sub! (y x) (:documentation "Returns y = y - x."))
+
+(defgeneric $mul (y x) (:documentation "Returns a new tensor of y * x."))
+(defgeneric $mul (y x) (:documentation "Returns y = y * x."))
+
+(defgeneric $div (y x) (:documentation "Returns a new tensor of y / x."))
+(defgeneric $div! (y x) (:documentation "Returns y = y / x."))
+
+(defgeneric $dot (x y) (:documentation "Returns x @ y, both as vectors."))
+
+(defgeneric $addmul (z x y &optional α) (:documentation "Returns z + α(x*y)"))
+(defgeneric $addmul! (z x y &optional α) (:documentation "Returns z = z + α(x*y)"))
+
+(defgeneric $adddiv (z x y &optional α) (:documentation "Returns z + α(x/y)"))
+(defgeneric $adddiv! (z x y &optional α) (:documentation "Returns z = z + α(x/y)"))
+
+(defgeneric $addmv (x m v &optional α β) (:documentation "Returns βx + α(mv)"))
+(defgeneric $addmv! (x m v &optional α β) (:documentation "Returns x = βx + α(mv)"))
+
+(defgeneric $addr (m x y &optional α β) (:documentation "Returns βm + α(x@y')"))
+(defgeneric $addr! (m x y &optional α β) (:documentation "Returns m = βm + α(x@y')"))
+
+(defgeneric $addmm (z x y &optional α β) (:documentation "Returns α(x@y) + βz"))
+(defgeneric $addmm! (z x y &optional α β) (:documentation "Returns z = α(x@y) + βz"))
+
+(defgeneric $addbmm (z bx by &optional α β) (:documentation "Returns α(Σ(x@y)) + βz"))
+(defgeneric $addbmm! (z bx by &optional α β) (:documentation "Returns z = α(Σ(x@y)) + βz"))
+
+(defgeneric $baddbmm (bz bx by &optional α β) (:documentation "Returns batched α(x@y) + βz"))
+(defgeneric $baddbmm! (bz bx by &optional α β) (:documentation "Returns batched z = α(x@y) + βz"))
+
+(defgeneric $vv (x y) (:documentation "Returns x@y'."))
+(defgeneric $vv! (m x y) (:documentation "Returns m = x@y'."))
+
+(defgeneric $mv (m v) (:documentation "Returns m@v."))
+(defgeneric $mv! (x m v) (:documentation "Returns x = m@v."))
+
+(defgeneric $mm (x y) (:documentation "Retruns x@y."))
+(defgeneric $mm! (z x y) (:documentation "Returns z = x@y."))
+
+(defgeneric $bmm (bx by) (:documentation "Returns batched (x@y)."))
+(defgeneric $bmm! (bz bx by) (:documentation "Returns batched z = (x@y)."))

@@ -944,3 +944,483 @@
 (defmethod $triu! ((tensor tensor) &optional (k 0))
   (tensor-tri-u tensor tensor k)
   tensor)
+
+(defmethod $abs ((x number)) (abs x))
+(defmethod $abs! ((x number)) (abs x))
+
+(defmethod $abs ((x tensor)) (tensor-abs ($empty x) x))
+(defmethod $abs! ((x tensor)) (tensor-abs x x))
+
+(defmethod $sign ((x number)) (signum x))
+(defmethod $sign! ((x number)) (signum x))
+
+(defmethod $sign ((x tensor)) (tensor-sign ($empty x) x))
+(defmethod $sign! ((x tensor)) (tensor-sign x x))
+
+(defmethod $acos ((x number)) (acos x))
+(defmethod $acos! ((x number)) (acos x))
+
+(defmethod $acos ((x tensor)) (tensor-acos ($empty x) x))
+(defmethod $acos! ((x tensor)) (tensor-acos x x))
+
+(defmethod $asin ((x number)) (asin x))
+(defmethod $asin! ((x number)) (asin x))
+
+(defmethod $asin ((x tensor)) (tensor-asin ($empty x) x))
+(defmethod $asin! ((x tensor)) (tensor-asin x x))
+
+(defmethod $atan ((y number)) (atan y))
+(defmethod $atan! ((y number)) (atan y))
+
+(defmethod $atan ((y tensor)) (tensor-atan ($empty y) y))
+(defmethod $atan! ((y tensor)) (tensor-atan y y))
+
+(defmethod $atan2 ((y number) (x number)) (atan y x))
+(defmethod $atan2! ((y number) (x number)) (atan y x))
+
+(defmethod $atan2 ((y tensor) (x tensor)) (tensor-atan2 ($empty y) y x))
+(defmethod $atan2! ((y tensor) (x tensor)) (tensor-atan2 y y x))
+
+(defmethod $ceil ((x number)) (ceiling x))
+(defmethod $ceil! ((x number)) (ceiling x))
+
+(defmethod $ceil ((x tensor)) (tensor-ceil ($empty x) x))
+(defmethod $ceil! ((x tensor)) (tensor-ceil x x))
+
+(defmethod $cos ((x number)) (cos x))
+(defmethod $cos! ((x number)) (cos x))
+
+(defmethod $cos ((x tensor)) (tensor-cos ($empty x) x))
+(defmethod $cos! ((x tensor)) (tensor-cos x x))
+
+(defmethod $cosh ((x number)) (cosh x))
+(defmethod $cosh! ((x number)) (cosh x))
+
+(defmethod $cosh ((x tensor)) (tensor-cosh ($empty x) x))
+(defmethod $cosh! ((x tensor)) (tensor-cosh x x))
+
+(defmethod $exp ((x number)) (exp x))
+(defmethod $exp! ((x number)) (exp x))
+
+(defmethod $exp ((x tensor)) (tensor-exp ($empty x) x))
+(defmethod $exp! ((x tensor)) (tensor-exp x x))
+
+(defmethod $floor ((x number)) (floor x))
+(defmethod $floor! ((x number)) (floor x))
+
+(defmethod $floor ((x tensor)) (tensor-floor ($empty x) x))
+(defmethod $floor! ((x tensor)) (tensor-floor x x))
+
+(defmethod $log ((x number)) (log x))
+(defmethod $log! ((x number)) (log x))
+
+(defmethod $log ((x tensor)) (tensor-log ($empty x) x))
+(defmethod $log! ((x tensor)) (tensor-log x x))
+
+(defmethod $log1p ((x number)) (log (1+ x)))
+(defmethod $log1p! ((x number)) (log (1+ x)))
+
+(defmethod $log1p ((x tensor)) (tensor-log1p ($empty x) x))
+(defmethod $log1p! ((x tensor)) (tensor-log1p x x))
+
+(defmethod $neg ((x number)) (- x))
+(defmethod $neg! ((x number)) (- x))
+
+(defmethod $neg ((x tensor)) (tensor-neg ($empty x) x))
+(defmethod $neg! ((x tensor)) (tensor-neg x x))
+
+(defmethod $cinv ((x number)) (/ 1 x))
+(defmethod $cinv! ((x number)) (/ 1 x))
+
+(defmethod $cinv ((x tensor)) (tensor-cinv ($empty x) x))
+(defmethod $cinv! ((x tensor)) (tensor-cinv x x))
+
+(defmethod $expt ((x number) (n number)) (expt x n))
+(defmethod $expt! ((x number) (n number)) (expt x n))
+
+(defmethod $expt ((x tensor) (n number)) (tensor-pow ($empty x) x n))
+(defmethod $expt ((x number) (n tensor)) (tensor-pow ($empty n) x n))
+
+(defmethod $expt! ((x tensor) (n number)) (tensor-pow x x n))
+(defmethod $expt! ((x number) (n tensor)) (tensor-pow n x n))
+
+(defmethod $expt ((x tensor) (n tensor)) (tensor-cpow ($empty x) x n))
+(defmethod $expt! ((x tensor) (n tensor)) (tensor-cpow x x n))
+
+(defmethod $round ((x number)) (round x))
+(defmethod $round! ((x number)) (round x))
+
+(defmethod $round ((x tensor)) (tensor-round ($empty x) x))
+(defmethod $round! ((x tensor)) (tensor-round x x))
+
+(defmethod $sin ((x number)) (sin x))
+(defmethod $sin! ((x number)) (sin x))
+
+(defmethod $sin ((x tensor)) (tensor-sin ($empty x) x))
+(defmethod $sin! ((x tensor)) (tensor-sin x x))
+
+(defmethod $sinh ((x number)) (sinh x))
+(defmethod $sinh! ((x number)) (sinh x))
+
+(defmethod $sinh ((x tensor)) (tensor-sinh ($empty x) x))
+(defmethod $sinh! ((x tensor)) (tensor-sinh x x))
+
+(defmethod $sqrt ((x number)) (sqrt x))
+(defmethod $sqrt! ((x number)) (sqrt x))
+
+(defmethod $sqrt ((x tensor)) (tensor-sqrt ($empty x) x))
+(defmethod $sqrt! ((x tensor)) (tensor-sqrt x x))
+
+(defmethod $rsqrt ((x number)) (/ 1 (sqrt x)))
+(defmethod $rsqrt! ((x number)) (/ 1 (sqrt x)))
+
+(defmethod $rsqrt ((x tensor)) (tensor-rsqrt ($empty x) x))
+(defmethod $rsqrt! ((x tensor)) (tensor-rsqrt x x))
+
+(defmethod $tan ((x number)) (tan x))
+(defmethod $tan! ((x number)) (tan x))
+
+(defmethod $tan ((x tensor)) (tensor-tan ($empty x) x))
+(defmethod $tan! ((x tensor)) (tensor-tan x x))
+
+(defmethod $tanh ((x number)) (tanh x))
+(defmethod $tanh! ((x number)) (tanh x))
+
+(defmethod $tanh ((x tensor)) (tensor-tanh ($empty x) x))
+(defmethod $tanh! ((x tensor)) (tensor-tanh x x))
+
+(defmethod $sigmoid ((x number)) (/ 1 (1+ (exp (- x)))))
+(defmethod $sigmoid! ((x number)) (/ 1 (1+ (exp (- x)))))
+
+(defmethod $sigmoid ((x tensor)) (tensor-sigmoid ($empty x) x))
+(defmethod $sigmoid! ((x tensor)) (tensor-sigmoid x x))
+
+(defmethod $trunc ((x number)) (truncate x))
+(defmethod $trunc! ((x number)) (truncate x))
+
+(defmethod $trunc ((x tensor)) (tensor-trunc ($empty x) x))
+(defmethod $trunc! ((x tensor)) (tensor-trunc x x))
+
+(defmethod $frac ((x number)) (- x (truncate x)))
+(defmethod $frac! ((x number)) (- x (truncate x)))
+
+(defmethod $frac ((x tensor)) (tensor-frac ($empty x) x))
+(defmethod $frac! ((x tensor)) (tensor-frac x x))
+
+(defmethod $equal ((x t) (y t)) (equal x y))
+(defmethod $equal ((x tensor) (y tensor)) (tensor-equal x y))
+
+(defmethod $clamp ((x tensor) (min number) (max number))
+  (let ((result ($empty x)))
+    (tensor-clamp result x min max)
+    result))
+(defmethod $clamp! ((x tensor) (min number) (max number))
+  (tensor-clamp x x min max)
+  x)
+
+(defmethod $axpy ((α number) (x tensor) (y tensor))
+  (let ((result ($empty y)))
+    (tensor-cadd result y α x)
+    result))
+
+(defmethod $axpy! ((α number) (x tensor) (y tensor))
+  (tensor-cadd y y α x)
+  y)
+
+(defmethod $add ((y tensor) (x number))
+  (let ((result ($empty y)))
+    (tensor-add result y x)
+    result))
+(defmethod $add ((y tensor) (x tensor))
+  (let ((result ($empty y)))
+    (tensor-cadd result y 1 x)
+    result))
+(defmethod $add ((y number) (x number)) (+ y x))
+(defmethod $add ((y number) (x tensor))
+  (let ((result ($empty x)))
+    (tensor-add result x y)
+    result))
+
+(defmethod $add! ((y tensor) (x number))
+  (tensor-add y y x)
+  y)
+(defmethod $add! ((y tensor) (x tensor))
+  (tensor-cadd y y 1 x)
+  y)
+
+(defmethod $sub ((y tensor) (x number))
+  (let ((result ($empty y)))
+    (tensor-sub result y x)
+    result))
+(defmethod $sub ((y tensor) (x tensor))
+  (let ((result ($empty y)))
+    (tensor-csub result y 1 x)
+    result))
+(defmethod $sub ((y number) (x number)) (- y x))
+(defmethod $sub ((y number) (x tensor))
+  (let ((result ($empty x)))
+    (tensor-sub result x y)
+    ($neg! result)))
+
+(defmethod $sub! ((y tensor) (x number))
+  (tensor-sub y y x)
+  y)
+(defmethod $sub! ((y tensor) (x tensor))
+  (tensor-csub y y 1 x)
+  y)
+
+(defmethod $mul ((y tensor) (x number))
+  (let ((result ($empty y)))
+    (tensor-mul result y x)
+    result))
+(defmethod $mul ((y tensor) (x tensor))
+  (let ((result ($empty y)))
+    (tensor-cmul result y x)
+    result))
+(defmethod $mul ((y number) (x number)) (* y x))
+(defmethod $mul ((y number) (x tensor))
+  (let ((result ($empty x)))
+    (tensor-mul result x y)
+    result))
+
+(defmethod $mul! ((y tensor) (x number))
+  (tensor-mul y y x)
+  y)
+(defmethod $mul! ((y tensor) (x tensor))
+  (tensor-cmul y y x)
+  y)
+
+(defmethod $div ((y tensor) (x number))
+  (let ((result ($empty y)))
+    (tensor-div result y x)
+    result))
+(defmethod $div ((y tensor) (x tensor))
+  (let ((result ($empty y)))
+    (tensor-cdiv result y x)
+    result))
+(defmethod $div ((y number) (x number)) (/ y x))
+(defmethod $div ((y number) (x tensor))
+  (let ((result ($empty x)))
+    (tensor-cinv result x)
+    (tensor-mul result result y)
+    result))
+
+(defmethod $div! ((y tensor) (x number))
+  (tensor-div y y x)
+  y)
+(defmethod $div! ((y tensor) (x tensor))
+  (tensor-cdiv y y x)
+  y)
+
+(defmethod $addmul ((z tensor) (x tensor) (y tensor) &optional (α 1))
+  (let ((result ($empty z)))
+    (tensor-add-cmul result z α x y)
+    result))
+
+(defmethod $addmul! ((z tensor) (x tensor) (y tensor) &optional (α 1))
+  (tensor-add-cmul z z α x y)
+  z)
+
+(defmethod $adddiv ((z tensor) (x tensor) (y tensor) &optional (α 1))
+  (let ((result ($empty z)))
+    (tensor-add-cdiv result z α x y)
+    result))
+
+(defmethod $adddiv! ((z tensor) (x tensor) (y tensor) &optional (α 1))
+  (tensor-add-cdiv z z α x y)
+  z)
+
+(defmethod $fmod ((tensor tensor) (value number))
+  (let ((result ($empty tensor)))
+    (tensor-fmod result tensor value)
+    result))
+(defmethod $fmod! ((tensor tensor) (value number))
+  (tensor-fmod tensor tensor value)
+  tensor)
+
+(defmethod $fmod ((tensor tensor) (value tensor))
+  (let ((result ($empty tensor)))
+    (tensor-cfmod result tensor value)
+    result))
+(defmethod $fmod! ((tensor tensor) (value tensor))
+  (tensor-cfmod tensor tensor value)
+  tensor)
+
+(defmethod $rem ((tensor tensor) (value number))
+  (let ((result ($empty tensor)))
+    (tensor-mod result tensor value)
+    result))
+(defmethod $rem! ((tensor tensor) (value number))
+  (tensor-mod tensor tensor value)
+  tensor)
+
+(defmethod $rem ((tensor tensor) (value tensor))
+  (let ((result ($empty tensor)))
+    (tensor-cmod result tensor value)
+    result))
+(defmethod $rem! ((tensor tensor) (value tensor))
+  (tensor-cmod tensor tensor value)
+  tensor)
+
+(defmethod $dot ((x tensor) (y tensor)) (tensor-dot x y))
+
+(defmethod $addmv ((x tensor) (m tensor) (v tensor) &optional (α 1) (β 1))
+  (let ((result ($empty x)))
+    ($resize result x)
+    (tensor-add-mv result β x α m v)
+    result))
+
+(defmethod $addmv! ((x tensor) (m tensor) (v tensor) &optional (α 1) (β 1))
+  (tensor-add-mv x β x α m v)
+  x)
+
+(defmethod $gemv ((α number ) (m tensor ) (x tensor) (β number ) (y tensor))
+  (let ((result ($empty y)))
+    ($resize result y)
+    (tensor-add-mv result β y α m x)
+    result))
+
+(defmethod $gemv! ((α number ) (m tensor ) (x tensor) (β number ) (y tensor))
+  (tensor-add-mv y β y α m x)
+  y)
+
+(defmethod $ger ((α number) (x tensor) (y tensor) (m tensor))
+  (let ((result ($empty m)))
+    ($resize result m)
+    (tensor-add-r result 1 m α x y)
+    result))
+
+(defmethod $ger! ((α number) (x tensor) (y tensor) (m tensor))
+  (tensor-add-r m 1 m α x y)
+  m)
+
+(defmethod $addr ((m tensor) (x tensor) (y tensor) &optional (α 1) (β 1))
+  (let ((result ($empty m)))
+    ($resize result m)
+    (tensor-add-r result β m α x y)
+    result))
+
+(defmethod $addr! ((m tensor) (x tensor) (y tensor) &optional (α 1) (β 1))
+  (tensor-add-r m β m α x y)
+  m)
+
+(defmethod $gemm ((α number) (x tensor) (y tensor) (β number) (z tensor))
+  (let ((result ($empty z)))
+    ($resize result z)
+    (tensor-add-mm result β z α x y)
+    result))
+
+(defmethod $gemm! ((α number) (x tensor) (y tensor) (β number) (z tensor))
+  (tensor-add-mm z β z α x y)
+  z)
+
+(defmethod $addmm ((z tensor) (x tensor) (y tensor) &optional (α 1) (β 1))
+  (let ((result ($empty z)))
+    ($resize result z)
+    (tensor-add-mm result β z α x y)
+    result))
+
+(defmethod $addmm! ((z tensor) (x tensor) (y tensor) &optional (α 1) (β 1))
+  (tensor-add-mm z β z α x y)
+  z)
+
+(defmethod $addbmm ((z tensor) (bx tensor) (by tensor) &optional (α 1) (β 1))
+  (let ((result ($empty z)))
+    ($resize result z)
+    (tensor-add-bmm result β z α bx by)
+    result))
+
+(defmethod $addbmm! ((z tensor) (bx tensor) (by tensor) &optional (α 1) (β 1))
+  (tensor-add-bmm z β z α bx by)
+  z)
+
+(defmethod $baddbmm ((bz tensor) (bx tensor) (by tensor) &optional (α 1) (β 1))
+  (let ((result ($empty bz)))
+    ($resize result bz)
+    (tensor-add-bmm result β bz α bx by)
+    result))
+
+(defmethod $baddbmm! ((bz tensor) (bx tensor) (by tensor) &optional (α 1) (β 1))
+  (tensor-add-bmm bz β bz α bx by)
+  bz)
+
+(defmethod $vv ((x tensor) (y tensor))
+  (let ((result (-> ($empty x) ($resize (list ($count x) ($count y))))))
+    ($addr! result x y 1 0)
+    result))
+
+(defmethod $vv! ((m tensor) (x tensor) (y tensor))
+  ($resize m (list ($count x) ($count y)))
+  ($addr! m x y 1 0)
+  m)
+
+(defmethod $mv ((m tensor) (v tensor))
+  (let ((result (-> ($empty m) ($resize (list ($size m 0))))))
+    ($addmv! result m v 1 0)
+    result))
+
+(defmethod $mv! ((x tensor) (m tensor) (v tensor))
+  ($resize x (list ($size m 0)))
+  ($addmv! x m v 1 0)
+  x)
+
+(defmethod $mm ((x tensor) (y tensor))
+  (let ((result (-> ($empty x) ($resize (list ($size x 0) ($size y 1))))))
+    ($addmm! result x y 1 0)
+    result))
+
+(defmethod $mm! ((z tensor) (x tensor) (y tensor))
+  ($resize z (list ($size x 0) ($size y 1)))
+  ($addmm! z x y 1 0)
+  z)
+
+(defmethod $bmm ((bx tensor) (by tensor))
+  (let ((result (-> ($empty bx) ($resize (list ($size bx 0) ($size bx 1) ($size by 2))))))
+    ($baddbmm! result bx by 1 0)
+    result))
+
+(defmethod $bmm! ((bz tensor) (bx tensor) (by tensor))
+  ($resize bz (list ($size bx 0) ($size bx 1) ($size by 2)))
+  ($baddbmm! bz bx by 1 0)
+  bz)
+
+(defun $+ (&rest args)
+  "Returns + of arguments."
+  (cond ((null args) 0)
+        ((eq 1 ($count args)) ($0 args))
+        (t (reduce #'$add args))))
+
+(defun $- (&rest args)
+  "Returns - of arguments."
+  (cond ((null args) (error "invalid number of arguments: 0"))
+        ((eq 1 ($count args)) ($neg ($0 args)))
+        (t (reduce #'$sub args))))
+
+(defun $* (&rest args)
+  "Returns * of arguments."
+  (cond ((null args) 1)
+        ((eq 1 ($count args)) ($0 args))
+        (t (reduce #'$mul args))))
+
+(defun $/ (&rest args)
+  "Returns / of arguments."
+  (cond ((null args) (error "invalid number of arguments: 0"))
+        ((eq 1 ($count args)) ($cinv ($0 args)))
+        (t (reduce #'$div args))))
+
+(defgeneric $mml (x y))
+
+(defmethod $mml ((x tensor) (y tensor))
+  (cond ((and (eq 1 ($ndim x)) (eq 1 ($ndim y))) ($dot x y))
+        ((and (eq 2 ($ndim x)) (eq 1 ($ndim y))) ($mv x y))
+        ((and (eq 2 ($ndim x)) (eq 2 ($ndim y))) ($mm x y))
+        ((and (eq 3 ($ndim x)) (eq 3 ($ndim y))) ($bmm x y))))
+(defmethod $mml ((x tensor) (y number)) ($mul x y))
+(defmethod $mml ((x number) (y number)) (* x y))
+(defmethod $mml ((x number) (y tensor)) ($mul x y))
+
+(defun $@ (&rest args)
+  "Returns dot of arguments."
+  (cond ((null args) 1)
+        ((eq 1 ($count args)) ($0 args))
+        (t (reduce #'$mml args))))
