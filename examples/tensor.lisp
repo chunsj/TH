@@ -1,16 +1,33 @@
-(in-package :th)
+(defpackage th.tensor-examples
+  (:use #:common-lisp
+        #:mu
+        #:th))
 
-;;
-;; CONSTRUCTION
-;;
-;; default construction
-(print (tensor))
-(print (tensor 2 2))
-(print (tensor '(1 2 3 4)))
-(print (tensor '((1 2) (3 4) (5 6))))
-(print (tensor (tensor '(4 3 2 1))))
+(in-package :th.tensor-examples)
+
+;; creates an empty tensor of default tensor class (double)
+(pprint (tensor))
+
+;; createa a tensor of default tensor class type with sizes; elements are not set and .
+(pprint (tensor 2 2))
+
+;; creates a tensor with contents
+(pprint (tensor '(1 2 3 4)))
+
+;; creates a tensor with multidimensional contents
+(pprint (tensor '((1 2) (3 4) (5 6))))
+
+;; creates tensor with other tensor, content storage is shared.
+(let ((x (tensor '(4 3 2 1))))
+  (pprint "X = (4 3 2 1)")
+  (pprint x)
+  (pprint "SAME CONTENT AS X")
+  (pprint (tensor x)))
+
+;; create tensor with sizes and strides
 (print (tensor '(2 2) '(2 1)))
-;; type specific construction
+
+;; type specific construction functions; same as above.
 (print (tensor.byte '(1 2 3 4)))
 (print (tensor.char '(1 2 3 4)))
 (print (tensor.short '(1 2 3 4)))
@@ -19,174 +36,273 @@
 (print (tensor.float '(1 2 3 4)))
 (print (tensor.double '(1 2 3 4)))
 
-;; clone
-(print ($clone (tensor '((1 2) (3 4)))))
+;; clone a tensor creates a new tensor with independent storage.
+(let ((x (tensor '((1 2) (3 4)))))
+  (pprint "'((1 2) (3 4))")
+  (pprint ($clone x)))
 
-;; contiguous
+;; make a tensor with contiguously allocated memory if it is not allocated contiguously.
 (print ($contiguous (tensor.float '((1 2 3) (4 5 6)))))
 
-;; coerced copying
+;; tensor types can be changed to each other
 (print (tensor.byte (tensor.double '((1.234 2.345) (3.456 4.567)))))
 (print (tensor.double (tensor.int '((1 2 3) (4 5 6)))))
 (print (tensor.long (tensor.float '(1.2 3.4 5.6 7.8))))
 
-;; tensor or not
+;; check whether it is tensor or not
 (print ($tensorp 0))
 (print ($tensorp (tensor)))
 
-;; dimensions, size and stride
+;; query number of dimensions
 (print ($ndim (tensor)))
 (print ($ndim (tensor 2 3 4)))
+
+;; query tensor size
 (print ($size (tensor 2 3 4)))
+
+;; query tensor size along given dimension
 (print ($size (tensor 2 3 4) 2))
+
+;; size of scalar value is nil
 (print ($size 1))
+
+;; stride of a tensor
 (print ($stride (tensor 2 3 4)))
+
+;; stride of a tensor along dimension
 (print ($stride (tensor 2 3 4) 2))
+
+;; stride of a nil object
 (print ($stride nil))
 
-;; storage - a tensor is a spepcific view on the storage
+;; storage of a tensor; a tensor is a spepcific view on the storage
 (let* ((x (tensor 4 5))
        (s ($storage x)))
   (loop :for i :from 0 :below ($count s)
         :do (setf ($ s i) i))
-  (print x))
+  (pprint "'((0 1 2 3 4) ... (15 16 17 18 19))")
+  (pprint x))
 
 ;; contiguous or not
-(print ($contiguousp (tensor)))
+(pprint ($contiguousp (tensor)))
+(pprint ($contiguousp (tensor 2 2 2)))
 
-;; size comparison
-(print (equal ($size (tensor 2 3)) ($size (tensor 2 3))))
-(print (equal ($size (tensor)) ($size (tensor 2 3))))
+;; size comparison using size value
+(pprint (equal ($size (tensor 2 3)) ($size (tensor 2 3))))
+(pprint (equal ($size (tensor)) ($size (tensor 2 3))))
 (print (equal ($size (tensor 2 2)) '(2 2)))
 
-;; element count
-(print ($count (tensor 3 3 4)))
+;; size comparison
+(pprint ($sizep (tensor 2 2) (tensor 2 2)))
+(pprint ($sizep (tensor 2 3) (tensor)))
 
-;; querying elements
+;; number of elements in a tensor
+(pprint ($count (tensor 3 3 4)))
+
+;; query the element at the index location
 (let ((x (tensor '((1 2 3) (4 5 6)))))
+  (pprint "'((1 2 3) (4 5 6))")
   (print x)
-  (print ($ x 0 0))
-  (print ($ x 0)))
+  (pprint "1")
+  (print ($ x 0 0)))
 
-;; set another view
+;; creates a new view on the same storage of the given tensor
 (let ((x (tensor))
       (y (tensor '((1 2) (3 4)))))
-  (print ($set x y))
-  (print ($setp x y)))
+  (pprint "((1 2) (3 4))")
+  (pprint ($set x y))
+  (pprint "T")
+  (pprint ($setp x y)))
 
-;; copy elements from other tensor
+;; copy elements from other tensor; both should have the same number of elements.
 (let ((x (tensor '(1 2 3 4)))
       (y (tensor '((5 4) (3 2)))))
-  (print x)
-  (print y)
+  ;; now the elements of x replaced with those of y
   ($copy x y)
-  (print x)
-  (print y)
-  (print ($copy (tensor.int x) '(123 234 345 456)))
-  (print x))
+  (pprint "(5 4 3 2)")
+  (pprint x)
+  (pprint "((5 4) (3 2))")
+  (pprint y)
+  ;; new int tensor from x, then copies elements from list
+  ;; new int tensor will have same size of x
+  (pprint "(123 234 345 456)")
+  (pprint ($copy (tensor.int x) '(123 234 345 456)))
+  (pprint "(5 4 3 2)")
+  ;; storage is not shared
+  (pprint x))
 
 ;; fill values
 (let ((x (tensor 3 3)))
   ($fill x 123)
-  (print x)
-  (print ($zero x))
-  (print x)
-  (print ($one x))
-  (print x))
+  (pprint "((123 123 123) ... (123 123 123))")
+  (pprint x)
+  (pprint "((0 0 0) ... (0 0 0))")
+  ;; mutable method
+  (pprint ($zero! x))
+  (pprint "((0 0 0) ... (0 0 0))")
+  (pprint x)
+  (pprint "((1 1 1) ... (1 1 1))")
+  ;; immutable method
+  (pprint ($one x))
+  (pprint "((0 0 0) ... (0 0 0))")
+  (pprint x))
 
-;; resizing
+;; resizing a tensor allocates if more memory storage is required
+;; note that $view only changes sizes or shape but without changing allocated memory.
 (let ((x (tensor '((1 2 3) (3 4 5))))
       (y (tensor 3 3)))
-  (print x)
-  (print ($resize x '(4 4)))
-  (print ($resize x '(2 2)))
-  (print ($resize x y)))
+  (pprint "((1 2 3 3) (4 5 ? ?) ... (? ? ? ?)))")
+  (pprint ($resize x '(4 4)))
+  (pprint "((1 2) (3 3))")
+  (pprint ($resize x '(2 2)))
+  ;; resize as y
+  (pprint "((1 2 3) (3 4 5) (? ? ?))")
+  (pprint ($resize x y)))
 
-;; narrow - start and size
-(let ((x (tensor 5 6)))
-  ($zero x)
-  (print x)
-  (-> ($narrow x 0 1 3)
-      ($fill 1))
-  (print x)
-  (-> ($narrow x 1 1 4)
-      ($fill 2))
-  (print x)
-  (setf ($narrow x 1 0 2) '(0 11 22 33 44 55 66 77 88 99))
-  (print x))
-
-;; subview - multiple start and size per dimension
-(let ((x (tensor '((1 2 3 4 5 6)
-                   (2 3 4 5 6 7)
-                   (3 4 5 6 7 8)
-                   (4 5 6 7 8 9)
-                   (0 0 0 0 0 0)))))
-  (print x)
-  (print ($subview x 1 3 2 3))
-  (setf ($subview x 1 3 2 3) '(11 12 13 14 15 16 17 18 19))
-  (print ($subview x 1 3 2 3))
-  (print x))
-
-;; select
+;; select - choose sub tensor at index along dimension
 (let ((x (tensor '((1 2 3) (4 5 6) (7 8 9)))))
-  (print x)
-  (print ($select x 0 1))
-  (print ($ x 1))
-  (print ($select x 1 1))
-  (setf ($ x 1) '(-11 -22 -33))
-  (print x))
+  (pprint "(4 5 6) - 2nd(1) row along 1st(0) dimension")
+  (pprint ($select x 0 1))
+  (pprint "(3 6 9) - 3rd(2) column along 2nd(1) dimension")
+  (pprint ($select x 1 2))
+  (setf ($select x 0 1) '(-11 -22 -33))
+  (pprint "x with 2nd row changed as (-11 -22 -33)")
+  (pprint x))
 
-;; query with dimension index size pairs or subview
+;; subdimensional select using $
+(let ((x (tensor '((1 2 3) (4 5 6) (7 8 9)))))
+  (pprint "1st row - (1 2 3)")
+  (pprint ($ x 0))
+  (setf ($ x 1) '(6 5 4))
+  (pprint "2nd row changes as (6 5 4)")
+  (pprint x))
+
+;; narrow - start and size along dimension
+;; returns a new tensor or view built with narrowing from start selected as size along dimension
+(let ((x (tensor 5 6)))
+  ($zero! x)
+  (pprint "5x5 matrix filled with zeros.")
+  (pprint x)
+  ;; along 1st(0) dimension, from 2nd row, select 3 rows, then fill it as one.
+  (-> ($narrow x 0 1 3)
+      ($fill! 1))
+  (pprint "along 1st(0) dimension, from 2nd(1) row, total 3 rows are filled with one.")
+  (pprint x)
+  (-> ($narrow x 1 1 4)
+      ($fill! 2))
+  (pprint "along 2nd(1) dimension, from 2nd(1) column, total 4 columns are filled with two.")
+  (pprint x)
+  (setf ($narrow x 1 0 2) '(0 11 22 33 44 55 66 77 88 99))
+  (pprint "along 2nd(1) dimension, from 1st(0) column, total 2 columns are copied from list.")
+  (pprint x))
+
+;; subview - multiple start and size per dimension, kind of multiple narrows
+;; each pair of start and size along each dimensions
 (let ((x (tensor '((1 2 3 4 5 6)
                    (2 3 4 5 6 7)
                    (3 4 5 6 7 8)
                    (4 5 6 7 8 9)
                    (0 0 0 0 0 0)))))
-  (print x)
-  (print ($ x '(1 3) '(2 3)))
-  (setf ($ x '(1 3) '(2 3)) '(11 12 13 14 15 16 17 18 19))
-  (print ($ x '(1 3) '(2 3)))
-  (print x))
+  (pprint "5x6 matrix.")
+  (pprint x)
+  (pprint "((4 5 6) (5 6 7) (6 7 8)) - from 2nd row, 3 rows, from 3rd column, 3 columns.")
+  (pprint ($subview x 1 3 2 3))
+  (setf ($subview x 1 3 2 3) '(11 12 13 14 15 16 17 18 19))
+  (pprint "((11 12 13) (14 15 16) (17 18 19))")
+  (pprint ($subview x 1 3 2 3))
+  (pprint "matrix changes.")
+  (pprint x))
 
-;; general selection
+;; orderly subview using $
+(let ((x (tensor '((1 2 3 4 5 6)
+                   (2 3 4 5 6 7)
+                   (3 4 5 6 7 8)
+                   (4 5 6 7 8 9)
+                   (0 0 0 0 0 0)))))
+  (pprint "((4 5 6) (5 6 7) (6 7 8)) - from 2nd row, 3 rows, from 3rd column, 3 columns.")
+  (pprint ($ x '(1 3) '(2 3)))
+  (setf ($ x '(1 3) '(2 3)) '(11 12 13 14 15 16 17 18 19))
+  (pprint "((11 12 13) (14 15 16) (17 18 19)) in x")
+  (pprint x))
+
+;; query with dimension index size pairs or subview using $
+(let ((x (tensor '((1 2 3 4 5 6)
+                   (2 3 4 5 6 7)
+                   (3 4 5 6 7 8)
+                   (4 5 6 7 8 9)
+                   (0 0 0 0 0 0)))))
+  (pprint "original x")
+  (pprint x)
+  (pprint "subview of size 3x3, from 2nd row and 3rd column")
+  (pprint ($ x '(1 3) '(2 3)))
+  (setf ($ x '(1 3) '(2 3)) '(11 12 13 14 15 16 17 18 19))
+  (pprint "3x3 subview changed as 11 to 19")
+  (pprint ($ x '(1 3) '(2 3)))
+  (pprint "changed x")
+  (pprint x))
+
+;; general selection using $
 (let ((x (zeros 5 6)))
-  (print x)
+  (pprint "5x6 zero matrix.")
+  (pprint x)
   (setf ($ x 0 2) 1)
-  (print x)
+  (pprint "1 at 1st row, 3rd column")
+  (pprint x)
+  (setf ($ x 4) 9)
+  (pprint "5th row as 9")
+  (pprint x)
+  (setf ($ x '(:all (5 1))) 8)
+  (pprint "6th column as 8")
+  (pprint x)
   (setf ($ x '((1 1) (1 3))) 2)
-  (print x)
+  (pprint "1x3 from 2nd row and 2nd column, filled with 2.")
+  (pprint x)
   (setf ($ x '((0 5) (3 1))) -1)
-  (print x)
+  (pprint "5x1 from 1st row and 4th column, filled with -1.")
+  (pprint x)
   (setf ($ x '((0 5) (1 1))) (range 1 5))
-  (print x)
-  (setf ($ x ($lt x 0)) -2)
-  (print x))
+  (pprint "5x1 from 1st row and 2nd column, copied from (1 ... 5)")
+  (pprint x)
+  (setf ($ x ($lt x 0)) 5)
+  (pprint "element as 5 if oringinal one is less than 0.")
+  (pprint x))
 
 ;; index-select - creates a new storage, not sharing
+;; collects subtensor along dimension at indices
 (let ((x (tensor '((1 2 3) (4 5 6) (7 8 9)))))
-  (print x)
-  (print ($index x 0 '(0 1)))
+  (pprint "original x")
+  (pprint x)
+  (pprint "1st(0) and 2nd(1) along 1st(0) dimension")
+  (pprint ($index x 0 '(0 1)))
   (let ((y ($index x 1 '(1 2))))
-    (print y)
-    ($fill y 0)
-    (print y)
-    (print x)))
+    (pprint "2nd(1) and 3rd(2) along 2nd(1) dimension")
+    (pprint y)
+    ($fill! y 0)
+    (pprint "zero filled")
+    (pprint y)
+    (pprint "x unchanged")
+    (pprint x)))
 
 ;; index-copy - set copies elements into selected index location
 (let ((x (tensor '((1 2 3 4) (2 3 4 5) (3 4 5 6) (4 5 6 7) (5 6 7 8))))
       (y (tensor 5 2)))
-  ($fill ($select y 1 0) -1)
-  ($fill ($select y 1 1) -2)
-  (print x)
-  (print y)
-  (setf ($index x 1 '(0 3)) y)
-  (print x))
+  ($fill! ($select y 1 0) -1)
+  ($fill! ($select y 1 1) -2)
+  (pprint "original x")
+  (pprint x)
+  (pprint "original y")
+  (pprint y)
+  (setf ($index x 1 '(3 0)) y)
+  (pprint "4th(3) and 1st(0) columns along 2nd(1) dimension copied from y.")
+  (pprint x))
 
 ;; index-fill
 (let ((x (tensor '((1 2 3 4) (2 3 4 5) (3 4 5 6) (4 5 6 7) (5 6 7 8)))))
-  (print x)
+  (pprint "original x")
+  (pprint x)
   (setf ($index x 1 '(0 3)) 123)
-  (print x))
+  (pprint "1st(0) and 4th(3) columns along 2nd(1) dimension set as 123")
+  (pprint x))
 
 ;; gather
 (let ((x (tensor 5 5)))

@@ -25,8 +25,6 @@
   (setf (cffi:mem-aref ($handle pointer) ($type pointer) location)
         ($coerce pointer value)))
 
-(defgeneric allocate-storage (storage &optional size))
-
 (defmethod allocate-storage ((storage storage.byte) &optional size)
   (let ((handle (if size
                     (th-byte-storage-new-with-size size)
@@ -69,25 +67,6 @@
                     (th-double-storage-new))))
     (setf ($handle storage) handle)
     (sb-ext:finalize storage (lambda () (th-double-storage-free handle)))))
-
-(defun make-storage (cls &optional size-or-contents)
-  (let ((storage (make-instance cls)))
-    (cond ((or (listp size-or-contents) ($tensorp size-or-contents))
-           (let ((sz ($count size-or-contents))
-                 (contents size-or-contents))
-             (allocate-storage storage sz)
-             (loop :for i :from 0 :below ($count contents)
-                   :do (setf ($ storage i) ($ contents i)))))
-          (t (allocate-storage storage size-or-contents)))
-    storage))
-
-(defun storage.byte (&optional size-or-contents) (make-storage 'storage.byte size-or-contents))
-(defun storage.char (&optional size-or-contents) (make-storage 'storage.char size-or-contents))
-(defun storage.short (&optional size-or-contents) (make-storage 'storage.short size-or-contents))
-(defun storage.int (&optional size-or-contents) (make-storage 'storage.int size-or-contents))
-(defun storage.long (&optional size-or-contents) (make-storage 'storage.long size-or-contents))
-(defun storage.float (&optional size-or-contents) (make-storage 'storage.float size-or-contents))
-(defun storage.double (&optional size-or-contents) (make-storage 'storage.double size-or-contents))
 
 (defmethod $empty ((storage storage)) (make-storage (type-of storage)))
 

@@ -1,14 +1,5 @@
 (in-package :th)
 
-(defun generator (&optional seed)
-  (let ((gen (make-instance 'generator))
-        (h (th-generator-new)))
-    (setf ($handle gen) h)
-    (sb-ext:finalize gen (lambda () (th-generator-free h)))
-    (when seed
-      (th-random-manual-seed ($handle gen) (coerce seed 'integer)))
-    gen))
-
 (defmethod $copy ((generator generator) from)
   (let ((gen (make-instance 'generator))
         (h (th-generator-copy ($handle generator)
@@ -46,7 +37,7 @@
                     (coerce median 'double-float)
                     (coerce sigma 'double-float)))
 
-(defmethod $log-normal ((generator generator) mean stdev)
+(defmethod $lognormal ((generator generator) mean stdev)
   (th-random-log-normal ($handle generator)
                         (coerce mean 'double-float)
                         (coerce stdev 'double-float)))
@@ -58,5 +49,3 @@
 (defmethod $bernoulli ((generator generator) p)
   (th-random-bernoulli ($handle generator)
                        (coerce p 'double-float)))
-
-(defparameter *generator* (generator))
