@@ -1424,3 +1424,77 @@
   (cond ((null args) 1)
         ((eq 1 ($count args)) ($0 args))
         (t (reduce #'$mml args))))
+
+(defmethod $xx ((x tensor) (y tensor) &optional dimension)
+  (let ((result ($empty x))
+        (dimension (or dimension
+                       (loop :for i :from 0 :below ($ndim x)
+                             :when (eq 3 ($size x i))
+                               :return i))))
+    (when dimension
+      (tensor-cross result x y dimension)
+      result)))
+
+(defmethod $xx! ((z tensor) (x tensor) (y tensor) &optional dimension)
+  (let ((dimension (or dimension
+                       (loop :for i :from 0 :below ($ndim x)
+                             :when (eq 3 ($size x i))
+                               :return i))))
+    (when dimension
+      (tensor-cross z x y dimension)
+      z)))
+
+(defmethod $cumprd ((x tensor) &optional dimension)
+  (let ((dimension (or dimension (1- ($ndim x))))
+        (result ($empty x)))
+    (tensor-cum-prd result x dimension)
+    result))
+
+(defmethod $cumprd! ((y tensor) (x tensor) &optional dimension)
+  (let ((dimension (or dimension (1- ($ndim x)))))
+    (tensor-cum-prd y x dimension)
+    y))
+
+(defmethod $cumsum ((x tensor) &optional (dimension 0))
+  (let ((result ($empty x)))
+    (tensor-cum-sum result x dimension)
+    result))
+
+(defmethod $cumsum! ((y tensor) (x tensor) &optional (dimension 0))
+  (tensor-cum-sum y x dimension)
+  y)
+
+(defmethod $max ((x tensor) &optional (dimension -1))
+  (if (< dimension 0)
+      (tensor-max-all x)
+      (let ((indices (tensor.long))
+            (vals ($empty x)))
+        (tensor-max vals indices x dimension nil)
+        (list vals indices))))
+
+(defmethod $max! ((vals tensor) (indices tensor.long) (x tensor) &optional (dimension 0))
+  (tensor-max vals indices x dimension nil)
+  (list vals indices))
+
+(defmethod $min ((x tensor) &optional (dimension -1))
+  (if (< dimension 0)
+      (tensor-min-all x)
+      (let ((indices (tensor.long))
+            (vals ($empty x)))
+        (tensor-min vals indices x dimension nil)
+        (list vals indices))))
+
+(defmethod $min! ((vals tensor) (indices tensor.long) (x tensor) &optional (dimension 0))
+  (tensor-min vals indices x dimension nil)
+  (list vals indices))
+
+(defmethod $mean ((x tensor) &optional (dimension -1))
+  (if (< dimension 0)
+      (tensor-mean-all x)
+      (let ((vals ($empty x)))
+        (tensor-mean vals x dimension nil)
+        vals)))
+
+(defmethod $mean! ((m tensor) (x tensor) &optional (dimension 0))
+  (tensor-mean m x dimension nil)
+  m)

@@ -205,6 +205,8 @@
            #:$baddbamm!
            #:$vv
            #:$vv!
+           #:$xx
+           #:$xx!
            #:$mv
            #:$mv!
            #:$mm
@@ -215,4 +217,14 @@
            #:$-
            #:$*
            #:$@
-           #:$/))
+           #:$/
+           #:$cumprd
+           #:$cumprd!
+           #:$cumsum
+           #:$cumsum!
+           #:$max
+           #:$max!
+           #:$min
+           #:$min!
+           #:$mean
+           #:$mean!))

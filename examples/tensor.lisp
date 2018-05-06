@@ -866,32 +866,37 @@
   (print ($@ m n)))
 (print ($/ (ones 2 2) 3))
 
+(let ((x (tensor '(1 2 3)))
+      (y (tensor '(3 2 1))))
+  (print (th::tensor-cross (tensor) x y 0)))
+
 ;; cross
-(let ((x ($randn 4 3))
-      (y ($randn 4 3)))
+(let ((x (rndn 4 3))
+      (y (rndn 4 3))
+      (z (tensor)))
   (print x)
   (print y)
-  (print ($cross x y 1))
-  (print ($cross! x y 1))
-  (print x))
+  (print ($xx x y))
+  (print ($xx! z x y 1))
+  (print z))
 
 ;; cumulative product
-(let ((x ($range 1 5))
-      (m ($longx '((1 4 7) (2 5 8) (3 6 9)))))
+(let ((x (range 1 5))
+      (m (tensor.long '((1 4 7) (2 5 8) (3 6 9)))))
   (print x)
   (print ($cumprd x))
   (print m)
   (print ($cumprd m))
-  (print ($cumprd m :dimension 1)))
+  (print ($cumprd m 0)))
 
 ;; cumulative sum
-(let ((x ($range 1 5))
-      (m ($longx '((1 4 7) (2 5 8) (3 6 9)))))
+(let ((x (range 1 5))
+      (m (tensor.long '((1 4 7) (2 5 8) (3 6 9)))))
   (print x)
   (print ($cumsum x))
   (print m)
   (print ($cumsum m))
-  (print ($cumsum m :dimension 1)))
+  (print ($cumsum m 1)))
 
 ;; max and min
 (let ((x ($randn 4 4))
