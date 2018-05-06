@@ -559,7 +559,7 @@
   (print ($triu x 1)))
 
 ;; abs
-(let ((x ($tensor '((-1 2) (3 -4)))))
+(let ((x (tensor '((-1 2) (3 -4)))))
   (print x)
   (print ($abs x))
   (print x)
@@ -567,7 +567,7 @@
   (print x))
 
 ;; sign
-(let ((x ($tensor '((-1 2) (3 -4)))))
+(let ((x (tensor '((-1 2) (3 -4)))))
   (print x)
   (print ($sign x))
   (print x)
@@ -575,7 +575,7 @@
   (print x))
 
 ;; acos
-(let ((x ($tensor '((-1 1) (1 -1)))))
+(let ((x (tensor '((-1 1) (1 -1)))))
   (print x)
   (print ($acos x))
   (print x)
@@ -583,7 +583,7 @@
   (print x))
 
 ;; asin
-(let ((x ($tensor '((-1 1) (1 -1)))))
+(let ((x (tensor '((-1 1) (1 -1)))))
   (print x)
   (print ($asin x))
   (print x)
@@ -591,7 +591,7 @@
   (print x))
 
 ;; atan
-(let ((y ($tensor '((-11 1) (1 -11)))))
+(let ((y (tensor '((-11 1) (1 -11)))))
   (print y)
   (print ($atan y))
   (print y)
@@ -599,8 +599,8 @@
   (print y))
 
 ;; atan2
-(let ((y ($tensor '((-11 1) (1 -11))))
-      (x ($tensor '((1 1) (1 1)))))
+(let ((y (tensor '((-11 1) (1 -11))))
+      (x (tensor '((1 1) (1 1)))))
   (print y)
   (print ($atan2 y x))
   (print y)
@@ -608,7 +608,7 @@
   (print y))
 
 ;; ceil
-(let ((x ($tensor '((1 1.1 1.7) (-0.8 -1.1 -2.3)))))
+(let ((x (tensor '((1 1.1 1.7) (-0.8 -1.1 -2.3)))))
   (print x)
   (print ($ceil x))
   (print x)
@@ -616,7 +616,7 @@
   (print x))
 
 ;; cos
-(let ((x ($tensor '((-3.14 0) (3.14 0)))))
+(let ((x (tensor '((-3.14 0) (3.14 0)))))
   (print x)
   (print ($cos x))
   (print x)
@@ -624,7 +624,7 @@
   (print x))
 
 ;; cosh
-(let ((x ($tensor '((-3.14 0) (3.14 0)))))
+(let ((x (tensor '((-3.14 0) (3.14 0)))))
   (print x)
   (print ($cosh x))
   (print x)
@@ -632,7 +632,7 @@
   (print x))
 
 ;; exp
-(let ((x ($tensor '((0 1 2) (-1 -2 -3)))))
+(let ((x (tensor '((0 1 2) (-1 -2 -3)))))
   (print x)
   (print ($exp x))
   (print x)
@@ -640,7 +640,7 @@
   (print x))
 
 ;; floor
-(let ((x ($tensor '((1 1.1 1.7) (-0.8 -1.1 -2.3)))))
+(let ((x (tensor '((1 1.1 1.7) (-0.8 -1.1 -2.3)))))
   (print x)
   (print ($floor x))
   (print x)
@@ -648,7 +648,7 @@
   (print x))
 
 ;; log
-(let ((x ($exp ($tensor '((0 1 2) (-1 -2 -3))))))
+(let ((x ($exp (tensor '((0 1 2) (-1 -2 -3))))))
   (print x)
   (print ($log x))
   (print x)
@@ -656,7 +656,7 @@
   (print x))
 
 ;; log1p
-(let ((x ($exp ($tensor '((0 1 2) (-1 -2 -3))))))
+(let ((x ($exp (tensor '((0 1 2) (-1 -2 -3))))))
   (print x)
   (print ($log1p x))
   (print x)
@@ -664,7 +664,7 @@
   (print x))
 
 ;; neg
-(let ((x ($tensor '((0 1 2) (-1 -2 -3)))))
+(let ((x (tensor '((0 1 2) (-1 -2 -3)))))
   (print x)
   (print ($neg x))
   (print x)
@@ -672,7 +672,7 @@
   (print x))
 
 ;; cinv
-(let ((x ($tensor '((3 2 1) (-1 -2 -3)))))
+(let ((x (tensor '((3 2 1) (-1 -2 -3)))))
   (print x)
   (print ($cinv x))
   (print x)
@@ -680,8 +680,8 @@
   (print x))
 
 ;; expt
-(let ((x ($tensor '((2 3) (1 2))))
-      (y ($tensor '((2 2) (3 3))))
+(let ((x (tensor '((2 3) (1 2))))
+      (y (tensor '((2 2) (3 3))))
       (n 2))
   (print x)
   (print ($expt x n))
@@ -694,7 +694,7 @@
   (print x))
 
 ;; round
-(let ((x ($tensor '((1.1 1.8) (-1.1 -1.8)))))
+(let ((x (tensor '((1.1 1.8) (-1.1 -1.8)))))
   (print x)
   (print ($round x))
   (print x)
@@ -702,7 +702,7 @@
   (print x))
 
 ;; sin
-(let ((x ($tensor '((-3.14 0) (3.14 0)))))
+(let ((x (tensor '((-3.14 0) (3.14 0)))))
   (print x)
   (print ($sin x))
   (print x)
@@ -710,7 +710,7 @@
   (print x))
 
 ;; sinh
-(let ((x ($tensor '((-3.14 0) (3.14 0)))))
+(let ((x (tensor '((-3.14 0) (3.14 0)))))
   (print x)
   (print ($sinh x))
   (print x)
@@ -718,7 +718,7 @@
   (print x))
 
 ;; sqrt
-(let ((x ($tensor '((1 2 4) (3 5 9)))))
+(let ((x (tensor '((1 2 4) (3 5 9)))))
   (print x)
   (print ($sqrt x))
   (print x)
@@ -726,7 +726,7 @@
   (print x))
 
 ;; rsqrt
-(let ((x ($tensor '((1 2 4) (3 5 9)))))
+(let ((x (tensor '((1 2 4) (3 5 9)))))
   (print x)
   (print ($rsqrt x))
   (print x)
@@ -734,7 +734,7 @@
   (print x))
 
 ;; tan
-(let ((x ($tensor '((1 2) (3 4)))))
+(let ((x (tensor '((1 2) (3 4)))))
   (print x)
   (print ($tan x))
   (print x)
@@ -742,7 +742,7 @@
   (print x))
 
 ;; tanh
-(let ((x ($tensor '((1 2) (-3 -4)))))
+(let ((x (tensor '((1 2) (-3 -4)))))
   (print x)
   (print ($tanh x))
   (print x)
@@ -750,7 +750,7 @@
   (print x))
 
 ;; sigmoid
-(let ((x ($tensor '((-2 -1) (1 2)))))
+(let ((x (tensor '((-2 -1) (1 2)))))
   (print x)
   (print ($sigmoid x))
   (print x)
@@ -758,15 +758,13 @@
   (print x))
 
 ;; equal
-(let ((x ($tensor '(1 2 3)))
-      (y ($tensor '(1 2 3)))
-      (z ($tensor '(1 2 3))))
-  (print ($equal x y))
-  (print ($= x y z)))
+(let ((x (tensor '(1 2 3)))
+      (y (tensor '(1 2 3))))
+  (print ($equal x y)))
 
 ;; add, sub, and mul
-(let ((x ($tensor '((1 2) (3 4))))
-      (y ($tensor '((2 3) (4 5))))
+(let ((x (tensor '((1 2) (3 4))))
+      (y (tensor '((2 3) (4 5))))
       (a 10))
   (print ($add x a))
   (print ($add x y))
@@ -776,7 +774,7 @@
   (print ($mul x y)))
 
 ;; clamp
-(let ((x ($tensor '((1 2 3 4 5) (2 3 4 5 6) (3 4 5 6 7))))
+(let ((x (tensor '((1 2 3 4 5) (2 3 4 5 6) (3 4 5 6 7))))
       (min 2)
       (max 5))
   (print x)
@@ -786,109 +784,87 @@
   (print x))
 
 ;; add-cmul
-(let ((x ($tensor 2 2))
-      (y ($tensor 4))
-      (z ($tensor 2 2)))
-  ($fill x 2)
-  ($fill y 3)
-  ($fill z 5)
-  (print ($addcmul x 2 y z)))
+(let ((x (tensor 2 2))
+      (y (tensor 4))
+      (z (tensor 2 2)))
+  ($fill! x 1)
+  ($fill! y 3)
+  ($fill! z 5)
+  (print ($addmul x y z 2)))
 
 ;; div
-(let ((x ($ones 2 2))
-      (y ($range 1 4)))
+(let ((x (ones 2 2))
+      (y (range 1 4)))
   (print ($div x y)))
 
-;; shift
-(let ((x ($long ($ones 2 2)))
-      (y (-> ($long ($range 1 4)) ($resize '(2 2)))))
-  (print ($<< x y))
-  ($set x (-> ($longx 2 2)
-              ($fill 32)))
-  (print ($>> x y)))
-
 ;; add-cdiv
-(let ((x (-> ($tensor 2 2) ($fill 1)))
-      (y ($range 1 4))
-      (z (-> ($tensor 2 2) ($fill 5))))
-  (print ($addcdiv x 2 y z)))
+(let ((x (-> (tensor 2 2) ($fill! 1)))
+      (y (range 1 4))
+      (z (-> (tensor 2 2) ($fill! 5))))
+  (print ($adddiv x y z 2)))
 
 ;; fmod, remainder
-(let ((x ($tensor '(-3 3))))
+(let ((x (tensor '(-3 3))))
   (print ($fmod x 2))
   (print ($fmod x -2))
   (print ($rem x 2))
   (print ($rem x -2))
-  (print ($fmod ($tensor '((3 3) (-3 -3))) ($tensor '((2 -2) (2 -2)))))
-  (print ($rem ($tensor '((3 3) (-3 -3))) ($tensor '((2 -2) (2 -2))))))
-
-;; bitand
-(let ((x (-> ($longx 4) ($fill 6)))
-      (y ($longx '(1 2 4 8))))
-  (print ($bitand x y)))
-
-;; bitor
-(let ((x (-> ($longx 4) ($fill 3)))
-      (y ($longx '(1 2 4 8))))
-  (print ($bitor x y)))
-
-;; bitxor
-(let ((x (-> ($longx 4) ($fill 15)))
-      (y ($longx '(1 2 4 8))))
-  (print ($bitxor x y)))
+  (print ($fmod (tensor '((3 3) (-3 -3))) (tensor '((2 -2) (2 -2)))))
+  (print ($rem (tensor '((3 3) (-3 -3))) (tensor '((2 -2) (2 -2))))))
 
 ;; dot
-(let ((x (-> ($tensor 2 2) ($fill 3)))
-      (y (-> ($tensor 4) ($fill 2))))
+(let ((x (-> (tensor 2 2) ($fill! 3)))
+      (y (-> (tensor 4) ($fill! 2))))
   (print ($dot x y)))
 
 ;; add-mv
-(let ((y ($zeros 3))
-      (m (-> ($tensor 3 2) ($fill 3)))
-      (x (-> ($tensor 2) ($fill 2))))
-  (print ($addmv 1 y 1 m x)))
+(let ((y (ones 3))
+      (m (-> (tensor 3 2) ($fill! 3)))
+      (x (-> (tensor 2) ($fill! 2))))
+  (print ($mv m x))
+  (print ($addmv y m x)))
 
 ;; add-r
-(let ((x ($range 1 3))
-      (y ($range 1 2))
-      (m ($zeros 3 2)))
-  (print ($addr! 1 m 1 x y))
-  (print ($addr! 2 m 1 x y)))
+(let ((x (range 1 3))
+      (y (range 1 2))
+      (m (ones 3 2)))
+  (print ($addr m x y))
+  (print ($addr! m x y 2 1)))
 
 ;; add-mm
-(let ((c ($zeros 4 4))
-      (a (-> ($range 1 12) ($resize '(4 3))))
-      (b (-> ($range 1 12) ($resize '(3 4)))))
-  (print ($addmm 1 c 1 a b)))
+(let ((c (ones 4 4))
+      (a (-> (range 1 12) ($resize '(4 3))))
+      (b (-> (range 1 12) ($resize '(3 4)))))
+  (print ($addmm c a b)))
 
 ;; add-bmm
-(let ((c ($zeros 4 4))
-      (ba (-> ($range 1 24) ($resize '(2 4 3))))
-      (bb (-> ($range 1 24) ($resize '(2 3 4)))))
-  (print ($addbmm 1 c 1 ba bb)))
+(let ((c (ones 4 4))
+      (ba (-> (range 1 24) ($resize '(2 4 3))))
+      (bb (-> (range 1 24) ($resize '(2 3 4)))))
+  (print ($addbmm c ba bb)))
 
 ;; badd-bmm
-(let ((bc ($zeros 2 4 4))
-      (ba (-> ($range 1 24) ($resize '(2 4 3))))
-      (bb (-> ($range 1 24) ($resize '(2 3 4)))))
-  (print ($baddbmm 1 bc 1 ba bb)))
+(let ((bc (ones 2 4 4))
+      (ba (-> (range 1 24) ($resize '(2 4 3))))
+      (bb (-> (range 1 24) ($resize '(2 3 4)))))
+  (print ($baddbmm bc ba bb)))
 
 ;; operators
-(print ($+ 5 ($rand 3)))
-(let ((x (-> ($tensor 2 2) ($fill 2)))
-      (y (-> ($tensor 4) ($fill 3))))
+(print ($+ 5 (rnd 3)))
+(let ((x (-> (tensor 2 2) ($fill! 2)))
+      (y (-> (tensor 4) ($fill! 3))))
   (print ($+ x y))
   (print ($- y x))
   (print ($+ x 3))
   (print ($- x)))
-(let ((m (-> ($tensor 2 2) ($fill 2)))
-      (n (-> ($tensor 2 4) ($fill 3)))
-      (x (-> ($tensor 2) ($fill 4)))
-      (y (-> ($tensor 2) ($fill 5))))
+(let ((m (-> (tensor 2 2) ($fill! 2)))
+      (n (-> (tensor 2 4) ($fill! 3)))
+      (x (-> (tensor 2) ($fill! 4)))
+      (y (-> (tensor 2) ($fill! 5))))
   (print ($* x y))
-  (print ($* m x))
-  (print ($* m n)))
-(print ($/ ($ones 2 2) 3))
+  (print ($@ m x))
+  (print ($@ m n)))
+(print ($/ (ones 2 2) 3))
 
 ;; cross
 (let ((x ($randn 4 3))

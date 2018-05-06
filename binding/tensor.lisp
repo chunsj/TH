@@ -1337,11 +1337,11 @@
 (defmethod $baddbmm ((bz tensor) (bx tensor) (by tensor) &optional (α 1) (β 1))
   (let ((result ($empty bz)))
     ($resize result bz)
-    (tensor-add-bmm result β bz α bx by)
+    (tensor-badd-bmm result β bz α bx by)
     result))
 
 (defmethod $baddbmm! ((bz tensor) (bx tensor) (by tensor) &optional (α 1) (β 1))
-  (tensor-add-bmm bz β bz α bx by)
+  (tensor-badd-bmm bz β bz α bx by)
   bz)
 
 (defmethod $vv ((x tensor) (y tensor))
