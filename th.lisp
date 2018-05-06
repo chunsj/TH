@@ -369,3 +369,53 @@
 
 (defgeneric $mean (x &optional dimension) (:documentation "Returns mean values."))
 (defgeneric $mean! (m x &optional dimension) (:documentation "Returns m = mean x."))
+
+(defgeneric $cmax (tensor &rest tensors) (:documentation "Elemnentwise maximum."))
+(defgeneric $cmax! (tensor &rest tensors) (:documentation "Elemnentwise maximum."))
+
+(defgeneric $cmin (tensor &rest tensors) (:documentation "Elemnentwise minimum."))
+(defgeneric $cmin! (tensor &rest tensors) (:documentation "Elemnentwise minimum."))
+
+(defgeneric $median (x &optional dimension)
+  (:documentation "Returns (median-vals, median-indices)."))
+(defgeneric $median! (vals indices x &optional dimension)
+  (:documentation "Returns (median-vals, median-indices)."))
+
+(defgeneric $mode (x &optional dimension)
+  (:documentation "Returns (mode-vals, mode-indices)."))
+(defgeneric $mode! (vals indices x &optional dimension)
+  (:documentation "Returns (mode-vals, mode-indices)."))
+
+(defgeneric $kth (x k &optional dimension) (:documentation "Returns kth smallest (value, index)."))
+(defgeneric $kth! (vals indices x k &optional dimension)
+  (:documentation "Returns kth smallest (value, index)."))
+
+(defgeneric $topk (x k &optional dimension direction sortp)
+  (:documentation "Returns top k smallest (values, indices) in unsorted manner."))
+(defgeneric $topk! (vals indices x k &optional dimension direction sortp)
+  (:documentation "Returns top k smallest (values, indices) in unsorted manner."))
+
+(defgeneric $sort (x &optional dimension descendingp)
+  (:documentation "Returns sorted (values, indices) along dimension."))
+(defgeneric $sort! (vals indices x &optional dimension descendingp)
+  (:documentation "Returns sorted (values, indices) along dimension."))
+
+(defgeneric $prd (x &optional dimension)
+  (:documentation "Returns products along dimension."))
+(defgeneric $prd! (z x &optional dimension)
+  (:documentation "Returns z = products along dimension of x."))
+
+(defgeneric $sum (x &optional dimension)
+  (:documentation "Returns sums along dimension."))
+(defgeneric $sum! (z x &optional dimension)
+  (:documentation "Returns z = sums along dimension of x."))
+
+(defgeneric $sd (x &optional dimension flag)
+  (:documentation "Returns standard deviation along dimension."))
+(defgeneric $sd! (z x &optional dimension flag)
+  (:documentation "Returns z = sd(x) along dimension."))
+
+(defgeneric $var (x &optional dimension flag)
+  (:documentation "Returns variance along dimension."))
+(defgeneric $var! (z x &optional dimension flag)
+  (:documentation "Returns z = var(x) along dimension."))

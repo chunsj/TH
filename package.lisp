@@ -226,5 +226,17 @@
            #:$max!
            #:$min
            #:$min!
+           #:$cmax
+           #:$cmax!
+           #:$cmin
+           #:$cmin!
            #:$mean
-           #:$mean!))
+           #:$mean!
+           #:$median
+           #:$median!
+           #:$mode
+           #:$mode!
+           #:$kth
+           #:$kth!
+           #:$topk
+           #:$topk!))

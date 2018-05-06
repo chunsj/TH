@@ -1498,3 +1498,86 @@
 (defmethod $mean! ((m tensor) (x tensor) &optional (dimension 0))
   (tensor-mean m x dimension nil)
   m)
+
+(defmethod $cmax ((tensor tensor) &rest tensors)
+  (flet ((cmax (x y)
+           (cond ((and ($tensorp x) ($tensorp y)) (tensor-cmax x x y))
+                 ((and (numberp x) ($tensorp y)) (tensor-cmax y y x))
+                 ((and ($tensorp x) (numberp y)) (tensor-cmax x x y))
+                 ((and (numberp x) (numberp y)) (max x y)))))
+    (reduce #'cmax tensors :initial-value (cmax ($clone tensor) tensor))))
+
+(defmethod $cmax! ((tensor tensor) &rest tensors)
+  (flet ((cmax (x y)
+           (cond ((and ($tensorp x) ($tensorp y)) (tensor-cmax x x y))
+                 ((and (numberp x) ($tensorp y)) (tensor-cmax y y x))
+                 ((and ($tensorp x) (numberp y)) (tensor-cmax x x y))
+                 ((and (numberp x) (numberp y)) (max x y)))))
+    (reduce #'cmax tensors :initial-value tensor)))
+
+(defmethod $cmin ((tensor tensor) &rest tensors)
+  (flet ((cmin (x y)
+           (cond ((and ($tensorp x) ($tensorp y)) (tensor-cmin x x y))
+                 ((and (numberp x) ($tensorp y)) (tensor-cmin y y x))
+                 ((and ($tensorp x) (numberp y)) (tensor-cmin x x y))
+                 ((and (numberp x) (numberp y)) (max x y)))))
+    (reduce #'cmin tensors :initial-value (cmin ($clone tensor) tensor))))
+
+(defmethod $cmin! ((tensor tensor) &rest tensors)
+  (flet ((cmin (x y)
+           (cond ((and ($tensorp x) ($tensorp y)) (tensor-cmin x x y))
+                 ((and (numberp x) ($tensorp y)) (tensor-cmin y y x))
+                 ((and ($tensorp x) (numberp y)) (tensor-cmin x x y))
+                 ((and (numberp x) (numberp y)) (max x y)))))
+    (reduce #'cmin tensors :initial-value tensor)))
+
+(defmethod $median ((x tensor) &optional (dimension -1))
+  (if (< dimension 0)
+      (tensor-median-all x)
+      (let ((indices (tensor.long))
+            (vals ($empty x)))
+        (tensor-median vals indices x dimension nil)
+        (list vals indices))))
+
+(defmethod $median! ((vals tensor) (indices tensor.long) (x tensor) &optional (dimension 0))
+  (tensor-median vals indices x dimension nil)
+  (list vals indices))
+
+(defmethod $mode ((x tensor) &optional dimension)
+  (let ((dimension (or dimension (1- ($ndim x))))
+        (indices (tensor.long))
+        (vals ($empty x)))
+    (tensor-mode vals indices x dimension nil)
+    (list vals indices)))
+
+(defmethod $mode! ((vals tensor) (indices tensor.long) (x tensor) &optional (dimension 0))
+  (tensor-mode vals indices x dimension nil)
+  (list vals indices))
+
+(defmethod $kth ((x tensor) k &optional dimension)
+  (let ((dimension (or dimension (1- ($ndim x))))
+        (vals ($empty x))
+        (indices (tensor.long)))
+    (tensor-kth-value vals indices x k dimension nil)
+    (list vals indices)))
+
+(defmethod $kth! ((vals tensor) (indices tensor.long) (x tensor) k &optional dimension)
+  (let ((dimension (or dimension (1- ($ndim x)))))
+    (tensor-kth-value vals indices x k dimension nil)
+    (list vals indices)))
+
+(defmethod $topk ((x tensor) k &optional dimension sortp))
+
+(defmethod $topk! ((vals tensor) (indices tensor.long) (x tensor) k &optional dimension sortp))
+
+(defmethod $sort ((x tensor) &optional dimension descendingp))
+
+(defmethod $sort! ((vals tensor) (indices tensor.long) (x tensor) &optional dim descending))
+
+(defmethod $prd ((x tensor) &optional dimension))
+
+(defmethod $prd! ((z tensor) (x tensor) &optional dimension))
+
+(defmethod $sum ((x tensor) &optional dimension))
+
+(defmethod $sum! ((z tensor) (x tensor) &optional dimension))
