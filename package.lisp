@@ -91,6 +91,7 @@
            #:$split
            #:$chunk
            #:$cat
+           #:$repeat
            #:$diag
            #:$diag!
            #:$eye
@@ -103,4 +104,5 @@
            #:$eq
            #:$ne
            #:$nonzero
-           #:$fmap))
+           #:$fmap
+           #:$fmap!))

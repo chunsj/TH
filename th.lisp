@@ -183,4 +183,6 @@
   (:documentation "Returns a long tensor which contains indices of nonzero elements."))
 
 (defgeneric $fmap (fn tensor &rest tensors)
-  (:documentation "Applies fn elementwise where only non-nil result will be updated."))
+  (:documentation "Applies fn elementwise where only non-nil result will be updated, new tensor."))
+(defgeneric $fmap! (fn tensor &rest tensors)
+  (:documentation "Applies fn elementwise where only non-nil result will be updated on 1st tensor"))

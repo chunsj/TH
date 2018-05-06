@@ -746,6 +746,17 @@
     out))
 
 (defmethod $fmap (fn (tensor tensor) &rest tensors)
+  (let* ((result ($empty tensor))
+         (s ($storage tensor)))
+    ($resize result tensor)
+    (loop :for i :from 0 :below ($count s)
+          :for x = ($ s i)
+          :for ys = (mapcar (lambda (aten) ($ aten i)) tensors)
+          :do (let ((v (apply #'funcall fn x ys)))
+                (when v (setf ($ ($storage result) i) v))))
+    result))
+
+(defmethod $fmap! (fn (tensor tensor) &rest tensors)
   (let ((s ($storage tensor)))
     (loop :for i :from 0 :below ($count s)
           :for x = ($ s i)
@@ -792,7 +803,7 @@
     tensor))
 
 (defmethod $ ((tensor tensor) (location number) &rest others-and-default)
-  (let ((locsn (cons location others-and-default)))
+  (let ((locs (cons location others-and-default)))
     (cond ((= ($ndim tensor) ($count locs))
            (let ((idx (+ ($offset tensor) (loop :for i :from 0 :below ($count locs)
                                                 :sum (* ($ locs i) ($stride tensor i))))))

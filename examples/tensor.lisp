@@ -308,19 +308,29 @@
 (let ((x (tensor 5 5)))
   (loop :for i :from 0 :below ($count x)
         :do (setf ($ ($storage x) i) i))
-  (print x)
+  (pprint "original 5x5 matrix")
+  (pprint x)
+  (pprint "by incrementing index, collect nth 1st(0) dimensional values.")
+  (pprint "1st row will be (0 0), (1 1), (2 2), (3 3), (4 4)")
+  (pprint "2nd row will be (1 0), (2 1), (3 2), (4 3), (0 4)")
   (print ($gather x 0 '((0 1 2 3 4) (1 2 3 4 0))))
-  (print ($gather x 1 '((0 1) (1 2) (2 3) (3 4) (4 0)))))
+  (pprint "by incrementing index, collect nth 2nd(1) dimensional values.")
+  (pprint "1st column will be (0 0), (1 1), (2 2), (3 3), (4 4)")
+  (pprint "2nd column will be (1 0), (2 1), (3 2), (4 3), (0 4)")
+  (pprint ($gather x 1 '((0 1) (1 2) (2 3) (3 4) (4 0)))))
 
 ;; scatter
 (let ((x (tensor 5 5))
-      (y (tensor '((11 21 31 41 51) (12 22 32 42 52)))))
+      (y (tensor '((1 2 3 4 5) (-5 -4 -3 -2 -1)))))
   ($zero! x)
-  (print x)
+  (pprint "5x5 zeros")
+  (pprint x)
   ($scatter x 0 '((0 1 2 3 4) (1 2 3 4 0)) y)
-  (print x)
-  ($scatter x 1 '((0 1) (1 2) (2 3) (3 4) (4 0)) 1234)
-  (print x))
+  (pprint "as in gather, but set from y")
+  (pprint x)
+  ($scatter x 1 '((0 1) (1 2) (2 3) (3 4) (4 0)) 9)
+  (pprint "as in gather, but fill a value")
+  (pprint x))
 
 ;; masked-select
 (let ((x (tensor 3 4))
@@ -328,133 +338,178 @@
       (z (tensor)))
   (loop :for i :from 0 :below ($count x)
         :do (setf ($ ($storage x) i) (1+ i)))
-  (print x)
-  (print ($masked x mask))
+  (pprint "original x")
+  (pprint x)
+  (pprint "only at value 1(true)")
+  (pprint ($masked x mask))
   ($set z ($masked x mask))
-  (print z)
-  ($fill z -123)
-  (print z)
-  (print x))
+  (pprint "same as above.")
+  (pprint z)
+  ($fill! z -99)
+  (pprint "z value changed as -99")
+  (pprint z)
+  (pprint "x unchanged.")
+  (pprint x))
 
 ;; masked-copy
 (let ((x (tensor 3 4))
       (mask '((1 0 1 0 0 0) (1 1 0 0 0 1)))
-      (z (tensor '(101 102 103 104 105))))
-  (loop :for i :from 0 :below ($count x)
-        :do (setf ($ ($storage x) i) (1+ i)))
-  (print x)
+      (z (tensor '(1 2 3 4 5))))
+  ($zero! x)
+  (pprint "x matrix, 3x4")
+  (pprint x)
   (setf ($masked x mask) z)
-  (print x))
+  (pprint "set by z")
+  (pprint x))
 
 ;; masked-fill
 (let ((x (tensor 3 4))
       (mask '((1 0 1 0 0 0) (1 1 0 0 0 1))))
-  (loop :for i :from 0 :below ($count x)
-        :do (setf ($ ($storage x) i) (1+ i)))
-  (print x)
-  (setf ($masked x mask) -123)
-  (print x))
+  ($zero! x)
+  (pprint "original 3x4 matrix")
+  (pprint x)
+  (setf ($masked x mask) 5)
+  (pprint "filled as 5")
+  (pprint x))
 
-;; nonzero
+;; nonzero - returns locations of non zero elements
 (print ($nonzero (tensor '((1 2 0 3 4) (0 0 1 0 0)))))
 
-;; expand
+;; expand - shares storage, just new view
 (let ((x (tensor 10 1))
       (y (tensor 10 2)))
   (loop :for i :from 0 :below ($count x)
         :do (setf ($ ($storage x) i) (1+ i)))
-  (print x)
+  (pprint "original 10x1 matrix x")
+  (pprint x)
+  (pprint "new expanded matrix as 10x4 using x")
   (print ($expand x 10 4))
-  (print ($fill ($expand x 10 4) 1))
-  (print x)
-  (print ($expand x y)))
+  (pprint "new expanded matrix as 10x4 filled with one.")
+  (print ($fill! ($expand x 10 4) 1))
+  (pprint "modified because of $fill! 1, storage is shared.")
+  (pprint x)
+  (pprint "as the shape/size of other tensor, 10x2")
+  (pprint ($expand x y)))
 
-;; repeat - not implemented yet
+;; repeat - repeat content as given times
 (print ($repeat (tensor '(1 2)) 3 2))
 
-;; squeeze
+;; squeeze - removes singletone dimensions
 (let ((x (tensor 2 1 2 1 2)))
-  (print ($size x))
-  (print ($size ($squeeze x)))
-  (print ($size ($squeeze x 1))))
+  (pprint "original size")
+  (pprint ($size x))
+  (pprint "no 1s")
+  (pprint ($size ($squeeze x)))
+  (pprint "no 1 in 2nd(1) dimension")
+  (pprint ($size ($squeeze x 1))))
 
-;; view
+;; unsqueeze - add a singleton dimension
+(let ((x (tensor '(1 2 3 4))))
+  (pprint "vector")
+  (pprint x)
+  (pprint "along 1st(0) dimension")
+  (pprint ($unsqueeze x 0))
+  (pprint "along 2nd(1) dimension")
+  (pprint ($unsqueeze x 1)))
+
+;; view - different from resize(allocation), reshape(new storage), just a view
 (let ((x (tensor '(0 0 0 0))))
-  (print x)
-  (print ($view x 2 2))
-  (print ($view x (tensor 2 2))))
+  (pprint "original vector")
+  (pprint x)
+  (pprint "2x2")
+  (pprint ($view x 2 2))
+  (pprint "as the size of other 2x2 tensor")
+  (pprint ($view x (tensor 2 2))))
 
 ;; transpose
 (let ((x (tensor '((1 2 3) (4 5 6)))))
-  (print x)
-  (print ($transpose x)))
+  (pprint "original 2x3")
+  (pprint x)
+  (pprint "transposed 3x2")
+  (pprint ($transpose x)))
+
+;; transpose - shares storage but different view(tensor)
 (let ((x (tensor 3 4)))
   ($zero! x)
-  ($fill ($select x 1 2) 7)
-  (print x)
+  ($fill! ($select x 1 2) 7)
+  (pprint "original x")
+  (pprint x)
   (let ((y ($transpose x)))
+    ($fill! ($select y 1 2) 8)
+    (pprint "modified transposed x or y")
     (print y)
-    ($fill ($select y 1 2) 8)
-    (print y)
+    (pprint "original x")
     (print x)))
 
-;; permute
+;; permute - multidimensional transposing
 (let ((x (tensor 3 4 2 5)))
-  (print ($size x))
-  (print ($size ($permute x 1 2 0 3))))
+  (pprint "original size")
+  (pprint ($size x))
+  (pprint "permute size with 2nd, 3rd, 1st and 4th dimensions - 4,2,3,5")
+  (pprint ($size ($permute x 1 2 0 3))))
 
-;; unfold
+;; unfold - slice with size by step along dimension
 (let ((x (tensor 7)))
   (loop :for i :from 1 :to 7 :do (setf ($ x (1- i)) i))
-  (print x)
+  (pprint "vector, 1 to 7")
+  (pprint x)
+  (pprint "slice along 1st(0) dimension, size of 2, by step 1")
   (print ($unfold x 0 2 1))
+  (pprint "slice along 1st(0) dimension, size of 2, by step 2")
   (print ($unfold x 0 2 2)))
 
-;; fmap
+;; fmap - just elementwise function application
 (let ((x (zeros 3 3))
       (n 0))
-  ($fmap (lambda (v) (* 0.5 3.1416 (incf n))) x)
-  (print x)
-  ($fmap (lambda (v) (sin v)) x)
-  (print x))
+  ($fmap (lambda (v) (+ v (* 0.5 pi (incf n)))) x)
+  (pprint x)
+  ($fmap (lambda (v) (round (sin v))) x)
+  (pprint x))
 
-;; fmap
+;; fmap - more, shape is irrelevant when they have same count.
 (let ((x (tensor 3 3))
       (y (tensor 9))
       (z (tensor '(0 1 2 3 4 5 6 7 8))))
   (loop :for i :from 1 :to 9 :do (setf ($ ($storage x) (1- i)) i
                                        ($ ($storage y) (1- i)) i))
-  (print x)
-  (print y)
-  (print z)
-  ($fmap (lambda (vx vy) (* vx vy)) x y)
-  (print x)
-  ($fmap (lambda (xx yy zz) (+ xx yy zz)) x y z)
-  (print x))
+  (pprint x)
+  (pprint y)
+  (pprint z)
+  (pprint "1*1, 2*2, 3*3, ...")
+  (pprint ($fmap (lambda (vx vy) (* vx vy)) x y))
+  (pprint "1 + 1 + 0, 2 + 2 + 1, 3 + 3 + 2, ...")
+  (pprint ($fmap (lambda (xx yy zz) (+ xx yy zz)) x y z))
+  (pprint x))
 
-;; split
+;; split - split tenor with size along dimension
 (let ((x (zeros 3 4 5)))
-  (print ($split x 2 0))
-  (print ($split x 2 1))
-  (print ($split x 2 2)))
+  (pprint "by 2 along 0 - 2x4x5, 1x4x5")
+  (pprint ($split x 2 0))
+  (pprint "by 2 along 1 - 3x2x5, 3x2x5")
+  (pprint ($split x 2 1))
+  (pprint "by 2 along 2 - 3x4x2, 3x4x2, 3x4x1")
+  (pprint ($split x 2 2)))
 
-;; chunk
+;; chunk - n parition of approaximately same size along dimension
 (let ((x (ones 3 4 5)))
-  (print ($chunk x 2 0))
-  (print ($chunk x 2 1))
-  (print ($chunk x 2 2)))
+  (pprint "2 partitions along 0 - 2x4x5, 1x4x5")
+  (pprint ($chunk x 2 0))
+  (pprint "2 partitions along 1 - 3x2x5, 3x2x5")
+  (pprint ($chunk x 2 1))
+  (pprint "2 paritions along 2 - 3x4x3, 3x4x2")
+  (pprint ($chunk x 2 2)))
 
-;; concat
+;; concat tensors
 (print ($cat 0 (ones 3) (zeros 3)))
 (print ($cat 1 (ones 3) (zeros 3)))
 (print ($cat 0 (ones 3 3) (zeros 1 3)))
 (print ($cat 1 (ones 3 4) (zeros 3 2)))
 
-;; diag
+;; diagonal matrix
 (print ($diag (tensor '(1 2 3 4))))
 (print ($diag (ones 3 3)))
 
-;; eye
+;; identity matrix
 (print (eye 2))
 (print (eye 3 4))
 (print ($eye (tensor.byte) 3))
