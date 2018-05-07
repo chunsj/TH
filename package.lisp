@@ -278,10 +278,10 @@
            #:$potri!
            #:$gels
            #:$gels!
-           #:$symeig
-           #:$symeig!
-           #:$eig
-           #:$eig!
+           #:$syev
+           #:$syev!
+           #:$ev
+           #:$ev!
            #:$svd
            #:$svd!
            #:$inverse

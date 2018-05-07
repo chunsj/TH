@@ -587,12 +587,21 @@
     (tensor-index-select result tensor dimension indices)
     result))
 
+(defmethod $index ((tensor tensor) dimension (indices tensor.int))
+  (let ((result ($empty tensor)))
+    (tensor-index-select result tensor dimension (tensor.long indices))
+    result))
+
 (defmethod (setf $index) ((value number) (tensor tensor) dimension (indices list))
   (tensor-index-fill tensor value dimension (tensor.long indices))
   value)
 
 (defmethod (setf $index) ((value number) (tensor tensor) dimension (indices tensor.long))
   (tensor-index-fill tensor value dimension indices)
+  value)
+
+(defmethod (setf $index) ((value number) (tensor tensor) dimension (indices tensor.int))
+  (tensor-index-fill tensor value dimension (tensor.long indices))
   value)
 
 (defmethod (setf $index) ((value tensor) (tensor tensor) dimension (indices list))
@@ -603,6 +612,10 @@
   (tensor-index-copy tensor value dimension indices)
   value)
 
+(defmethod (setf $index) ((value tensor) (tensor tensor) dimension (indices tensor.int))
+  (tensor-index-copy tensor value dimension (tensor.long indices))
+  value)
+
 (defmethod (setf $index) ((value list) (tensor tensor) dimension (indices list))
   (tensor-index-copy tensor (make-tensor-args (type-of tensor) (list value))
                      dimension (storage.long indices))
@@ -611,6 +624,11 @@
 (defmethod (setf $index) ((value list) (tensor tensor) dimension (indices tensor.long))
   (tensor-index-copy tensor (make-tensor-args (type-of tensor) (list value))
                      dimension indices)
+  value)
+
+(defmethod (setf $index) ((value list) (tensor tensor) dimension (indices tensor.int))
+  (tensor-index-copy tensor (make-tensor-args (type-of tensor) (list value))
+                     dimension (tensor.long indices))
   value)
 
 (defmethod $gather ((tensor tensor) dimension (indices list))
@@ -1751,54 +1769,127 @@
            (tensor-conv-3d-mv r 0 1 x k 1 1 1 type xc)))
     r))
 
-(defmethod $gesv ((b tensor) (a tensor)))
+(defmethod $gesv ((b tensor) (a tensor))
+  (let ((x ($empty a))
+        (lu ($empty a)))
+    (tensor-gesv x lu b a)
+    (list x lu)))
 
-(defmethod $gesv! ((x tensor) (lu tensor) (b tensor) (a tensor)))
+(defmethod $gesv! ((x tensor) (lu tensor) (b tensor) (a tensor))
+  (tensor-gesv x lu b a)
+  (list x lu))
 
-(defmethod $trtrs ((b tensor) (a tensor) &optional up trans diag))
+(defmethod $trtrs ((b tensor) (a tensor) &optional (up t) trans unit-diag)
+  (let ((x ($empty a))
+        (tm ($empty a)))
+    (tensor-trtrs x tm b a up trans unit-diag)
+    x))
 
-(defmethod $trtrs! ((x tensor) (b tensor) (a tensor) &optional up trans diag))
+(defmethod $trtrs! ((x tensor) (b tensor) (a tensor) &optional (up t) trans unit-diag)
+  (let ((tm ($empty a)))
+    (tensor-trtrs x tm b a up trans unit-diag)
+    x))
 
-(defmethod $potrf ((a tensor) &optional up))
+(defmethod $potrf ((a tensor) &optional (up t))
+  (let ((ch ($empty a)))
+    (tensor-potrf ch a up)
+    ch))
 
-(defmethod $potrf! ((ch tensor) (a tensor) &optional up))
+(defmethod $potrf! ((ch tensor) (a tensor) &optional (up t))
+  (tensor-potrf ch a up)
+  ch)
 
-(defmethod $pstrf ((a tensor) &optional up))
+(defmethod $pstrf ((a tensor) &optional (up t))
+  (let ((ch ($empty a))
+        (piv (tensor.int)))
+    (tensor-pstrf ch piv a up -1D0)
+    ($fmap! (lambda (v) (1- v)) piv)
+    (list ch piv)))
 
-(defmethod $pstrf! ((ch tensor) (piv tensor.int) (a tensor) &optional up))
+(defmethod $pstrf! ((ch tensor) (piv tensor.int) (a tensor) &optional (up t))
+  (tensor-pstrf ch piv a up -1D0)
+  ($fmap! (lambda (v) (1- v)) piv)
+  (list ch piv))
 
-(defmethod $potrs ((b tensor) (ch tensor) &optional up))
+(defmethod $potrs ((b tensor) (ch tensor) &optional (up t))
+  (let ((x ($empty ch)))
+    (tensor-potrs x b ch up)
+    x))
 
-(defmethod $potrs! ((x tensor) (b tensor) (ch tensor) &optional up))
+(defmethod $potrs! ((x tensor) (b tensor) (ch tensor) &optional (up t))
+  (tensor-potrs x b ch up)
+  x)
 
-(defmethod $potri ((ch tensor) &optional up))
+(defmethod $potri ((ch tensor) &optional (up t))
+  (let ((inv ($empty ch)))
+    (tensor-potri inv ch up)
+    inv))
 
-(defmethod $potri! ((inv tensor) (ch tensor) &optional up))
+(defmethod $potri! ((inv tensor) (ch tensor) &optional (up t))
+  (tensor-potri inv ch up)
+  inv)
 
-(defmethod $gels ((b tensor) (a tensor)))
+(defmethod $gels ((b tensor) (a tensor))
+  (let ((x ($empty a))
+        (f ($empty a)))
+    (tensor-gels x f b a)
+    x))
 
-(defmethod $gels! ((x tensor) (b tensor) (a tensor)))
+(defmethod $gels! ((x tensor) (b tensor) (a tensor))
+  (let ((f ($empty a)))
+    (tensor-gels x f b a)
+    x))
 
-(defmethod $symeig ((a tensor) &optional all up))
+(defmethod $syev ((a tensor) &optional all (up t))
+  (let ((e ($empty a))
+        (v ($empty a)))
+    (tensor-syev e v a all up)
+    (list e v)))
 
-(defmethod $symeig! ((e tensor) (v tensor) (a tensor) &optional all up))
+(defmethod $syev! ((e tensor) (v tensor) (a tensor) &optional all (up t))
+  (tensor-syev e v a all up)
+  (list e v))
 
-(defmethod $eig ((a tensor) &optional all))
+(defmethod $ev ((a tensor) &optional all)
+  (let ((e ($empty a))
+        (v ($empty a)))
+    (tensor-geev e v a all)
+    (list e v)))
 
-(defmethod $eig! ((e tensor) (v tensor) (a tensor) &optional all))
+(defmethod $ev! ((e tensor) (v tensor) (a tensor) &optional all)
+  (tensor-geev e v a all)
+  (list e v))
 
-(defmethod $svd ((a tensor) &optional all))
+(defmethod $svd ((a tensor) &optional all)
+  (let ((u ($empty a))
+        (s ($empty a))
+        (v ($empty a)))
+    (tensor-gesvd u s v a all)
+    (list u s v)))
 
-(defmethod $svd! ((u tensor) (s tensor) (v tensor) (a tensor) &optional all))
+(defmethod $svd! ((u tensor) (s tensor) (v tensor) (a tensor) &optional all)
+  (tensor-gesvd u s v a all)
+  (list u s v))
 
-(defmethod $inverse ((a tensor)))
+(defmethod $inverse ((a tensor))
+  (let ((r ($empty a)))
+    (tensor-getri r a)
+    r))
 
-(defmethod $inverse! ((r tensor) (a tensor)))
+(defmethod $inverse! ((r tensor) (a tensor))
+  (tensor-getri r a)
+  r)
 
-(defmethod $qr ((x tensor)))
+(defmethod $qr ((x tensor))
+  (let ((q ($empty x))
+        (r ($empty x)))
+    (tensor-qr q r x)
+    (list q r)))
 
-(defmethod $qr! ((q tensor) (r tensor) (x tensor)))
+(defmethod $qr! ((q tensor) (r tensor) (x tensor))
+  (tensor-qr q r x)
+  (list q r))
 
-(defmethod $any ((a tensor)))
+(defmethod $any ((a tensor)) (tensor-logical-any (tensor.byte a)))
 
-(defmethod $all ((a tensor)))
+(defmethod $all ((a tensor)) (tensor-logical-all (tensor.byte a)))

@@ -458,9 +458,9 @@
 (defgeneric $gesv (b a) (:documentation "Returns (x, lu) for ax = b."))
 (defgeneric $gesv! (x lu b a) (:documentation "Returns (x, lu) for ax = b."))
 
-(defgeneric $trtrs (b a &optional up trans diag)
+(defgeneric $trtrs (b a &optional up trans unit-diag)
   (:documentation "Returns x for ax = b, a is triangular."))
-(defgeneric $trtrs! (x b a &optional up trans diag)
+(defgeneric $trtrs! (x b a &optional up trans unit-diag)
   (:documentation "Returns x for ax = b, a is triangular."))
 
 (defgeneric $potrf (a &optional up)
@@ -482,14 +482,14 @@
 (defgeneric $gels (b a) (:documentation "Returns solution of least square of a."))
 (defgeneric $gels! (x b a) (:documentation "Returns solution of least square of a."))
 
-(defgeneric $symeig (a &optional all up)
+(defgeneric $syev (a &optional all up)
   (:documentation "Returns (eigenvalues, eigenvectors) of symmetric matrix a."))
-(defgeneric $symeig! (e v a &optional all up)
+(defgeneric $syev! (e v a &optional all up)
   (:documentation "Returns (eigenvalues, eigenvectors) of symmetric matrix a."))
 
-(defgeneric $eig (a &optional all)
+(defgeneric $ev (a &optional all)
   (:documentation "Returns (eigenvalues, eigenvectors) of matrix a."))
-(defgeneric $eig! (e v a &optional all)
+(defgeneric $ev! (e v a &optional all)
   (:documentation "Returns (eigenvalues, eigenvectors) of matrix a."))
 
 (defgeneric $svd (a &optional all) (:documentation "Returns (u, s, v) of a."))
