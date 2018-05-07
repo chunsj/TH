@@ -899,61 +899,56 @@
   (print ($cumsum m 1)))
 
 ;; max and min
-(let ((x ($randn 4 4))
-      (indices ($longx)))
+(let ((x (rndn 4 4))
+      (vals (tensor))
+      (indices (tensor.long)))
   (print x)
   (print ($max x))
   (print ($min x))
-  (print ($max x :dimension 0 :indices indices))
-  (print indices)
-  (print ($max x :dimension 1 :indices indices))
-  (print indices)
-  (print ($min x :dimension 0 :indices indices))
-  (print indices)
-  (print ($min x :dimension 1 :indices indices))
-  (print indices))
+  (print ($max! vals indices x))
+  (print ($max! vals indices x 1)))
 
 ;; mean
-(let ((x ($randn 3 4)))
+(let ((x (rndn 3 4)))
   (print x)
   (print ($mean x))
-  (print ($mean x :dimension 0))
-  (print ($mean x :dimension 1)))
+  (print ($mean x 0))
+  (print ($mean x 1)))
 
 ;; cmax
-(let ((a ($tensor '(1 2 3)))
-      (b ($tensor '(3 2 1))))
+(let ((a (tensor '(1 2 3)))
+      (b (tensor '(3 2 1))))
   (print ($cmax a b))
   (print ($cmax a b 2 3)))
 
 ;; cmin
-(let ((a ($tensor '(1 2 3)))
-      (b ($tensor '(3 2 1))))
+(let ((a (tensor '(1 2 3)))
+      (b (tensor '(3 2 1))))
   (print ($cmin a b))
   (print ($cmin a b 2 3)))
 
 ;; median
-(let ((x ($randn 3 4))
-      (indices ($longx)))
+(let ((x (rndn 3 4))
+      (vals (tensor))
+      (indices (tensor.long)))
   (print x)
   (print ($median x))
-  (print ($median x :dimension 0 :indices indices))
-  (print indices)
-  (print ($median x :dimension 1 :indices indices))
-  (print indices))
+  (print ($median! vals indices x))
+  (print ($median! vals indices x 1)))
 
 ;; product
-(let ((a ($tensor '(((1 2) (3 4)) ((5 6) (7 8))))))
+(let ((a (tensor '(((1 2) (3 4)) ((5 6) (7 8))))))
   (print a)
-  (print ($prd a :dimension 0))
-  (print ($prd a :dimension 1)))
+  (print ($prd a))
+  (print ($prd a 0))
+  (print ($prd a 1)))
 
 ;; sort
-(let ((x ($randn 3 3))
-      (indices ($longx)))
+(let ((x (rndn 3 3))
+      (vals (tensor))
+      (indices (tensor.long)))
   (print x)
-  (print ($sort x :indices indices))
-  (print indices))
+  (print ($sort! vals indices x)))
 
 ;; conv2
 (let ((x ($rand 100 100))
