@@ -255,4 +255,38 @@
            #:$renorm
            #:$renorm!
            #:$dist
-           #:$trace))
+           #:$trace
+           #:$conv2
+           #:$conv2!
+           #:$xcorr2
+           #:$xcorr2!
+           #:$conv3
+           #:$conv3!
+           #:$xcorr3
+           #:$xcorr3!
+           #:$gesv
+           #:$gesv!
+           #:$trtrs
+           #:$trtrs!
+           #:$potrf
+           #:$potrf!
+           #:$pstrf
+           #:$pstrf!
+           #:$potrs
+           #:$potrs!
+           #:$potri
+           #:$potri!
+           #:$gels
+           #:$gels!
+           #:$symeig
+           #:$symeig!
+           #:$eig
+           #:$eig!
+           #:$svd
+           #:$svd!
+           #:$inverse
+           #:$inverse!
+           #:$qr
+           #:$qr!
+           #:$any
+           #:$all))

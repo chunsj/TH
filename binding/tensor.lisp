@@ -1658,3 +1658,147 @@
 (defmethod $dist (x y &optional (p 2)) (tensor-dist x y p))
 
 (defmethod $trace ((x tensor)) (tensor-trace x))
+
+(defmethod $conv2 ((x tensor) (k tensor) &optional (type :valid))
+  (let ((result ($empty x))
+        (type (if (eq type :valid) "V" "F"))
+        (xc "C"))
+    (cond ((and (eq 2 ($ndim x)) (eq 2 ($ndim k)))
+           (tensor-conv-2d-mul result 0 1 x k 1 1 type xc))
+          ((and (eq 3 ($ndim x)) (eq 3 ($ndim k)))
+           (tensor-conv-2d-cmul result 0 1 x k 1 1 type xc))
+          ((and (eq 3 ($ndim x)) (eq 4 ($ndim k)))
+           (tensor-conv-2d-mv result 0 1 x k 1 1 type xc)))
+    result))
+
+(defmethod $conv2! ((r tensor) (x tensor) (k tensor) &optional (type :valid))
+  (let ((type (if (eq type :valid) "V" "F"))
+        (xc "C"))
+    (cond ((and (eq 2 ($ndim x)) (eq 2 ($ndim k)))
+           (tensor-conv-2d-mul r 0 1 x k 1 1 type xc))
+          ((and (eq 3 ($ndim x)) (eq 3 ($ndim k)))
+           (tensor-conv-2d-cmul r 0 1 x k 1 1 type xc))
+          ((and (eq 3 ($ndim x)) (eq 4 ($ndim k)))
+           (tensor-conv-2d-mv r 0 1 x k 1 1 type xc)))
+    r))
+
+(defmethod $xcorr2 ((x tensor) (k tensor) &optional (type :valid))
+  (let ((result ($empty x))
+        (type (if (eq type :valid) "V" "F"))
+        (xc "X"))
+    (cond ((and (eq 2 ($ndim x)) (eq 2 ($ndim k)))
+           (tensor-conv-2d-mul result 0 1 x k 1 1 type xc))
+          ((and (eq 3 ($ndim x)) (eq 3 ($ndim k)))
+           (tensor-conv-2d-cmul result 0 1 x k 1 1 type xc))
+          ((and (eq 3 ($ndim x)) (eq 4 ($ndim k)))
+           (tensor-conv-2d-mv result 0 1 x k 1 1 type xc)))
+    result))
+
+(defmethod $xcorr2! ((r tensor) (x tensor) (k tensor) &optional (type :valid))
+  (let ((type (if (eq type :valid) "V" "F"))
+        (xc "X"))
+    (cond ((and (eq 2 ($ndim x)) (eq 2 ($ndim k)))
+           (tensor-conv-2d-mul r 0 1 x k 1 1 type xc))
+          ((and (eq 3 ($ndim x)) (eq 3 ($ndim k)))
+           (tensor-conv-2d-cmul r 0 1 x k 1 1 type xc))
+          ((and (eq 3 ($ndim x)) (eq 4 ($ndim k)))
+           (tensor-conv-2d-mv r 0 1 x k 1 1 type xc)))
+    r))
+
+(defmethod $conv3 ((x tensor) (k tensor) &optional (type :valid))
+  (let ((result ($empty x))
+        (type (if (eq type :valid) "V" "F"))
+        (xc "C"))
+    (cond ((and (eq 3 ($ndim x)) (eq 3 ($ndim k)))
+           (tensor-conv-3d-mul result 0 1 x k 1 1 1 type xc))
+          ((and (eq 4 ($ndim x)) (eq 4 ($ndim k)))
+           (tensor-conv-3d-cmul result 0 1 x k 1 1 1 type xc))
+          ((and (eq 4 ($ndim x)) (eq 5 ($ndim k)))
+           (tensor-conv-3d-mv result 0 1 x k 1 1 1 type xc)))
+    result))
+
+(defmethod $conv3! ((r tensor) (x tensor) (k tensor) &optional (type :valid))
+  (let ((type (if (eq type :valid) "V" "F"))
+        (xc "C"))
+    (cond ((and (eq 3 ($ndim x)) (eq 3 ($ndim k)))
+           (tensor-conv-3d-mul r 0 1 x k 1 1 1 type xc))
+          ((and (eq 4 ($ndim x)) (eq 4 ($ndim k)))
+           (tensor-conv-3d-cmul r 0 1 x k 1 1 1 type xc))
+          ((and (eq 4 ($ndim x)) (eq 5 ($ndim k)))
+           (tensor-conv-3d-mv r 0 1 x k 1 1 1 type xc)))
+    r))
+
+(defmethod $xcorr3 ((x tensor) (k tensor) &optional (type :valid))
+  (let ((result ($empty x))
+        (type (if (eq type :valid) "V" "F"))
+        (xc "X"))
+    (cond ((and (eq 3 ($ndim x)) (eq 3 ($ndim k)))
+           (tensor-conv-3d-mul result 0 1 x k 1 1 1 type xc))
+          ((and (eq 4 ($ndim x)) (eq 4 ($ndim k)))
+           (tensor-conv-3d-cmul result 0 1 x k 1 1 1 type xc))
+          ((and (eq 4 ($ndim x)) (eq 5 ($ndim k)))
+           (tensor-conv-3d-mv result 0 1 x k 1 1 1 type xc)))
+    result))
+
+(defmethod $xcorr3! ((r tensor) (x tensor) (k tensor) &optional (type :valid))
+  (let ((type (if (eq type :valid) "V" "F"))
+        (xc "X"))
+    (cond ((and (eq 3 ($ndim x)) (eq 3 ($ndim k)))
+           (tensor-conv-3d-mul r 0 1 x k 1 1 1 type xc))
+          ((and (eq 4 ($ndim x)) (eq 4 ($ndim k)))
+           (tensor-conv-3d-cmul r 0 1 x k 1 1 1 type xc))
+          ((and (eq 4 ($ndim x)) (eq 5 ($ndim k)))
+           (tensor-conv-3d-mv r 0 1 x k 1 1 1 type xc)))
+    r))
+
+(defmethod $gesv ((b tensor) (a tensor)))
+
+(defmethod $gesv! ((x tensor) (lu tensor) (b tensor) (a tensor)))
+
+(defmethod $trtrs ((b tensor) (a tensor) &optional up trans diag))
+
+(defmethod $trtrs! ((x tensor) (b tensor) (a tensor) &optional up trans diag))
+
+(defmethod $potrf ((a tensor) &optional up))
+
+(defmethod $potrf! ((ch tensor) (a tensor) &optional up))
+
+(defmethod $pstrf ((a tensor) &optional up))
+
+(defmethod $pstrf! ((ch tensor) (piv tensor.int) (a tensor) &optional up))
+
+(defmethod $potrs ((b tensor) (ch tensor) &optional up))
+
+(defmethod $potrs! ((x tensor) (b tensor) (ch tensor) &optional up))
+
+(defmethod $potri ((ch tensor) &optional up))
+
+(defmethod $potri! ((inv tensor) (ch tensor) &optional up))
+
+(defmethod $gels ((b tensor) (a tensor)))
+
+(defmethod $gels! ((x tensor) (b tensor) (a tensor)))
+
+(defmethod $symeig ((a tensor) &optional all up))
+
+(defmethod $symeig! ((e tensor) (v tensor) (a tensor) &optional all up))
+
+(defmethod $eig ((a tensor) &optional all))
+
+(defmethod $eig! ((e tensor) (v tensor) (a tensor) &optional all))
+
+(defmethod $svd ((a tensor) &optional all))
+
+(defmethod $svd! ((u tensor) (s tensor) (v tensor) (a tensor) &optional all))
+
+(defmethod $inverse ((a tensor)))
+
+(defmethod $inverse! ((r tensor) (a tensor)))
+
+(defmethod $qr ((x tensor)))
+
+(defmethod $qr! ((q tensor) (r tensor) (x tensor)))
+
+(defmethod $any ((a tensor)))
+
+(defmethod $all ((a tensor)))

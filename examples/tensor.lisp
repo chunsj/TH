@@ -951,20 +951,20 @@
   (print ($sort! vals indices x)))
 
 ;; conv2
-(let ((x ($rand 100 100))
-      (k ($rand 10 10)))
+(let ((x (rnd 100 100))
+      (k (rnd 10 10)))
   (print ($size ($conv2 x k)))
-  (print ($size ($conv2 x k :vf :f))))
-(let ((x ($rand 500 100 100))
-      (k ($rand 500 10 10)))
+  (print ($size ($conv2 x k :full))))
+(let ((x (rnd 500 100 100))
+      (k (rnd 500 10 10)))
   (print ($size ($conv2 x k)))
-  (print ($size ($conv2 x k :vf :f))))
+  (print ($size ($conv2 x k :full))))
 
 ;; conv3 - slow, in this laptop, it takes ~6secs
-(let ((x ($rand 100 100 100))
-      (k ($rand 10 10 10)))
+(let ((x (rnd 100 100 100))
+      (k (rnd 10 10 10)))
   (print ($size ($conv3 x k)))
-  (print ($size ($conv3 x k :vf :f))))
+  (print ($size ($conv3 x k :full))))
 
 ;; gesv
 (let ((a (-> ($tensor '((6.80 -2.11  5.66  5.97  8.23)

@@ -344,7 +344,7 @@
 (defgeneric $mv (m v) (:documentation "Returns m@v."))
 (defgeneric $mv! (x m v) (:documentation "Returns x = m@v."))
 
-(defgeneric $mm (x y) (:documentation "Retruns x@y."))
+(defgeneric $mm (x y) (:documentation "Returns x@y."))
 (defgeneric $mm! (z x y) (:documentation "Returns z = x@y."))
 
 (defgeneric $bmm (bx by) (:documentation "Returns batched (x@y)."))
@@ -434,3 +434,72 @@
   (:documentation "Returns p-norm of x - y."))
 
 (defgeneric $trace (x) (:documentation "Returns the trace of x."))
+
+(defgeneric $conv2 (x k &optional type)
+  (:documentation "Computes 2D convolution between x and k. By default valid."))
+(defgeneric $conv2! (r x k &optional type)
+  (:documentation "Computes r = 2D convolution between x and k. By default valid."))
+
+(defgeneric $xcore2 (x k &optional type)
+  (:documentation "Computes 2D cross-correlation between x and k. By default valid."))
+(defgeneric $xcorr2! (r x k &optional type)
+  (:documentation "Computes r = 2D cross-correlation between x and k. By default valid."))
+
+(defgeneric $conv3 (x k &optional type)
+  (:documentation "Computes 3D convolution between x and k. By default valid."))
+(defgeneric $conv3! (r x k &optional type)
+  (:documentation "Computes r = 3D convolution between x and k. By default valid."))
+
+(defgeneric $xcore3 (x k &optional type)
+  (:documentation "Computes 3D cross-correlation between x and k. By default valid."))
+(defgeneric $xcorr3! (r x k &optional type)
+  (:documentation "Computes r = 3D cross-correlation between x and k. By default valid."))
+
+(defgeneric $gesv (b a) (:documentation "Returns (x, lu) for ax = b."))
+(defgeneric $gesv! (x lu b a) (:documentation "Returns (x, lu) for ax = b."))
+
+(defgeneric $trtrs (b a &optional up trans diag)
+  (:documentation "Returns x for ax = b, a is triangular."))
+(defgeneric $trtrs! (x b a &optional up trans diag)
+  (:documentation "Returns x for ax = b, a is triangular."))
+
+(defgeneric $potrf (a &optional up)
+  (:documentation "Returns cholesky decomposition of a."))
+(defgeneric $potrf! (ch a &optional up)
+  (:documentation "Returns cholesky decomposition ch of a."))
+
+(defgeneric $pstrf (a &optional up)
+  (:documentation "Returns cholesky decomposition with pivot(ch, piv) of a."))
+(defgeneric $pstrf! (ch piv a &optional up)
+  (:documentation "Returns cholesky decomposition with pivot(ch, piv) of a."))
+
+(defgeneric $potrs (b ch &optional up) (:documentation "Returns x for ax = b, a = ch."))
+(defgeneric $potrs! (x b ch &optional up) (:documentation "Returns x for ax = b, a = ch."))
+
+(defgeneric $potri (ch &optional up) (:documentation "Returns inverse of ch."))
+(defgeneric $potri! (inv ch &optional up) (:documentation "Returns inverse of ch."))
+
+(defgeneric $gels (b a) (:documentation "Returns solution of least square of a."))
+(defgeneric $gels! (x b a) (:documentation "Returns solution of least square of a."))
+
+(defgeneric $symeig (a &optional all up)
+  (:documentation "Returns (eigenvalues, eigenvectors) of symmetric matrix a."))
+(defgeneric $symeig! (e v a &optional all up)
+  (:documentation "Returns (eigenvalues, eigenvectors) of symmetric matrix a."))
+
+(defgeneric $eig (a &optional all)
+  (:documentation "Returns (eigenvalues, eigenvectors) of matrix a."))
+(defgeneric $eig! (e v a &optional all)
+  (:documentation "Returns (eigenvalues, eigenvectors) of matrix a."))
+
+(defgeneric $svd (a &optional all) (:documentation "Returns (u, s, v) of a."))
+(defgeneric $svd! (u s v a &optional all) (:documentation "Returns (u, s, v) of a."))
+
+(defgeneric $inverse (a) (:documentation "Returns inverse of a."))
+(defgeneric $inverse! (r a) (:documentation "Returns r = inverse of a."))
+
+(defgeneric $qr (x) (:documentation "Returns qr decomposition (q, r) of a."))
+(defgeneric $qr! (q r x) (:documentation "Returns qr decomposition (q, r) of a."))
+
+(defgeneric $any (a) (:documentation "Logical sum of byte tensor."))
+(defgeneric $all (a) (:documentation "Logical product of byte tensor."))
