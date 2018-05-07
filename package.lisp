@@ -249,4 +249,10 @@
            #:$sd
            #:$sd!
            #:$var
-           #:$var!))
+           #:$var!
+           #:$norm
+           #:$norm!
+           #:$renorm
+           #:$renorm!
+           #:$dist
+           #:$trace))

@@ -1634,3 +1634,27 @@
 (defmethod $var! ((z tensor) (x tensor) &optional (dimension 0) biased)
   (tensor-var z x dimension nil biased)
   z)
+
+(defmethod $norm ((x tensor) &optional (p 2) (dimension -1))
+  (if (< dimension 0)
+      (tensor-norm-all x p)
+      (let ((result ($empty x)))
+        (tensor-norm result x p dimension nil)
+        result)))
+
+(defmethod $norm! ((z tensor) (x tensor) &optional (p 2) (dimension 0))
+  (tensor-norm z x p dimension nil)
+  z)
+
+(defmethod $renorm ((x tensor) p dimension max)
+  (let ((result ($empty x)))
+    (tensor-renorm result x p dimension max)
+    result))
+
+(defmethod $renorm! ((z tensor) (x tensor) p dimension max)
+  (tensor-renorm z x p dimension max)
+  z)
+
+(defmethod $dist (x y &optional (p 2)) (tensor-dist x y p))
+
+(defmethod $trace ((x tensor)) (tensor-trace x))

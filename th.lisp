@@ -419,3 +419,18 @@
   (:documentation "Returns variance along dimension."))
 (defgeneric $var! (z x &optional dimension biased)
   (:documentation "Returns z = var(x) along dimension."))
+
+(defgeneric $norm (x &optional p dimension)
+  (:documentation "Returns p-norm."))
+(defgeneric $norm! (z x &optional p dimension)
+  (:documentation "Returns z = p-norm of x."))
+
+(defgeneric $renorm (x p dimension max)
+  (:documentation "Renormalizes subtensors along dimension so that they do not exceed norm max."))
+(defgeneric $renorm! (z x p dimension max)
+  (:documentation "Renormalizes subtensors along dimension so that they do not exceed norm max."))
+
+(defgeneric $dist (x y &optional p)
+  (:documentation "Returns p-norm of x - y."))
+
+(defgeneric $trace (x) (:documentation "Returns the trace of x."))
