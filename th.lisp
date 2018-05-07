@@ -390,9 +390,9 @@
 (defgeneric $kth! (vals indices x k &optional dimension)
   (:documentation "Returns kth smallest (value, index)."))
 
-(defgeneric $topk (x k &optional dimension direction sortp)
+(defgeneric $topk (x k &optional dimension descendingp sortp)
   (:documentation "Returns top k smallest (values, indices) in unsorted manner."))
-(defgeneric $topk! (vals indices x k &optional dimension direction sortp)
+(defgeneric $topk! (vals indices x k &optional dimension descendingp sortp)
   (:documentation "Returns top k smallest (values, indices) in unsorted manner."))
 
 (defgeneric $sort (x &optional dimension descendingp)
@@ -410,12 +410,12 @@
 (defgeneric $sum! (z x &optional dimension)
   (:documentation "Returns z = sums along dimension of x."))
 
-(defgeneric $sd (x &optional dimension flag)
+(defgeneric $sd (x &optional dimension biased)
   (:documentation "Returns standard deviation along dimension."))
-(defgeneric $sd! (z x &optional dimension flag)
+(defgeneric $sd! (z x &optional dimension biased)
   (:documentation "Returns z = sd(x) along dimension."))
 
-(defgeneric $var (x &optional dimension flag)
+(defgeneric $var (x &optional dimension biased)
   (:documentation "Returns variance along dimension."))
-(defgeneric $var! (z x &optional dimension flag)
+(defgeneric $var! (z x &optional dimension biased)
   (:documentation "Returns z = var(x) along dimension."))

@@ -239,4 +239,14 @@
            #:$kth
            #:$kth!
            #:$topk
-           #:$topk!))
+           #:$topk!
+           #:$sort
+           #:$sort!
+           #:$prd
+           #:$prd!
+           #:$sum
+           #:$sum!
+           #:$sd
+           #:$sd!
+           #:$var
+           #:$var!))
