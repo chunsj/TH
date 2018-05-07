@@ -128,12 +128,14 @@
     result))
 
 (defun range (from to &optional (step 1) type)
+  "Returns a tensor from from to to."
   (let* ((type (or type *default-tensor-class*))
          (tensor (make-tensor type)))
     (tensor-range tensor from to step)
     tensor))
 
 (defun arange (from to &optional (step 1) type)
+  "Returns a tensor from from below to"
   (let* ((type (or type *default-tensor-class*))
          (tensor (make-tensor type)))
     (tensor-arange tensor from to step)
