@@ -515,14 +515,6 @@
 (defgeneric $freadfloat (file) (:documentation "Reads a scalar float."))
 (defgeneric $freaddouble (file) (:documentation "Reads a scalar double."))
 
-(defgeneric $freadbyte! (storage file) (:documentation "Reads a byte storage."))
-(defgeneric $freadchar! (storage file) (:documentation "Reads a char storage."))
-(defgeneric $freadshort! (storage file) (:documentation "Reads a short storage."))
-(defgeneric $freadint! (storage file) (:documentation "Reads a int storage."))
-(defgeneric $freadlong! (storage file) (:documentation "Reads a long storage."))
-(defgeneric $freadfloat! (storage file) (:documentation "Reads a float storage."))
-(defgeneric $freaddouble! (storage file) (:documentation "Reads a double storage."))
-
 (defgeneric $fwritebyte (byte file) (:documentation "Writes a scalar byte."))
 (defgeneric $fwritechar (char file) (:documentation "Writes a scalar char."))
 (defgeneric $fwriteshort (short file) (:documentation "Writes a scalar short."))
@@ -531,7 +523,8 @@
 (defgeneric $fwritefloat (float file) (:documentation "Writes a scalar float."))
 (defgeneric $fwritedouble (double file) (:documentation "Writes a scalar double."))
 
-(defgeneric $fwrite (storage file) (:documentation "Writes a storage object."))
+(defgeneric $fread (object file) (:documentation "Reads an object."))
+(defgeneric $fwrite (object file) (:documentation "Writes an object."))
 
 (defgeneric $fsync (file) (:documentation "Synchronizes file."))
 (defgeneric $fseek (file position) (:documentation "Repositions file to position."))

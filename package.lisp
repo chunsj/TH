@@ -305,13 +305,7 @@
            #:$freadlong
            #:$freadfloat
            #:$freaddouble
-           #:$freadbyte!
-           #:$freadchar!
-           #:$freadshort!
-           #:$freadint!
-           #:$freadlong!
-           #:$freadfloat!
-           #:$freaddouble!
+           #:$fread
            #:$fwritebyte
            #:$fwritechar
            #:$fwriteshort
