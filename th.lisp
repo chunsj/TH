@@ -1,8 +1,5 @@
 (in-package :th)
 
-(defgeneric $validp (generator)
-  (:documentation "Returns whether generator is valid one or not."))
-
 (defgeneric $seed (generator)
   (:documentation "Returns current seed of generator."))
 
@@ -414,6 +411,11 @@
   (:documentation "Returns variance along dimension."))
 (defgeneric $var! (z x &optional dimension biased)
   (:documentation "Returns z = var(x) along dimension."))
+
+(defgeneric $uniform! (x a b)
+  (:documentation "Returns tensor x filled with uniform random numbers."))
+(defgeneric $normal! (x m sd)
+  (:documentation "Returns tensor x filled with normal random numbers."))
 
 (defgeneric $norm (x &optional p dimension)
   (:documentation "Returns p-norm."))

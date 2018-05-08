@@ -1642,6 +1642,14 @@
   (tensor-var z x dimension nil biased)
   z)
 
+(defmethod $uniform! ((x tensor) a b)
+  (tensor-uniform x a b)
+  x)
+
+(defmethod $normal! ((x tensor) m sd)
+  (tensor-normal x m sd)
+  x)
+
 (defmethod $norm ((x tensor) &optional (p 2) (dimension -1))
   (if (< dimension 0)
       (tensor-norm-all x p)

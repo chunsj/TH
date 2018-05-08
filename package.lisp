@@ -247,6 +247,8 @@
            #:$sd!
            #:$var
            #:$var!
+           #:$uniform!
+           #:$normal!
            #:$norm
            #:$norm!
            #:$renorm
