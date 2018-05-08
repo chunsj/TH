@@ -284,4 +284,45 @@
            #:$inverse
            #:$inverse!
            #:$qr
-           #:$qr!))
+           #:$qr!
+           #:file.disk
+           #:file.pipe
+           #:file.memory
+           #:$fopenedp
+           #:$fquietp
+           #:$fpedanticp
+           #:$freadablep
+           #:$fwritablep
+           #:$fbinaryp
+           #:$fasciip
+           #:$fautospacingp
+           #:$fnoautospacingp
+           #:$ferrorp
+           #:$freadbyte
+           #:$freadchar
+           #:$freadshort
+           #:$freadint
+           #:$freadlong
+           #:$freadfloat
+           #:$freaddouble
+           #:$freadbyte!
+           #:$freadchar!
+           #:$freadshort!
+           #:$freadint!
+           #:$freadlong!
+           #:$freadfloat!
+           #:$freaddouble!
+           #:$fwritebyte
+           #:$fwritechar
+           #:$fwriteshort
+           #:$fwriteint
+           #:$fwritelong
+           #:$fwritefloat
+           #:$fwritedouble
+           #:$fwrite
+           #:$fsync
+           #:$feek
+           #:$fseekend
+           #:$ftell
+           #:$fclose
+           #:$fname))

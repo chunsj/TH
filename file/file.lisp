@@ -24,13 +24,27 @@
 (cffi:defcfun ("THFile_readFloatScalar" th-file-read-float-scalar) :float (self th-file-ptr))
 (cffi:defcfun ("THFile_readDoubleScalar" th-file-read-double-scalar) :double (self th-file-ptr))
 
-(cffi:defcfun ("THFile_writeByteScalar" th-file-write-byte-scalar) :unsigned-char (self th-file-ptr))
-(cffi:defcfun ("THFile_writeCharScalar" th-file-write-char-scalar) :char (self th-file-ptr))
-(cffi:defcfun ("THFile_writeShortScalar" th-file-write-short-scalar) :short (self th-file-ptr))
-(cffi:defcfun ("THFile_writeIntScalar" th-file-write-int-scalar) :int (self th-file-ptr))
-(cffi:defcfun ("THFile_writeLongScalar" th-file-write-long-scalar) :long (self th-file-ptr))
-(cffi:defcfun ("THFile_writeFloatScalar" th-file-write-float-scalar) :float (self th-file-ptr))
-(cffi:defcfun ("THFile_writeDoubleScalar" th-file-write-double-scalar) :double (self th-file-ptr))
+(cffi:defcfun ("THFile_writeByteScalar" th-file-write-byte-scalar) :long
+  (self th-file-ptr)
+  (scalar :unsigned-char))
+(cffi:defcfun ("THFile_writeCharScalar" th-file-write-char-scalar) :long
+  (self th-file-ptr)
+  (scalar :char))
+(cffi:defcfun ("THFile_writeShortScalar" th-file-write-short-scalar) :long
+  (self th-file-ptr)
+  (scalar :short))
+(cffi:defcfun ("THFile_writeIntScalar" th-file-write-int-scalar) :long
+  (self th-file-ptr)
+  (scalar :int))
+(cffi:defcfun ("THFile_writeLongScalar" th-file-write-long-scalar) :long
+  (self th-file-ptr)
+  (scalar :long))
+(cffi:defcfun ("THFile_writeFloatScalar" th-file-write-float-scalar) :long
+  (self th-file-ptr)
+  (scalar :float))
+(cffi:defcfun ("THFile_writeDoubleScalar" th-file-write-double-scalar) :long
+  (self th-file-ptr)
+  (scalar :double))
 
 (cffi:defcfun ("THFile_readByte" th-file-read-byte) :long
   (self th-file-ptr)
