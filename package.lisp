@@ -29,7 +29,6 @@
            #:rnd
            #:rndn
            #:rndperm
-           #:$validp
            #:$seed
            #:$random
            #:$uniform
@@ -78,8 +77,6 @@
            #:$narrow!
            #:$unfold
            #:$unfold!
-           #:$expand
-           #:$expand!
            #:$index
            #:$gather
            #:$scatter
@@ -287,6 +284,4 @@
            #:$inverse
            #:$inverse!
            #:$qr
-           #:$qr!
-           #:$any
-           #:$all))
+           #:$qr!))

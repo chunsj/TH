@@ -143,18 +143,6 @@
 (cffi:defcfun ("THFloatTensor_newView" th-float-tensor-new-view) th-float-tensor-ptr
   (tensor th-float-tensor-ptr)
   (size th-long-storage-ptr))
-(cffi:defcfun ("THFloatTensor_newExpand" th-float-tensor-new-expand) th-float-tensor-ptr
-  (tensor th-float-tensor-ptr)
-  (size th-long-storage-ptr))
-
-(cffi:defcfun ("THFloatTensor_expand" th-float-tensor-expand) :void
-  (result th-float-tensor-ptr)
-  (tensor th-float-tensor-ptr)
-  (size th-long-storage-ptr))
-(cffi:defcfun ("THFloatTensor_expandNd" th-float-tensor-expand-nd) :void
-  (result (:pointer th-float-tensor-ptr))
-  (ops (:pointer th-float-tensor-ptr))
-  (count :int))
 
 (cffi:defcfun ("THFloatTensor_resize" th-float-tensor-resize) :void
   (tensor th-float-tensor-ptr)

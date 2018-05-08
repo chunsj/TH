@@ -143,18 +143,6 @@
 (cffi:defcfun ("THByteTensor_newView" th-byte-tensor-new-view) th-byte-tensor-ptr
   (tensor th-byte-tensor-ptr)
   (size th-long-storage-ptr))
-(cffi:defcfun ("THByteTensor_newExpand" th-byte-tensor-new-expand) th-byte-tensor-ptr
-  (tensor th-byte-tensor-ptr)
-  (size th-long-storage-ptr))
-
-(cffi:defcfun ("THByteTensor_expand" th-byte-tensor-expand) :void
-  (result th-byte-tensor-ptr)
-  (tensor th-byte-tensor-ptr)
-  (size th-long-storage-ptr))
-(cffi:defcfun ("THByteTensor_expandNd" th-byte-tensor-expand-nd) :void
-  (result (:pointer th-byte-tensor-ptr))
-  (ops (:pointer th-byte-tensor-ptr))
-  (count :int))
 
 (cffi:defcfun ("THByteTensor_resize" th-byte-tensor-resize) :void
   (tensor th-byte-tensor-ptr)
@@ -1057,18 +1045,6 @@
   (result th-byte-tensor-ptr)
   (tensora th-byte-tensor-ptr)
   (tensorb th-byte-tensor-ptr))
-
-;; #if defined(TH_REAL_IS_BYTE)
-
-;; int THTensor_(logicalall)(THTensor *self);
-(cffi:defcfun ("THByteTensor_logicalall" th-byte-tensor-logical-all) :int
-  (tensor th-byte-tensor-ptr))
-;; int THTensor_(logicalany)(THTensor *self);
-(cffi:defcfun ("THByteTensor_logicalany" th-byte-tensor-logical-any) :int
-  (tensor th-byte-tensor-ptr))
-
-;; #endif /* TH_REAL_IS_BYTE */
-
 
 ;; void THTensor_(validXCorr2Dptr)(real *r_,
 ;;                                 real alpha,

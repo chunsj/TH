@@ -143,18 +143,6 @@
 (cffi:defcfun ("THCharTensor_newView" th-char-tensor-new-view) th-char-tensor-ptr
   (tensor th-char-tensor-ptr)
   (size th-long-storage-ptr))
-(cffi:defcfun ("THCharTensor_newExpand" th-char-tensor-new-expand) th-char-tensor-ptr
-  (tensor th-char-tensor-ptr)
-  (size th-long-storage-ptr))
-
-(cffi:defcfun ("THCharTensor_expand" th-char-tensor-expand) :void
-  (result th-char-tensor-ptr)
-  (tensor th-char-tensor-ptr)
-  (size th-long-storage-ptr))
-(cffi:defcfun ("THCharTensor_expandNd" th-char-tensor-expand-nd) :void
-  (result (:pointer th-char-tensor-ptr))
-  (ops (:pointer th-char-tensor-ptr))
-  (count :int))
 
 (cffi:defcfun ("THCharTensor_resize" th-char-tensor-resize) :void
   (tensor th-char-tensor-ptr)

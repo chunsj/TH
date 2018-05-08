@@ -375,22 +375,6 @@
 ;; nonzero - returns locations of non zero elements
 (print ($nonzero (tensor '((1 2 0 3 4) (0 0 1 0 0)))))
 
-;; expand - shares storage, just new view
-(let ((x (tensor 10 1))
-      (y (tensor 10 2)))
-  (loop :for i :from 0 :below ($count x)
-        :do (setf ($ ($storage x) i) (1+ i)))
-  (print "original 10x1 matrix x")
-  (print x)
-  (print "new expanded matrix as 10x4 using x")
-  (print ($expand x 10 4))
-  (print "new expanded matrix as 10x4 filled with one.")
-  (print ($fill! ($expand x 10 4) 1))
-  (print "modified because of $fill! 1, storage is shared.")
-  (print x)
-  (print "as the shape/size of other tensor, 10x2")
-  (print ($expand x y)))
-
 ;; repeat - repeat content as given times
 (print ($repeat (tensor '(1 2)) 3 2))
 

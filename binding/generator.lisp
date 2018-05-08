@@ -8,9 +8,6 @@
     (sb-ext:finalize gen (lambda () (th-generator-free h)))
     gen))
 
-(defmethod $validp (generator)
-  (eq 1 (th-generator-is-valid ($handle generator))))
-
 (defmethod $seed ((generator generator)) (th-random-seed ($handle generator)))
 (defmethod (setf $seed) (seed (generator generator))
   (th-random-manual-seed ($handle generator) (coerce seed 'integer))

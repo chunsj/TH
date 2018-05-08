@@ -463,17 +463,6 @@
   (cond (($tensorp ($0 sizes)) (tensor-new-view tensor ($size ($0 sizes))))
         (t (tensor-new-view tensor sizes))))
 
-(defmethod $expand ((tensor tensor) &rest sizes)
-  (let ((result ($empty tensor)))
-    (cond (($tensorp ($0 sizes)) (tensor-expand result tensor ($size ($0 sizes))))
-          (t (tensor-expand result tensor sizes)))
-    result))
-
-(defmethod $expand! ((tensor tensor) &rest sizes)
-  (cond (($tensorp ($0 sizes)) (tensor-expand tensor tensor ($size ($0 sizes))))
-        (t (tensor-expand tensor tensor sizes)))
-  tensor)
-
 (defmethod $set ((tensor tensor) (source tensor) &optional offset size stride)
   (declare (ignore offset size stride))
   (tensor-set tensor source)
@@ -1889,7 +1878,3 @@
 (defmethod $qr! ((q tensor) (r tensor) (x tensor))
   (tensor-qr q r x)
   (list q r))
-
-(defmethod $any ((a tensor)) (tensor-logical-any (tensor.byte a)))
-
-(defmethod $all ((a tensor)) (tensor-logical-all (tensor.byte a)))

@@ -11,11 +11,6 @@
 (cffi:defcfun ("THGenerator_free" th-generator-free) :void
   (generator th-generator-ptr))
 
-;; /* Checks if given generator is valid */
-;; int THGenerator_isValid(THGenerator *_generator);
-(cffi:defcfun ("THGenerator_isValid" th-generator-is-valid) :int
-  (generator th-generator-ptr))
-
 ;; /* Initializes the random number generator from /dev/urandom (or on Windows
 ;; platforms with the current time (granularity: seconds)) and returns the seed. */
 ;; unsigned long THRandom_seed(THGenerator *_generator);

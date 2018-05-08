@@ -27,6 +27,7 @@
                                             (:file "long")
                                             (:file "float")
                                             (:file "double")))
+               (:module file :components ((:file "file")))
                (:module object :components ((:file "object")
                                             (:file "generator")
                                             (:file "storage")

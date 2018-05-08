@@ -115,11 +115,6 @@
 (defgeneric $unfold! (tensor dimension size step)
   (:documentation "Returns a tensor with all slices of the given size by step."))
 
-(defgeneric $expand (tensor &rest sizes)
-  (:documentation "Returns a new tensor whose singleton dimension can be expanded."))
-(defgeneric $expand! (tensor &rest sizes)
-  (:documentation "Returns a tensor whose singleton dimension can be expanded."))
-
 (defgeneric $index (tensor dimension index)
   (:documentation "Returns a new tensor with contents selected by index along dimension."))
 
@@ -501,5 +496,39 @@
 (defgeneric $qr (x) (:documentation "Returns qr decomposition (q, r) of a."))
 (defgeneric $qr! (q r x) (:documentation "Returns qr decomposition (q, r) of a."))
 
-(defgeneric $any (a) (:documentation "Logical sum of byte tensor."))
-(defgeneric $all (a) (:documentation "Logical product of byte tensor."))
+(defgeneric $openedp (file) (:documentation "Check file is opened."))
+(defgeneric $quietp (file) (:documentation "Check file is in quiet mode."))
+(defgeneric $pendanticp (file) (:documentation "Check file is in pedantic mode."))
+(defgeneric $readablep (file) (:documentation "Check file is readable."))
+(defgeneric $writablep (file) (:documentation "Check file is writable."))
+(defgeneric $binaryp (file) (:documentation "Check file is binary mode."))
+(defgeneric $asciip (file) (:documentation "Check file is ascii mode."))
+(defgeneric $autospacingp (file) (:documentation "Check file is in auto spacing mode."))
+(defgeneric $noautospacingp (file) (:documentation "Check file is not in auto spacing mode."))
+(defgeneric $errorp (file) (:documentation "Check file has errors."))
+
+(defgeneric $readbyte (file) (:documentation "Reads a scalar byte."))
+(defgeneric $readchar (file) (:documentation "Reads a scalar char."))
+(defgeneric $readshort (file) (:documentation "Reads a scalar short."))
+(defgeneric $readint (file) (:documentation "Reads a scalar int."))
+(defgeneric $readlong (file) (:documentation "Reads a scalar long."))
+(defgeneric $readfloat (file) (:documentation "Reads a scalar float."))
+(defgeneric $readdouble (file) (:documentation "Reads a scalar double."))
+
+(defgeneric $readbyte! (storage file) (:documentation "Reads a byte storage."))
+(defgeneric $readchar! (storage file) (:documentation "Reads a char storage."))
+(defgeneric $readshort! (storage file) (:documentation "Reads a short storage."))
+(defgeneric $readint! (storage file) (:documentation "Reads a int storage."))
+(defgeneric $readlong! (storage file) (:documentation "Reads a long storage."))
+(defgeneric $readfloat! (storage file) (:documentation "Reads a float storage."))
+(defgeneric $readdouble! (storage file) (:documentation "Reads a double storage."))
+
+(defgeneric $writebyte (byte file) (:documentation "Writes a scalar byte."))
+(defgeneric $writechar (char file) (:documentation "Writes a scalar char."))
+(defgeneric $writeshort (short file) (:documentation "Writes a scalar short."))
+(defgeneric $writeint (int file) (:documentation "Writes a scalar int."))
+(defgeneric $writelong (long file) (:documentation "Writes a scalar long."))
+(defgeneric $writefloat (float file) (:documentation "Writes a scalar float."))
+(defgeneric $writedouble (double file) (:documentation "Writes a scalar double."))
+
+(defgeneric $write (storage file) (:documentation "Writes a storage object."))
