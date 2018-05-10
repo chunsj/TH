@@ -53,16 +53,16 @@
 (defgeneric $acoerce (object value)
   (:documentation "Returns coerced value for accumulation."))
 
-(defgeneric $contiguous (tensor)
+(defgeneric $contiguous! (tensor)
   (:documentation "Returns a new contiguously allocated tensor if it's not."))
 (defgeneric $contiguousp (tensor)
   (:documentation "Returns whether tensor is contiguously allocated."))
 
-(defgeneric $resize (object size &optional stride)
+(defgeneric $resize! (object size &optional stride)
   (:documentation "Resizes object as size and stride."))
-(defgeneric $copy (object source)
+(defgeneric $copy! (object source)
   (:documentation "Copies content from source."))
-(defgeneric $swap (object1 object2)
+(defgeneric $swap! (object1 object2)
   (:documentation "Swaps the contents of objects."))
 
 (defgeneric $fill (object value)
@@ -83,7 +83,7 @@
 (defgeneric $sizep (tensor other)
   (:documentation "Checks whether tensor has the same size of other or other dimension."))
 
-(defgeneric $set (tensor source &optional offset size stride)
+(defgeneric $set! (tensor source &optional offset size stride)
   (:documentation "Sets the storage contents of source to tensor."))
 (defgeneric $setp (tensor source)
   (:documentation "Checks whether tensor is set with source."))
@@ -117,7 +117,7 @@
 
 (defgeneric $gather (tensor dimension indices)
   (:documentation "Returns a new tensor by gathering elements from indices along dimension."))
-(defgeneric $scatter (tensor dimension indices value)
+(defgeneric $scatter! (tensor dimension indices value)
   (:documentation "Writes value specified by indices along dimension."))
 
 (defgeneric $masked (tensor mask)

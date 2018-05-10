@@ -1,6 +1,6 @@
 (in-package :th)
 
-(defmethod $copy ((generator generator) from)
+(defmethod $copy! ((generator generator) from)
   (let ((gen (make-instance 'generator))
         (h (th-generator-copy ($handle generator)
                               ($handle from))))

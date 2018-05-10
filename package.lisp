@@ -52,11 +52,11 @@
            #:$stride
            #:$coerce
            #:$acoerce
-           #:$contiguous
+           #:$contiguous!
            #:$contiguousp
-           #:$resize
-           #:$copy
-           #:$swap
+           #:$resize!
+           #:$copy!
+           #:$swap!
            #:$fill
            #:$fill!
            #:$zero
@@ -65,7 +65,7 @@
            #:$one!
            #:$clone
            #:$sizep
-           #:$set
+           #:$set!
            #:$setp
            #:$transpose
            #:$transpose!
@@ -79,7 +79,7 @@
            #:$unfold!
            #:$index
            #:$gather
-           #:$scatter
+           #:$scatter!
            #:$masked
            #:$squeeze
            #:$squeeze!

@@ -42,7 +42,7 @@
   (print ($clone x)))
 
 ;; make a tensor with contiguously allocated memory if it is not allocated contiguously.
-(print ($contiguous (tensor.float '((1 2 3) (4 5 6)))))
+(print ($contiguous! (tensor.float '((1 2 3) (4 5 6)))))
 
 ;; tensor types can be changed to each other
 (print (tensor.byte (tensor.double '((1.234 2.345) (3.456 4.567)))))
@@ -110,7 +110,7 @@
 (let ((x (tensor))
       (y (tensor '((1 2) (3 4)))))
   (print "((1 2) (3 4))")
-  (print ($set x y))
+  (print ($set! x y))
   (print "T")
   (print ($setp x y)))
 
@@ -118,7 +118,7 @@
 (let ((x (tensor '(1 2 3 4)))
       (y (tensor '((5 4) (3 2)))))
   ;; now the elements of x replaced with those of y
-  ($copy x y)
+  ($copy! x y)
   (print "(5 4 3 2)")
   (print x)
   (print "((5 4) (3 2))")
@@ -126,7 +126,7 @@
   ;; new int tensor from x, then copies elements from list
   ;; new int tensor will have same size of x
   (print "(123 234 345 456)")
-  (print ($copy (tensor.int x) '(123 234 345 456)))
+  (print ($copy! (tensor.int x) '(123 234 345 456)))
   (print "(5 4 3 2)")
   ;; storage is not shared
   (print x))
@@ -152,12 +152,12 @@
 (let ((x (tensor '((1 2 3) (3 4 5))))
       (y (tensor 3 3)))
   (print "((1 2 3 3) (4 5 ? ?) ... (? ? ? ?)))")
-  (print ($resize x '(4 4)))
+  (print ($resize! x '(4 4)))
   (print "((1 2) (3 3))")
-  (print ($resize x '(2 2)))
+  (print ($resize! x '(2 2)))
   ;; resize as y
   (print "((1 2 3) (3 4 5) (? ? ?))")
-  (print ($resize x y)))
+  (print ($resize! x y)))
 
 ;; select - choose sub tensor at index along dimension
 (let ((x (tensor '((1 2 3) (4 5 6) (7 8 9)))))
@@ -325,10 +325,10 @@
   ($zero! x)
   (print "5x5 zeros")
   (print x)
-  ($scatter x 0 '((0 1 2 3 4) (1 2 3 4 0)) y)
+  ($scatter! x 0 '((0 1 2 3 4) (1 2 3 4 0)) y)
   (print "as in gather, but set from y")
   (print x)
-  ($scatter x 1 '((0 1) (1 2) (2 3) (3 4) (4 0)) 9)
+  ($scatter! x 1 '((0 1) (1 2) (2 3) (3 4) (4 0)) 9)
   (print "as in gather, but fill a value")
   (print x))
 
@@ -342,7 +342,7 @@
   (print x)
   (print "only at value 1(true)")
   (print ($masked x mask))
-  ($set z ($masked x mask))
+  ($set! z ($masked x mask))
   (print "same as above.")
   (print z)
   ($fill! z -99)
@@ -817,20 +817,20 @@
 
 ;; add-mm
 (let ((c (ones 4 4))
-      (a (-> (range 1 12) ($resize '(4 3))))
-      (b (-> (range 1 12) ($resize '(3 4)))))
+      (a (-> (range 1 12) ($resize! '(4 3))))
+      (b (-> (range 1 12) ($resize! '(3 4)))))
   (print ($addmm c a b)))
 
 ;; add-bmm
 (let ((c (ones 4 4))
-      (ba (-> (range 1 24) ($resize '(2 4 3))))
-      (bb (-> (range 1 24) ($resize '(2 3 4)))))
+      (ba (-> (range 1 24) ($resize! '(2 4 3))))
+      (bb (-> (range 1 24) ($resize! '(2 3 4)))))
   (print ($addbmm c ba bb)))
 
 ;; badd-bmm
 (let ((bc (ones 2 4 4))
-      (ba (-> (range 1 24) ($resize '(2 4 3))))
-      (bb (-> (range 1 24) ($resize '(2 3 4)))))
+      (ba (-> (range 1 24) ($resize! '(2 4 3))))
+      (bb (-> (range 1 24) ($resize! '(2 3 4)))))
   (print ($baddbmm bc ba bb)))
 
 ;; operators

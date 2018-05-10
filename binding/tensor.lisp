@@ -373,10 +373,10 @@
 (defmethod $type ((tensor tensor.float)) :float)
 (defmethod $type ((tensor tensor.double)) :double)
 
-(defmethod $copy ((tensor tensor) (source tensor))
+(defmethod $copy! ((tensor tensor) (source tensor))
   (tensor-copy tensor source)
   tensor)
-(defmethod $copy ((tensor tensor) (source list))
+(defmethod $copy! ((tensor tensor) (source list))
   (tensor-copy tensor (tensor source))
   tensor)
 
@@ -411,10 +411,10 @@
 
 (defmethod $clone ((tensor tensor)) (tensor-clone tensor))
 
-(defmethod $contiguous ((tensor tensor))
-  (if ($contiguousp tensor)
-      tensor
-      (tensor-contiguous tensor)))
+(defmethod $contiguous! ((tensor tensor))
+  (unless ($contiguousp tensor)
+    (tensor-contiguous tensor))
+  tensor)
 
 (defmethod $contiguousp ((tensor tensor)) (tensor-contiguous-p tensor))
 
@@ -427,7 +427,7 @@
 
 (defmethod (setf $select) (value (tensor tensor) dimension index)
   (let ((x ($select tensor dimension index)))
-    ($copy x value)
+    ($copy! x value)
     value))
 
 (defmethod $narrow ((tensor tensor) dimension first-index size)
@@ -439,7 +439,7 @@
 
 (defmethod (setf $narrow) (value (tensor tensor) dimension first-index size)
   (let ((x ($narrow tensor dimension first-index size)))
-    ($copy x value)
+    ($copy! x value)
     value))
 
 (defmethod $transpose ((tensor tensor) &optional dimension0 dimension1)
@@ -463,12 +463,12 @@
   (cond (($tensorp ($0 sizes)) (tensor-new-view tensor ($size ($0 sizes))))
         (t (tensor-new-view tensor sizes))))
 
-(defmethod $set ((tensor tensor) (source tensor) &optional offset size stride)
+(defmethod $set! ((tensor tensor) (source tensor) &optional offset size stride)
   (declare (ignore offset size stride))
   (tensor-set tensor source)
   tensor)
 
-(defmethod $set ((tensor tensor) (source storage) &optional offset size stride)
+(defmethod $set! ((tensor tensor) (source storage) &optional offset size stride)
   (tensorn-set-storage tensor source offset size stride)
   tensor)
 
@@ -484,22 +484,22 @@
 (defmethod $sizep ((tensor tensor) (other storage.long))
   (tensor-size-p tensor other))
 
-(defmethod $resize ((tensor tensor) (size list) &optional stride)
+(defmethod $resize! ((tensor tensor) (size list) &optional stride)
   (tensor-resize tensor size stride)
   tensor)
 
-(defmethod $resize ((tensor tensor) (other tensor) &optional stride)
+(defmethod $resize! ((tensor tensor) (other tensor) &optional stride)
   (declare (ignore stride))
   (tensor-resize-as tensor other)
   tensor)
 
-(defmethod $resize ((tensor tensor) (size storage.long) &optional stride)
+(defmethod $resize! ((tensor tensor) (size storage.long) &optional stride)
   (tensor-resize tensor ($list size) ($list stride))
   tensor)
 
 (defmethod $zero ((tensor tensor))
   (let ((nt ($empty tensor)))
-    ($resize nt tensor)
+    ($resize! nt tensor)
     (tensor-zero nt)
     nt))
 
@@ -509,7 +509,7 @@
 
 (defmethod $one ((tensor tensor))
   (let ((nt ($empty tensor)))
-    ($resize nt tensor)
+    ($resize! nt tensor)
     (tensor-fill nt 1)
     nt))
 
@@ -527,7 +527,7 @@
 
 (defmethod (setf $subview) (value (tensor tensor) &rest index-sizes)
   (let ((x (apply #'$subview tensor index-sizes)))
-    ($copy x value)
+    ($copy! x value)
     value))
 
 (defmethod $list ((tensor tensor)) ($list ($storage tensor)))
@@ -623,40 +623,40 @@
 (defmethod $gather ((tensor tensor) dimension (indices list))
   (let ((result ($empty tensor))
         (indices (tensor.long indices)))
-    ($resize result indices)
+    ($resize! result indices)
     (tensor-gather result tensor dimension indices)
     result))
 
 (defmethod $gather ((tensor tensor) dimension (indices tensor))
   (let ((result ($empty tensor)))
-    ($resize result indices)
+    ($resize! result indices)
     (tensor-gather result tensor dimension indices)
     result))
 
-(defmethod $scatter ((tensor tensor) dimension (indices list) (value tensor))
+(defmethod $scatter! ((tensor tensor) dimension (indices list) (value tensor))
   (let ((indices (tensor.long indices)))
     (tensor-scatter tensor value dimension indices)
     tensor))
 
-(defmethod $scatter ((tensor tensor) dimension (indices list) (value list))
+(defmethod $scatter! ((tensor tensor) dimension (indices list) (value list))
   (let ((indices (tensor.long indices)))
     (tensor-scatter tensor (make-tensor-args (type-of tensor) (list value)) dimension indices)
     tensor))
 
-(defmethod $scatter ((tensor tensor) dimension (indices list) (value number))
+(defmethod $scatter! ((tensor tensor) dimension (indices list) (value number))
   (let ((indices (tensor.long indices)))
     (tensor-scatter-fill tensor value dimension indices)
     tensor))
 
-(defmethod $scatter ((tensor tensor) dimension (indices tensor.long) (value tensor))
+(defmethod $scatter! ((tensor tensor) dimension (indices tensor.long) (value tensor))
   (tensor-scatter tensor value dimension indices)
   tensor)
 
-(defmethod $scatter ((tensor tensor) dimension (indices tensor.long) (value list))
+(defmethod $scatter! ((tensor tensor) dimension (indices tensor.long) (value list))
   (tensor-scatter tensor (make-tensor-args (type-of tensor) (list value)) dimension indices)
   tensor)
 
-(defmethod $scatter ((tensor tensor) dimension (indices tensor.long) (value number))
+(defmethod $scatter! ((tensor tensor) dimension (indices tensor.long) (value number))
   (tensor-scatter-fill tensor value dimension indices)
   tensor)
 
@@ -707,16 +707,16 @@
          (size-tensor (tensor-cmul (tensor.long) (tensor.long xsize) (tensor.long size)))
          (size (loop :for i :from 0 :below ($count size-tensor)
                      :collect ($ ($storage size-tensor) i)))
-         (result ($resize result size))
+         (result ($resize! result size))
          (urtensor (tensor result))
-         (xtensor ($resize xtensor xsize)))
+         (xtensor ($resize! xtensor xsize)))
     (loop :for i :from 0 :below ($ndim xtensor)
           :for xs = ($size xtensor i)
           :do (setf urtensor ($unfold urtensor i xs xs)))
     (loop :for i :from 0 :below (- ($ndim urtensor) ($ndim xtensor))
           :do (push 1 xsize))
-    ($resize xtensor xsize)
-    ($copy urtensor (apply #'$expand xtensor ($size urtensor)))
+    ($resize! xtensor xsize)
+    ($copy! urtensor (apply #'$expand xtensor ($size urtensor)))
     result))
 
 (defmethod $squeeze ((tensor tensor) &optional dimension)
@@ -755,7 +755,7 @@
 (defmethod $fmap (fn (tensor tensor) &rest tensors)
   (let* ((result ($empty tensor))
          (s ($storage tensor)))
-    ($resize result tensor)
+    ($resize! result tensor)
     (loop :for i :from 0 :below ($count s)
           :for x = ($ s i)
           :for ys = (mapcar (lambda (aten) ($ aten i)) tensors)
@@ -1273,7 +1273,7 @@
 
 (defmethod $addmv ((x tensor) (m tensor) (v tensor) &optional (α 1) (β 1))
   (let ((result ($empty x)))
-    ($resize result x)
+    ($resize! result x)
     (tensor-add-mv result β x α m v)
     result))
 
@@ -1283,7 +1283,7 @@
 
 (defmethod $gemv ((α number ) (m tensor ) (x tensor) (β number ) (y tensor))
   (let ((result ($empty y)))
-    ($resize result y)
+    ($resize! result y)
     (tensor-add-mv result β y α m x)
     result))
 
@@ -1293,7 +1293,7 @@
 
 (defmethod $ger ((α number) (x tensor) (y tensor) (m tensor))
   (let ((result ($empty m)))
-    ($resize result m)
+    ($resize! result m)
     (tensor-add-r result 1 m α x y)
     result))
 
@@ -1303,7 +1303,7 @@
 
 (defmethod $addr ((m tensor) (x tensor) (y tensor) &optional (α 1) (β 1))
   (let ((result ($empty m)))
-    ($resize result m)
+    ($resize! result m)
     (tensor-add-r result β m α x y)
     result))
 
@@ -1313,7 +1313,7 @@
 
 (defmethod $gemm ((α number) (x tensor) (y tensor) (β number) (z tensor))
   (let ((result ($empty z)))
-    ($resize result z)
+    ($resize! result z)
     (tensor-add-mm result β z α x y)
     result))
 
@@ -1323,7 +1323,7 @@
 
 (defmethod $addmm ((z tensor) (x tensor) (y tensor) &optional (α 1) (β 1))
   (let ((result ($empty z)))
-    ($resize result z)
+    ($resize! result z)
     (tensor-add-mm result β z α x y)
     result))
 
@@ -1333,7 +1333,7 @@
 
 (defmethod $addbmm ((z tensor) (bx tensor) (by tensor) &optional (α 1) (β 1))
   (let ((result ($empty z)))
-    ($resize result z)
+    ($resize! result z)
     (tensor-add-bmm result β z α bx by)
     result))
 
@@ -1343,7 +1343,7 @@
 
 (defmethod $baddbmm ((bz tensor) (bx tensor) (by tensor) &optional (α 1) (β 1))
   (let ((result ($empty bz)))
-    ($resize result bz)
+    ($resize! result bz)
     (tensor-badd-bmm result β bz α bx by)
     result))
 
@@ -1352,42 +1352,42 @@
   bz)
 
 (defmethod $vv ((x tensor) (y tensor))
-  (let ((result (-> ($empty x) ($resize (list ($count x) ($count y))))))
+  (let ((result (-> ($empty x) ($resize! (list ($count x) ($count y))))))
     ($addr! result x y 1 0)
     result))
 
 (defmethod $vv! ((m tensor) (x tensor) (y tensor))
-  ($resize m (list ($count x) ($count y)))
+  ($resize! m (list ($count x) ($count y)))
   ($addr! m x y 1 0)
   m)
 
 (defmethod $mv ((m tensor) (v tensor))
-  (let ((result (-> ($empty m) ($resize (list ($size m 0))))))
+  (let ((result (-> ($empty m) ($resize! (list ($size m 0))))))
     ($addmv! result m v 1 0)
     result))
 
 (defmethod $mv! ((x tensor) (m tensor) (v tensor))
-  ($resize x (list ($size m 0)))
+  ($resize! x (list ($size m 0)))
   ($addmv! x m v 1 0)
   x)
 
 (defmethod $mm ((x tensor) (y tensor))
-  (let ((result (-> ($empty x) ($resize (list ($size x 0) ($size y 1))))))
+  (let ((result (-> ($empty x) ($resize! (list ($size x 0) ($size y 1))))))
     ($addmm! result x y 1 0)
     result))
 
 (defmethod $mm! ((z tensor) (x tensor) (y tensor))
-  ($resize z (list ($size x 0) ($size y 1)))
+  ($resize! z (list ($size x 0) ($size y 1)))
   ($addmm! z x y 1 0)
   z)
 
 (defmethod $bmm ((bx tensor) (by tensor))
-  (let ((result (-> ($empty bx) ($resize (list ($size bx 0) ($size bx 1) ($size by 2))))))
+  (let ((result (-> ($empty bx) ($resize! (list ($size bx 0) ($size bx 1) ($size by 2))))))
     ($baddbmm! result bx by 1 0)
     result))
 
 (defmethod $bmm! ((bz tensor) (bx tensor) (by tensor))
-  ($resize bz (list ($size bx 0) ($size bx 1) ($size by 2)))
+  ($resize! bz (list ($size bx 0) ($size bx 1) ($size by 2)))
   ($baddbmm! bz bx by 1 0)
   bz)
 
