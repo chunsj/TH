@@ -416,6 +416,8 @@
   (:documentation "Returns tensor x filled with uniform random numbers."))
 (defgeneric $normal! (x m sd)
   (:documentation "Returns tensor x filled with normal random numbers."))
+(defgeneric $bernoulli! (x p)
+  (:documentation "Returns tensor x filled with bernoulli random numbers."))
 
 (defgeneric $norm (x &optional p dimension)
   (:documentation "Returns p-norm."))

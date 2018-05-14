@@ -1650,6 +1650,10 @@
   (tensor-normal x m sd)
   x)
 
+(defmethod $bernoulli! ((x tensor) p)
+  (tensor-bernoulli x p)
+  x)
+
 (defmethod $norm ((x tensor) &optional (p 2) (dimension -1))
   (if (< dimension 0)
       (tensor-norm-all x p)

@@ -249,6 +249,7 @@
            #:$var!
            #:$uniform!
            #:$normal!
+           #:$bernoulli!
            #:$norm
            #:$norm!
            #:$renorm
