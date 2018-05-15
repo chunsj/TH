@@ -57,6 +57,8 @@
            #:$resize!
            #:$copy!
            #:$swap!
+           #:$expand
+           #:$expand!
            #:$fill
            #:$fill!
            #:$zero
