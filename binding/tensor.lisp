@@ -1279,6 +1279,9 @@
   tensor)
 
 (defmethod $dot ((x tensor) (y tensor)) (tensor-dot x y))
+(defmethod $dot ((x tensor) (y number)) (tensor-dot x ($fill! ($one x) y)))
+(defmethod $dot ((x number) (y tensor)) ($dot y x))
+(defmethod $dot ((x number) (y number)) (* x y))
 
 (defmethod $addmv ((x tensor) (m tensor) (v tensor) &optional (α 1) (β 1))
   (let ((result ($empty x)))
