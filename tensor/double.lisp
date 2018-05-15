@@ -144,6 +144,11 @@
   (tensor th-double-tensor-ptr)
   (size th-long-storage-ptr))
 
+(cffi:defcfun ("THDoubleTensor_expand" th-double-tensor-expand) :void
+  (result th-double-tensor-ptr)
+  (tensor th-double-tensor-ptr)
+  (size th-long-storage-ptr))
+
 (cffi:defcfun ("THDoubleTensor_resize" th-double-tensor-resize) :void
   (tensor th-double-tensor-ptr)
   (size th-long-storage-ptr)

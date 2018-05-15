@@ -484,6 +484,15 @@
 (defmethod $sizep ((tensor tensor) (other storage.long))
   (tensor-size-p tensor other))
 
+(defmethod $expand ((tensor tensor) size)
+  (let ((result ($empty tensor)))
+    (tensor-expand result tensor size)
+    result))
+
+(defmethod $expand! ((tensor tensor) size)
+  (tensor-expand tensor tensor size)
+  tensor)
+
 (defmethod $resize! ((tensor tensor) (size list) &optional stride)
   (tensor-resize tensor size stride)
   tensor)

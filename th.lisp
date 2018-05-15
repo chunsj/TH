@@ -65,6 +65,11 @@
 (defgeneric $swap! (object1 object2)
   (:documentation "Swaps the contents of objects."))
 
+(defgeneric $expand (object size)
+  (:documentation "Returns a new tensor with expanded size."))
+(defgeneric $expand! (object size)
+  (:documentation "Returns a tensor with expanded size."))
+
 (defgeneric $fill (object value)
   (:documentation "Returns a new tensor filled with value."))
 (defgeneric $fill! (object value)
