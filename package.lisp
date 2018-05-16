@@ -326,7 +326,7 @@
            #:$fclose
            #:$fname
            #:$tapep
-           #:$backprop
+           #:$bp!
            #:tape
            #:var
            #:const
@@ -334,4 +334,5 @@
            #:$data
            #:$gradient
            #:$broadcast
-           #:$gd!))
+           #:$gd!
+           #:$bce))
