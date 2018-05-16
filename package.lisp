@@ -324,4 +324,14 @@
            #:$fseekend
            #:$ftell
            #:$fclose
-           #:$fname))
+           #:$fname
+           #:$tapep
+           #:$backprop
+           #:tape
+           #:var
+           #:const
+           #:$children
+           #:$data
+           #:$gradient
+           #:$broadcast
+           #:$gd!))

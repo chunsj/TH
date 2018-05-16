@@ -37,4 +37,6 @@
                (:module binding :components ((:file "generator")
                                              (:file "storage")
                                              (:file "tensor")
-                                             (:file "file")))))
+                                             (:file "file")))
+               (:module ad :components ((:file "autograd")
+                                        (:file "operators")))))
