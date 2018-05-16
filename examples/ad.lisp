@@ -80,3 +80,29 @@
               ($gd! gradient 0.05)))
   (print b)
   (print c))
+
+;; regressions
+(let* ((X (const (-> (tensor '(1 3))
+                     ($transpose!))))
+       (Y (const (tensor '(-10 -30))))
+       (c (var 0))
+       (b (var (tensor '(10)))))
+  (loop :for i :from 0 :below 1000
+        :do (let* ((d ($sub ($add ($mv X b) ($broadcast c Y)) Y))
+                   (out ($dot d d))
+                   (gradient ($bp! out 1)))
+              (when (zerop (mod i 100)) (print ($data out)))
+              ($gd! gradient 0.02)))
+  (print ($add ($mv X b) ($broadcast c Y))))
+
+(let* ((X (const (tensor '((5 2) (-1 0) (5 2)))))
+       (Y (const (tensor '(1 0 1))))
+       (c (var 0))
+       (b (var (tensor '(0 0)))))
+  (loop :for i :from 0 :below 1000
+        :do (let* ((Y* ($sigmoid ($add ($mv X b) ($broadcast c Y))))
+                   (out ($bce Y* Y))
+                   (gradient ($bp! out 1)))
+              (when (zerop (mod i 100)) (print ($data out)))
+              ($gd! gradient 0.1)))
+  (print ($sigmoid ($add ($mv X b) ($broadcast c Y)))))
