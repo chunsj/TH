@@ -328,6 +328,8 @@
            #:$tapep
            #:$bp!
            #:tape
+           #:$variable
+           #:$constant
            #:var
            #:const
            #:$children
