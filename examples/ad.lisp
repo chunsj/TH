@@ -6,13 +6,15 @@
 (in-package :th.ad-example)
 
 ;; broadcast
-(let* ((out ($broadcast (variant 5) (constant (tensor '(1 2 3)))))
-       (gradient ($bp! out (tensor '(1 2 3)))))
-  (print gradient))
+(let ((out ($broadcast (variant 5) (constant (tensor '(1 2 3))))))
+  ($bp! out (tensor '(1 2 3)))
+  (loop :for c :in ($children out)
+        :do (print ($gradient c))))
 
-(let* ((out ($broadcast (variant 5) (constant '(1 2 3))))
-       (gradient ($bp! out (tensor '(1 2 3)))))
-  (print gradient))
+(let ((out ($broadcast (variant 5) (constant '(1 2 3)))))
+  ($bp! out (tensor '(1 2 3)))
+  (loop :for c :in ($children out)
+        :do (print ($gradient c))))
 
 ;; add
 (let* ((a (variant (tensor '(1 1 1))))
