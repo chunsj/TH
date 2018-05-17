@@ -1,7 +1,7 @@
 (in-package :th)
 
 (defgeneric $tapep (object))
-(defgeneric $bp! (tape gradient))
+(defgeneric $bp! (tape &optional gradient))
 (defgeneric $gd! (gradient &optional learning-rate))
 
 (defgeneric $variant (object))
@@ -41,7 +41,7 @@
 (defmethod $variant ((data t)) (tape data t))
 (defmethod $constant ((data t)) (tape data nil))
 
-(defmethod $bp! ((tape tape) gradient) (funcall ($bpfn tape) tape gradient))
+(defmethod $bp! ((tape tape) &optional (gradient 1)) (funcall ($bpfn tape) tape gradient))
 
 (defmethod $gd! ((gradient tape) &optional (learning-rate 0.01))
   (let ((children ($children gradient))
