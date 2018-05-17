@@ -4,7 +4,7 @@
 (defgeneric $bp! (tape gradient))
 (defgeneric $gd! (gradient &optional learning-rate))
 
-(defgeneric $variable (object))
+(defgeneric $variant (object))
 (defgeneric $constant (object))
 
 (defgeneric $broadcast (constant matrix))
@@ -32,13 +32,13 @@
     (setf ($bpfn n) #'default-bpfn)
     n))
 
-(defmethod $variable ((tape tape)) (setf ($gradientp tape) t) tape)
+(defmethod $variant ((tape tape)) (setf ($gradientp tape) t) tape)
 (defmethod $constant ((tape tape)) (setf ($gradientp tape) nil) tape)
 
-(defmethod $variable ((data list)) (tape (tensor data) t))
+(defmethod $variant ((data list)) (tape (tensor data) t))
 (defmethod $constant ((data list)) (tape (tensor data) nil))
 
-(defmethod $variable ((data t)) (tape data t))
+(defmethod $variant ((data t)) (tape data t))
 (defmethod $constant ((data t)) (tape data nil))
 
 (defmethod $bp! ((tape tape) gradient) (funcall ($bpfn tape) tape gradient))
@@ -55,5 +55,5 @@
 
 (defmethod $gd! ((object t) &optional (learning-rate 0.01)) (declare (ignore learning-rate)))
 
-(defun var (data) ($variable data))
-(defun const (data) ($constant data))
+(defun variant (data) ($variant data))
+(defun constant (data) ($constant data))

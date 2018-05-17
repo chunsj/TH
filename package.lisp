@@ -328,10 +328,10 @@
            #:$tapep
            #:$bp!
            #:tape
-           #:$variable
+           #:$variant
            #:$constant
-           #:var
-           #:const
+           #:variant
+           #:constant
            #:$children
            #:$data
            #:$gradient
