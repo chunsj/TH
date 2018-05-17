@@ -450,6 +450,10 @@
                  (tensor-transpose result tensor dimension0 dimension1)
                  result)))))
 
+(defmethod $transpose ((n number) &optional dimension0 dimension1)
+  (declare (ignore dimension0 dimension1))
+  n)
+
 (defmethod $transpose! ((tensor tensor) &optional dimension0 dimension1)
   (if (eq 1 ($ndim tensor))
       ($reshape! tensor ($count tensor) 1)

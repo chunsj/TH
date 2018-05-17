@@ -24,7 +24,7 @@
 
 (let* ((a (variant '(1 1 1)))
        (b (variant '(1 1 1)))
-       (out ($add a b))
+       (out ($+ a b))
        (gradient ($bp! out (tensor '(1 1 1)))))
   (print gradient)
   (print ($children gradient)))
@@ -35,7 +35,7 @@
   (print gradient)
   (print ($children gradient)))
 
-(let* ((out ($sub (constant '(1 2 3)) (variant '(3 2 1))))
+(let* ((out ($- (constant '(1 2 3)) (variant '(3 2 1))))
        (gradient ($bp! out (tensor '(1 1 1)))))
   (print gradient)
   (print ($children gradient)))
@@ -57,7 +57,7 @@
 
 (let* ((a (constant '(1 1 1)))
        (b (variant '(1 2 3)))
-       (out ($dot a b))
+       (out ($@ a b))
        (gradient ($bp! out 1)))
   (print gradient)
   (print ($gd! gradient))
@@ -81,8 +81,8 @@
        (c (variant 0))
        (b (variant '(10))))
   (loop :for i :from 0 :below 2000
-        :do (let* ((d ($sub ($add ($mv X b) ($broadcast c Y)) Y))
-                   (out ($dot d d))
+        :do (let* ((d ($- ($+ ($@ X b) ($broadcast c Y)) Y))
+                   (out ($@ d d))
                    (gradient ($bp! out 1)))
               (when (zerop (mod i 100)) (print (list i ($data out))))
               ($gd! gradient)))
@@ -97,6 +97,20 @@
         :do (let* ((Y* ($add ($mv X b) ($broadcast c Y)))
                    (d ($sub Y* Y))
                    (out ($dot d d))
+                   (gradient ($bp! out 1)))
+              (when (zerop (mod i 100)) (print (list i ($data out))))
+              ($gd! gradient 0.001)))
+  (print b))
+
+(let* ((X (constant (-> (range 0 10)
+                        ($transpose!))))
+       (Y (constant (range 0 10)))
+       (c (variant 0))
+       (b (variant (tensor '(0)))))
+  (loop :for i :from 0 :below 2000
+        :do (let* ((Y* ($+ ($@ X b) ($broadcast c Y)))
+                   (d ($- Y* Y))
+                   (out ($@ d d))
                    (gradient ($bp! out 1)))
               (when (zerop (mod i 100)) (print (list i ($data out))))
               ($gd! gradient 0.001)))
@@ -117,6 +131,21 @@
   (print b)
   (print c))
 
+(let* ((X (constant (-> (tensor '((1 1 2)
+                                  (1 3 1)))
+                        ($transpose!))))
+       (Y (constant (tensor '(1 2 3))))
+       (c (variant 0))
+       (b (variant (tensor '(1 1)))))
+  (loop :for i :from 0 :below 1000
+        :do (let* ((d ($- ($+ ($@ X b) ($broadcast c Y)) Y))
+                   (out ($@ d d))
+                   (gradient ($bp! out 1)))
+              (when (zerop (mod i 100)) (print (list i ($data out))))
+              ($gd! gradient 0.05)))
+  (print b)
+  (print c))
+
 ;; regressions
 (let* ((X (constant (-> (tensor '(1 3))
                         ($transpose!))))
@@ -130,6 +159,19 @@
               (when (zerop (mod i 100)) (print ($data out)))
               ($gd! gradient 0.02)))
   (print ($add ($mv X b) ($broadcast c Y))))
+
+(let* ((X (constant (-> (tensor '(1 3))
+                        ($transpose!))))
+       (Y (constant (tensor '(-10 -30))))
+       (c (variant 0))
+       (b (variant (tensor '(10)))))
+  (loop :for i :from 0 :below 1000
+        :do (let* ((d ($- ($+ ($@ X b) ($broadcast c Y)) Y))
+                   (out ($@ d d))
+                   (gradient ($bp! out 1)))
+              (when (zerop (mod i 100)) (print ($data out)))
+              ($gd! gradient 0.02)))
+  (print ($+ ($@ X b) ($broadcast c Y))))
 
 (let* ((X (constant (tensor '((5 2) (-1 0) (5 2)))))
        (Y (constant (tensor '(1 0 1))))

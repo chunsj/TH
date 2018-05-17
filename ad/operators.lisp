@@ -148,6 +148,34 @@
     (setf ($bpfn result) #'mul-backprop)
     result))
 
+(defmethod $ndim ((x tape)) ($ndim ($data x)))
+
+(defmethod $mml ((x tape) (y tape))
+  (cond ((and (eq 1 ($ndim x)) (eq 1 ($ndim y))) ($dot x y))
+        ((and (eq 2 ($ndim x)) (eq 1 ($ndim y))) ($mv x y))
+        ((and (eq 2 ($ndim x)) (eq 2 ($ndim y))) ($mm x y))))
+
+(defun div-backprop (node gradient)
+  (setf ($gradient node) gradient)
+  (setf ($children node) (when ($children node)
+                           (let ((a ($0 ($children node)))
+                                 (b ($1 ($children node))))
+                             (list (if ($gradientp a)
+                                       ($bp! a ($div gradient ($data b)))
+                                       a)
+                                   (if ($gradientp b)
+                                       ($bp! b ($neg! ($div ($* ($data a) gradient)
+                                                            ($* ($data b) ($data b)))))
+                                       b)))))
+  node)
+
+(defmethod $div ((a tape) (b tape))
+  (let ((result (tape ($div ($data a) ($data b)))))
+    (setf ($children result) (list a b))
+    (setf ($gradientp result) (or ($gradientp a) ($gradientp b)))
+    (setf ($bpfn result) #'div-backprop)
+    result))
+
 (defgeneric $bce (a b))
 
 (defmethod $bce ((a tape) (b tape))
