@@ -736,6 +736,11 @@
     ($copy! urtensor (apply #'$expand xtensor ($size urtensor)))
     result))
 
+(defmethod $repeat ((n number) &rest sizes)
+  (let ((result (apply #'tensor sizes)))
+    ($fill! result n)
+    result))
+
 (defmethod $squeeze ((tensor tensor) &optional dimension)
   (let ((result ($empty tensor)))
     (tensor-squeeze result tensor dimension)
@@ -1639,6 +1644,10 @@
       (let ((result ($empty x)))
         (tensor-sum result x dimension nil)
         result)))
+
+(defmethod $sum ((x number) &optional (dimension -1))
+  (declare (ignore dimension))
+  x)
 
 (defmethod $sum! ((z tensor) (x tensor) &optional (dimension 0))
   (tensor-sum z x dimension nil)
