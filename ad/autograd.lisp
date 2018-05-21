@@ -18,9 +18,14 @@
 
 (defmethod print-object ((tape tape) stream) (print-object ($data tape) stream))
 
+(defun $c0 (tape) ($0 ($children tape)))
+(defun $c1 (tape) ($1 ($children tape)))
+
 (defmethod $ ((tape tape) location &rest others-and-default)
-  (declare (ignore others-and-default))
-  ($ ($children tape) location))
+  (apply #'$ ($children ($data tape)) (cons location others-and-default)))
+
+(defmethod (setf $) (value (tape tape) location &rest others)
+  (setf (apply #'$ ($data tape) (cons location others)) value))
 
 (defmethod $tapep ((tape tape)) t)
 (defmethod $tapep ((object t)) nil)
