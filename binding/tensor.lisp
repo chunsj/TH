@@ -1171,6 +1171,7 @@
 (defmethod $add! ((y tensor) (x tensor))
   (tensor-cadd y y 1 x)
   y)
+(defmethod $add! ((y number) (x number)) (+ y x))
 
 (defmethod $sub ((y tensor) (x number))
   (let ((result ($empty y)))
@@ -1192,6 +1193,7 @@
 (defmethod $sub! ((y tensor) (x tensor))
   (tensor-csub y y 1 x)
   y)
+(defmethod $sub! ((y number) (x number)) (- y x))
 
 (defmethod $mul ((y tensor) (x number))
   (let ((result ($empty y)))
@@ -1213,6 +1215,7 @@
 (defmethod $mul! ((y tensor) (x tensor))
   (tensor-cmul y y x)
   y)
+(defmethod $mul! ((y number) (x number)) (* y x))
 
 (defmethod $div ((y tensor) (x number))
   (let ((result ($empty y)))
@@ -1235,6 +1238,7 @@
 (defmethod $div! ((y tensor) (x tensor))
   (tensor-cdiv y y x)
   y)
+(defmethod $div! ((y number) (x number)) (/ y x))
 
 (defmethod $addmul ((z tensor) (x tensor) (y tensor) &optional (α 1))
   (let ((result ($empty z)))

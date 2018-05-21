@@ -18,6 +18,10 @@
 
 (defmethod print-object ((tape tape) stream) (print-object ($data tape) stream))
 
+(defmethod $ ((tape tape) location &rest others-and-default)
+  (declare (ignore others-and-default))
+  ($ ($children tape) location))
+
 (defmethod $tapep ((tape tape)) t)
 (defmethod $tapep ((object t)) nil)
 
