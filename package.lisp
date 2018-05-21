@@ -337,4 +337,5 @@
            #:$gradient
            #:$broadcast
            #:$gd!
-           #:$bce))
+           #:$bce
+           #:$xwpb))
