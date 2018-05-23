@@ -5,6 +5,10 @@
 
 (in-package :yy)
 
+;; XXX
+;; following code should be redesigned as it is copied from python which is not optimal
+;; XXX
+
 (defclass tape () ((objects :initform nil :accessor elms)))
 
 (defmethod $ ((tape tape) location &rest args)
