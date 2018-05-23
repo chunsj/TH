@@ -1,58 +1,58 @@
 (in-package :th)
 
-(defgeneric $tapep (object))
-(defgeneric $bp! (tape &optional gradient))
-(defgeneric $gd! (gradient &optional learning-rate))
+(defgeneric $nodep (object) (:documentation "Checks whether object is node."))
+(defgeneric $bp! (node &optional gradient) (:documentation "Executes backward error propagation."))
+(defgeneric $gd! (node &optional learning-rate) (:documentation "Executes gradient descent."))
 
-(defgeneric $variant (object))
-(defgeneric $constant (object))
+(defgeneric $variant (object) (:documentation "Returns variant node."))
+(defgeneric $constant (object) (:documentation "Returns constant node."))
 
 (defgeneric $broadcast (constant matrix))
 
-(defclass tape ()
+(defclass node ()
   ((data :initform nil :accessor $data)
    (gradient :initform nil :accessor $gradient)
    (need-gradient-p :initform nil :accessor $gradientp)
    (children :initform nil :accessor $children)
    (backward-function :initform nil :accessor $bpfn)))
 
-(defmethod print-object ((tape tape) stream) (print-object ($data tape) stream))
+(defmethod print-object ((node node) stream) (print-object ($data node) stream))
 
-(defun $c0 (tape) ($0 ($children tape)))
-(defun $c1 (tape) ($1 ($children tape)))
+(defun $c0 (node) ($0 ($children node)))
+(defun $c1 (node) ($1 ($children node)))
 
-(defmethod $ ((tape tape) location &rest others-and-default)
-  (apply #'$ ($children ($data tape)) (cons location others-and-default)))
+(defmethod $ ((node node) location &rest others-and-default)
+  (apply #'$ ($children ($data node)) (cons location others-and-default)))
 
-(defmethod (setf $) (value (tape tape) location &rest others)
-  (setf (apply #'$ ($data tape) (cons location others)) value))
+(defmethod (setf $) (value (node node) location &rest others)
+  (setf (apply #'$ ($data node) (cons location others)) value))
 
-(defmethod $tapep ((tape tape)) t)
-(defmethod $tapep ((object t)) nil)
+(defmethod $nodep ((node node)) t)
+(defmethod $nodep ((object t)) nil)
 
-(defun default-bpfn (tape gradient)
-  (setf ($gradient tape) gradient)
-  tape)
+(defun default-bpfn (node gradient)
+  (setf ($gradient node) gradient)
+  node)
 
-(defun tape (data &optional need-gradient-p)
-  (let ((n (make-instance 'tape)))
+(defun node (data &optional need-gradient-p)
+  (let ((n (make-instance 'node)))
     (setf ($data n) data)
     (setf ($gradientp n) need-gradient-p)
     (setf ($bpfn n) #'default-bpfn)
     n))
 
-(defmethod $variant ((tape tape)) (setf ($gradientp tape) t) tape)
-(defmethod $constant ((tape tape)) (setf ($gradientp tape) nil) tape)
+(defmethod $variant ((node node)) (setf ($gradientp node) t) node)
+(defmethod $constant ((node node)) (setf ($gradientp node) nil) node)
 
-(defmethod $variant ((data list)) (tape (tensor data) t))
-(defmethod $constant ((data list)) (tape (tensor data) nil))
+(defmethod $variant ((data list)) (node (tensor data) t))
+(defmethod $constant ((data list)) (node (tensor data) nil))
 
-(defmethod $variant ((data t)) (tape data t))
-(defmethod $constant ((data t)) (tape data nil))
+(defmethod $variant ((data t)) (node data t))
+(defmethod $constant ((data t)) (node data nil))
 
-(defmethod $bp! ((tape tape) &optional (gradient 1)) (funcall ($bpfn tape) tape gradient))
+(defmethod $bp! ((node node) &optional (gradient 1)) (funcall ($bpfn node) node gradient))
 
-(defmethod $gd! ((gradient tape) &optional (learning-rate 0.01))
+(defmethod $gd! ((gradient node) &optional (learning-rate 0.01))
   (let ((children ($children gradient))
         (data ($data gradient))
         (grv ($gradient gradient)))
