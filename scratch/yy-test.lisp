@@ -13,18 +13,7 @@
 
 (defclass tape () ((objects :initform nil :accessor elms)))
 
-(defmethod $ ((tape tape) location &rest args)
-  (declare (ignore args))
-  ($ (elms tape) location))
-
-(defmethod (setf $) (value (tape tape) location &rest args)
-  (declare (ignore args))
-  (setf ($ (elms tape) location) value))
-
-(defmethod $count ((tape tape)) ($count (elms tape)))
-
 (defun $append (tape object) (setf (elms tape) (append (elms tape) (list object))))
-(defun $reverse (tape) (reverse (elms tape)))
 
 (defmethod print-object ((tape tape) stream)
   (print-object (elms tape) stream))
@@ -70,7 +59,7 @@
                                       (apply gf ndog (mapcar #'getval ndargs)))))))))
   (opnodeograd (car (elms tape))))
 
-(defun grad (function &optional (argnum 0))
+(defun differentiate (function &optional (argnum 0))
   (lambda (&rest args)
     (let ((tape (make-instance 'tape))
           (ans nil))
@@ -170,7 +159,8 @@
                    (kyapply #'$mm ($transpose x) g))))
 
 
-(defmacro defgrad (df f &optional (argnum 0)) `(setf (symbol-function ',df) (grad #',f ,argnum)))
+(defmacro defgrad (df f &optional (argnum 0))
+  `(setf (symbol-function ',df) (differentiate #',f ,argnum)))
 
 (defun f (x) (kyapply #'$sin x))
 (defgrad df f)
@@ -203,3 +193,6 @@
   (print (mv m v))
   (print (dmv m v))
   (print (dmv2 m v)))
+
+;; instead of kyapply...
+;; (=> $exp 2)
