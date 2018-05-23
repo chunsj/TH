@@ -6,7 +6,8 @@
 (in-package :yy)
 
 ;; XXX
-;; following code should be redesigned as it is copied from python which is not optimal
+;; 1. following code should be redesigned as it is copied from python which is not optimal
+;; 2. do i need tape? why?
 ;; XXX
 
 (defclass tape () ((objects :initform nil :accessor elms)))
