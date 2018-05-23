@@ -8,6 +8,7 @@
 ;; XXX
 ;; 1. following code should be redesigned as it is copied from python which is not optimal
 ;; 2. do i need tape? why?
+;; 3. implementation should depends upon generic operators like $+, $-, $*, $@, ...
 ;; XXX
 
 (defclass tape () ((objects :initform nil :accessor elms)))
