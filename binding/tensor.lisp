@@ -1384,6 +1384,10 @@
   (let ((result (-> ($empty x) ($resize! (list ($count x) ($count y))))))
     ($addr! result x y 1 0)
     result))
+(defmethod $vv ((x number) (y tensor))
+  ($mul x y))
+(defmethod $vv ((x tensor) (y number))
+  ($mul x y))
 
 (defmethod $vv! ((m tensor) (x tensor) (y tensor))
   ($resize! m (list ($count x) ($count y)))
@@ -1404,6 +1408,10 @@
   (let ((result (-> ($empty x) ($resize! (list ($size x 0) ($size y 1))))))
     ($addmm! result x y 1 0)
     result))
+(defmethod $mm ((x number) (y tensor))
+  ($mul x y))
+(defmethod $mm ((x tensor) (y number))
+  ($mul x y))
 
 (defmethod $mm! ((z tensor) (x tensor) (y tensor))
   ($resize! z (list ($size x 0) ($size y 1)))
