@@ -39,4 +39,5 @@
                                              (:file "tensor")
                                              (:file "file")))
                (:module ad :components ((:file "autograd")
-                                        (:file "operators")))))
+                                        (:file "function")
+                                        (:file "utility")))))
