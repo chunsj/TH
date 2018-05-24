@@ -26,7 +26,7 @@
    (ograd :initform 0 :accessor opnodeograd)))
 
 (defmethod print-object ((opnode opnode) stream)
-  (print-object (opnodeval opnode) stream))
+  (format stream "#<NODE: ~A>" (opnodeval opnode)))
 
 (defparameter *grad-funcs* #{})
 
