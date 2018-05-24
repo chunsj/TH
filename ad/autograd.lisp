@@ -1,6 +1,5 @@
 (in-package :th)
 
-(defgeneric $nodep (object) (:documentation "Checks whether object is node."))
 (defgeneric $bp! (node &optional gradient) (:documentation "Executes backward error propagation."))
 (defgeneric $gd! (node &optional learning-rate) (:documentation "Executes gradient descent."))
 
@@ -27,8 +26,7 @@
 (defmethod (setf $) (value (node node) location &rest others)
   (setf (apply #'$ ($data node) (cons location others)) value))
 
-(defmethod $nodep ((node node)) t)
-(defmethod $nodep ((object t)) nil)
+(defmethod $tensorp ((node node)) ($tensorp ($data node)))
 
 (defun default-bpfn (node gradient)
   (setf ($gradient node) gradient)
