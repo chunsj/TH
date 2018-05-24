@@ -4,7 +4,7 @@
 (defgeneric $bp! (node &optional gradient) (:documentation "Executes backward error propagation."))
 (defgeneric $gd! (node &optional learning-rate) (:documentation "Executes gradient descent."))
 
-(defgeneric $variant (object) (:documentation "Returns variant node."))
+(defgeneric $variable (object) (:documentation "Returns variable node."))
 (defgeneric $constant (object) (:documentation "Returns constant node."))
 
 (defgeneric $broadcast (constant matrix))
@@ -41,13 +41,13 @@
     (setf ($bpfn n) #'default-bpfn)
     n))
 
-(defmethod $variant ((node node)) (setf ($gradientp node) t) node)
+(defmethod $variable ((node node)) (setf ($gradientp node) t) node)
 (defmethod $constant ((node node)) (setf ($gradientp node) nil) node)
 
-(defmethod $variant ((data list)) (node (tensor data) t))
+(defmethod $variable ((data list)) (node (tensor data) t))
 (defmethod $constant ((data list)) (node (tensor data) nil))
 
-(defmethod $variant ((data t)) (node data t))
+(defmethod $variable ((data t)) (node data t))
 (defmethod $constant ((data t)) (node data nil))
 
 (defmethod $bp! ((node node) &optional (gradient 1)) (funcall ($bpfn node) node gradient))
@@ -63,6 +63,3 @@
     gradient))
 
 (defmethod $gd! ((object t) &optional (learning-rate 0.01)) (declare (ignore learning-rate)))
-
-(defun variant (data) ($variant data))
-(defun constant (data) ($constant data))
