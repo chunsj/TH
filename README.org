@@ -9,3 +9,8 @@ Another feature I'd like to have is some kind of automatic backpropagation, so I
 ** You have to build libATen from pytorch - You may have to install another libraries for building libATen.
 ** Clone this repository and setup local project for quicklisp.
 ** You can quick load th.
+
+* Examples
+** examples/tensor.lisp - tensor related, mostly from torch
+** examples/ad.lisp - my humble auto gradient/auto backpropagation, copiled from clj-autograd of whilo
+** dlfs - my following up of the book "Deep Learning from Scratch"
