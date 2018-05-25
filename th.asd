@@ -40,4 +40,5 @@
                                              (:file "file")))
                (:module ad :components ((:file "autograd")
                                         (:file "function")
-                                        (:file "utility")))))
+                                        (:file "utility")))
+               (:module db :components ((:file "mnist")))))
