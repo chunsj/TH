@@ -557,11 +557,39 @@
 
 (defgeneric $bce (a b))
 
+(defmethod $bce ((a tensor) (b tensor))
+  ($dot ($add ($mul ($log a) b)
+              ($mul ($log ($sub ($one a) a))
+                    ($sub ($one b) b)))
+        ($neg ($one a))))
+
 (defmethod $bce ((a node) (b node))
   ($dot ($add ($mul ($log a) b)
               ($mul ($log ($sub ($one a) a))
                     ($sub ($one b) b)))
         ($neg ($one a))))
+
+(defgeneric $mse (a b))
+
+(defmethod $mse ((a tensor) (b tensor))
+  (let ((nbatch (if (eq 1 ($ndim a)) 1 ($size a 0))))
+    (* (/ 0.5 nbatch) ($sum ($expt ($sub a b) 2)))))
+
+(defmethod $mse ((a node) (b node))
+  (let ((nbatch (if (eq 1 ($ndim a)) 1 ($size a 0))))
+    (* (/ 0.5 nbatch) ($sum ($expt ($sub a b) 2)))))
+
+(defgeneric $cee (a b))
+
+(defmethod $cee ((a tensor) (b tensor))
+  (let ((tiny 1D-7)
+        (nbatch (if (eq 1 ($ndim a)) 1 ($size a 0))))
+    (/ (- ($sum ($mul! ($log ($add a tiny)) b))) nbatch)))
+
+(defmethod $cee ((a node) (b node))
+  (let ((tiny 1D-7)
+        (nbatch (if (eq 1 ($ndim a)) 1 ($size a 0))))
+    (/ (- ($sum ($mul! ($log ($add a tiny)) b))) nbatch)))
 
 (defun repeat-to-match-shape (x &optional axis)
   (if (not ($tensorp x))

@@ -338,6 +338,7 @@
            #:$kcols
            #:$gd!
            #:$bce
+           #:$mse
            #:$relu
            #:$softmax
            #:$xwpb))
