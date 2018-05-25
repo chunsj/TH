@@ -61,3 +61,28 @@
     gradient))
 
 (defmethod $gd! ((object t) &optional (learning-rate 0.01)) (declare (ignore learning-rate)))
+
+(defmethod $zero ((x node)) (node ($zero ($data x)) ($gradientp x)))
+(defmethod $one ((x node)) (node ($one ($data x)) ($gradientp x)))
+(defmethod $fill ((x node) value) (node ($fill ($data x) value) ($gradientp x)))
+(defmethod $ndim ((x node)) ($ndim ($data x)))
+
+(defmethod $zero! ((x node))
+  ($zero! ($data x))
+  x)
+(defmethod $one! ((x node))
+  ($one! ($data x))
+  x)
+(defmethod $fill! ((x node) value)
+  ($fill! ($data x) value)
+  x)
+
+(defmethod $empty ((node node))
+  (let ((data ($data node)))
+    (cond (($gradientp node) ($variable ($empty data)))
+          (t ($constant ($empty data))))))
+
+(defmethod $storage ((node node)) ($storage ($data node)))
+(defmethod $offset ((node node)) ($offset ($data node)))
+(defmethod $size ((node node) &optional dimension) ($size ($data node) dimension))
+(defmethod $stride ((node node) &optional dimension) ($stride ($data node) dimension))
