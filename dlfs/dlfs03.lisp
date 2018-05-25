@@ -1,7 +1,8 @@
 (defpackage :dlfs-03
   (:use #:common-lisp
         #:mu
-        #:th))
+        #:th
+        #:th.db.mnist))
 
 (in-package :dlfs-03)
 
@@ -101,3 +102,36 @@
        (y ($softmax a)))
   (print y)
   (print ($sum y)))
+
+;; mnist data loading - takes time, so load and set
+(defparameter *mnist* (read-mnist-data))
+(print *mnist*)
+
+;; network parameters
+(defparameter *w1* ($variable (rndn 784 50)))
+(defparameter *b1* ($variable (zeros 50)))
+(defparameter *w2* ($variable (rndn 50 100)))
+(defparameter *b2* ($variable (zeros 100)))
+(defparameter *w3* ($variable (rndn 100 10)))
+(defparameter *b3* ($variable (zeros 10)))
+
+(defun mnist-predict (x)
+  (-> x
+      ($xwpb *w1* *b1*)
+      ($sigmoid)
+      ($xwpb *w2* *b2*)
+      ($sigmoid)
+      ($xwpb *w3* *b3*)
+      ($softmax)))
+
+;; train data
+(print ($ *mnist* :train-images))
+
+;; run prediction - test
+(print (-> *mnist*
+           ($ :train-images)
+           ($index 0 '(0 1 2 3 4))
+           ($constant)
+           (mnist-predict)))
+
+(defun mnist-loss (prediction trueth) ($bce prediction trueth))
