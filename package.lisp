@@ -334,6 +334,10 @@
            #:$data
            #:$gradient
            #:$broadcast
+           #:$krows
+           #:$kcols
            #:$gd!
            #:$bce
+           #:$relu
+           #:$softmax
            #:$xwpb))

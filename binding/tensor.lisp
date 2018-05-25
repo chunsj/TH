@@ -562,26 +562,32 @@
 (defmethod $lt ((a tensor) (b tensor)) ($compare :lt a b))
 (defmethod $lt ((a tensor) (b number)) ($compare :lt a b))
 (defmethod $lt ((a number) (b tensor)) ($compare :ge b a))
+(defmethod $lt ((a number) (b number)) (if (< a b) 1 0))
 
 (defmethod $le ((a tensor) (b tensor)) ($compare :le a b))
 (defmethod $le ((a tensor) (b number)) ($compare :le a b))
 (defmethod $le ((a number) (b tensor)) ($compare :gt b a))
+(defmethod $le ((a number) (b number)) (if (<= a b) 1 0))
 
 (defmethod $gt ((a tensor) (b tensor)) ($compare :gt a b))
 (defmethod $gt ((a tensor) (b number)) ($compare :gt a b))
 (defmethod $gt ((a number) (b tensor)) ($compare :le b a))
+(defmethod $gt ((a number) (b number)) (if (> a b) 1 0))
 
 (defmethod $ge ((a tensor) (b tensor)) ($compare :ge a b))
 (defmethod $ge ((a tensor) (b number)) ($compare :ge a b))
 (defmethod $ge ((a number) (b tensor)) ($compare :lt b a))
+(defmethod $ge ((a number) (b number)) (if (>= a b) 1 0))
 
 (defmethod $eq ((a tensor) (b tensor)) ($compare :eq a b))
 (defmethod $eq ((a tensor) (b number)) ($compare :eq a b))
 (defmethod $eq ((a number) (b tensor)) ($compare :eq b a))
+(defmethod $eq ((a number) (b number)) (if (= a b) 1 0))
 
 (defmethod $ne ((a tensor) (b tensor)) ($compare :ne a b))
 (defmethod $ne ((a tensor) (b number)) ($compare :ne a b))
 (defmethod $ne ((a number) (b tensor)) ($compare :ne b a))
+(defmethod $ne ((a number) (b number)) (if (not (= a b)) 1 0))
 
 (defmethod $index ((tensor tensor) dimension (indices list))
   (let ((result ($empty tensor)))
