@@ -1,0 +1,11 @@
+* What is TH?
+In a word, this is a libTH binding (in fact, libATen, which has libTH) for Common Lisp. After working on the journey of MTX, I found
+that writing a binding is better than starting from BLAS/LAPACK. And I cannot find an existing binding library for Common Lisp, I
+wrote one for myself.
+Another feature I'd like to have is some kind of automatic backpropagation, so I'm working on it during reading the book
+"Deep Learning from Scratch" again.
+
+* How to Use
+** You have to build libATen from pytorch - You may have to install another libraries for building libATen.
+** Clone this repository and setup local project for quicklisp.
+** You can quick load th.
