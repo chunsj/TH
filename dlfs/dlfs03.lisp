@@ -105,7 +105,6 @@
 
 ;; mnist data loading - takes time, so load and set
 (defparameter *mnist* (read-mnist-data))
-(print *mnist*)
 
 ;; network parameters
 (defparameter *w1* ($variable (rndn 784 50)))
@@ -124,6 +123,8 @@
       ($xwpb *w3* *b3*)
       ($softmax)))
 
+(defun mnist-loss (prediction trueth) ($cee prediction trueth))
+
 ;; train data
 (print ($ *mnist* :train-images))
 
@@ -134,4 +135,51 @@
            ($constant)
            (mnist-predict)))
 
-(defun mnist-loss (prediction trueth) ($bce prediction trueth))
+(let ((y (-> *mnist*
+             ($ :train-images)
+             ($index 0 '(0 1 2 3 4))
+             ($constant)
+             (mnist-predict)) )
+      (r (-> *mnist*
+             ($ :train-labels)
+             ($index 0 '(0 1 2 3 4))
+             ($constant))))
+  (print y)
+  (print r)
+  (print ($cee y r)))
+
+;; XXX this crashes system
+;; need to test mnist-loss function with simpler network like xor
+(let* ((sels '(0 1 2 3 4))
+       (x (-> *mnist*
+              ($ :train-images)
+              ($index 0 sels)
+              ($constant)))
+       (y (-> *mnist*
+              ($ :train-labels)
+              ($index 0 sels)
+              ($constant)))
+       (lr 0.01))
+  (loop :for i :from 0 :below 1
+        :do (let* ((y* (mnist-predict x))
+                   (loss (mnist-loss y* y)))
+              (print loss)
+              ($bp! loss)
+              ($gd! loss lr))))
+
+
+(let* ((y ($constant '(1 1 1)))
+       (y* ($variable '(0.1 0.1 0.1)))
+       (out ($bce y* y)))
+  (print out)
+  ;;($bp! out)
+  )
+
+(let* ((y ($constant '(1 1 1)))
+       (y* ($variable '(0.1 0.1 0.1)))
+       (out ($sum ($sub y y*))))
+  (print out)
+  ($bp! out 1)
+  (print ($gradient y*))
+  ($gd! out 0.9)
+  (print y*))
