@@ -1,0 +1,4380 @@
+(in-package :th)
+
+(cffi:defctype thnn-state-ptr (:pointer :void))
+
+(cffi:defctype th-generator-ptr (:pointer :void))
+(cffi:defctype th-int-tensor-ptr (:pointer :void))
+(cffi:defctype th-long-tensor-ptr (:pointer :void))
+(cffi:defctype th-float-tensor-ptr (:pointer :void))
+(cffi:defctype th-double-tensor-ptr (:pointer :void))
+
+;; [OUT] output
+(cffi:defcfun ("THNN_FloatAbs_updateOutput" thnn-float-abs-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleAbs_updateOutput" thnn-double-abs-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr))
+
+;; [OUT] grad-input
+(cffi:defcfun ("THNN_FloatAbs_updateGradInput" thnn-float-abs-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleAbs_updateGradInput" thnn-double-abs-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr))
+
+;; [OUT] output
+(cffi:defcfun ("THNN_FloatAbsCriterion_updateOutput" thnn-float-abs-criterion-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (target th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+(cffi:defcfun ("THNN_DoubleAbsCriterion_updateOutput" thnn-double-abs-criterion-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (target th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+
+;; [OUT] grad-input
+(cffi:defcfun ("THNN_FloatAbsCriterion_updateGradInput"
+               thnn-float-abs-criterion-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (target th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+(cffi:defcfun ("THNN_DoubleAbsCriterion_updateGradInput"
+               thnn-double-abs-criterion-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (target th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+
+(cffi:defcfun ("THNN_FloatBCECriterion_updateOutput"
+               thnn-float-bce-criterion-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (target th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (size-average :char)
+  (weights th-float-tensor-ptr)
+  (reduce :char))
+(cffi:defcfun ("THNN_DoubleBCECriterion_updateOutput"
+               thnn-double-bce-criterion-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (target th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (size-average :char)
+  (weights th-double-tensor-ptr)
+  (reduce :char))
+
+(cffi:defcfun ("THNN_FloatBCECriterion_updateGradInput"
+               thnn-float-bce-criterion-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (target th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (size-average :char)
+  (weights th-float-tensor-ptr)
+  (reduce :char))
+(cffi:defcfun ("THNN_DoubleBCECriterion_updateGradInput"
+               thnn-double-bce-criterion-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (target th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (size-average :char)
+  (weights th-double-tensor-ptr)
+  (reduce :char))
+
+(cffi:defcfun ("THNN_FloatBatchNormalization_updateOutput"
+               thnn-float-batch-normalization-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (running-mean th-float-tensor-ptr)
+  (running-var th-float-tensor-ptr)
+  (save-mean th-float-tensor-ptr)
+  (save-std th-float-tensor-ptr)
+  (train :char)
+  (momentum :double)
+  (eps :double))
+(cffi:defcfun ("THNN_DoubleBatchNormalization_updateOutput"
+               thnn-double-batch-normalization-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (running-mean th-double-tensor-ptr)
+  (running-var th-double-tensor-ptr)
+  (save-mean th-double-tensor-ptr)
+  (save-std th-double-tensor-ptr)
+  (train :char)
+  (momentum :double)
+  (eps :double))
+
+(cffi:defcfun ("THNN_FloatBatchNormalization_backward"
+               thnn-float-batch-normalization-backward) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (running-mean th-float-tensor-ptr)
+  (running-var th-float-tensor-ptr)
+  (save-mean th-float-tensor-ptr)
+  (save-std th-float-tensor-ptr)
+  (train :char)
+  (scale :double)
+  (eps :double))
+(cffi:defcfun ("THNN_DoubleBatchNormalization_backward"
+               thnn-double-batch-normalization-backward) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (running-mean th-double-tensor-ptr)
+  (running-var th-double-tensor-ptr)
+  (save-mean th-double-tensor-ptr)
+  (save-std th-double-tensor-ptr)
+  (train :char)
+  (scale :double)
+  (eps :double))
+
+;; [OUT] output
+;; [OPTIONAL] weights
+;; [BUFFER] total-weight
+(cffi:defcfun ("THNN_FloatClassNLLCriterion_updateOutput"
+               thnn-float-class-nll-criterion-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (target th-long-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (size-average :char)
+  (weights th-float-tensor-ptr)
+  (total-weight th-float-tensor-ptr)
+  (ignore-index :long)
+  (reduce :char))
+(cffi:defcfun ("THNN_DoubleClassNLLCriterion_updateOutput"
+               thnn-double-class-nll-criterion-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (target th-long-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (size-average :char)
+  (weights th-double-tensor-ptr)
+  (total-weight th-double-tensor-ptr)
+  (ignore-index :long)
+  (reduce :char))
+
+;; [OUT] grad-input
+;; [OPTIONAL] weights
+;; [BUFFER] total-weight
+(cffi:defcfun ("THNN_FloatClassNLLCriterion_updateGradInput"
+               thnn-float-class-nll-criterion-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (target th-long-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (size-average :char)
+  (weights th-float-tensor-ptr)
+  (total-weight th-float-tensor-ptr)
+  (ignore-index :long)
+  (reduce :char))
+(cffi:defcfun ("THNN_DoubleClassNLLCriterion_updateGradInput"
+               thnn-double-class-nll-criterion-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (target th-long-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (size-average :char)
+  (weights th-double-tensor-ptr)
+  (total-weight th-double-tensor-ptr)
+  (ignore-index :long)
+  (reduce :char))
+
+(cffi:defcfun ("THNN_FloatCol2Im_updateOutput" thnn-float-col2im-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (oh :int)
+  (ow :int)
+  (kh :int)
+  (kw :int)
+  (dh :int)
+  (dw :int)
+  (ph :int)
+  (pw :int)
+  (sh :int)
+  (sw :int))
+(cffi:defcfun ("THNN_DoubleCol2Im_updateOutput" thnn-double-col2im-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (oh :int)
+  (ow :int)
+  (kh :int)
+  (kw :int)
+  (dh :int)
+  (dw :int)
+  (ph :int)
+  (pw :int)
+  (sh :int)
+  (sw :int))
+
+(cffi:defcfun ("THNN_FloatCol2Im_updateGradInput" thnn-float-col2im-update-grad-input) :void
+  (state thnn-state-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (kh :int)
+  (kw :int)
+  (dh :int)
+  (dw :int)
+  (ph :int)
+  (pw :int)
+  (sh :int)
+  (sw :int))
+(cffi:defcfun ("THNN_DoubleCol2Im_updateGradInput" thnn-double-col2im-update-grad-input) :void
+  (state thnn-state-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (kh :int)
+  (kw :int)
+  (dh :int)
+  (dw :int)
+  (ph :int)
+  (pw :int)
+  (sh :int)
+  (sw :int))
+
+;; [OUT] output
+(cffi:defcfun ("THNN_FloatDistKLDivCriterion_updateOutput"
+               thnn-float-dist-kl-div-criterion-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (target th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+(cffi:defcfun ("THNN_DoubleDistKLDivCriterion_updateOutput"
+               thnn-double-dist-kl-div-criterion-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (target th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+
+;; [OUT] grad-input
+(cffi:defcfun ("THNN_FloatDistKLDivCriterion_updateGradInput"
+               thnn-float-dist-kl-div-criterion-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (target th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+(cffi:defcfun ("THNN_DoubleDistKLDivCriterion_updateGradInput"
+               thnn-double-dist-kl-div-criterion-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (target th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+
+;; [OUT] output
+(cffi:defcfun ("THNN_FloatELU_updateOutput" thnn-float-elu-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (alpha :double)
+  (scale :double)
+  (in-place :char))
+(cffi:defcfun ("THNN_DoubleELU_updateOutput" thnn-double-elu-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (alpha :double)
+  (scale :double)
+  (in-place :char))
+
+;; [OUT] grad-input
+(cffi:defcfun ("THNN_FloatELU_updateGradInput" thnn-float-elu-update-grad-input) :void
+  (state thnn-state-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (alpha :double)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleELU_updateGradInput" thnn-double-elu-update-grad-input) :void
+  (state thnn-state-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (alpha :double)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatFeatureLPPooling_updateOutput"
+               thnn-float-feature-lp-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (power :double)
+  (width :int)
+  (stride :int)
+  (batch-mode :char))
+(cffi:defcfun ("THNN_DoubleFeatureLPPooling_updateOutput"
+               thnn-double-feature-lp-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (power :double)
+  (width :int)
+  (stride :int)
+  (batch-mode :char))
+
+(cffi:defcfun ("THNN_FloatFeatureLPPooling_updateGradInput"
+               thnn-float-feature-lp-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (grad-output th-float-tensor-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (power :double)
+  (width :int)
+  (stride :int)
+  (batch-mode :char))
+(cffi:defcfun ("THNN_DoubleFeatureLPPooling_updateGradInput"
+               thnn-double-feature-lp-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (grad-output th-double-tensor-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (power :double)
+  (width :int)
+  (stride :int)
+  (batch-mode :char))
+
+(cffi:defcfun ("THNN_FloatGatedLinear_updateOutput"
+               thnn-float-gated-linear-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (dim :int))
+(cffi:defcfun ("THNN_DoubleGatedLinear_updateOutput"
+               thnn-double-gated-linear-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (dim :int))
+
+(cffi:defcfun ("THNN_FloatGatedLinear_updateGradInput"
+               thnn-float-gated-linear-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (dim :int))
+(cffi:defcfun ("THNN_DoubleGatedLinear_updateGradInput"
+               thnn-double-gated-linear-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (dim :int))
+
+;; [OUT] output
+(cffi:defcfun ("THNN_FloatHardShrink_updateOutput" thnn-float-hard-shrink-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (lam :double))
+(cffi:defcfun ("THNN_DoubleHardShrink_updateOutput" thnn-double-hard-shrink-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (lam :double))
+
+;; [OUT] grad-input
+(cffi:defcfun ("THNN_FloatHardShrink_updateGradInput" thnn-float-hard-shrink-update-grad-input)
+    :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (lam :double))
+(cffi:defcfun ("THNN_DoubleHardShrink_updateGradInput" thnn-double-hard-shrink-update-grad-input)
+    :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (lam :double))
+
+;; [OUT] output
+(cffi:defcfun ("THNN_FloatHardTanh_updateOutput" thnn-float-hard-tanh-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (min-value :double)
+  (max-value :double)
+  (in-place :char))
+(cffi:defcfun ("THNN_DoubleHardTanh_updateOutput" thnn-double-hard-tanh-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (min-value :double)
+  (max-value :double)
+  (in-place :char))
+
+;; [OUT] grad-input
+(cffi:defcfun ("THNN_FloatHardTanh_updateGradInput" thnn-float-hard-tanh-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (min-value :double)
+  (max-value :double)
+  (in-place :char))
+(cffi:defcfun ("THNN_DoubleHardTanh_updateGradInput" thnn-double-hard-tanh-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (min-value :double)
+  (max-value :double)
+  (in-place :char))
+
+(cffi:defcfun ("THNN_FloatIm2Col_updateOutput" thnn-float-im2col-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (kh :int)
+  (kw :int)
+  (dh :int)
+  (dw :int)
+  (ph :int)
+  (pw :int)
+  (sh :int)
+  (sw :int))
+(cffi:defcfun ("THNN_DoubleIm2Col_updateOutput" thnn-double-im2col-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (kh :int)
+  (kw :int)
+  (dh :int)
+  (dw :int)
+  (ph :int)
+  (pw :int)
+  (sh :int)
+  (sw :int))
+
+(cffi:defcfun ("THNN_FloatIm2Col_updateGradInput" thnn-float-im2col-update-grad-input) :void
+  (state thnn-state-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (ih :int)
+  (iw :int)
+  (kh :int)
+  (kw :int)
+  (dh :int)
+  (dw :int)
+  (ph :int)
+  (pw :int)
+  (sh :int)
+  (sw :int))
+(cffi:defcfun ("THNN_DoubleIm2Col_updateGradInput" thnn-double-im2col-update-grad-input) :void
+  (state thnn-state-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (ih :int)
+  (iw :int)
+  (kh :int)
+  (kw :int)
+  (dh :int)
+  (dw :int)
+  (ph :int)
+  (pw :int)
+  (sh :int)
+  (sw :int))
+
+(cffi:defcfun ("THNN_FloatIndexLinear_updateOutput"
+               thnn-float-index-linear-update-output) :void
+  (state thnn-state-ptr)
+  (keys th-long-tensor-ptr)
+  (keys-offset :long)
+  (value th-float-tensor-ptr)
+  (sizes th-long-tensor-ptr)
+  (cum-sum-sizes th-long-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (normalized-values th-float-tensor-ptr)
+  (train :int))
+(cffi:defcfun ("THNN_DoubleIndexLinear_updateOutput"
+               thnn-double-index-linear-update-output) :void
+  (state thnn-state-ptr)
+  (keys th-long-tensor-ptr)
+  (keys-offset :long)
+  (value th-double-tensor-ptr)
+  (sizes th-long-tensor-ptr)
+  (cum-sum-sizes th-long-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (normalized-values th-double-tensor-ptr)
+  (train :int))
+
+(cffi:defcfun ("THNN_FloatIndexLinear_accGradParameters"
+               thnn-float-index-linear-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (keys th-long-tensor-ptr)
+  (keys-offset :long)
+  (value th-float-tensor-ptr)
+  (sizes th-long-tensor-ptr)
+  (cum-sum-sizes th-long-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (values-buffer th-float-tensor-ptr)
+  (weight-decay :double)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleIndexLinear_accGradParameters"
+               thnn-double-index-linear-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (keys th-long-tensor-ptr)
+  (keys-offset :long)
+  (value th-double-tensor-ptr)
+  (sizes th-long-tensor-ptr)
+  (cum-sum-sizes th-long-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (values-buffer th-double-tensor-ptr)
+  (weight-decay :double)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatIndexLinear_accUpdateGradParameters"
+               thnn-float-index-linear-acc-update-grad-parameters) :void
+  (state thnn-state-ptr)
+  (keys th-long-tensor-ptr)
+  (keys-offset :long)
+  (value th-float-tensor-ptr)
+  (sizes th-long-tensor-ptr)
+  (cum-sum-sizes th-long-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (weight-decay :double)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleIndexLinear_accUpdateGradParameters"
+               thnn-double-index-linear-acc-update-grad-parameters) :void
+  (state thnn-state-ptr)
+  (keys th-long-tensor-ptr)
+  (keys-offset :long)
+  (value th-double-tensor-ptr)
+  (sizes th-long-tensor-ptr)
+  (cum-sum-sizes th-long-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (weight-decay :double)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatIndexLinear_updateParameters"
+               thnn-float-index-linear-update-parameters) :void
+  (state thnn-state-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (running-keys th-long-tensor-ptr)
+  (cum-sum-sizes th-long-tensor-ptr)
+  (keys-offset :long)
+  (weight-decay :double)
+  (learning-rate :double))
+(cffi:defcfun ("THNN_DoubleIndexLinear_updateParameters"
+               thnn-double-index-linear-update-parameters) :void
+  (state thnn-state-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (running-keys th-long-tensor-ptr)
+  (cum-sum-sizes th-long-tensor-ptr)
+  (keys-offset :long)
+  (weight-decay :double)
+  (learning-rate :double))
+
+;; [OUT] output
+(cffi:defcfun ("THNN_FloatL1Cost_updateOutput" thnn-float-l1-cost-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleL1Cost_updateOutput" thnn-double-l1-cost-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr))
+
+;; [OUT] grad-input
+(cffi:defcfun ("THNN_FloatL1Cost_updateGradInput" thnn-float-l1-cost-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleL1Cost_updateGradInput" thnn-double-l1-cost-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr))
+
+;; [OUT] output
+(cffi:defcfun ("THNN_FloatLeakyReLU_updateOutput" thnn-float-leaky-relu-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (neg-val :double)
+  (in-place :char))
+(cffi:defcfun ("THNN_DoubleLeakyReLU_updateOutput" thnn-double-leaky-relu-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (neg-val :double)
+  (in-place :char))
+
+;; [OUT] grad-input
+;; [MODIFIED] grad-output
+(cffi:defcfun ("THNN_FloatLeakyReLU_updateGradInput"
+               thnn-float-leaky-relu-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (neg-val :double)
+  (in-place :char))
+(cffi:defcfun ("THNN_DoubleLeakyReLU_updateGradInput"
+               thnn-double-leaky-relu-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (neg-val :double)
+  (in-place :char))
+
+(cffi:defcfun ("THNN_FloatLinear_updateOutput" thnn-float-linear-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (add-buffer th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleLinear_updateOutput" thnn-double-linear-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (add-buffer th-double-tensor-ptr))
+
+(cffi:defcfun ("THNN_FloatLinear_updateGradInput" thnn-float-linear-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (weight th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleLinear_updateGradInput" thnn-double-linear-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (weight th-double-tensor-ptr))
+
+(cffi:defcfun ("THNN_FloatLinear_accGradParameters" thnn-float-linear-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (add-buffer th-float-tensor-ptr)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleLinear_accGradParameters" thnn-double-linear-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (add-buffer th-double-tensor-ptr)
+  (scale :double))
+
+;; [BUFFER] buffer
+(cffi:defcfun ("THNN_FloatLogSigmoid_updateOutput" thnn-float-log-sigmoid-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (buffer th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleLogSigmoid_updateOutput" thnn-double-log-sigmoid-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (buffer th-double-tensor-ptr))
+
+;; [OUT] grad-input
+;; [BUFFER] buffer
+(cffi:defcfun ("THNN_FloatLogSigmoid_updateGradInput"
+               thnn-float-log-sigmoid-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (buffer th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleLogSigmoid_updateGradInput"
+               thnn-double-log-sigmoid-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (buffer th-double-tensor-ptr))
+
+;; [OUT] output
+(cffi:defcfun ("THNN_FloatLogSoftMax_updateOutput" thnn-float-log-softmax-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleLogSoftMax_updateOutput" thnn-double-log-softmax-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr))
+
+;; [OUT] grad-input
+(cffi:defcfun ("THNN_FloatLogSoftMax_updateGradInput" thnn-float-log-softmax-update-grad-input)
+    :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (output th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleLogSoftMax_updateGradInput" thnn-double-log-softmax-update-grad-input)
+    :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (output th-double-tensor-ptr))
+
+(cffi:defcfun ("THNN_FloatLookupTable_accGradParameters"
+               thnn-float-lookup-table-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-long-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (count th-int-tensor-ptr)
+  (sorted th-float-tensor-ptr)
+  (indices th-int-tensor-ptr)
+  (scale-grad-by-freq :char)
+  (padding-value :int)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleLookupTable_accGradParameters"
+               thnn-double-lookup-table-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-long-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (count th-int-tensor-ptr)
+  (sorted th-double-tensor-ptr)
+  (indices th-int-tensor-ptr)
+  (scale-grad-by-freq :char)
+  (padding-value :int)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatLookupTable_renorm" thnn-float-lookup-table-renorm) :void
+  (state thnn-state-ptr)
+  (idx th-long-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (max-norm :double)
+  (norm-type :double))
+(cffi:defcfun ("THNN_DoubleLookupTable_renorm" thnn-double-lookup-table-renorm) :void
+  (state thnn-state-ptr)
+  (idx th-long-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (max-norm :double)
+  (norm-type :double))
+
+;; [OUT] output
+(cffi:defcfun ("THNN_FloatMSECriterion_updateOutput" thnn-float-mse-criterion-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (target th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+(cffi:defcfun ("THNN_DoubleMSECriterion_updateOutput" thnn-double-mse-criterion-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (target th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+
+;; [OUT] grad-input
+(cffi:defcfun ("THNN_FloatMSECriterion_updateGradInput"
+               thnn-float-mse-criterion-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (target th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+(cffi:defcfun ("THNN_DoubleMSECriterion_updateGradInput"
+               thnn-double-mse-criterion-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (target th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+
+;; [OUT] output
+(cffi:defcfun ("THNN_FloatMarginCriterion_updateOutput" thnn-float-margin-criterion-update-output)
+    :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (target th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (size-average :char)
+  (margin :double))
+(cffi:defcfun ("THNN_DoubleMarginCriterion_updateOutput" thnn-double-margin-criterion-update-output)
+    :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (target th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (size-average :char)
+  (margin :double))
+
+;; [OUT] grad-input
+(cffi:defcfun ("THNN_FloatMarginCriterion_updateGradInput"
+               thnn-float-margin-criterion-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (target th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (size-average :char)
+  (margin :double))
+(cffi:defcfun ("THNN_DoubleMarginCriterion_updateGradInput"
+               thnn-double-margin-criterion-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (target th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (size-average :char)
+  (margin :double))
+
+;; [OUT] output
+(cffi:defcfun ("THNN_FloatMultiLabelMarginCriterion_updateOutput"
+               thnn-float-multi-label-margin-criterion-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (target th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (is-target th-float-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+(cffi:defcfun ("THNN_DoubleMultiLabelMarginCriterion_updateOutput"
+               thnn-double-multi-label-margin-criterion-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (target th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (is-target th-double-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+
+;; [OUT] grad-input
+(cffi:defcfun ("THNN_FloatMultiLabelMarginCriterion_updateGradInput"
+               thnn-float-multi-label-margin-criterion-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (target th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (is-target th-float-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+(cffi:defcfun ("THNN_DoubleMultiLabelMarginCriterion_updateGradInput"
+               thnn-double-multi-label-margin-criterion-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (target th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (is-target th-double-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+
+;; [OUT] output
+(cffi:defcfun ("THNN_FloatMultiMarginCriterion_updateOutput"
+               thnn-float-multi-margin-criterion-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (target th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (size-average :char)
+  (p :int)
+  (weghts th-float-tensor-ptr)
+  (margin :double)
+  (reduce :char))
+(cffi:defcfun ("THNN_DoubleMultiMarginCriterion_updateOutput"
+               thnn-double-multi-margin-criterion-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (target th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (size-average :char)
+  (p :int)
+  (weghts th-double-tensor-ptr)
+  (margin :double)
+  (reduce :char))
+
+;; [OUT] grad-input
+(cffi:defcfun ("THNN_FloatMultiMarginCriterion_updateGradInput"
+               thnn-float-multi-margin-criterion-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (target th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (size-average :char)
+  (p :int)
+  (weights th-float-tensor-ptr)
+  (margin :double)
+  (reduce :char))
+(cffi:defcfun ("THNN_DoubleMultiMarginCriterion_updateGradInput"
+               thnn-double-multi-margin-criterion-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (target th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (size-average :char)
+  (p :int)
+  (weights th-double-tensor-ptr)
+  (margin :double)
+  (reduce :char))
+
+;; [OUT] output
+(cffi:defcfun ("THNN_FloatPReLU_updateOutput" thnn-float-p-relu-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoublePReLU_updateOutput" thnn-double-p-relu-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr))
+
+;; [OUT] grad-input
+;; [MODIFIED] grad-output
+(cffi:defcfun ("THNN_FloatPReLU_updateGradInput" thnn-float-p-relu-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (weight th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoublePReLU_updateGradInput" thnn-double-p-relu-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (weight th-double-tensor-ptr))
+
+(cffi:defcfun ("THNN_FloatPReLU_accGradParameters" thnn-float-p-relu-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (scale :double))
+(cffi:defcfun ("THNN_DoublePReLU_accGradParameters" thnn-double-p-relu-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (scale :double))
+
+;; [OUT] output
+(cffi:defcfun ("THNN_FloatRReLU_updateOutput" thnn-float-r-relu-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (noise th-float-tensor-ptr)
+  (lower :double)
+  (upper :double)
+  (train :char)
+  (inplace :char)
+  (generator th-generator-ptr))
+(cffi:defcfun ("THNN_DoubleRReLU_updateOutput" thnn-double-r-relu-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (noise th-double-tensor-ptr)
+  (lower :double)
+  (upper :double)
+  (train :char)
+  (inplace :char)
+  (generator th-generator-ptr))
+
+;; [OUT] grad-input
+(cffi:defcfun ("THNN_FloatRReLU_updateGradInput" thnn-float-r-relu-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (noise th-float-tensor-ptr)
+  (lower :double)
+  (upper :double)
+  (train :char)
+  (inplace :char))
+(cffi:defcfun ("THNN_DoubleRReLU_updateGradInput" thnn-double-r-relu-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (noise th-double-tensor-ptr)
+  (lower :double)
+  (upper :double)
+  (train :char)
+  (inplace :char))
+
+;; [BUFFER] buffer
+(cffi:defcfun ("THNN_FloatSigmoid_updateOutput" thnn-float-sigmoid-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleSigmoid_updateOutput" thnn-double-sigmoid-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr))
+
+;; [OUT] grad-input
+(cffi:defcfun ("THNN_FloatSigmoid_updateGradInput" thnn-float-sigmoid-update-grad-input) :void
+  (state thnn-state-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (output th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleSigmoid_updateGradInput" thnn-double-sigmoid-update-grad-input) :void
+  (state thnn-state-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (output th-double-tensor-ptr))
+
+(cffi:defcfun ("THNN_FloatSmoothL1Criterion_updateOutput"
+               thnn-float-smooth-l1-criterion-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (target th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+(cffi:defcfun ("THNN_DoubleSmoothL1Criterion_updateOutput"
+               thnn-double-smooth-l1-criterion-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (target th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+
+(cffi:defcfun ("THNN_FloatSmoothL1Criterion_updateGradInput"
+               thnn-float-smooth-l1-criterion-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (target th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+(cffi:defcfun ("THNN_DoubleSmoothL1Criterion_updateGradInput"
+               thnn-double-smooth-l1-criterion-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (target th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+
+(cffi:defcfun ("THNN_FloatSoftMarginCriterion_updateOutput"
+               thnn-float-softmargin-criterion-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (target th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+(cffi:defcfun ("THNN_DoubleSoftMarginCriterion_updateOutput"
+               thnn-double-softmargin-criterion-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (target th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+
+(cffi:defcfun ("THNN_FloatSoftMarginCriterion_updateGradInput"
+               thnn-float-softmargin-criterion-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (target th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+(cffi:defcfun ("THNN_DoubleSoftMarginCriterion_updateGradInput"
+               thnn-double-softmargin-criterion-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (target th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (size-average :char)
+  (reduce :char))
+
+(cffi:defcfun ("THNN_FloatSoftMax_updateOutput" thnn-float-softmax-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleSoftMax_updateOutput" thnn-double-softmax-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr))
+
+(cffi:defcfun ("THNN_FloatSoftMax_updateGradInput" thnn-float-softmax-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (output th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleSoftMax_updateGradInput" thnn-double-softmax-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (output th-double-tensor-ptr))
+
+(cffi:defcfun ("THNN_FloatSoftPlus_updateOutput" thnn-float-softplus-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (beta :double)
+  (threshold :double))
+(cffi:defcfun ("THNN_DoubleSoftPlus_updateOutput" thnn-double-softplus-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (beta :double)
+  (threshold :double))
+
+(cffi:defcfun ("THNN_FloatSoftPlus_updateGradInput" thnn-float-softplus-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (beta :double)
+  (threshold :double))
+(cffi:defcfun ("THNN_DoubleSoftPlus_updateGradInput" thnn-double-softplus-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (beta :double)
+  (threshold :double))
+
+(cffi:defcfun ("THNN_FloatSoftShrink_updateOutput" thnn-float-softshrink-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (lam :double))
+(cffi:defcfun ("THNN_DoubleSoftShrink_updateOutput" thnn-double-softshrink-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (lam :double))
+
+(cffi:defcfun ("THNN_FloatSoftShrink_updateGradInput" thnn-float-softshrink-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (lam :double))
+(cffi:defcfun ("THNN_DoubleSoftShrink_updateGradInput" thnn-double-softshrink-update-grad-input)
+    :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (lam :double))
+
+(cffi:defcfun ("THNN_FloatSparseLinear_updateOutput"
+               thnn-float-sparse-linear-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleSparseLinear_updateOutput"
+               thnn-double-sparse-linear-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr))
+
+(cffi:defcfun ("THNN_FloatSparseLinear_accGradParameters"
+               thnn-float-sparse-linear-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (weight-decay :double)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleSparseLinear_accGradParameters"
+               thnn-double-sparse-linear-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (weight-decay :double)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatSparseLinear_zeroGradParameters"
+               thnn-float-sparse-linear-zero-grad-parameters) :void
+  (state thnn-state-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (last-input th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleSparseLinear_zeroGradParameters"
+               thnn-double-sparse-linear-zero-grad-parameters) :void
+  (state thnn-state-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (last-input th-double-tensor-ptr))
+
+(cffi:defcfun ("THNN_FloatSparseLinear_updateParameters"
+               thnn-float-sparse-linear-update-parameters) :void
+  (state thnn-state-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (last-input th-float-tensor-ptr)
+  (learning-rate :double))
+(cffi:defcfun ("THNN_DoubleSparseLinear_updateParameters"
+               thnn-double-sparse-linear-update-parameters) :void
+  (state thnn-state-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (last-input th-double-tensor-ptr)
+  (learning-rate :double))
+
+(cffi:defcfun ("THNN_FloatSparseLinear_legacyUpdateOutput"
+               thnn-float-sparse-linear-legacy-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleSparseLinear_legacyUpdateOutput"
+               thnn-double-sparse-linear-legacy-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr))
+
+(cffi:defcfun ("THNN_FloatSparseLinear_legacyAccGradParameters"
+               thnn-float-sparse-linear-legacy-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (weight-decay :double)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleSparseLinear_legacyAccGradParameters"
+               thnn-double-sparse-linear-legacy-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (weight-decay :double)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatSparseLinear_legacyZeroGradParameters"
+               thnn-float-sparse-linear-legacy-zero-grad-parameters) :void
+  (state thnn-state-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (last-input th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleSparseLinear_legacyZeroGradParameters"
+               thnn-double-sparse-linear-legacy-zero-grad-parameters) :void
+  (state thnn-state-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (last-input th-double-tensor-ptr))
+
+(cffi:defcfun ("THNN_FloatSparseLinear_legacyUpdateParameters"
+               thnn-float-sparse-linear-legacy-update-parameters) :void
+  (state thnn-state-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (last-input th-float-tensor-ptr)
+  (learning-rate :double))
+(cffi:defcfun ("THNN_DoubleSparseLinear_legacyUpdateParameters"
+               thnn-double-sparse-linear-legacy-update-parameters) :void
+  (state thnn-state-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (last-input th-double-tensor-ptr)
+  (learning-rate :double))
+
+(cffi:defcfun ("THNN_FloatSpatialAdaptiveAveragePooling_updateOutput"
+               thnn-float-spatial-adaptive-average-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (owidth :int)
+  (oheight :int))
+(cffi:defcfun ("THNN_DoubleSpatialAdaptiveAveragePooling_updateOutput"
+               thnn-double-spatial-adaptive-average-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (owidth :int)
+  (oheight :int))
+
+(cffi:defcfun ("THNN_FloatSpatialAdaptiveAveragePooling_updateGradInput"
+               thnn-float-spatial-adaptive-average-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleSpatialAdaptiveAveragePooling_updateGradInput"
+               thnn-double-spatial-adaptive-average-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr))
+
+(cffi:defcfun ("THNN_FloatSpatialAdaptiveMaxPooling_updateOutput"
+               thnn-float-spatial-adaptive-max-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (owidth :int)
+  (oheight :int))
+(cffi:defcfun ("THNN_DoubleSpatialAdaptiveMaxPooling_updateOutput"
+               thnn-double-spatial-adaptive-max-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (owidth :int)
+  (oheight :int))
+
+(cffi:defcfun ("THNN_FloatSpatialAdaptiveMaxPooling_updateGradInput"
+               thnn-float-spatial-adaptive-max-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (indices th-long-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleSpatialAdaptiveMaxPooling_updateGradInput"
+               thnn-double-spatial-adaptive-max-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (indices th-long-tensor-ptr))
+
+(cffi:defcfun ("THNN_FloatSpatialAveragePooling_updateOutput"
+               thnn-float-spatial-average-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (ceil-mode :char)
+  (count-include-pad :char))
+(cffi:defcfun ("THNN_DoubleSpatialAveragePooling_updateOutput"
+               thnn-double-spatial-average-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (ceil-mode :char)
+  (count-include-pad :char))
+
+(cffi:defcfun ("THNN_FloatSpatialAveragePooling_updateGradInput"
+               thnn-float-spatial-average-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (ceil-mode :char)
+  (count-include-pad :char))
+(cffi:defcfun ("THNN_DoubleSpatialAveragePooling_updateGradInput"
+               thnn-double-spatial-average-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (ceil-mode :char)
+  (count-include-pad :char))
+
+(cffi:defcfun ("THNN_FloatSpatialClassNLLCriterion_updateOutput"
+               thnn-float-spatial-class-nll-criterion-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (target th-long-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (size-average :char)
+  (weights th-float-tensor-ptr)
+  (total-weight th-float-tensor-ptr)
+  (ignore-index :long)
+  (reduce :char))
+(cffi:defcfun ("THNN_DoubleSpatialClassNLLCriterion_updateOutput"
+               thnn-double-spatial-class-nll-criterion-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (target th-long-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (size-average :char)
+  (weights th-double-tensor-ptr)
+  (total-weight th-double-tensor-ptr)
+  (ignore-index :long)
+  (reduce :char))
+
+(cffi:defcfun ("THNN_FloatSpatialClassNLLCriterion_updateGradInput"
+               thnn-float-spatial-class-nll-criterion-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (target th-long-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (size-average :char)
+  (weight th-float-tensor-ptr)
+  (total-weight th-float-tensor-ptr)
+  (ignore-index :long)
+  (reduce :char))
+(cffi:defcfun ("THNN_DoubleSpatialClassNLLCriterion_updateGradInput"
+               thnn-double-spatial-class-nll-criterion-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (target th-long-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (size-average :char)
+  (weight th-double-tensor-ptr)
+  (total-weight th-double-tensor-ptr)
+  (ignore-index :long)
+  (reduce :char))
+
+(cffi:defcfun ("THNN_FloatSpatialConvolutionLocal_updateOutput"
+               thnn-float-spatial-convolution-local-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (fgrad-input th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (input-width :int)
+  (input-height :int)
+  (output-width :int)
+  (output-height :int))
+(cffi:defcfun ("THNN_DoubleSpatialConvolutionLocal_updateOutput"
+               thnn-double-spatial-convolution-local-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (fgrad-input th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (input-width :int)
+  (input-height :int)
+  (output-width :int)
+  (output-height :int))
+
+(cffi:defcfun ("THNN_FloatSpatialConvolutionLocal_updateGradInput"
+               thnn-float-spatial-convolution-local-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (fgrad-input th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (input-width :int)
+  (input-height :int)
+  (output-width :int)
+  (output-height :int))
+(cffi:defcfun ("THNN_DoubleSpatialConvolutionLocal_updateGradInput"
+               thnn-double-spatial-convolution-local-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (fgrad-input th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (input-width :int)
+  (input-height :int)
+  (output-width :int)
+  (output-height :int))
+
+(cffi:defcfun ("THNN_FloatSpatialConvolutionLocal_accGradParameters"
+               thnn-float-spatial-convolution-local-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (fgrad-input th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (input-width :int)
+  (input-height :int)
+  (output-width :int)
+  (output-height :int)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleSpatialConvolutionLocal_accGradParameters"
+               thnn-double-spatial-convolution-local-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (fgrad-input th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (input-width :int)
+  (input-height :int)
+  (output-width :int)
+  (output-height :int)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatSpatialConvolutionMM_updateOutput"
+               thnn-float-spatial-convolution-mm-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (fgrad-input th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int))
+(cffi:defcfun ("THNN_DoubleSpatialConvolutionMM_updateOutput"
+               thnn-double-spatial-convolution-mm-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (fgrad-input th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int))
+
+(cffi:defcfun ("THNN_FloatSpatialConvolutionMM_updateGradInput"
+               thnn-float-spatial-convolution-mm-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (fgrad-input th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int))
+(cffi:defcfun ("THNN_DoubleSpatialConvolutionMM_updateGradInput"
+               thnn-double-spatial-convolution-mm-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (fgrad-input th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int))
+
+(cffi:defcfun ("THNN_FloatSpatialConvolutionMM_accGradParameters"
+               thnn-float-spatial-convolution-mm-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (fgrad-input th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleSpatialConvolutionMM_accGradParameters"
+               thnn-double-spatial-convolution-mm-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (fgrad-input th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatSpatialConvolutionMap_updateOutput"
+               thnn-float-spatial-convolution-map-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (conn-table th-float-tensor-ptr)
+  (n-input-plane :int)
+  (n-output-plane :int)
+  (dw :int)
+  (dh :int))
+(cffi:defcfun ("THNN_DoubleSpatialConvolutionMap_updateOutput"
+               thnn-double-spatial-convolution-map-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (conn-table th-double-tensor-ptr)
+  (n-input-plane :int)
+  (n-output-plane :int)
+  (dw :int)
+  (dh :int))
+
+(cffi:defcfun ("THNN_FloatSpatialConvolutionMap_updateGradInput"
+               thnn-float-spatial-convolution-map-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (conn-table th-float-tensor-ptr)
+  (n-input-plane :int)
+  (n-output-plane :int)
+  (dw :int)
+  (dh :int))
+(cffi:defcfun ("THNN_DoubleSpatialConvolutionMap_updateGradInput"
+               thnn-double-spatial-convolution-map-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (conn-table th-double-tensor-ptr)
+  (n-input-plane :int)
+  (n-output-plane :int)
+  (dw :int)
+  (dh :int))
+
+(cffi:defcfun ("THNN_FloatSpatialConvolutionMap_accGradParameters"
+               thnn-float-spatial-convolution-map-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (conn-table th-float-tensor-ptr)
+  (n-input-plane :int)
+  (n-output-plane :int)
+  (dw :int)
+  (dh :int)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleSpatialConvolutionMap_accGradParameters"
+               thnn-double-spatial-convolution-map-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (conn-table th-double-tensor-ptr)
+  (n-input-plane :int)
+  (n-output-plane :int)
+  (dw :int)
+  (dh :int)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatSpatialDepthWiseConvolution_updateOutput"
+               thnn-float-spatial-depthwise-convolution-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (fgrad-input th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int))
+(cffi:defcfun ("THNN_DoubleSpatialDepthWiseConvolution_updateOutput"
+               thnn-double-spatial-depthwise-convolution-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (fgrad-input th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int))
+
+(cffi:defcfun ("THNN_FloatSpatialDepthWiseConvolution_updateGradInput"
+               thnn-float-spatial-depthwise-convolution-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (fgrad-input th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int))
+(cffi:defcfun ("THNN_DoubleSpatialDepthWiseConvolution_updateGradInput"
+               thnn-double-spatial-depthwise-convolution-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (fgrad-input th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int))
+
+(cffi:defcfun ("THNN_FloatSpatialDepthWiseConvolution_accGradParameters"
+               thnn-float-spatial-depthwise-convolution-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (fgrad-input th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleSpatialDepthWiseConvolution_accGradParameters"
+               thnn-double-spatial-depthwise-convolution-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (fgrad-input th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatSpatialDilatedConvolution_updateOutput"
+               thnn-float-spatial-dilated-convolution-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (columns th-float-tensor-ptr)
+  (ones th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (dilationw :int)
+  (dilationh :int))
+(cffi:defcfun ("THNN_DoubleSpatialDilatedConvolution_updateOutput"
+               thnn-double-spatial-dilated-convolution-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (columns th-double-tensor-ptr)
+  (ones th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (dilationw :int)
+  (dilationh :int))
+
+(cffi:defcfun ("THNN_FloatSpatialDilatedConvolution_updateGradInput"
+               thnn-float-spatial-dilated-convolution-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (grad-columns th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (dilationw :int)
+  (dilationh :int))
+(cffi:defcfun ("THNN_DoubleSpatialDilatedConvolution_updateGradInput"
+               thnn-double-spatial-dilated-convolution-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (grad-columns th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (dilationw :int)
+  (dilationh :int))
+
+(cffi:defcfun ("THNN_FloatSpatialDilatedConvolution_accGradParameters"
+               thnn-float-spatial-dilated-convolution-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (columns th-float-tensor-ptr)
+  (ones th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (dilationw :int)
+  (dilationh :int)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleSpatialDilatedConvolution_accGradParameters"
+               thnn-double-spatial-dilated-convolution-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (columns th-double-tensor-ptr)
+  (ones th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (dilationw :int)
+  (dilationh :int)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatSpatialDilatedMaxPooling_updateOutput"
+               thnn-float-spatial-dilated-max-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (dilationw :int)
+  (dilationh :int)
+  (ceil-mode :char))
+(cffi:defcfun ("THNN_DoubleSpatialDilatedMaxPooling_updateOutput"
+               thnn-double-spatial-dilated-max-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (dilationw :int)
+  (dilationh :int)
+  (ceil-mode :char))
+
+(cffi:defcfun ("THNN_FloatSpatialDilatedMaxPooling_updateGradInput"
+               thnn-float-spatial-dilated-max-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (dilationw :int)
+  (dilationh :int)
+  (ceil-mode :char))
+(cffi:defcfun ("THNN_DoubleSpatialDilatedMaxPooling_updateGradInput"
+               thnn-double-spatial-dilated-max-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (dilationw :int)
+  (dilationh :int)
+  (ceil-mode :char))
+
+(cffi:defcfun ("THNN_FloatSpatialFractionalMaxPooling_updateOutput"
+               thnn-float-spatial-fractional-max-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (outputw :int)
+  (outputh :int)
+  (kw :int)
+  (kh :int)
+  (indices th-long-tensor-ptr)
+  (random-samples th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleSpatialFractionalMaxPooling_updateOutput"
+               thnn-double-spatial-fractional-max-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (outputw :int)
+  (outputh :int)
+  (kw :int)
+  (kh :int)
+  (indices th-long-tensor-ptr)
+  (random-samples th-double-tensor-ptr))
+
+(cffi:defcfun ("THNN_FloatSpatialFractionalMaxPooling_updateGradInput"
+               thnn-float-spatial-fractional-max-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (outputw :int)
+  (outputh :int)
+  (kw :int)
+  (kh :int)
+  (indices th-long-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleSpatialFractionalMaxPooling_updateGradInput"
+               thnn-double-spatial-fractional-max-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (outputw :int)
+  (outputh :int)
+  (kw :int)
+  (kh :int)
+  (indices th-long-tensor-ptr))
+
+(cffi:defcfun ("THNN_FloatSpatialFullConvolutionMap_updateOutput"
+               thnn-float-spatial-full-convolution-map-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (conn-table th-float-tensor-ptr)
+  (n-input-plane :int)
+  (n-output-plane :int)
+  (dw :int)
+  (dh :int))
+(cffi:defcfun ("THNN_DoubleSpatialFullConvolutionMap_updateOutput"
+               thnn-double-spatial-full-convolution-map-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (conn-table th-double-tensor-ptr)
+  (n-input-plane :int)
+  (n-output-plane :int)
+  (dw :int)
+  (dh :int))
+
+(cffi:defcfun ("THNN_FloatSpatialFullConvolutionMap_updateGradInput"
+               thnn-float-spatial-full-convolution-map-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (conn-table th-float-tensor-ptr)
+  (n-input-plane :int)
+  (n-output-plane :int)
+  (dw :int)
+  (dh :int))
+(cffi:defcfun ("THNN_DoubleSpatialFullConvolutionMap_updateGradInput"
+               thnn-double-spatial-full-convolution-map-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (conn-table th-double-tensor-ptr)
+  (n-input-plane :int)
+  (n-output-plane :int)
+  (dw :int)
+  (dh :int))
+
+(cffi:defcfun ("THNN_FloatSpatialFullConvolutionMap_accGradParameters"
+               thnn-float-spatial-full-convolution-map-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (conn-table th-float-tensor-ptr)
+  (n-input-plane :int)
+  (n-output-plane :int)
+  (dw :int)
+  (dh :int)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleSpatialFullConvolutionMap_accGradParameters"
+               thnn-double-spatial-full-convolution-map-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (conn-table th-double-tensor-ptr)
+  (n-input-plane :int)
+  (n-output-plane :int)
+  (dw :int)
+  (dh :int)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatSpatialFullConvolution_updateOutput"
+               thnn-float-spatial-full-convolution-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (columns th-float-tensor-ptr)
+  (ones th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (adjw :int)
+  (adjh :int))
+(cffi:defcfun ("THNN_DoubleSpatialFullConvolution_updateOutput"
+               thnn-double-spatial-full-convolution-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (columns th-double-tensor-ptr)
+  (ones th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (adjw :int)
+  (adjh :int))
+
+(cffi:defcfun ("THNN_FloatSpatialFullConvolution_updateGradInput"
+               thnn-float-spatial-full-convolution-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (columns th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (adjw :int)
+  (adjh :int))
+(cffi:defcfun ("THNN_DoubleSpatialFullConvolution_updateGradInput"
+               thnn-double-spatial-full-convolution-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (columns th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (adjw :int)
+  (adjh :int))
+
+(cffi:defcfun ("THNN_FloatSpatialFullConvolution_accGradParameters"
+               thnn-float-spatial-full-convolution-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (columns th-float-tensor-ptr)
+  (ones th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (adjw :int)
+  (adjh :int)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleSpatialFullConvolution_accGradParameters"
+               thnn-double-spatial-full-convolution-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (columns th-double-tensor-ptr)
+  (ones th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (adjw :int)
+  (adjh :int)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatSpatialFullDilatedConvolution_updateOutput"
+               thnn-float-spatial-full-dilated-convolution-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (columns th-float-tensor-ptr)
+  (ones th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (dilationw :int)
+  (dilationh :int)
+  (adjw :int)
+  (adjh :int))
+(cffi:defcfun ("THNN_DoubleSpatialFullDilatedConvolution_updateOutput"
+               thnn-double-spatial-full-dilated-convolution-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (columns th-double-tensor-ptr)
+  (ones th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (dilationw :int)
+  (dilationh :int)
+  (adjw :int)
+  (adjh :int))
+
+(cffi:defcfun ("THNN_FloatSpatialFullDilatedConvolution_updateGradInput"
+               thnn-float-spatial-full-dilated-convolution-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (columns th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (dilationw :int)
+  (dilationh :int)
+  (adjw :int)
+  (adjh :int))
+(cffi:defcfun ("THNN_DoubleSpatialFullDilatedConvolution_updateGradInput"
+               thnn-double-spatial-full-dilated-convolution-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (columns th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (dilationw :int)
+  (dilationh :int)
+  (adjw :int)
+  (adjh :int))
+
+(cffi:defcfun ("THNN_FloatSpatialFullDilatedConvolution_accGradParameters"
+               thnn-float-spatial-full-dilated-convolution-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (columns th-float-tensor-ptr)
+  (ones th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (dilationw :int)
+  (dilationh :int)
+  (adjw :int)
+  (adjh :int)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleSpatialFullDilatedConvolution_accGradParameters"
+               thnn-double-spatial-full-dilated-convolution-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (columns th-double-tensor-ptr)
+  (ones th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (dilationw :int)
+  (dilationh :int)
+  (adjw :int)
+  (adjh :int)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatSpatialGridSamplerBilinear_updateOutput"
+               thnn-float-spatial-grid-sampler-bilinear-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grid th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (padding-mode :int))
+(cffi:defcfun ("THNN_DoubleSpatialGridSamplerBilinear_updateOutput"
+               thnn-double-spatial-grid-sampler-bilinear-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grid th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (padding-mode :int))
+
+(cffi:defcfun ("THNN_FloatSpatialGridSamplerBilinear_updateGradInput"
+               thnn-float-spatial-grid-sampler-bilinear-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (grid th-float-tensor-ptr)
+  (grad-grid th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (padding-mode :int))
+(cffi:defcfun ("THNN_DoubleSpatialGridSamplerBilinear_updateGradInput"
+               thnn-double-spatial-grid-sampler-bilinear-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (grid th-double-tensor-ptr)
+  (grad-grid th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (padding-mode :int))
+
+(cffi:defcfun ("THNN_FloatSpatialMaxPooling_updateOutput"
+               thnn-float-spatial-max-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (ceil-mode :char))
+(cffi:defcfun ("THNN_DoubleSpatialMaxPooling_updateOutput"
+               thnn-double-spatial-max-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (ceil-mode :char))
+
+(cffi:defcfun ("THNN_FloatSpatialMaxPooling_updateGradInput"
+               thnn-float-spatial-max-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (ceil-mode :char))
+(cffi:defcfun ("THNN_DoubleSpatialMaxPooling_updateGradInput"
+               thnn-double-spatial-max-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (ceil-mode :char))
+
+(cffi:defcfun ("THNN_FloatSpatialMaxUnpooling_updateOutput"
+               thnn-float-spatial-max-unpooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (ow :int)
+  (oh :int))
+(cffi:defcfun ("THNN_DoubleSpatialMaxUnpooling_updateOutput"
+               thnn-double-spatial-max-unpooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (ow :int)
+  (oh :int))
+
+(cffi:defcfun ("THNN_FloatSpatialMaxUnpooling_updateGradInput"
+               thnn-float-spatial-max-unpooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (ow :int)
+  (oh :int))
+(cffi:defcfun ("THNN_DoubleSpatialMaxUnpooling_updateGradInput"
+               thnn-double-spatial-max-unpooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (ow :int)
+  (oh :int))
+
+(cffi:defcfun ("THNN_FloatSpatialReflectionPadding_updateOutput"
+               thnn-float-spatial-reflection-padding-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (padl :int)
+  (padr :int)
+  (padt :int)
+  (padb :int))
+(cffi:defcfun ("THNN_DoubleSpatialReflectionPadding_updateOutput"
+               thnn-double-spatial-reflection-padding-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (padl :int)
+  (padr :int)
+  (padt :int)
+  (padb :int))
+
+(cffi:defcfun ("THNN_FloatSpatialReflectionPadding_updateGradInput"
+               thnn-float-spatial-reflection-padding-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (padl :int)
+  (padr :int)
+  (padt :int)
+  (padb :int))
+(cffi:defcfun ("THNN_DoubleSpatialReflectionPadding_updateGradInput"
+               thnn-double-spatial-reflection-padding-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (padl :int)
+  (padr :int)
+  (padt :int)
+  (padb :int))
+
+(cffi:defcfun ("THNN_FloatSpatialReplicationPadding_updateOutput"
+               thnn-float-spatial-replication-padding-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (padl :int)
+  (padr :int)
+  (padt :int)
+  (padb :int))
+(cffi:defcfun ("THNN_DoubleSpatialReplicationPadding_updateOutput"
+               thnn-double-spatial-replication-padding-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (padl :int)
+  (padr :int)
+  (padt :int)
+  (padb :int))
+
+(cffi:defcfun ("THNN_FloatSpatialReplicationPadding_updateGradInput"
+               thnn-float-spatial-replication-padding-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (padl :int)
+  (padr :int)
+  (padt :int)
+  (padb :int))
+(cffi:defcfun ("THNN_DoubleSpatialReplicationPadding_updateGradInput"
+               thnn-double-spatial-replication-padding-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (padl :int)
+  (padr :int)
+  (padt :int)
+  (padb :int))
+
+(cffi:defcfun ("THNN_FloatSpatialSubSampling_updateOutput"
+               thnn-float-spatial-subsampling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int))
+(cffi:defcfun ("THNN_DoubleSpatialSubSampling_updateOutput"
+               thnn-double-spatial-subsampling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int))
+
+(cffi:defcfun ("THNN_FloatSpatialSubSampling_updateGradInput"
+               thnn-float-spatial-subsampling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int))
+(cffi:defcfun ("THNN_DoubleSpatialSubSampling_updateGradInput"
+               thnn-double-spatial-subsampling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int))
+
+(cffi:defcfun ("THNN_FloatSpatialSubSampling_accGradParameters"
+               thnn-float-spatial-subsampling-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleSpatialSubSampling_accGradParameters"
+               thnn-double-spatial-subsampling-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatSpatialUpSamplingBilinear_updateOutput"
+               thnn-float-spatial-upsampling-bilinear-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (oh :int)
+  (ow :int)
+  (align-corners :char))
+(cffi:defcfun ("THNN_DoubleSpatialUpSamplingBilinear_updateOutput"
+               thnn-double-spatial-upsampling-bilinear-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (oh :int)
+  (ow :int)
+  (align-corners :char))
+
+(cffi:defcfun ("THNN_FloatSpatialUpSamplingBilinear_updateGradInput"
+               thnn-float-spatial-upsampling-bilinear-update-grad-input) :void
+  (state thnn-state-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (szb :int)
+  (szc :int)
+  (szh :int)
+  (szw :int)
+  (oh :int)
+  (ow :int)
+  (align-corners :char))
+(cffi:defcfun ("THNN_DoubleSpatialUpSamplingBilinear_updateGradInput"
+               thnn-double-spatial-upsampling-bilinear-update-grad-input) :void
+  (state thnn-state-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (szb :int)
+  (szc :int)
+  (szh :int)
+  (szw :int)
+  (oh :int)
+  (ow :int)
+  (align-corners :char))
+
+(cffi:defcfun ("THNN_FloatSpatialUpSamplingNearest_updateOutput"
+               thnn-float-spatial-upsampling-nearest-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (scale-factor :int))
+(cffi:defcfun ("THNN_DoubleSpatialUpSamplingNearest_updateOutput"
+               thnn-double-spatial-upsampling-nearest-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (scale-factor :int))
+
+(cffi:defcfun ("THNN_FloatSpatialUpSamplingNearest_updateGradInput"
+               thnn-float-spatial-upsampling-nearest-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (scale-factor :int))
+(cffi:defcfun ("THNN_DoubleSpatialUpSamplingNearest_updateGradInput"
+               thnn-double-spatial-upsampling-nearest-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (scale-factor :int))
+
+(cffi:defcfun ("THNN_FloatSqrt_updateOutput" thnn-float-sqrt-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (eps :double))
+(cffi:defcfun ("THNN_DoubleSqrt_updateOutput" thnn-double-sqrt-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (eps :double))
+
+(cffi:defcfun ("THNN_FloatSqrt_updateGradInput" thnn-float-sqrt-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (output th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleSqrt_updateGradInput" thnn-double-sqrt-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (output th-double-tensor-ptr))
+
+(cffi:defcfun ("THNN_FloatSquare_updateOutput" thnn-float-square-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleSquare_updateOutput" thnn-double-square-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr))
+
+(cffi:defcfun ("THNN_FloatSquare_updateGradInput" thnn-float-square-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleSquare_updateGradInput" thnn-double-square-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr))
+
+(cffi:defcfun ("THNN_FloatTanh_updateOutput" thnn-float-tanh-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleTanh_updateOutput" thnn-double-tanh-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr))
+
+(cffi:defcfun ("THNN_FloatTanh_updateGradInput" thnn-float-tanh-update-grad-input) :void
+  (state thnn-state-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (output th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleTanh_updateGradInput" thnn-double-tanh-update-grad-input) :void
+  (state thnn-state-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (output th-double-tensor-ptr))
+
+(cffi:defcfun ("THNN_FloatTemporalConvolution_updateOutput"
+               thnn-float-temporal-convolution-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (kw :int)
+  (dw :int)
+  (input-frame-size :int)
+  (output-frame-size :int))
+(cffi:defcfun ("THNN_DoubleTemporalConvolution_updateOutput"
+               thnn-double-temporal-convolution-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (kw :int)
+  (dw :int)
+  (input-frame-size :int)
+  (output-frame-size :int))
+
+(cffi:defcfun ("THNN_FloatTemporalConvolution_updateGradInput"
+               thnn-float-temporal-convolution-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (kw :int)
+  (dw :int))
+(cffi:defcfun ("THNN_DoubleTemporalConvolution_updateGradInput"
+               thnn-double-temporal-convolution-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (kw :int)
+  (dw :int))
+
+(cffi:defcfun ("THNN_FloatTemporalConvolution_accGradParameters"
+               thnn-float-temporal-convolution-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (kw :int)
+  (dw :int)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleTemporalConvolution_accGradParameters"
+               thnn-double-temporal-convolution-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (kw :int)
+  (dw :int)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatTemporalMaxPooling_updateOutput"
+               thnn-float-temporal-max-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (kw :int)
+  (dw :int))
+(cffi:defcfun ("THNN_DoubleTemporalMaxPooling_updateOutput"
+               thnn-double-temporal-max-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (kw :int)
+  (dw :int))
+
+(cffi:defcfun ("THNN_FloatTemporalMaxPooling_updateGradInput"
+               thnn-float-temporal-max-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (kw :int)
+  (dw :int))
+(cffi:defcfun ("THNN_DoubleTemporalMaxPooling_updateGradInput"
+               thnn-double-temporal-max-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (kw :int)
+  (dw :int))
+
+(cffi:defcfun ("THNN_FloatTemporalReflectionPadding_updateOutput"
+               thnn-float-temporal-reflection-padding-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (pl :int)
+  (pr :int))
+(cffi:defcfun ("THNN_DoubleTemporalReflectionPadding_updateOutput"
+               thnn-double-temporal-reflection-padding-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (pl :int)
+  (pr :int))
+
+(cffi:defcfun ("THNN_FloatTemporalReflectionPadding_updateGradInput"
+               thnn-float-temporal-reflection-padding-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (pl :int)
+  (pr :int))
+(cffi:defcfun ("THNN_DoubleTemporalReflectionPadding_updateGradInput"
+               thnn-double-temporal-reflection-padding-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (pl :int)
+  (pr :int))
+
+(cffi:defcfun ("THNN_FloatTemporalReplicationPadding_updateOutput"
+               thnn-float-temporal-replication-padding-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (pl :int)
+  (pr :int))
+(cffi:defcfun ("THNN_DoubleTemporalReplicationPadding_updateOutput"
+               thnn-double-temporal-replication-padding-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (pl :int)
+  (pr :int))
+
+(cffi:defcfun ("THNN_FloatTemporalReplicationPadding_updateGradInput"
+               thnn-float-temporal-replication-padding-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (pl :int)
+  (pr :int))
+(cffi:defcfun ("THNN_DoubleTemporalReplicationPadding_updateGradInput"
+               thnn-double-temporal-replication-padding-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (pl :int)
+  (pr :int))
+
+(cffi:defcfun ("THNN_FloatTemporalRowConvolution_updateOutput"
+               thnn-float-temporal-row-convolution-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (fgrad-input th-float-tensor-ptr)
+  (kw :int)
+  (dw :int)
+  (padw :int)
+  (feat-first :char))
+(cffi:defcfun ("THNN_DoubleTemporalRowConvolution_updateOutput"
+               thnn-double-temporal-row-convolution-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (fgrad-input th-double-tensor-ptr)
+  (kw :int)
+  (dw :int)
+  (padw :int)
+  (feat-first :char))
+
+(cffi:defcfun ("THNN_FloatTemporalRowConvolution_updateGradInput"
+               thnn-float-temporal-row-convolution-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (fgrad-input th-float-tensor-ptr)
+  (kw :int)
+  (dw :int)
+  (padw :int)
+  (feat-first :char))
+(cffi:defcfun ("THNN_DoubleTemporalRowConvolution_updateGradInput"
+               thnn-double-temporal-row-convolution-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (fgrad-input th-double-tensor-ptr)
+  (kw :int)
+  (dw :int)
+  (padw :int)
+  (feat-first :char))
+
+(cffi:defcfun ("THNN_FloatTemporalRowConvolution_accGradParameters"
+               thnn-float-temporal-row-convolution-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (fgrad-input th-float-tensor-ptr)
+  (kw :int)
+  (dw :int)
+  (padw :int)
+  (feat-first :char)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleTemporalRowConvolution_accGradParameters"
+               thnn-double-temporal-row-convolution-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (fgrad-input th-double-tensor-ptr)
+  (kw :int)
+  (dw :int)
+  (padw :int)
+  (feat-first :char)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatTemporalSubSampling_updateOutput"
+               thnn-float-temporal-subsampling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (kw :int)
+  (dw :int)
+  (input-frame-size :int))
+(cffi:defcfun ("THNN_DoubleTemporalSubSampling_updateOutput"
+               thnn-double-temporal-subsampling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (kw :int)
+  (dw :int)
+  (input-frame-size :int))
+
+(cffi:defcfun ("THNN_FloatTemporalSubSampling_updateGradInput"
+               thnn-float-temporal-subsampling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (kw :int)
+  (dw :int))
+(cffi:defcfun ("THNN_DoubleTemporalSubSampling_updateGradInput"
+               thnn-double-temporal-subsampling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (kw :int)
+  (dw :int))
+
+(cffi:defcfun ("THNN_FloatTemporalSubSampling_accGradParameters"
+               thnn-float-temporal-subsampling-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (kw :int)
+  (dw :int)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleTemporalSubSampling_accGradParameters"
+               thnn-double-temporal-subsampling-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (kw :int)
+  (dw :int)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatTemporalUpSamplingLinear_updateOutput"
+               thnn-float-temporal-upsampling-linear-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (ow :int)
+  (align-corners :char))
+(cffi:defcfun ("THNN_DoubleTemporalUpSamplingLinear_updateOutput"
+               thnn-double-temporal-upsampling-linear-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (ow :int)
+  (align-corners :char))
+
+(cffi:defcfun ("THNN_FloatTemporalUpSamplingLinear_updateGradInput"
+               thnn-float-temporal-upsampling-linear-update-grad-input) :void
+  (state thnn-state-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (ib :int)
+  (ic :int)
+  (iw :int)
+  (ow :int)
+  (align-corners :char))
+(cffi:defcfun ("THNN_DoubleTemporalUpSamplingLinear_updateGradInput"
+               thnn-double-temporal-upsampling-linear-update-grad-input) :void
+  (state thnn-state-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (ib :int)
+  (ic :int)
+  (iw :int)
+  (ow :int)
+  (align-corners :char))
+
+(cffi:defcfun ("THNN_FloatTemporalUpSamplingNearest_updateOutput"
+               thnn-float-temporal-upsampling-nearest-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (scale-factor :int))
+(cffi:defcfun ("THNN_DoubleTemporalUpSamplingNearest_updateOutput"
+               thnn-double-temporal-upsampling-nearest-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (scale-factor :int))
+
+(cffi:defcfun ("THNN_FloatTemporalUpSamplingNearest_updateGradInput"
+               thnn-float-temporal-upsampling-nearest-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (scale-factor :int))
+(cffi:defcfun ("THNN_DoubleTemporalUpSamplingNearest_updateGradInput"
+               thnn-double-temporal-upsampling-nearest-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (scale-factor :int))
+
+(cffi:defcfun ("THNN_FloatThreshold_updateOutput" thnn-float-threshold-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (threshold :double)
+  (val :double)
+  (in-place :char))
+(cffi:defcfun ("THNN_DoubleThreshold_updateOutput" thnn-double-threshold-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (threshold :double)
+  (val :double)
+  (in-place :char))
+
+(cffi:defcfun ("THNN_FloatThreshold_updateGradInput" thnn-float-threshold-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (threshold :double)
+  (val :double)
+  (in-place :char))
+(cffi:defcfun ("THNN_DoubleThreshold_updateGradInput" thnn-double-threshold-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (threshold :double)
+  (val :double)
+  (in-place :char))
+
+(cffi:defcfun ("THNN_Floatunfolded_acc" thnn-float-unfolded-acc) :void
+  (finput th-float-tensor-ptr)
+  (input th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (n-input-plane :int)
+  (iw :int)
+  (ih :int)
+  (ow :int)
+  (oh :int))
+(cffi:defcfun ("THNN_Doubleunfolded_acc" thnn-double-unfolded-acc) :void
+  (finput th-double-tensor-ptr)
+  (input th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (n-input-plane :int)
+  (iw :int)
+  (ih :int)
+  (ow :int)
+  (oh :int))
+
+(cffi:defcfun ("THNN_Floatunfolded_copy" thnn-float-unfolded-copy) :void
+  (finput th-float-tensor-ptr)
+  (input th-float-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (n-input-plane :int)
+  (iw :int)
+  (ih :int)
+  (ow :int)
+  (oh :int))
+(cffi:defcfun ("THNN_Doubleunfolded_copy" thnn-double-unfolded-copy) :void
+  (finput th-double-tensor-ptr)
+  (input th-double-tensor-ptr)
+  (kw :int)
+  (kh :int)
+  (dw :int)
+  (dh :int)
+  (padw :int)
+  (padh :int)
+  (n-input-plane :int)
+  (iw :int)
+  (ih :int)
+  (ow :int)
+  (oh :int))
+
+(cffi:defcfun ("THNN_FloatVolumetricAveragePooling_updateOutput"
+               thnn-float-volumetric-average-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (ceil-mode :char)
+  (count-include-pad :char))
+(cffi:defcfun ("THNN_DoubleVolumetricAveragePooling_updateOutput"
+               thnn-double-volumetric-average-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (ceil-mode :char)
+  (count-include-pad :char))
+
+(cffi:defcfun ("THNN_FloatVolumetricAveragePooling_updateGradInput"
+               thnn-float-volumetric-average-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (ceil-mode :char)
+  (count-include-pad :char))
+(cffi:defcfun ("THNN_DoubleVolumetricAveragePooling_updateGradInput"
+               thnn-double-volumetric-average-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (ceil-mode :char)
+  (count-include-pad :char))
+
+(cffi:defcfun ("THNN_FloatVolumetricConvolution_updateOutput"
+               thnn-float-volumetric-convolution-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (fgrad-input th-float-tensor-ptr)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (pt :int)
+  (pw :int)
+  (ph :int))
+(cffi:defcfun ("THNN_DoubleVolumetricConvolution_updateOutput"
+               thnn-double-volumetric-convolution-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (fgrad-input th-double-tensor-ptr)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (pt :int)
+  (pw :int)
+  (ph :int))
+
+(cffi:defcfun ("THNN_FloatVolumetricConvolution_updateGradInput"
+               thnn-float-volumetric-convolution-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (pt :int)
+  (pw :int)
+  (ph :int))
+(cffi:defcfun ("THNN_DoubleVolumetricConvolution_updateGradInput"
+               thnn-double-volumetric-convolution-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (pt :int)
+  (pw :int)
+  (ph :int))
+
+(cffi:defcfun ("THNN_FloatVolumetricConvolution_accGradParameters"
+               thnn-float-volumetric-convolution-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (fgrad-input th-float-tensor-ptr)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (pt :int)
+  (pw :int)
+  (ph :int)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleVolumetricConvolution_accGradParameters"
+               thnn-double-volumetric-convolution-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (fgrad-input th-double-tensor-ptr)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (pt :int)
+  (pw :int)
+  (ph :int)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatVolumetricConvolutionMM_updateOutput"
+               thnn-float-volumetric-convolution-mm-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (pt :int)
+  (pw :int)
+  (ph :int))
+(cffi:defcfun ("THNN_DoubleVolumetricConvolutionMM_updateOutput"
+               thnn-double-volumetric-convolution-mm-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (pt :int)
+  (pw :int)
+  (ph :int))
+
+(cffi:defcfun ("THNN_FloatVolumetricConvolutionMM_updateGradInput"
+               thnn-float-volumetric-convolution-mm-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (fgrad-input th-float-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (pt :int)
+  (pw :int)
+  (ph :int))
+(cffi:defcfun ("THNN_DoubleVolumetricConvolutionMM_updateGradInput"
+               thnn-double-volumetric-convolution-mm-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (fgrad-input th-double-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (pt :int)
+  (pw :int)
+  (ph :int))
+
+(cffi:defcfun ("THNN_FloatVolumetricConvolutionMM_accGradParameters"
+               thnn-float-volumetric-convolution-mm-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (pt :int)
+  (pw :int)
+  (ph :int)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleVolumetricConvolutionMM_accGradParameters"
+               thnn-double-volumetric-convolution-mm-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (pt :int)
+  (pw :int)
+  (ph :int)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatVolumetricDilatedConvolution_updateOutput"
+               thnn-float-volumetric-dilated-convolution-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (columns th-float-tensor-ptr)
+  (ones th-float-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (dilationt :int)
+  (dilationw :int)
+  (dilationh :int))
+(cffi:defcfun ("THNN_DoubleVolumetricDilatedConvolution_updateOutput"
+               thnn-double-volumetric-dilated-convolution-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (columns th-double-tensor-ptr)
+  (ones th-double-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (dilationt :int)
+  (dilationw :int)
+  (dilationh :int))
+
+(cffi:defcfun ("THNN_FloatVolumetricDilatedConvolution_updateGradInput"
+               thnn-float-volumetric-dilated-convolution-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (columns th-float-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (dilationt :int)
+  (dilationw :int)
+  (dilationh :int))
+(cffi:defcfun ("THNN_DoubleVolumetricDilatedConvolution_updateGradInput"
+               thnn-double-volumetric-dilated-convolution-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (columns th-double-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (dilationt :int)
+  (dilationw :int)
+  (dilationh :int))
+
+(cffi:defcfun ("THNN_FloatVolumetricDilatedConvolution_accGradParameters"
+               thnn-float-volumetric-dilated-convolution-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (columns th-float-tensor-ptr)
+  (ones th-float-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (dilationt :int)
+  (dilationw :int)
+  (dilationh :int)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleVolumetricDilatedConvolution_accGradParameters"
+               thnn-double-volumetric-dilated-convolution-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (columns th-double-tensor-ptr)
+  (ones th-double-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (dilationt :int)
+  (dilationw :int)
+  (dilationh :int)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatVolumetricDilatedMaxPooling_updateOutput"
+               thnn-float-volumetric-dilated-max-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (dilationt :int)
+  (dilationw :int)
+  (dilationh :int)
+  (ceil-mode :char))
+(cffi:defcfun ("THNN_DoubleVolumetricDilatedMaxPooling_updateOutput"
+               thnn-double-volumetric-dilated-max-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (dilationt :int)
+  (dilationw :int)
+  (dilationh :int)
+  (ceil-mode :char))
+
+(cffi:defcfun ("THNN_FloatVolumetricDilatedMaxPooling_updateGradInput"
+               thnn-float-volumetric-dilated-max-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (dilationt :int)
+  (dilationw :int)
+  (dilationh :int)
+  (ceil-mode :char))
+(cffi:defcfun ("THNN_DoubleVolumetricDilatedMaxPooling_updateGradInput"
+               thnn-double-volumetric-dilated-max-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (dilationt :int)
+  (dilationw :int)
+  (dilationh :int)
+  (ceil-mode :char))
+
+(cffi:defcfun ("THNN_FloatVolumetricFractionalMaxPooling_updateOutput"
+               thnn-float-volumetric-fractional-max-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (outputt :int)
+  (outputw :int)
+  (outputh :int)
+  (pool-size-t :int)
+  (pool-size-w :int)
+  (pool-size-h :int)
+  (indices th-long-tensor-ptr)
+  (random-samples th-float-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleVolumetricFractionalMaxPooling_updateOutput"
+               thnn-double-volumetric-fractional-max-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (outputt :int)
+  (outputw :int)
+  (outputh :int)
+  (pool-size-t :int)
+  (pool-size-w :int)
+  (pool-size-h :int)
+  (indices th-long-tensor-ptr)
+  (random-samples th-double-tensor-ptr))
+
+(cffi:defcfun ("THNN_FloatVolumetricFractionalMaxPooling_updateGradInput"
+               thnn-float-volumetric-fractional-max-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (outputt :int)
+  (outputw :int)
+  (outputh :int)
+  (pool-size-t :int)
+  (pool-size-w :int)
+  (pool-size-h :int)
+  (indices th-long-tensor-ptr))
+(cffi:defcfun ("THNN_DoubleVolumetricFractionalMaxPooling_updateGradInput"
+               thnn-double-volumetric-fractional-max-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (outputt :int)
+  (outputw :int)
+  (outputh :int)
+  (pool-size-t :int)
+  (pool-size-w :int)
+  (pool-size-h :int)
+  (indices th-long-tensor-ptr))
+
+(cffi:defcfun ("THNN_FloatVolumetricFullConvolution_updateOutput"
+               thnn-float-volumetric-full-convolution-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (fgrad-input th-float-tensor-ptr)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (adjt :int)
+  (adjw :int)
+  (adjh :int))
+(cffi:defcfun ("THNN_DoubleVolumetricFullConvolution_updateOutput"
+               thnn-double-volumetric-full-convolution-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (fgrad-input th-double-tensor-ptr)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (adjt :int)
+  (adjw :int)
+  (adjh :int))
+
+(cffi:defcfun ("THNN_FloatVolumetricFullConvolution_updateGradInput"
+               thnn-float-volumetric-full-convolution-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (fgrad-input th-float-tensor-ptr)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (adjt :int)
+  (adjw :int)
+  (adjh :int))
+(cffi:defcfun ("THNN_DoubleVolumetricFullConvolution_updateGradInput"
+               thnn-double-volumetric-full-convolution-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (fgrad-input th-double-tensor-ptr)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (adjt :int)
+  (adjw :int)
+  (adjh :int))
+
+(cffi:defcfun ("THNN_FloatVolumetricFullConvolution_accGradParameters"
+               thnn-float-volumetric-full-convolution-update-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (fgrad-input th-float-tensor-ptr)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (adjt :int)
+  (adjw :int)
+  (adjh :int)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleVolumetricFullConvolution_accGradParameters"
+               thnn-double-volumetric-full-convolution-update-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (fgrad-input th-double-tensor-ptr)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (adjt :int)
+  (adjw :int)
+  (adjh :int)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatVolumetricFullDilatedConvolution_updateOutput"
+               thnn-float-volumetric-full-dilated-convolution-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (bias th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (fgrad-input th-float-tensor-ptr)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (dilationt :int)
+  (dilationw :int)
+  (dilationh :int)
+  (adjt :int)
+  (adjw :int)
+  (adjh :int))
+(cffi:defcfun ("THNN_DoubleVolumetricFullDilatedConvolution_updateOutput"
+               thnn-double-volumetric-full-dilated-convolution-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (bias th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (fgrad-input th-double-tensor-ptr)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (dilationt :int)
+  (dilationw :int)
+  (dilationh :int)
+  (adjt :int)
+  (adjw :int)
+  (adjh :int))
+
+(cffi:defcfun ("THNN_FloatVolumetricFullDilatedConvolution_updateGradInput"
+               thnn-float-volumetric-full-dilated-convolution-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (weight th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (grad-finput th-float-tensor-ptr)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (dilationt :int)
+  (dilationw :int)
+  (dilationh :int)
+  (adjt :int)
+  (adjw :int)
+  (adjh :int))
+(cffi:defcfun ("THNN_DoubleVolumetricFullDilatedConvolution_updateGradInput"
+               thnn-double-volumetric-full-dilated-convolution-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (weight th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (grad-finput th-double-tensor-ptr)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (dilationt :int)
+  (dilationw :int)
+  (dilationh :int)
+  (adjt :int)
+  (adjw :int)
+  (adjh :int))
+
+(cffi:defcfun ("THNN_FloatVolumetricFullDilatedConvolution_accGradParameters"
+               thnn-float-volumetric-full-dilated-convolution-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-weight th-float-tensor-ptr)
+  (grad-bias th-float-tensor-ptr)
+  (finput th-float-tensor-ptr)
+  (fgrad-input th-float-tensor-ptr)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (dilationt :int)
+  (dilationw :int)
+  (dilationh :int)
+  (adjt :int)
+  (adjw :int)
+  (adjh :int)
+  (scale :double))
+(cffi:defcfun ("THNN_DoubleVolumetricFullDilatedConvolution_accGradParameters"
+               thnn-double-volumetric-full-dilated-convolution-acc-grad-parameters) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-weight th-double-tensor-ptr)
+  (grad-bias th-double-tensor-ptr)
+  (finput th-double-tensor-ptr)
+  (fgrad-input th-double-tensor-ptr)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (dilationt :int)
+  (dilationw :int)
+  (dilationh :int)
+  (adjt :int)
+  (adjw :int)
+  (adjh :int)
+  (scale :double))
+
+(cffi:defcfun ("THNN_FloatVolumetricMaxPooling_updateOutput"
+               thnn-float-volumetric-max-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (ceil-mode :char))
+(cffi:defcfun ("THNN_DoubleVolumetricMaxPooling_updateOutput"
+               thnn-double-volumetric-max-pooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (ceil-mode :char))
+
+(cffi:defcfun ("THNN_FloatVolumetricMaxPooling_updateGradInput"
+               thnn-float-volumetric-max-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (ceil-mode :char))
+(cffi:defcfun ("THNN_DoubleVolumetricMaxPooling_updateGradInput"
+               thnn-double-volumetric-max-pooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (kt :int)
+  (kw :int)
+  (kh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (padt :int)
+  (padw :int)
+  (padh :int)
+  (ceil-mode :char))
+
+(cffi:defcfun ("THNN_FloatVolumetricMaxUnpooling_updateOutput"
+               thnn-float-volumetric-max-unpooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (ot :int)
+  (ow :int)
+  (oh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (pt :int)
+  (pw :int)
+  (ph :int))
+(cffi:defcfun ("THNN_DoubleVolumetricMaxUnpooling_updateOutput"
+               thnn-double-volumetric-max-unpooling-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (ot :int)
+  (ow :int)
+  (oh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (pt :int)
+  (pw :int)
+  (ph :int))
+
+(cffi:defcfun ("THNN_FloatVolumetricMaxUnpooling_updateGradInput"
+               thnn-float-volumetric-max-unpooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (ot :int)
+  (ow :int)
+  (oh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (pt :int)
+  (pw :int)
+  (ph :int))
+(cffi:defcfun ("THNN_DoubleVolumetricMaxUnpooling_updateGradInput"
+               thnn-double-volumetric-max-unpooling-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (indices th-long-tensor-ptr)
+  (ot :int)
+  (ow :int)
+  (oh :int)
+  (dt :int)
+  (dw :int)
+  (dh :int)
+  (pt :int)
+  (pw :int)
+  (ph :int))
+
+(cffi:defcfun ("THNN_FloatVolumetricReplicationPadding_updateOutput"
+               thnn-float-volumetric-replication-padding-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (padl :int)
+  (padr :int)
+  (padt :int)
+  (padb :int)
+  (padf :int)
+  (padk :int))
+(cffi:defcfun ("THNN_DoubleVolumetricReplicationPadding_updateOutput"
+               thnn-double-volumetric-replication-padding-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (padl :int)
+  (padr :int)
+  (padt :int)
+  (padb :int)
+  (padf :int)
+  (padk :int))
+
+(cffi:defcfun ("THNN_FloatVolumetricReplicationPadding_updateGradInput"
+               thnn-float-volumetric-replication-padding-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (padl :int)
+  (padr :int)
+  (padt :int)
+  (padb :int)
+  (padf :int)
+  (padk :int))
+(cffi:defcfun ("THNN_DoubleVolumetricReplicationPadding_updateGradInput"
+               thnn-double-volumetric-replication-padding-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (padl :int)
+  (padr :int)
+  (padt :int)
+  (padb :int)
+  (padf :int)
+  (padk :int))
+
+(cffi:defcfun ("THNN_FloatVolumetricUpSamplingNearest_updateOutput"
+               thnn-float-volumetric-upsampling-nearest-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (scale-factor :int))
+(cffi:defcfun ("THNN_DoubleVolumetricUpSamplingNearest_updateOutput"
+               thnn-double-volumetric-upsampling-nearest-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (scale-factor :int))
+
+(cffi:defcfun ("THNN_FloatVolumetricUpSamplingNearest_updateGradInput"
+               thnn-float-volumetric-upsampling-nearest-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (scale-factor :int))
+(cffi:defcfun ("THNN_DoubleVolumetricUpSamplingNearest_updateGradInput"
+               thnn-double-volumetric-upsampling-nearest-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (scale-factor :int))
+
+(cffi:defcfun ("THNN_FloatVolumetricUpSamplingTrilinear_updateOutput"
+               thnn-float-volumetric-upsampling-trilinear-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (od :int)
+  (oh :int)
+  (ow :int)
+  (align-corners :char))
+(cffi:defcfun ("THNN_DoubleVolumetricUpSamplingTrilinear_updateOutput"
+               thnn-double-volumetric-upsampling-trilinear-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (od :int)
+  (oh :int)
+  (ow :int)
+  (align-corners :char))
+
+(cffi:defcfun ("THNN_FloatVolumetricUpSamplingTrilinear_updateGradInput"
+               thnn-float-volumetric-upsampling-trilinear-update-grad-input) :void
+  (state thnn-state-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (ib :int)
+  (ic :int)
+  (it :int)
+  (ih :int)
+  (iw :int)
+  (od :int)
+  (oh :int)
+  (ow :int)
+  (align-corners :char))
+(cffi:defcfun ("THNN_DoubleVolumetricUpSamplingTrilinear_updateGradInput"
+               thnn-double-volumetric-upsampling-trilinear-update-grad-input) :void
+  (state thnn-state-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (ib :int)
+  (ic :int)
+  (it :int)
+  (ih :int)
+  (iw :int)
+  (od :int)
+  (oh :int)
+  (ow :int)
+  (align-corners :char))

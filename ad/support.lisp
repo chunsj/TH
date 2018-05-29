@@ -1,0 +1,83 @@
+(in-package :th)
+
+(defgeneric $relu (x))
+(defgeneric $softmax (x))
+
+(defgeneric $bce (a b))
+(defgeneric $mse (a b))
+(defgeneric $cee (a b))
+
+(defmethod $bce ((a tensor) (b tensor))
+  ($dot ($add ($mul ($log a) b)
+              ($mul ($log ($sub ($one a) a))
+                    ($sub ($one b) b)))
+        ($neg ($one a))))
+
+(defmethod $bce ((a node) (b node))
+  ($dot ($add ($mul ($log a) b)
+              ($mul ($log ($sub ($one a) a))
+                    ($sub ($one b) b)))
+        ($neg ($one a))))
+
+(defmethod $mse ((a tensor) (b tensor))
+  (let ((nbatch (if (eq 1 ($ndim a)) 1 ($size a 0))))
+    (* (/ 0.5 nbatch) ($sum ($expt ($sub a b) 2)))))
+
+(defmethod $mse ((a node) (b node))
+  (let ((nbatch ($constant (if (eq 1 ($ndim a)) 1 ($size a 0)))))
+    ($mul ($mul ($constant 0.5) nbatch) ($sum ($expt ($sub a b) ($constant 2))))))
+
+(defmethod $cee ((a tensor) (b tensor))
+  (let ((tiny 1D-7)
+        (nbatch (if (eq 1 ($ndim a)) 1 ($size a 0))))
+    (/ (- ($sum ($mul! ($log ($add a tiny)) b))) nbatch)))
+
+(defmethod $cee ((a node) (b node))
+  (let ((tiny ($broadcast ($constant 1D-7) a))
+        (nbatch ($constant (if (eq 1 ($ndim a)) 1 ($size a 0)))))
+    ($div ($neg ($sum ($mul ($log ($add a tiny)) b))) nbatch)))
+
+(defmethod $relu ((x tensor)) ($mul! (tensor ($gt x 0)) x))
+(defmethod $relu ((x number)) (max 0 x))
+
+(defun relu-backprop (node gradient)
+  (setf ($gradient node) gradient)
+  (setf ($children node) (when ($children node)
+                           (let ((x ($c0 node)))
+                             (list (if ($gradientp x)
+                                       ($bp! x ($mul! (tensor ($gt ($data node) 0)) gradient))
+                                       x)))))
+  node)
+
+(defmethod $relu ((x node))
+  (let ((result (node ($relu ($data x)))))
+    (setf ($children result) (list x))
+    (setf ($gradientp result) ($gradientp x))
+    (setf ($bpfn result) #'relu-backprop)
+    result))
+
+(defmethod $softmax ((x tensor))
+  (let ((output ($empty x)))
+    (nn-softmax-update-output x output)
+    output))
+
+(defun dsoftmax (input output gradient)
+  (let ((dinput ($empty input)))
+    (nn-softmax-update-grad-input input gradient dinput output)
+    dinput))
+
+(defun softmax-backprop (node gradient)
+  (setf ($gradient node) gradient)
+  (setf ($children node) (when ($children node)
+                           (let ((x ($c0 node)))
+                             (list (if ($gradientp x)
+                                       ($bp! x (dsoftmax ($data x) ($data node) gradient))
+                                       x)))))
+  node)
+
+(defmethod $softmax ((x node))
+  (let ((result (node ($softmax ($data x)))))
+    (setf ($children result) (list x))
+    (setf ($gradientp result) ($gradientp x))
+    (setf ($bpfn result) #'softmax-backprop)
+    result))

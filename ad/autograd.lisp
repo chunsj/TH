@@ -15,7 +15,9 @@
    (children :initform nil :accessor $children)
    (backward-function :initform nil :accessor $bpfn)))
 
-(defmethod print-object ((node node) stream) (print-object ($data node) stream))
+(defmethod print-object ((node node) stream)
+  (format stream "[NODE] ")
+  (print-object ($data node) stream))
 
 (defun $c0 (node) ($0 ($children node)))
 (defun $c1 (node) ($1 ($children node)))
@@ -66,6 +68,10 @@
 (defmethod $one ((x node)) (node ($one ($data x)) ($gradientp x)))
 (defmethod $fill ((x node) value) (node ($fill ($data x) value) ($gradientp x)))
 (defmethod $ndim ((x node)) ($ndim ($data x)))
+(defmethod $count ((x node)) ($count ($data x)))
+
+(defmethod $ ((x node) location &rest others-and-default)
+  (apply #'$ ($data x) location others-and-default))
 
 (defmethod $zero! ((x node))
   ($zero! ($data x))

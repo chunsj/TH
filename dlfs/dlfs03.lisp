@@ -88,20 +88,12 @@
 
 ;; softmax
 (let* ((a (tensor '(0.3 2.9 4.0)))
-       (exp-a ($exp a))
-       (sum-exp-a ($sum exp-a))
-       (y ($/ exp-a sum-exp-a)))
-  (print exp-a)
-  (print sum-exp-a)
-  (print y))
-
-(let ((a (tensor '(1010 1000 990))))
-  (print ($softmax a)))
-
-(let* ((a (tensor '(0.3 2.9 4.0)))
        (y ($softmax a)))
   (print y)
   (print ($sum y)))
+
+(let ((a (tensor '(1010 1000 990))))
+  (print ($softmax a)))
 
 ;; mnist data loading - takes time, so load and set
 (defparameter *mnist* (read-mnist-data))
@@ -148,8 +140,7 @@
   (print r)
   (print ($cee y r)))
 
-;; XXX this crashes system
-;; need to test mnist-loss function with simpler network like xor
+;; backprop testing
 (let* ((sels '(0 1 2 3 4))
        (x (-> *mnist*
               ($ :train-images)
@@ -160,27 +151,11 @@
               ($index 0 sels)
               ($constant)))
        (lr 0.01))
-  (loop :for i :from 0 :below 1
+  (loop :for i :from 0 :below 100
         :do (let* ((y* (mnist-predict x))
                    (loss (mnist-loss y* y)))
               (print loss)
               ($bp! loss)
-              ($gd! loss lr))))
-
-
-(let* ((y ($constant '(1 1 1)))
-       (y* ($variable '(0.1 0.1 0.1)))
-       (out ($bce y* y)))
-  (print out)
-  ;;($bp! out)
-  )
-
-;; XXX check sum and else, manual derivation might be good choice
-(let* ((y ($constant '(1 1 1)))
-       (y* ($variable '(0.1 0.1 0.1)))
-       (out ($sum ($sub y y*))))
-  (print out)
-  ($bp! out 1)
-  (print ($gradient y*))
-  ($gd! out 0.9)
-  (print y*))
+              ($gd! loss lr)))
+  (print y)
+  (print ($round ($data (mnist-predict x)))))
