@@ -175,6 +175,7 @@
   ;;($bp! out)
   )
 
+;; XXX check sum and else, manual derivation might be good choice
 (let* ((y ($constant '(1 1 1)))
        (y* ($variable '(0.1 0.1 0.1)))
        (out ($sum ($sub y y*))))
