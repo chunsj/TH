@@ -1,3 +1,8 @@
 (in-package :th)
 
-(cffi:load-foreign-library "libATen.dylib")
+(defun load-native-library ()
+  (let ((stype (software-type)))
+    (cond ((string-equal "Darwin" stype) (cffi:load-foreign-library "libATen.dylib"))
+          ((string-equal "Linux" stype) (cffi:load-foreign-library "/usr/local/lib/libATen.so")))))
+
+(load-native-library)
