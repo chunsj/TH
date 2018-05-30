@@ -93,7 +93,7 @@
         :for loss = (mnist-loss y* y)
         :do (progn
               (when (zerop (mod i 5))
-                (print (list i loss))
+                (print (list i ($data loss)))
                 (finish-output)
                 (sb-ext::gc :full t))
               ($bp! loss)
