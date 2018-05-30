@@ -50,7 +50,7 @@
            (ndata (car metadata))
            (nrow (cadr metadata))
            (ncol (caddr metadata))
-           (m (tensor ndata (* nrow ncol))))
+           (m (zeros ndata (* nrow ncol))))
       (when verbose
         (format T "~%TYPE: ~A NBYTES: ~A~%" dtype nbytes)
         (format T "NDATA: ~A NROW: ~A NCOL: ~A~%" ndata nrow ncol))
@@ -69,7 +69,7 @@
            (nbytes (cadr tagdata))
            (metadata (loop :repeat (read-byte str) :collect (read-nbyte 4 str)))
            (ndata (car metadata))
-           (m (if onehot (tensor ndata 10) (tensor ndata 1))))
+           (m (if onehot (zeros ndata 10) (zeros ndata 1))))
       (when verbose
         (format T "~%TYPE: ~A NBYTES: ~A~%" dtype nbytes)
         (format T "NDATA: ~A~%" ndata))

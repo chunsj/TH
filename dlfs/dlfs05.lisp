@@ -69,6 +69,17 @@
   ($fread ($data *b3*) f)
   ($fclose f))
 
+;; running loaded model with test data
+(let ((xt ($ *mnist* :test-images))
+      (yt ($ *mnist* :test-labels)))
+  (print ($count (loop :for i :from 0 :below ($size xt 0)
+                       :for xi = ($index xt 0 (list i))
+                       :for yi = ($index yt 0 (list i))
+                       :for yi* = ($data (mnist-predict ($constant xi)))
+                       :for err = ($sum ($abs ($sub ($round yi*) yi)))
+                       :when (> err 0)
+                         :collect i))))
+
 ;; full training
 (let* ((x (-> *mnist*
               ($ :train-images)
