@@ -3,6 +3,8 @@
 (defgeneric $gd! (node &optional learning-rate) (:documentation "Executes gradient descent."))
 (defgeneric $mgd! (node vs &optional learning-rate momentum)
   (:documentation "Executes momentum."))
+(defgeneric $agd! (node hs &optional learning-rate)
+  (:documentation "Executes adagrad."))
 
 (defmethod $gd! ((object t) &optional (learning-rate 0.01)) (declare (ignore learning-rate)))
 
@@ -26,7 +28,22 @@
     (unless (null grv)
       (let ((v ($ vs node 0)))
         (setf v ($add ($mul! v momentum) ($mul grv (- learning-rate))))
-        (setf ($data node) ($add data v))
+        (setf ($data node) ($add! data v))
         (setf ($ vs node) v)))
     (loop :for c :in children :do ($mgd! c vs learning-rate momentum))
+    node))
+
+(defmethod $agd! ((object t) hs &optional (learning-rate 0.01))
+  (declare (ignore hs learning-rate)))
+
+(defmethod $agd! ((node node) hs &optional (learning-rate 0.01))
+  (let ((children ($children node))
+        (data ($data node))
+        (grv ($gradient node)))
+    (unless (null grv)
+      (let ((h ($ hs node 1E-8)))
+        (setf h ($add! ($mul grv grv) h))
+        (setf ($data node) ($add! data ($mul! ($div (- learning-rate) ($sqrt h)) grv)))
+        (setf ($ hs node) h)))
+    (loop :for c :in children :do ($agd! c hs learning-rate))
     node))
