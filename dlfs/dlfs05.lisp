@@ -104,7 +104,7 @@
               ($gd! loss lr)
               (when (zerop (mod i 50))
                 (let ((wrcnt (mnist-test-stat)))
-                  (print (list i wrcnt ($size xt 0)))
+                  (print (list i wrcnt 10000))
                   (when (< wrcnt pwrcnt)
                     (setf pwrcnt wrcnt)
                     (print "Saving weights...")
