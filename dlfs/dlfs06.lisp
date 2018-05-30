@@ -127,7 +127,8 @@
               (print (list i ($data loss)))
               (finish-output)
               ($bp! loss)
-              ($mgd! loss vs lr a)))
+              ($mgd! loss vs lr a)
+              (sb-ext:gc :full t)))
   (sb-ext:gc :full t))
 
 (let* ((x (-> *mnist*
@@ -146,5 +147,6 @@
               (print (list i ($data loss)))
               (finish-output)
               ($bp! loss)
-              ($agd! loss hs lr)))
+              ($agd! loss hs lr)
+              (sb-ext:gc :full t)))
   (sb-ext:gc :full t))
