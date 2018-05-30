@@ -41,6 +41,7 @@
                (:module nn :components ((:file "ffi")
                                         (:file "nn")))
                (:module ad :components ((:file "autograd")
+                                        (:file "gd")
                                         (:file "operator")
                                         (:file "function")
                                         (:file "support")

@@ -1,7 +1,6 @@
 (in-package :th)
 
 (defgeneric $bp! (node &optional gradient) (:documentation "Executes backward error propagation."))
-(defgeneric $gd! (node &optional learning-rate) (:documentation "Executes gradient descent."))
 
 (defgeneric $variable (object) (:documentation "Returns variable node."))
 (defgeneric $constant (object) (:documentation "Returns constant node."))
@@ -51,18 +50,6 @@
 (defmethod $constant ((data t)) (node data nil))
 
 (defmethod $bp! ((node node) &optional (gradient 1)) (funcall ($bpfn node) node gradient))
-
-(defmethod $gd! ((gradient node) &optional (learning-rate 0.01))
-  (let ((children ($children gradient))
-        (data ($data gradient))
-        (grv ($gradient gradient)))
-    (cond ((null grv) nil)
-          ((numberp grv) (setf ($data gradient) (- data (* grv learning-rate))))
-          (t ($axpy! (- learning-rate) grv ($data gradient))))
-    (loop :for c :in children :do ($gd! c learning-rate))
-    gradient))
-
-(defmethod $gd! ((object t) &optional (learning-rate 0.01)) (declare (ignore learning-rate)))
 
 (defmethod $zero ((x node)) (node ($zero ($data x)) ($gradientp x)))
 (defmethod $one ((x node)) (node ($one ($data x)) ($gradientp x)))

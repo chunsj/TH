@@ -337,6 +337,7 @@
            #:$krows
            #:$kcols
            #:$gd!
+           #:$mgd!
            #:$bce
            #:$cee
            #:$mse

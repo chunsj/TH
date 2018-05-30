@@ -1,0 +1,32 @@
+(in-package :th)
+
+(defgeneric $gd! (node &optional learning-rate) (:documentation "Executes gradient descent."))
+(defgeneric $mgd! (node vs &optional learning-rate momentum)
+  (:documentation "Executes momentum."))
+
+(defmethod $gd! ((object t) &optional (learning-rate 0.01)) (declare (ignore learning-rate)))
+
+(defmethod $gd! ((node node) &optional (learning-rate 0.01))
+  (let ((children ($children node))
+        (data ($data node))
+        (grv ($gradient node)))
+    (cond ((null grv) nil)
+          ((numberp grv) (setf ($data node) (- data (* grv learning-rate))))
+          (t ($axpy! (- learning-rate) grv data)))
+    (loop :for c :in children :do ($gd! c learning-rate))
+    node))
+
+(defmethod $mgd! ((object t) vs &optional (learning-rate 0.01) (momentum 0.9))
+  (declare (ignore vs learning-rate momentum)))
+
+(defmethod $mgd! ((node node) vs &optional (learning-rate 0.01) (momentum 0.9))
+  (let ((children ($children node))
+        (data ($data node))
+        (grv ($gradient node)))
+    (unless (null grv)
+      (let ((v ($ vs node 0)))
+        (setf v ($add ($mul! v momentum) ($mul grv (- learning-rate))))
+        (setf ($data node) ($add data v))
+        (setf ($ vs node) v)))
+    (loop :for c :in children :do ($mgd! c vs learning-rate momentum))
+    node))

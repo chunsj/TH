@@ -305,6 +305,27 @@
                 (l2 ($sigmoid ($xwpb l1 w2 b2))))
            l2)))
 
+;; momentum
+(let* ((w1 ($variable (rndn 2 3)))
+       (w2 ($variable (rndn 3 1)))
+       (b1 ($variable (ones 3)))
+       (b2 ($variable (ones 1)))
+       (o1 ($constant (ones 4)))
+       (X ($constant '((0 0) (0 1) (1 0) (1 1))))
+       (Y ($constant '(0 1 1 0)))
+       (vs #{}))
+  (loop :for i :from 0 :below 1000
+        :do (let* ((l1 ($tanh ($xwpb X w1 b1 o1)))
+                   (l2 ($sigmoid ($xwpb l1 w2 b2 o1)))
+                   (d ($sub l2 Y))
+                   (out ($dot d d)))
+              ($bp! out)
+              (when (zerop (mod i 100)) (print ($data out)))
+              ($mgd! out vs 0.5)))
+  (print (let* ((l1 ($tanh ($xwpb X w1 b1)))
+                (l2 ($sigmoid ($xwpb l1 w2 b2))))
+           l2)))
+
 (defun fwd (input weight) ($sigmoid! ($@ input weight)))
 (defun dwb (delta output) ($* delta output ($- 1 output)))
 
