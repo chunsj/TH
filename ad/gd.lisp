@@ -27,7 +27,7 @@
         (grv ($gradient node)))
     (unless (null grv)
       (let ((v ($ vs node 0)))
-        (setf v ($add ($mul! v momentum) ($mul grv (- learning-rate))))
+        (setf v ($add! ($mul grv (- learning-rate)) ($mul! v momentum)))
         (setf ($data node) ($add! data v))
         (setf ($ vs node) v)))
     (loop :for c :in children :do ($mgd! c vs learning-rate momentum))
