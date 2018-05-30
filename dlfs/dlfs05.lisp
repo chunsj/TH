@@ -91,7 +91,7 @@
               ($ :train-labels)
               ($constant)))
        (lr 1.4)
-       (pwrcnt 555))
+       (pwrcnt 526))
   (loop :for i :from 1 :to 1000
         :for y* = (mnist-predict x)
         :for loss = (mnist-loss y* y)
