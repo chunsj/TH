@@ -18,12 +18,20 @@
 (defparameter *w3* ($variable (rndn 100 10)))
 (defparameter *b3* ($variable (zeros 10)))
 
-(defun mnist-reset-parameters ()
+(defun mnist-reset-parameters-xavier ()
   (setf *w1* ($variable ($div (rndn 784 50) ($sqrt 784))))
   (setf *b1* ($variable (zeros 50)))
   (setf *w2* ($variable ($div (rndn 50 100) ($sqrt 50))))
   (setf *b2* ($variable (zeros 100)))
   (setf *w3* ($variable ($div (rndn 100 10) ($sqrt 100))))
+  (setf *b3* ($variable (zeros 10))))
+
+(defun mnist-reset-parameters-he ()
+  (setf *w1* ($variable ($div (rndn 784 50) ($sqrt (/ 784 2)))))
+  (setf *b1* ($variable (zeros 50)))
+  (setf *w2* ($variable ($div (rndn 50 100) ($sqrt (/ 50 2)))))
+  (setf *b2* ($variable (zeros 100)))
+  (setf *w3* ($variable ($div (rndn 100 10) ($sqrt (/ 100 2)))))
   (setf *b3* ($variable (zeros 10))))
 
 (defun mnist-predict (x)
@@ -32,6 +40,15 @@
       ($sigmoid)
       ($xwpb *w2* *b2*)
       ($sigmoid)
+      ($xwpb *w3* *b3*)
+      ($softmax)))
+
+(defun mnist-predict-relu (x)
+  (-> x
+      ($xwpb *w1* *b1*)
+      ($relu)
+      ($xwpb *w2* *b2*)
+      ($relu)
       ($xwpb *w3* *b3*)
       ($softmax)))
 
@@ -69,13 +86,25 @@
 ;; read from file
 (mnist-read-weights)
 
-;; running loaded model with test data
+;; code test
 (let ((xt ($ *mnist* :test-images))
       (yt ($ *mnist* :test-labels)))
+  (mnist-reset-parameters-xavier)
   (print ($count (loop :for i :from 0 :below ($size xt 0)
                        :for xi = ($index xt 0 (list i))
                        :for yi = ($index yt 0 (list i))
                        :for yi* = ($data (mnist-predict ($constant xi)))
+                       :for err = ($sum ($abs ($sub ($round yi*) yi)))
+                       :when (> err 0)
+                         :collect i))))
+
+(let ((xt ($ *mnist* :test-images))
+      (yt ($ *mnist* :test-labels)))
+  (mnist-reset-parameters-he)
+  (print ($count (loop :for i :from 0 :below ($size xt 0)
+                       :for xi = ($index xt 0 (list i))
+                       :for yi = ($index yt 0 (list i))
+                       :for yi* = ($data (mnist-predict-relu ($constant xi)))
                        :for err = ($sum ($abs ($sub ($round yi*) yi)))
                        :when (> err 0)
                          :collect i))))
@@ -91,6 +120,17 @@
                   :when (> err 0)
                     :collect i))))
 
+(defun mnist-test-stat-relu ()
+  (let ((xt ($ *mnist* :test-images))
+        (yt ($ *mnist* :test-labels)))
+    ($count (loop :for i :from 0 :below ($size xt 0)
+                  :for xi = ($index xt 0 (list i))
+                  :for yi = ($index yt 0 (list i))
+                  :for yi* = ($data (mnist-predict-relu ($constant xi)))
+                  :for err = ($sum ($abs ($sub ($round yi*) yi)))
+                  :when (> err 0)
+                    :collect i))))
+
 ;; compare sgd vs others
 (let* ((x (-> *mnist*
               ($ :train-images)
@@ -99,7 +139,7 @@
               ($ :train-labels)
               ($constant)))
        (lr 0.01))
-  (mnist-reset-parameters)
+  (mnist-reset-parameters-xavier)
   (loop :for i :from 1 :to 10
         :for y* = (mnist-predict x)
         :for loss = (mnist-loss y* y)
@@ -119,7 +159,7 @@
               ($constant)))
        (lr 0.01)
        (a 0.9))
-  (mnist-reset-parameters)
+  (mnist-reset-parameters-xavier)
   (loop :for i :from 1 :to 10
         :for y* = (mnist-predict x)
         :for loss = (mnist-loss y* y)
@@ -138,9 +178,68 @@
               ($ :train-labels)
               ($constant)))
        (lr 0.01))
-  (mnist-reset-parameters)
+  (mnist-reset-parameters-xavier)
   (loop :for i :from 1 :to 10
         :for y* = (mnist-predict x)
+        :for loss = (mnist-loss y* y)
+        :do (progn
+              (print (list i ($data loss)))
+              (finish-output)
+              ($bp! loss)
+              ($agd! loss lr)
+              (gcf)))
+  (gcf))
+
+;; relu model comparison
+(let* ((x (-> *mnist*
+              ($ :train-images)
+              ($constant)))
+       (y (-> *mnist*
+              ($ :train-labels)
+              ($constant)))
+       (lr 0.01))
+  (mnist-reset-parameters-he)
+  (loop :for i :from 1 :to 10
+        :for y* = (mnist-predict-relu x)
+        :for loss = (mnist-loss y* y)
+        :do (progn
+              (print (list i ($data loss)))
+              (finish-output)
+              ($bp! loss)
+              ($gd! loss lr)
+              (gcf)))
+  (gcf))
+
+(let* ((x (-> *mnist*
+              ($ :train-images)
+              ($constant)))
+       (y (-> *mnist*
+              ($ :train-labels)
+              ($constant)))
+       (lr 0.01)
+       (a 0.9))
+  (mnist-reset-parameters-he)
+  (loop :for i :from 1 :to 10
+        :for y* = (mnist-predict-relu x)
+        :for loss = (mnist-loss y* y)
+        :do (progn
+              (print (list i ($data loss)))
+              (finish-output)
+              ($bp! loss)
+              ($mgd! loss lr a)
+              (gcf)))
+  (gcf))
+
+(let* ((x (-> *mnist*
+              ($ :train-images)
+              ($constant)))
+       (y (-> *mnist*
+              ($ :train-labels)
+              ($constant)))
+       (lr 0.01))
+  (mnist-reset-parameters-he)
+  (loop :for i :from 1 :to 10
+        :for y* = (mnist-predict-relu x)
         :for loss = (mnist-loss y* y)
         :do (progn
               (print (list i ($data loss)))
