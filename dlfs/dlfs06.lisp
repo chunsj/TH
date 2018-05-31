@@ -107,8 +107,9 @@
               (print (list i ($data loss)))
               (finish-output)
               ($bp! loss)
-              ($gd! loss lr)))
-  (sb-ext:gc :full t))
+              ($gd! loss lr)
+              (gcf)))
+  (gcf))
 
 (let* ((x (-> *mnist*
               ($ :train-images)
@@ -128,8 +129,8 @@
               (finish-output)
               ($bp! loss)
               ($mgd! loss vs lr a)
-              (sb-ext:gc :full t)))
-  (sb-ext:gc :full t))
+              (gcf)))
+  (gcf))
 
 (let* ((x (-> *mnist*
               ($ :train-images)
@@ -148,5 +149,5 @@
               (finish-output)
               ($bp! loss)
               ($agd! loss hs lr)
-              (sb-ext:gc :full t)))
-  (sb-ext:gc :full t))
+              (gcf)))
+  (gcf))
