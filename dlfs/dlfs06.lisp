@@ -19,11 +19,11 @@
 (defparameter *b3* ($variable (zeros 10)))
 
 (defun mnist-reset-parameters ()
-  (setf *w1* ($variable (rndn 784 50)))
+  (setf *w1* ($variable ($div (rndn 784 50) ($sqrt 784))))
   (setf *b1* ($variable (zeros 50)))
-  (setf *w2* ($variable (rndn 50 100)))
+  (setf *w2* ($variable ($div (rndn 50 100) ($sqrt 50))))
   (setf *b2* ($variable (zeros 100)))
-  (setf *w3* ($variable (rndn 100 10)))
+  (setf *w3* ($variable ($div (rndn 100 10) ($sqrt 100))))
   (setf *b3* ($variable (zeros 10))))
 
 (defun mnist-predict (x)
@@ -98,7 +98,7 @@
        (y (-> *mnist*
               ($ :train-labels)
               ($constant)))
-       (lr 0.02))
+       (lr 0.01))
   (mnist-reset-parameters)
   (loop :for i :from 1 :to 10
         :for y* = (mnist-predict x)
@@ -117,7 +117,7 @@
        (y (-> *mnist*
               ($ :train-labels)
               ($constant)))
-       (lr 0.02)
+       (lr 0.01)
        (a 0.9))
   (mnist-reset-parameters)
   (loop :for i :from 1 :to 10
@@ -137,7 +137,7 @@
        (y (-> *mnist*
               ($ :train-labels)
               ($constant)))
-       (lr 0.02))
+       (lr 0.01))
   (mnist-reset-parameters)
   (loop :for i :from 1 :to 10
         :for y* = (mnist-predict x)
