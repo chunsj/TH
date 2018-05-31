@@ -312,8 +312,7 @@
        (b2 ($variable (ones 1)))
        (o1 ($constant (ones 4)))
        (X ($constant '((0 0) (0 1) (1 0) (1 1))))
-       (Y ($constant '(0 1 1 0)))
-       (vs #{}))
+       (Y ($constant '(0 1 1 0))))
   (loop :for i :from 0 :below 1000
         :do (let* ((l1 ($tanh ($xwpb X w1 b1 o1)))
                    (l2 ($sigmoid ($xwpb l1 w2 b2 o1)))
@@ -321,7 +320,7 @@
                    (out ($dot d d)))
               ($bp! out)
               (when (zerop (mod i 100)) (print ($data out)))
-              ($mgd! out vs 0.2)))
+              ($mgd! out 0.2)))
   (print (let* ((l1 ($tanh ($xwpb X w1 b1)))
                 (l2 ($sigmoid ($xwpb l1 w2 b2))))
            l2)))

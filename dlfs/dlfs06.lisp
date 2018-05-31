@@ -117,7 +117,6 @@
        (y (-> *mnist*
               ($ :train-labels)
               ($constant)))
-       (vs #{})
        (lr 0.02)
        (a 0.9))
   (mnist-reset-parameters)
@@ -128,7 +127,7 @@
               (print (list i ($data loss)))
               (finish-output)
               ($bp! loss)
-              ($mgd! loss vs lr a)
+              ($mgd! loss lr a)
               (gcf)))
   (gcf))
 
@@ -138,7 +137,6 @@
        (y (-> *mnist*
               ($ :train-labels)
               ($constant)))
-       (hs #{})
        (lr 0.02))
   (mnist-reset-parameters)
   (loop :for i :from 1 :to 10
@@ -148,6 +146,6 @@
               (print (list i ($data loss)))
               (finish-output)
               ($bp! loss)
-              ($agd! loss hs lr)
+              ($agd! loss lr)
               (gcf)))
   (gcf))

@@ -12,7 +12,8 @@
    (gradient :initform nil :accessor $gradient)
    (need-gradient-p :initform nil :accessor $gradientp)
    (children :initform nil :accessor $children)
-   (backward-function :initform nil :accessor $bpfn)))
+   (backward-function :initform nil :accessor $bpfn)
+   (attrs :initform #{} :accessor $attrs)))
 
 (defmethod print-object ((node node) stream)
   (format stream "[NODE] ")
