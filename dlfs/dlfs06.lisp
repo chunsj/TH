@@ -289,7 +289,7 @@
               ($constant)))
        (lr 0.01))
   (mnist-reset-parameters-he)
-  (loop :for i :from 1 :to 10
+  (loop :for i :from 1 :to 50
         :for y* = (mnist-predict-relu x)
         :for loss = (mnist-loss y* y)
         :do (progn
@@ -300,6 +300,17 @@
               (gcf)))
   (gcf))
 
+(let ((xt ($ *mnist* :test-images))
+      (yt ($ *mnist* :test-labels)))
+  (print ($count (loop :for i :from 0 :below ($size xt 0)
+                       :for xi = ($index xt 0 (list i))
+                       :for yi = ($index yt 0 (list i))
+                       :for yi* = ($data (mnist-predict-relu ($constant xi)))
+                       :for err = ($sum ($abs ($sub ($round yi*) yi)))
+                       :when (> err 0)
+                         :collect i))))
+
+
 ;; batch normalization
 (let* ((x (-> *mnist*
               ($ :train-images)
@@ -309,7 +320,7 @@
               ($constant)))
        (lr 0.01))
   (mnist-reset-parameters-bn)
-  (loop :for i :from 1 :to 10
+  (loop :for i :from 1 :to 50
         :for y* = (mnist-predict-bn x)
         :for loss = (mnist-loss y* y)
         :do (progn
@@ -319,3 +330,16 @@
               ($agd! loss lr)
               (gcf)))
   (gcf))
+
+(let ((xt ($ *mnist* :test-images))
+      (yt ($ *mnist* :test-labels)))
+  (print ($count (loop :for i :from 0 :below ($size xt 0)
+                       :for xi = ($index xt 0 (list i))
+                       :for yi = ($index yt 0 (list i))
+                       :for yi* = ($data (mnist-predict-bn ($constant xi) nil))
+                       :for err = ($sum ($abs ($sub ($round yi*) yi)))
+                       :when (> err 0)
+                         :collect i))))
+
+(print *m1*)
+(print ($mean ($xwpb ($ *mnist* :train-images) ($data *w1*) ($data *b1*)) 0))
