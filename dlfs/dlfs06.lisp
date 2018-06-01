@@ -10,6 +10,18 @@
 (defparameter *mnist* (read-mnist-data))
 (print *mnist*)
 
+(defparameter *mnist-train-image-batches*
+  (loop :for i :from 0 :below 6
+        :for rng = (loop :for k :from (* i 10000) :below (* (1+ i) 10000)
+                         :collect k)
+        :collect ($contiguous! ($index ($ *mnist* :train-images) 0 rng))))
+
+(defparameter *mnist-train-label-batches*
+  (loop :for i :from 0 :below 6
+        :for rng = (loop :for k :from (* i 10000) :below (* (1+ i) 10000)
+                         :collect k)
+        :collect ($contiguous! ($index ($ *mnist* :train-labels) 0 rng))))
+
 ;; network parameters
 (defparameter *w1* ($variable (rndn 784 50)))
 (defparameter *b1* ($variable (zeros 50)))
@@ -91,6 +103,33 @@
       ($relu)
       ($xwpb *w3* *b3*)
       ($softmax)))
+
+(defun mnist-predict-bn (x &optional (trainp t))
+  (let ((l1 nil)
+        (l2 nil))
+    (setf l1 (-> x
+                 ($xwpb *w1* *b1*)))
+    (setf *m1* ($mean l1 0))
+    (setf *v1* ($mean ($expt ($sub l1 ($vv ($constant (ones ($size l1 0)))
+                                           *m1*))
+                             ($constant 2))
+                      0))
+    (setf l1 (-> l1
+                 ($bnorm *g1* *e1* *m1* *v1* trainp)
+                 ($relu)))
+    (setf l2 (-> l1
+                 ($xwpb *w2* *b2*)))
+    (setf *m2* ($mean l2 0))
+    (setf *v2* ($mean ($expt ($sub l2 ($vv ($constant (ones ($size l2 0)))
+                                           *m2*))
+                             ($constant 2))
+                      0))
+    (setf l2 (-> l2
+                 ($bnorm *g2* *e2* *m2* *v2* trainp)
+                 ($relu)))
+    (-> l2
+        ($xwpb *w3* *b3*)
+        ($softmax))))
 
 (defun mnist-loss (prediction trueth) ($cee prediction trueth))
 
@@ -289,7 +328,7 @@
               ($constant)))
        (lr 0.01))
   (mnist-reset-parameters-he)
-  (loop :for i :from 1 :to 50
+  (loop :for i :from 1 :to 10
         :for y* = (mnist-predict-relu x)
         :for loss = (mnist-loss y* y)
         :do (progn
@@ -320,7 +359,7 @@
               ($constant)))
        (lr 0.01))
   (mnist-reset-parameters-bn)
-  (loop :for i :from 1 :to 50
+  (loop :for i :from 1 :to 10
         :for y* = (mnist-predict-bn x)
         :for loss = (mnist-loss y* y)
         :do (progn
@@ -329,6 +368,22 @@
               ($bp! loss)
               ($agd! loss lr)
               (gcf)))
+  (gcf))
+
+(let ((lr 0.01))
+  (mnist-reset-parameters-bn)
+  (loop :for i :from 1 :to 10
+        :do (loop :for k :from 0 :below ($count *mnist-train-image-batches*)
+                  :for x = ($constant ($ *mnist-train-image-batches* k))
+                  :for y = ($constant ($ *mnist-train-label-batches* k))
+                  :for y* = (mnist-predict-bn x)
+                  :for loss = (mnist-loss y* y)
+                  :do (progn
+                        (print (list i ($data loss)))
+                        (finish-output)
+                        ($bp! loss)
+                        ($agd! loss lr)
+                        (gcf))))
   (gcf))
 
 (let ((xt ($ *mnist* :test-images))

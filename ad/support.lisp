@@ -140,8 +140,6 @@
     (when (and trainp (not (eq nx 1)))
       (let* ((mx ($mean x 0))
              (vx ($var x 0)))
-        ;;($add! ($mul! mean (- 1 momentum)) ($mul! mx momentum))
-        ;;($add! ($mul! var (- 1 momentum)) ($mul! vx momentum))
         ($mul! mx momentum)
         ($mul! vx momentum)
         ($mul! mean (- 1 momentum))
@@ -159,7 +157,7 @@
 
 (defmethod $bnorm ((x node) (gamma node) (beta node) (mean node) (var node)
                    &optional (trainp t) (momentum 0.1) (eps 1E-7))
-  ;;(runstat ($data x) ($data mean) ($data var) trainp momentum)
+  (runstat ($data x) ($data mean) ($data var) trainp momentum)
   (let* ((x (if (eq 1 ($ndim x))
                 ($vv (ones 1) x)
                 x))
