@@ -21,6 +21,7 @@
 
 (defun $c0 (node) ($0 ($children node)))
 (defun $c1 (node) ($1 ($children node)))
+(defun $c2 (node) ($2 ($children node)))
 
 (defmethod $ ((node node) location &rest others-and-default)
   (apply #'$ ($children ($data node)) (cons location others-and-default)))

@@ -344,4 +344,5 @@
            #:$mse
            #:$relu
            #:$softmax
+           #:$bnorm
            #:$xwpb))

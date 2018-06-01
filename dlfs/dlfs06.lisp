@@ -52,6 +52,46 @@
       ($xwpb *w3* *b3*)
       ($softmax)))
 
+(defparameter *g1* ($variable (ones 50)))
+(defparameter *e1* ($variable (zeros 50)))
+(defparameter *m1* ($constant (zeros 50)))
+(defparameter *v1* ($constant (ones 50)))
+(defparameter *g2* ($variable (ones 100)))
+(defparameter *e2* ($variable (zeros 100)))
+(defparameter *m2* ($constant (zeros 100)))
+(defparameter *v2* ($constant (ones 100)))
+
+(defun mnist-reset-parameters-bn ()
+  (setf *w1* ($variable ($div (rndn 784 50) ($sqrt (/ 784 2)))))
+  (setf *b1* ($variable (zeros 50)))
+  (setf *w2* ($variable ($div (rndn 50 100) ($sqrt (/ 50 2)))))
+  (setf *b2* ($variable (zeros 100)))
+  (setf *w3* ($variable ($div (rndn 100 10) ($sqrt (/ 100 2)))))
+  (setf *b3* ($variable (zeros 10)))
+  (setf *g1* ($variable (ones 50)))
+  (setf *e1* ($variable (zeros 50)))
+  (setf *m1* ($constant (zeros 50)))
+  (setf *v1* ($constant (ones 50)))
+  (setf *g2* ($variable (ones 100)))
+  (setf *e2* ($variable (zeros 100)))
+  (setf *m2* ($constant (zeros 100)))
+  (setf *v2* ($constant (ones 100))))
+
+(defun print-and-pass (x)
+  (print x)
+  x)
+
+(defun mnist-predict-bn (x &optional (trainp t))
+  (-> x
+      ($xwpb *w1* *b1*)
+      ($bnorm *g1* *e1* *m1* *v1* trainp)
+      ($relu)
+      ($xwpb *w2* *b2*)
+      ($bnorm *g2* *e2* *m2* *v2* trainp)
+      ($relu)
+      ($xwpb *w3* *b3*)
+      ($softmax)))
+
 (defun mnist-loss (prediction trueth) ($cee prediction trueth))
 
 (defun mnist-write-weight-to (w fname)
@@ -105,6 +145,17 @@
                        :for xi = ($index xt 0 (list i))
                        :for yi = ($index yt 0 (list i))
                        :for yi* = ($data (mnist-predict-relu ($constant xi)))
+                       :for err = ($sum ($abs ($sub ($round yi*) yi)))
+                       :when (> err 0)
+                         :collect i))))
+
+(let ((xt ($ *mnist* :test-images))
+      (yt ($ *mnist* :test-labels)))
+  (mnist-reset-parameters-bn)
+  (print ($count (loop :for i :from 0 :below ($size xt 0)
+                       :for xi = ($index xt 0 (list i))
+                       :for yi = ($index yt 0 (list i))
+                       :for yi* = ($data (mnist-predict-bn ($constant xi)))
                        :for err = ($sum ($abs ($sub ($round yi*) yi)))
                        :when (> err 0)
                          :collect i))))
@@ -240,6 +291,26 @@
   (mnist-reset-parameters-he)
   (loop :for i :from 1 :to 10
         :for y* = (mnist-predict-relu x)
+        :for loss = (mnist-loss y* y)
+        :do (progn
+              (print (list i ($data loss)))
+              (finish-output)
+              ($bp! loss)
+              ($agd! loss lr)
+              (gcf)))
+  (gcf))
+
+;; batch normalization
+(let* ((x (-> *mnist*
+              ($ :train-images)
+              ($constant)))
+       (y (-> *mnist*
+              ($ :train-labels)
+              ($constant)))
+       (lr 0.01))
+  (mnist-reset-parameters-bn)
+  (loop :for i :from 1 :to 10
+        :for y* = (mnist-predict-bn x)
         :for loss = (mnist-loss y* y)
         :do (progn
               (print (list i ($data loss)))
