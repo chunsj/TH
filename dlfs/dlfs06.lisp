@@ -104,6 +104,17 @@
       ($xwpb *w3* *b3*)
       ($softmax)))
 
+(defun mnist-predict-bns (x &optional (trainp t))
+  (-> x
+      ($xwpb *w1* *b1*)
+      ($bnorm nil nil *m1* *v1* trainp)
+      ($relu)
+      ($xwpb *w2* *b2*)
+      ($bnorm nil nil *m2* *v2* trainp)
+      ($relu)
+      ($xwpb *w3* *b3*)
+      ($softmax)))
+
 (defun mnist-loss (prediction trueth) ($cee prediction trueth))
 
 (defun mnist-write-weight-to (w fname)
