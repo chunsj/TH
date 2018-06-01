@@ -3,6 +3,7 @@
 (defgeneric $relu (x))
 (defgeneric $softmax (x))
 (defgeneric $bnorm (x gamma beta mean sd &optional trainp momentum eps))
+(defgeneric $dropout (x &optional trainp p))
 
 (defgeneric $bce (a b))
 (defgeneric $mse (a b))
@@ -182,3 +183,15 @@
          (os ($constant (ones ($size x 0))))
          (zx ($div ($sub x ($vv os mean)) ($vv os ($sqrt ($add var ($constant eps)))))))
     zx))
+
+(defmethod $dropout ((x tensor) &optional (trainp t) (p 0.1))
+  (if trainp
+      (let ((mask ($gt (apply #'rnd ($size x)) p)))
+        ($mul! (tensor mask) x))
+      ($mul x (- 1.0 p))))
+
+(defmethod $dropout ((x node) &optional (trainp t) (p 0.1))
+  (if trainp
+      (let ((mask ($gt (apply #'rnd ($size x)) p)))
+        ($mul ($constant (tensor mask)) x))
+      ($mul x ($broadcast ($constant (- 1 p)) x))))

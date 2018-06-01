@@ -345,4 +345,5 @@
            #:$relu
            #:$softmax
            #:$bnorm
+           #:$dropout
            #:$xwpb))

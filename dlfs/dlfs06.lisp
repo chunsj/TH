@@ -64,6 +64,17 @@
       ($xwpb *w3* *b3*)
       ($softmax)))
 
+(defun mnist-predict-relu-do (x &optional (trainp t) (p 0.1))
+  (-> x
+      ($xwpb *w1* *b1*)
+      ($relu)
+      ($dropout trainp p)
+      ($xwpb *w2* *b2*)
+      ($relu)
+      ($dropout trainp p)
+      ($xwpb *w3* *b3*)
+      ($softmax)))
+
 (defparameter *g1* ($variable (ones 50)))
 (defparameter *e1* ($variable (zeros 50)))
 (defparameter *m1* ($constant (zeros 50)))
@@ -115,7 +126,22 @@
       ($xwpb *w3* *b3*)
       ($softmax)))
 
-(defun mnist-loss (prediction trueth) ($cee prediction trueth))
+(defun mnist-loss (prediction truth) ($cee prediction truth))
+
+(defun mnist-loss-wr (prediction truth &optional (l 0.1))
+  ($+ (mnist-loss prediction truth)
+      ($* ($+ ($sum ($* *w1* *w1*))
+              ($sum ($* *b1* *b1*))
+              ($sum ($* *w2* *w2*))
+              ($sum ($* *b2* *b2*))
+              ($sum ($* *w3* *w3*))
+              ($sum ($* *b3* *b3*)))
+          ($constant (/ l (+ ($count *w1*)
+                             ($count *b1*)
+                             ($count *w2*)
+                             ($count *b2*)
+                             ($count *w3*)
+                             ($count *b3*)))))))
 
 (defun mnist-write-weight-to (w fname)
   (let ((f (file.disk fname "w")))
@@ -304,6 +330,90 @@
               (gcf)))
   (gcf))
 
+;; dropout
+(let* ((x (-> *mnist*
+              ($ :train-images)
+              ($constant)))
+       (y (-> *mnist*
+              ($ :train-labels)
+              ($constant)))
+       (lr 0.01)
+       (p 0.1))
+  (mnist-reset-parameters-he)
+  (loop :for i :from 1 :to 10
+        :for y* = (mnist-predict-relu-do x t p)
+        :for loss = (mnist-loss y* y)
+        :do (progn
+              (print (list i ($data loss)))
+              (finish-output)
+              ($bp! loss)
+              ($agd! loss lr)
+              (gcf)))
+  (gcf))
+
+(let ((xt ($ *mnist* :test-images))
+      (yt ($ *mnist* :test-labels))
+      (p 0.1))
+  (print ($count (loop :for i :from 0 :below ($size xt 0)
+                       :for xi = ($index xt 0 (list i))
+                       :for yi = ($index yt 0 (list i))
+                       :for yi* = ($data (mnist-predict-relu-do ($constant xi) nil p))
+                       :for err = ($sum ($abs ($sub ($round yi*) yi)))
+                       :when (> err 0)
+                         :collect i))))
+
+;; without weight regularization
+(let* ((x (-> *mnist*
+              ($ :train-images)
+              ($constant)))
+       (y (-> *mnist*
+              ($ :train-labels)
+              ($constant)))
+       (lr 0.01))
+  (mnist-reset-parameters-he)
+  (loop :for i :from 1 :to 10
+        :for y* = (mnist-predict-relu x)
+        :for loss = (mnist-loss y* y)
+        :do (progn
+              (print (list i ($data loss)))
+              (finish-output)
+              ($bp! loss)
+              ($agd! loss lr)
+              (gcf)))
+  (gcf))
+
+;; with weight regularization - does not work in 50 step
+(let* ((x (-> *mnist*
+              ($ :train-images)
+              ($constant)))
+       (y (-> *mnist*
+              ($ :train-labels)
+              ($constant)))
+       (lr 0.01)
+       (l 0.1))
+  (mnist-reset-parameters-he)
+  (loop :for i :from 1 :to 100
+        :for y* = (mnist-predict-relu x)
+        :for loss = (mnist-loss-wr y* y l)
+        :do (progn
+              (print (list i ($data loss)))
+              (finish-output)
+              ($bp! loss)
+              ($agd! loss lr)
+              (gcf)))
+  (gcf))
+
+;; test result
+(let ((xt ($ *mnist* :test-images))
+      (yt ($ *mnist* :test-labels)))
+  (print ($count (loop :for i :from 0 :below ($size xt 0)
+                       :for xi = ($index xt 0 (list i))
+                       :for yi = ($index yt 0 (list i))
+                       :for yi* = ($data (mnist-predict-relu ($constant xi)))
+                       :for err = ($sum ($abs ($sub ($round yi*) yi)))
+                       :when (> err 0)
+                         :collect i))))
+
 ;; without batch normalization
 (let* ((x (-> *mnist*
               ($ :train-images)
@@ -335,7 +445,7 @@
                        :when (> err 0)
                          :collect i))))
 
-;; batch normalization
+;; batch normalization - does not converge
 (let* ((x (-> *mnist*
               ($ :train-images)
               ($constant)))
@@ -344,7 +454,7 @@
               ($constant)))
        (lr 0.01))
   (mnist-reset-parameters-bn)
-  (loop :for i :from 1 :to 50
+  (loop :for i :from 1 :to 40
         :for y* = (mnist-predict-bn x)
         :for loss = (mnist-loss y* y)
         :do (progn
@@ -352,6 +462,7 @@
               (finish-output)
               ($bp! loss)
               ($agd! loss lr)
+              (print *m1*)
               (gcf)))
   (gcf))
 
