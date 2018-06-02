@@ -1004,32 +1004,32 @@
 (cffi:defcfun ("THFloatTensor_ltValue" th-float-tensor-lt-value) :void
   (result th-byte-tensor-ptr)
   (tensor th-float-tensor-ptr)
-  (value :double))
+  (value :float))
 ;; void THTensor_(leValue)(THByteTensor *r_, THTensor* t, real value);
 (cffi:defcfun ("THFloatTensor_leValue" th-float-tensor-le-value) :void
   (result th-byte-tensor-ptr)
   (tensor th-float-tensor-ptr)
-  (value :double))
+  (value :float))
 ;; void THTensor_(gtValue)(THByteTensor *r_, THTensor* t, real value);
 (cffi:defcfun ("THFloatTensor_gtValue" th-float-tensor-gt-value) :void
   (result th-byte-tensor-ptr)
   (tensor th-float-tensor-ptr)
-  (value :double))
+  (value :float))
 ;; void THTensor_(geValue)(THByteTensor *r_, THTensor* t, real value);
 (cffi:defcfun ("THFloatTensor_geValue" th-float-tensor-ge-value) :void
   (result th-byte-tensor-ptr)
   (tensor th-float-tensor-ptr)
-  (value :double))
+  (value :float))
 ;; void THTensor_(neValue)(THByteTensor *r_, THTensor* t, real value);
 (cffi:defcfun ("THFloatTensor_neValue" th-float-tensor-ne-value) :void
   (result th-byte-tensor-ptr)
   (tensor th-float-tensor-ptr)
-  (value :double))
+  (value :float))
 ;; void THTensor_(eqValue)(THByteTensor *r_, THTensor* t, real value);
 (cffi:defcfun ("THFloatTensor_eqValue" th-float-tensor-eq-value) :void
   (result th-byte-tensor-ptr)
   (tensor th-float-tensor-ptr)
-  (value :double))
+  (value :float))
 
 ;; void THTensor_(ltValueT)(THTensor *r_, THTensor* t, real value);
 (cffi:defcfun ("THFloatTensor_ltValueT" th-float-tensor-lt-value-t) :void

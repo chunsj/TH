@@ -1,6 +1,6 @@
 (in-package :th)
 
-(defparameter *default-tensor-class* 'tensor.single)
+(defparameter *default-tensor-class* 'tensor.float)
 
 (defclass tensor (th.object) ())
 (defclass tensor.integral (tensor) ())
