@@ -1,5 +1,7 @@
 (in-package :th)
 
+(defparameter *default-tensor-class* 'tensor.single)
+
 (defclass tensor (th.object) ())
 (defclass tensor.integral (tensor) ())
 (defclass tensor.fractional (tensor) ())
@@ -72,8 +74,6 @@
 (defun tensor.long (&rest args) (make-tensor-args 'tensor.long args))
 (defun tensor.float (&rest args) (make-tensor-args 'tensor.float args))
 (defun tensor.double (&rest args) (make-tensor-args 'tensor.double args))
-
-(defparameter *default-tensor-class* 'tensor.double)
 
 (defun tensor (&rest args)
   "Creates a new tensor with size specification or list contents or other tensor."

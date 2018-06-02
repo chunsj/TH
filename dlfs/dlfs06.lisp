@@ -9,7 +9,7 @@
 ;; mnist data loading - takes time, so load and set
 (defparameter *mnist* (read-mnist-data))
 (print *mnist*)
-
+a
 (defparameter *mnist-train-image-batches*
   (loop :for i :from 0 :below 6
         :for rng = (loop :for k :from (* i 10000) :below (* (1+ i) 10000)
@@ -476,3 +476,6 @@
                        :for err = ($sum ($abs ($sub ($round yi*) yi)))
                        :when (> err 0)
                          :collect i))))
+
+;; need to write gradient testing code
+;; sum, mean, max, min, reshape, transpose, ...
