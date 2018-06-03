@@ -9,7 +9,7 @@
 ;; mnist data loading - takes time, so load and set
 (defparameter *mnist* (read-mnist-data))
 (print *mnist*)
-a
+
 (defparameter *mnist-train-image-batches*
   (loop :for i :from 0 :below 6
         :for rng = (loop :for k :from (* i 10000) :below (* (1+ i) 10000)
@@ -338,7 +338,7 @@ a
               ($ :train-labels)
               ($constant)))
        (lr 0.01)
-       (p 0.1))
+       (p 0.4))
   (mnist-reset-parameters-he)
   (loop :for i :from 1 :to 10
         :for y* = (mnist-predict-relu-do x t p)
@@ -353,7 +353,7 @@ a
 
 (let ((xt ($ *mnist* :test-images))
       (yt ($ *mnist* :test-labels))
-      (p 0.1))
+      (p 0.4))
   (print ($count (loop :for i :from 0 :below ($size xt 0)
                        :for xi = ($index xt 0 (list i))
                        :for yi = ($index yt 0 (list i))
