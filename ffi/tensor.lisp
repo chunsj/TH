@@ -5656,7 +5656,7 @@
                               ($handle src)
                               ($handle s))))
   tensor)
-(defmethod tensor-reshape ((tensor tensor.long) (src tensor.float) (size storage.long))
+(defmethod tensor-reshape ((tensor tensor.float) (src tensor.float) (size storage.long))
   (th-float-tensor-reshape ($handle tensor)
                            ($handle src)
                            ($handle size))
