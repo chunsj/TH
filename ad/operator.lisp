@@ -367,12 +367,12 @@
     (setf ($bpfn result) (lambda (node gradient) (max-backprop node gradient dimension)))
     result))
 
-(defun transpose-backprop (node gradient)
+(defun transpose-backprop (node gradient dimension0 dimension1)
   (setf ($gradient node) gradient)
   (setf ($children node) (when ($children node)
                            (let ((x ($c0 node)))
                              (list (if ($gradientp x)
-                                       ($bp! x ($transpose g dimension0 dimension1))
+                                       ($bp! x ($transpose gradient dimension0 dimension1))
                                        x)))))
   node)
 
@@ -380,7 +380,8 @@
   (let ((result (node ($transpose ($data x) dimension0 dimension1))))
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
-    (setf ($bpfn result) #'transpose-backprop)
+    (setf ($bpfn result) (lambda (node gradient)
+                           (transpose-backprop node gradient dimension0 dimension1)))
     result))
 
 (defun reshape-backprop (node gradient)
