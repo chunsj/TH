@@ -321,7 +321,7 @@
 
 (defun seteq! (a b v)
   (let ((m ($eq a b)))
-    ($mul! ($copy! ($resize! ($empty v) v) m) v)))
+    ($mul! ($copy! ($resize! ($empty a) a) m) v)))
 
 (defun min-backprop (node gradient dimension)
   (setf ($gradient node) gradient)

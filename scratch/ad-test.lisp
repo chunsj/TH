@@ -62,3 +62,67 @@
                (tensor '((2.4445831169074586)
                          (2.4445831169074586))))
     (error "mm")))
+
+(let* ((x ($variable '((1 2 3) (4 5 6) (7 8 9))))
+       (y ($constant 40))
+       (out ($sum x))
+       (delta ($sub out y))
+       (loss ($dot delta delta)))
+  (print out)
+  (print loss)
+  ($bp! loss 1)
+  (print ($gradient x))
+  ($gd! loss 0.01)
+  (print x)
+  (print ($sum x))
+  (loop :for i :from 1 :to 50
+        :for y* = ($sum x)
+        :for d = ($sub y* y)
+        :for l = ($dot d d)
+        :do (progn
+              ($bp! l)
+              ($gd! l 0.01)))
+  (print x)
+  (print ($sum x)))
+
+(let* ((x ($variable '((1 2 3) (4 5 6) (7 8 9))))
+       (y ($constant 6))
+       (out ($mean x)))
+  (print out)
+  (loop :for i :from 1 :to 50
+        :for y* = ($mean x)
+        :for d = ($sub y* y)
+        :for l = ($dot d d)
+        :do (progn
+              ($bp! l)
+              ($gd! l 0.9)))
+  (print x)
+  (print ($mean x)))
+
+(let* ((x ($variable '((1 2) (3 4) (5 6))))
+       (y ($constant 5))
+       (out ($max x)))
+  (print out)
+  (loop :for i :from 1 :to 50
+        :for y* = ($max x)
+        :for d = ($sub y* y)
+        :for l = ($dot d d)
+        :do (progn
+              ($bp! l)
+              ($gd! l 0.1)))
+  (print x)
+  (print ($max x)))
+
+(let* ((x ($variable '((1 2) (3 4) (5 6))))
+       (y ($constant 5))
+       (out ($min x)))
+  (print out)
+  (loop :for i :from 1 :to 50
+        :for y* = ($min x)
+        :for d = ($sub y* y)
+        :for l = ($dot d d)
+        :do (progn
+              ($bp! l)
+              ($gd! l 0.5)))
+  (print x)
+  (print ($min x)))
