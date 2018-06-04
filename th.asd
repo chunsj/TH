@@ -45,5 +45,6 @@
                                         (:file "operator")
                                         (:file "function")
                                         (:file "support")
+                                        (:file "conv")
                                         (:file "utility")))
                (:module db :components ((:file "mnist")))))

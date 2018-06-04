@@ -346,4 +346,5 @@
            #:$softmax
            #:$bnorm
            #:$dropout
+           #:$conv2d
            #:$xwpb))
