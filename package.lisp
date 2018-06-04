@@ -347,4 +347,6 @@
            #:$bnorm
            #:$dropout
            #:$conv2d
+           #:$maxpool2d
+           #:$avgpool2d
            #:$xwpb))

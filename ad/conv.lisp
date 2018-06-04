@@ -2,8 +2,10 @@
 
 (defgeneric $conv2d (x k &optional b dw dh pw ph)
   (:documentation "Performs convolution of x with kernel k and bias b which is optional."))
-(defgeneric $maxpool2d (x kw kh &optional dw dh pw ph)
+(defgeneric $maxpool2d (x kw kh &optional dw dh pw ph ceilp)
   (:documentation "Performs max pooling over x."))
+(defgeneric $avgpool2d (x kw kh &optional dw dh pw ph ceilp count-pad-p)
+  (:documentation "Performs average pooling over x."))
 
 (defmethod $conv2d ((x tensor) (k tensor) &optional b (dw 1) (dh 1) (pw 0) (ph 0))
   (let ((out ($empty x))
@@ -96,4 +98,69 @@
                                     (if b ($gradientp b) nil)))
       (setf ($bpfn result) (lambda (node gradient)
                              (conv2d-backprop node gradient f df dw dh pw ph)))
+      result)))
+
+(defmethod $maxpool2d ((x tensor) kw kh &optional (dw 1) (dh 1) (pw 0) (ph 0) ceilp)
+  (let ((out ($empty x))
+        (indices (tensor.long)))
+    (nn-spatial-max-pooling-update-output x out indices kw kh dw dh pw ph ceilp)
+    out))
+
+(defun maxpool2d-backprop (node gradient indices kw kh dw dh pw ph ceilp)
+  (setf ($gradient node) gradient)
+  (setf ($children node) (when ($children node)
+                           (let* ((x ($c0 node))
+                                  (dx ($empty ($data x))))
+                             (nn-spatial-max-pooling-update-grad-input ($data x)
+                                                                       gradient
+                                                                       dx
+                                                                       indices
+                                                                       kw kh dw dh pw ph
+                                                                       ceilp)
+                             (list (if ($gradientp x)
+                                       ($bp! x dx)
+                                       x)))))
+  node)
+
+(defmethod $maxpool2d ((x node) kw kh &optional (dw 1) (dh 1) (pw 0) (ph 0) ceilp)
+  (let ((out ($empty ($data x)))
+        (indices (tensor.long)))
+    (nn-spatial-max-pooling-update-output ($data x) out indices kw kh dw dh pw ph ceilp)
+    (let ((result (node out)))
+      (setf ($children result) (list x))
+      (setf ($gradientp result) ($gradientp x))
+      (setf ($bpfn result) (lambda (node gradient)
+                             (maxpool2d-backprop node gradient indices kw kh dw dh pw ph ceilp)))
+      result)))
+
+(defmethod $avgpool2d ((x tensor) kw kh &optional (dw 1) (dh 1) (pw 0) (ph 0) ceilp (count-pad-p t))
+  (let ((out ($empty x)))
+    (nn-spatial-average-pooling-update-output x out kw kh dw dh pw ph ceilp count-pad-p)
+    out))
+
+(defun avgpool2d-backprop (node gradient kw kh dw dh pw ph ceilp count-pad-p)
+  (setf ($gradient node) gradient)
+  (setf ($children node) (when ($children node)
+                           (let* ((x ($c0 node))
+                                  (dx ($empty ($data x))))
+                             (nn-spatial-average-pooling-update-grad-input ($data x)
+                                                                           gradient
+                                                                           dx
+                                                                           kw kh dw dh pw ph
+                                                                           ceilp
+                                                                           count-pad-p)
+                             (list (if ($gradientp x)
+                                       ($bp! x dx)
+                                       x)))))
+  node)
+
+(defmethod $avgpool2d ((x node) kw kh &optional (dw 1) (dh 1) (pw 0) (ph 0) ceilp (count-pad-p t))
+  (let ((out ($empty ($data x))))
+    (nn-spatial-average-pooling-update-output ($data x) out kw kh dw dh pw ph ceilp count-pad-p)
+    (let ((result (node out)))
+      (setf ($children result) (list x))
+      (setf ($gradientp result) ($gradientp x))
+      (setf ($bpfn result) (lambda (node gradient)
+                             (avgpool2d-backprop node gradient kw kh dw dh pw ph
+                                                 ceilp count-pad-p)))
       result)))
