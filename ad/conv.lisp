@@ -2,6 +2,8 @@
 
 (defgeneric $conv2d (x k &optional b dw dh pw ph)
   (:documentation "Performs convolution of x with kernel k and bias b which is optional."))
+(defgeneric $maxpool2d (x kw kh &optional dw dh pw ph)
+  (:documentation "Performs max pooling over x."))
 
 (defmethod $conv2d ((x tensor) (k tensor) &optional b (dw 1) (dh 1) (pw 0) (ph 0))
   (let ((out ($empty x))
