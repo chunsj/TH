@@ -505,6 +505,3 @@
                        :for err = ($sum ($abs ($sub ($round yi*) yi)))
                        :when (> err 0)
                          :collect i))))
-
-;; need to write gradient testing code
-;; sum, mean, max, min, reshape, transpose, ...
