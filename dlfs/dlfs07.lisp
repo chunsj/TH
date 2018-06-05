@@ -195,7 +195,7 @@
       ($softmax)))
 
 ;; use batches for performance
-(loop :for epoch :from 1 :to 5
+(loop :for epoch :from 1 :to 10
       :do (loop :for i :from 0 :below 60
                 :for xi = ($ *mnist-train-image-batches* i)
                 :for x = (-> xi
