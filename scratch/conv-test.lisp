@@ -238,7 +238,8 @@
                     (1 1 1)))))
   (print c)
   (print ($conv2 x g))
-  (print ($xcorr2 g k :full)))
+  (print ($xcorr2 g k :full))
+  (print ($add k ($mul ($conv2 x g) -0.01))))
 
 (let* ((x ($variable '(((1 2 3 4)
                         (2 3 4 1)
@@ -253,7 +254,9 @@
   (print c)
   ($bp! c g)
   (print ($gradient k))
-  (print ($gradient x)))
+  (print ($gradient x))
+  ($gd! c 0.01)
+  (print k))
 
 (let* ((x ($variable '((1 2 3 4)
                        (2 3 4 1)
@@ -268,4 +271,6 @@
   (print c)
   ($bp! c g)
   (print ($gradient k))
-  (print ($gradient x)))
+  (print ($gradient x))
+  ($gd! c 0.01)
+  (print k))
