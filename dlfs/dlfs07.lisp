@@ -206,7 +206,7 @@
                 :for y* = (mnist-predict x)
                 :for loss = ($cee y* y)
                 :do (progn
-                      (format t "[~A|~A]: ~A~%" (1+ i) epoch loss)
+                      (format t "[~A|~A]: ~A~%" (1+ i) epoch ($data loss))
                       (finish-output)
                       ($bp! loss)
                       ($agd! loss 0.01)
@@ -216,7 +216,7 @@
 (let* ((indices (loop :for i :from 0 :below 10000 :collect i))
        (xtest ($index ($ *mnist* :test-images) 0 indices))
        (ytest ($index ($ *mnist* :test-labels) 0 indices)))
-  (print ($cee (mnist-predict (-> xtest
-                                  ($reshape ($count indices) 1 28 28)
-                                  ($constant)))
-               ($constant ytest))))
+  (print ($data ($cee (mnist-predict (-> xtest
+                                         ($reshape ($count indices) 1 28 28)
+                                         ($constant)))
+                      ($constant ytest)))))
