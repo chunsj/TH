@@ -176,6 +176,7 @@
        (c ($conv2d x k b))
        (p ($maxpool2d c 2 2))
        (g (tensor '(((1 1) (1 1))))))
+  (print c)
   (print p)
   ($bp! p g)
   (print ($gradient c))
