@@ -263,4 +263,5 @@
                   :for err = ($sum ($abs ($sub ($round yi*) yi)))
                   :when (> err 0)
                     :collect i))))
+
 (print (mnist-test-stat))
