@@ -11,14 +11,14 @@
 (print *mnist*)
 
 (defparameter *mnist-train-image-batches*
-  (loop :for i :from 0 :below 100
-        :for rng = (loop :for k :from (* i 600) :below (* (1+ i) 600)
+  (loop :for i :from 0 :below 60
+        :for rng = (loop :for k :from (* i 1000) :below (* (1+ i) 1000)
                          :collect k)
         :collect ($contiguous! ($index ($ *mnist* :train-images) 0 rng))))
 
 (defparameter *mnist-train-label-batches*
-  (loop :for i :from 0 :below 100
-        :for rng = (loop :for k :from (* i 600) :below (* (1+ i) 600)
+  (loop :for i :from 0 :below 60
+        :for rng = (loop :for k :from (* i 1000) :below (* (1+ i) 100)
                          :collect k)
         :collect ($contiguous! ($index ($ *mnist* :train-labels) 0 rng))))
 
@@ -195,7 +195,7 @@
       ($softmax)))
 
 ;; use batches for performance
-(loop :for epoch :from 1 :to 10
+(loop :for epoch :from 1 :to 50
       :do (loop :for i :from 0 :below 100
                 :for xi = ($ *mnist-train-image-batches* i)
                 :for x = (-> xi
@@ -213,10 +213,9 @@
                       (gcf))))
 
 ;; test
-(let* ((indices (loop :for i :from 0 :below 10000 :collect i))
-       (xtest ($contiguous! ($index ($ *mnist* :test-images) 0 indices)))
-       (ytest ($contiguous! ($index ($ *mnist* :test-labels) 0 indices))))
+(let* ((xtest ($ *mnist* :test-images))
+       (ytest ($ *mnist* :test-labels)))
   (print ($data ($cee (mnist-predict (-> xtest
-                                         ($reshape ($count indices) 1 28 28)
+                                         ($reshape ($size xtest 0) 1 28 28)
                                          ($constant)))
                       ($constant ytest)))))
