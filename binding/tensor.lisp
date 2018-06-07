@@ -813,10 +813,18 @@
 (defmethod $chunk ((tensor tensor) n &optional (dimension 0))
   ($split tensor (ceiling (/ ($size tensor dimension) n)) dimension))
 
-(defmethod $cat ((dimension integer) (tensor tensor) &rest tensors)
-  (let ((tensors (cons tensor tensors))
+(defmethod $cat ((tensor tensor) dimension (a tensor) (b tensor))
+  (tensor-cat2 tensor dimension a b)
+  tensor)
+
+(defmethod $cat! ((tensor tensor) dimension (other tensor))
+  (tensor-cat2 tensor dimension tensor other)
+  tensor)
+
+(defmethod $concat ((tensor tensor) dimension &rest tensors)
+  (let ((xs (cons tensor tensors))
         (result ($empty tensor)))
-    (apply #'tensor-cat result dimension tensors)
+    (apply #'tensor-cat result dimension xs)
     result))
 
 (defmethod $diag ((tensor tensor) &optional (k 0))
