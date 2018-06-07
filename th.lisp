@@ -117,7 +117,7 @@
 (defgeneric $unfold! (tensor dimension size step)
   (:documentation "Returns a tensor with all slices of the given size by step."))
 
-(defgeneric $index (tensor dimension index)
+(defgeneric $index (tensor dimension indices)
   (:documentation "Returns a new tensor with contents selected by index along dimension."))
 
 (defgeneric $gather (tensor dimension indices)
