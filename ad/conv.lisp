@@ -25,25 +25,27 @@
                                       (dx ($empty ($data x)))
                                       (dk (apply #'zeros ($size k)))
                                       (db (apply #'zeros ($size b))))
-                                 (nn-spatial-convolution-mm-update-grad-input ($data x)
-                                                                              gradient
-                                                                              dx
-                                                                              ($data k)
-                                                                              f
-                                                                              df
-                                                                              ($size k 2)
-                                                                              ($size k 3)
-                                                                              dw dh pw ph)
-                                 (nn-spatial-convolution-mm-acc-grad-parameters ($data x)
-                                                                                gradient
-                                                                                dk
-                                                                                db
-                                                                                f
-                                                                                df
-                                                                                ($size k 2)
-                                                                                ($size k 3)
-                                                                                dw dh pw ph
-                                                                                1)
+                                 (if (or ($gradientp x) ($gradientp k) ($gradientp b))
+                                     (nn-spatial-convolution-mm-update-grad-input ($data x)
+                                                                                  gradient
+                                                                                  dx
+                                                                                  ($data k)
+                                                                                  f
+                                                                                  df
+                                                                                  ($size k 2)
+                                                                                  ($size k 3)
+                                                                                  dw dh pw ph))
+                                 (if (or ($gradientp k) ($gradientp b))
+                                     (nn-spatial-convolution-mm-acc-grad-parameters ($data x)
+                                                                                    gradient
+                                                                                    dk
+                                                                                    db
+                                                                                    f
+                                                                                    df
+                                                                                    ($size k 2)
+                                                                                    ($size k 3)
+                                                                                    dw dh pw ph
+                                                                                    1))
                                  (list (if ($gradientp x)
                                            ($bp! x dx)
                                            x)
