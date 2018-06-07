@@ -47,4 +47,5 @@
                                         (:file "support")
                                         (:file "conv")
                                         (:file "utility")))
-               (:module db :components ((:file "mnist")))))
+               (:module db :components ((:file "mnist")
+                                        (:file "fashion")))))
