@@ -251,3 +251,16 @@
 
 ;; read weights
 (mnist-cnn-read-weights)
+
+;; test stats
+(defun mnist-test-stat ()
+  (let ((xt ($ *mnist* :test-images))
+        (yt ($ *mnist* :test-labels)))
+    ($count (loop :for i :from 0 :below ($size xt 0)
+                  :for xi = ($index xt 0 (list i))
+                  :for yi = ($index yt 0 (list i))
+                  :for yi* = ($data (mnist-predict ($constant ($reshape xi ($size xi 0) 1 28 28))))
+                  :for err = ($sum ($abs ($sub ($round yi*) yi)))
+                  :when (> err 0)
+                    :collect i))))
+(print (mnist-test-stat))
