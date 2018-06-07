@@ -185,6 +185,32 @@
 (defparameter *b3* (-> (zeros *l3-output*)
                        ($variable)))
 
+(defun mnist-write-weight-to (w fname)
+  (let ((f (file.disk fname "w")))
+    ($fwrite ($data w) f)
+    ($fclose f)))
+
+(defun mnist-cnn-write-weights ()
+  (mnist-write-weight-to *k* "dlfs/mnist-cnn-k.dat")
+  (mnist-write-weight-to *kb* "dlfs/mnist-cnn-kb.dat")
+  (mnist-write-weight-to *w2* "dlfs/mnist-cnn-w2.dat")
+  (mnist-write-weight-to *b2* "dlfs/mnist-cnn-b2.dat")
+  (mnist-write-weight-to *w3* "dlfs/mnist-cnn-w3.dat")
+  (mnist-write-weight-to *b3* "dlfs/mnist-cnn-b3.dat"))
+
+(defun mnist-read-weight-from (w fname)
+  (let ((f (file.disk fname "r")))
+    ($fread ($data w) f)
+    ($fclose f)))
+
+(defun mnist-cnn-read-weights ()
+  (mnist-read-weight-from *k* "dlfs/mnist-cnn-k.dat")
+  (mnist-read-weight-from *kb* "dlfs/mnist-cnn-kb.dat")
+  (mnist-read-weight-from *w2* "dlfs/mnist-cnn-w2.dat")
+  (mnist-read-weight-from *b2* "dlfs/mnist-cnn-b2.dat")
+  (mnist-read-weight-from *w3* "dlfs/mnist-cnn-w3.dat")
+  (mnist-read-weight-from *b3* "dlfs/mnist-cnn-b3.dat"))
+
 ;; x should have been reshaped before entering
 (defun mnist-predict (x)
   (-> x
@@ -223,3 +249,9 @@
                                          ($reshape ($size xtest 0) 1 28 28)
                                          ($constant)))
                       ($constant ytest)))))
+
+;; write weights
+(mnist-cnn-write-weights)
+
+;; read weights
+(mnist-cnn-read-weights)
