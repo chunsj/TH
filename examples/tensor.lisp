@@ -5,14 +5,15 @@
 
 (in-package :th.tensor-examples)
 
-;; creates an empty tensor of default tensor class (double)
+;; creates an empty tensor of default tensor class (float)
 (print (tensor))
 
-;; createa a tensor of default tensor class type with sizes; elements are not set and .
+;; creates a tensor of default tensor class type with specified sizes; elements are not initialized.
 (print (tensor 2 2))
 
 ;; creates a tensor with contents
 (print (tensor '(1 2 3 4)))
+(print (tensor '((1 2 3 4))))
 
 ;; creates a tensor with multidimensional contents
 (print (tensor '((1 2) (3 4) (5 6))))
@@ -24,7 +25,7 @@
   (print "SAME CONTENT AS X")
   (print (tensor x)))
 
-;; create tensor with sizes and strides
+;; create tensor with sizes and strides, elements are not initialized.
 (print (tensor '(2 2) '(2 1)))
 
 ;; type specific construction functions; same as above.
@@ -75,7 +76,7 @@
 ;; stride of a nil object
 (print ($stride nil))
 
-;; storage of a tensor; a tensor is a spepcific view on the storage
+;; storage of a tensor; a tensor is a specific view on the storage
 (let* ((x (tensor 4 5))
        (s ($storage x)))
   (loop :for i :from 0 :below ($count s)
