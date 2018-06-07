@@ -18,7 +18,11 @@
 
 (defparameter *mnist-train-label-batches*
   (loop :for i :from 0 :below 60
+<<<<<<< HEAD
         :for rng = (loop :for k :from (* i 1000) :below (* (1+ i) 1000)
+=======
+        :for rng = (loop :for k :from (* i 1000) :below (* (1+ i) 100)
+>>>>>>> bee00fde9650f28380320ee4929df13f43a7fa45
                          :collect k)
         :collect ($contiguous! ($index ($ *mnist* :train-labels) 0 rng))))
 
@@ -195,7 +199,7 @@
       ($softmax)))
 
 ;; use batches for performance
-(loop :for epoch :from 1 :to 10
+(loop :for epoch :from 1 :to 50
       :do (loop :for i :from 0 :below 100
                 :for xi = ($ *mnist-train-image-batches* i)
                 :for x = (-> xi
