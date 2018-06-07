@@ -406,7 +406,7 @@
                            (let ((x ($c0 node)))
                              (list (if ($gradient x)
                                        ($bp! x (let ((z ($zero ($data x))))
-                                                 (setf (apply #'$ z locs) gradient)
+                                                 ($copy! (apply #'$ z locs) gradient)
                                                  z))
                                        x)))))
   node)
