@@ -266,4 +266,4 @@
                   :when (> err 0)
                     :collect i))))
 
-(print (mnist-test-stat))
+(prn (mnist-test-stat))
