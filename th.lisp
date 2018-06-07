@@ -148,9 +148,9 @@
 (defgeneric $chunk (tensor n &optional dimension)
   (:documentation "Splits tensor by n approximately equal partitions along dimension."))
 
-(defgeneric $cat (tensor dimension a b)
+(defgeneric $cat (tensor other &optional dimension)
   (:documentation "Returns a new tensor which is a concatenation of tensors along dimension."))
-(defgeneric $cat! (tensor dimension other)
+(defgeneric $cat! (tensor other &optional dimension)
   (:documentation "Returns a tensor which is a concatenation of tensors along dimension."))
 
 (defgeneric $reshape (tensor &rest sizes)
