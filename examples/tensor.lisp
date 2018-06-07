@@ -485,10 +485,11 @@
   (print ($chunk x 2 2)))
 
 ;; concat tensors
-(print ($cat 0 (ones 3) (zeros 3)))
-(print ($cat 1 (ones 3) (zeros 3)))
-(print ($cat 0 (ones 3 3) (zeros 1 3)))
-(print ($cat 1 (ones 3 4) (zeros 3 2)))
+(print ($cat (ones 3) (zeros 3)))
+(print ($cat (ones 1 3) (zeros 1 3) 1))
+(print ($cat (ones 1 3) (zeros 1 3) 0))
+(print ($cat (ones 3 3) (zeros 1 3)))
+(print ($cat (ones 3 4) (zeros 3 2) 1))
 
 ;; diagonal matrix
 (print ($diag (tensor '(1 2 3 4))))
