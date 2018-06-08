@@ -112,7 +112,7 @@
 (defun rnd (&rest sizes)
   "Returns a new tensor filled with uniform random numbers between 0 and 1."
   (let ((tensor (tensor)))
-    (tensor-randn tensor sizes)
+    (tensor-rand tensor sizes)
     tensor))
 
 (defun rndn (&rest sizes)
