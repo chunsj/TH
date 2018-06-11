@@ -15,3 +15,4 @@
 ;; flare - https://github.com/aria42/flare
 ;; flare is written in clojure and which is the thing i'd like to do in common lisp, it seems.
 ;; should i refer flare and follow its design if it's better? XXX
+;; i think with CLOS, common lisp can build a better flare/torch.
