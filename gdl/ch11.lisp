@@ -53,7 +53,7 @@
                            (mapcar #'process-review)
                            (apply #'$concat)
                            (remove-duplicates)))
-(defparameter *w2i* (let ((h #{}))
+(defparameter *w2i* (let ((h (make-hash-table :test 'equal :size ($count *words*))))
                       (loop :for i :from 0 :below ($count *words*)
                             :for w = ($ *words* i)
                             :do (setf ($ h w) i))
@@ -84,7 +84,7 @@
   (print (time ($sum ($index w 0 ($0 *input-dataset*)) 0))))
 
 (defparameter *alpha* 0.01)
-(defparameter *iterations* 10)
+(defparameter *iterations* 200)
 (defparameter *hidden-size* 100)
 
 (defparameter *w01* ($- ($* 0.2 (rnd ($count *words*) *hidden-size*)) 0.1))
