@@ -25,7 +25,7 @@
                     (format flbl "~A~%" lbl)))))))
 
 ;; make a smaller dataset
-(defparameter *small-size* 4000)
+(defparameter *small-size* 2000)
 (with-open-file (stream "/Users/Sungjin/IMDB/reviews.txt" :direction :input)
   (with-open-file (frvs "/Users/Sungjin/IMDB/reviews-small.txt" :direction :output
                                                                 :if-exists :supersede)
@@ -43,7 +43,7 @@
                 (format frvs "~A~%" line)))))
 
 ;; a smaller test dataset as well
-(defparameter *small-test-size* 1000)
+(defparameter *small-test-size* 500)
 (with-open-file (stream "/Users/Sungjin/IMDB/reviews.txt" :direction :input)
   (with-open-file (frvs "/Users/Sungjin/IMDB/reviews-small-test.txt" :direction :output
                                                                      :if-exists :supersede)
@@ -51,7 +51,7 @@
           :for line = (read-line stream nil)
           :do (when (and line (or (and (>= i *small-size*) (< i (+ *small-size*
                                                                   *small-test-size*)))
-                                  (and (> i 13500))))
+                                  (and (> i (+ 12500 *small-size*)))))
                 (format frvs "~A~%" line)))))
 
 (with-open-file (stream "/Users/Sungjin/IMDB/labels.txt" :direction :input)
@@ -61,5 +61,5 @@
           :for line = (read-line stream nil)
           :do (when (and line (or (and (>= i *small-size*) (< i (+ *small-size*
                                                                   *small-test-size*)))
-                                  (and (> i 13500))))
+                                  (and (> i (+ 12500 *small-size*)))))
                 (format frvs "~A~%" line)))))

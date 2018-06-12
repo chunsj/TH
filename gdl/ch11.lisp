@@ -84,7 +84,7 @@
   (print (time ($sum ($index w 0 ($0 *input-dataset*)) 0))))
 
 (defparameter *alpha* 0.01)
-(defparameter *iterations* 100)
+(defparameter *iterations* 10)
 (defparameter *hidden-size* 100)
 
 (defparameter *w01* ($- ($* 0.2 (rnd ($count *words*) *hidden-size*)) 0.1))
@@ -111,8 +111,9 @@
                         (incf total)
                         (when (< (abs dl2) 0.5)
                           (incf correct))))
-            (when (zerop (rem iter 2))
-              (prn iter total correct))))
+            (when (zerop (rem iter 1))
+              (prn iter total correct)
+              (gcf))))
 
 (defun predict-sentiment (x)
   (let* ((w01 ($index *w01* 0 x))
