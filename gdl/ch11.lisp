@@ -150,3 +150,10 @@
               (when (< (abs (- s y)) 0.5)
                 (incf correct))))
   (prn total correct))
+
+;; wow, this really works
+(let* ((my-review "this so called franchise movie of avengers is great master piece. i've enjoyed it very much and my kids love this one as well. though my wife generally does not like this kind of genre, she said this one is better than others.")
+       (review (process-review my-review))
+       (x (review-to-indices review)))
+  (print x)
+  (print (predict-sentiment x)))
