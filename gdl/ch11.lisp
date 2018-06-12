@@ -1,7 +1,8 @@
 (defpackage :gdl-ch11
   (:use #:common-lisp
         #:mu
-        #:th))
+        #:th
+        #:th.db.imdb))
 
 (in-package :gdl-ch11)
 
@@ -25,10 +26,126 @@
   (print ($sum ($index w 0 (tensor.long '(0 1 4))) 0))
   (print w))
 
-;; compare multiplication and embedding layer shortcut, not that fast
+;; compare multiplication and embedding layer shortcut (conceptually)
 (let ((x (tensor '((1 1 0 1))))
       (w (tensor '((1 2 3) (2 3 4) (3 4 5) (4 5 6)))))
   (print (time ($mm x w)))
   (print (time ($sum ($index w 0 '(0 1 3)) 0)))
   (print ($index ($nonzero x) 1 '(1)))
   (print (time ($sum ($index w 0 ($reshape ($index ($nonzero x) 1 '(1)) 3)) 0))))
+
+(defun process-review (review)
+  (->> (remove-duplicates (split #\space review) :test #'equal)
+       (mapcar (lambda (w)
+                 (cl-ppcre:regex-replace-all
+                  "[^a-z0-9A-Z]"
+                  (string-downcase w)
+                  "")))
+       (remove-if-not (lambda (w) (> ($count w) 0)))
+       (remove-duplicates)))
+
+(defparameter *imdb* (read-imdb-data))
+(defparameter *train-reviews* (->> ($ *imdb* :train-reviews)
+                                   (mapcar #'process-review)))
+(defparameter *test-reviews* (->> ($ *imdb* :test-reviews)
+                                  (mapcar #'process-review)))
+(defparameter *words* (->> ($ *imdb* :train-reviews)
+                           (mapcar #'process-review)
+                           (apply #'$concat)
+                           (remove-duplicates)))
+(defparameter *w2i* (let ((h #{}))
+                      (loop :for i :from 0 :below ($count *words*)
+                            :for w = ($ *words* i)
+                            :do (setf ($ h w) i))
+                      h))
+
+(defun review-to-indices (review-words)
+  (sort (->> review-words
+             (mapcar (lambda (w) ($ *w2i* w)))
+             (remove-if (lambda (w) (null w)))
+             (remove-duplicates))
+        #'<))
+
+(defparameter *input-dataset* (mapcar #'review-to-indices *train-reviews*))
+(defparameter *target-dataset* (tensor (mapcar (lambda (s) (if (equal s "pos") 1 0))
+                                               ($ *imdb* :train-labels))))
+
+(print ($index *target-dataset* 0 '(0 1 2 3 4)))
+
+;; now we have indices of words as input
+(print ($count *words*)) ;; this is conceptually real input size
+
+;; instead of large matrix multiplication, we can use selection+sum
+(let ((w (rnd ($count *words*) 100)))
+  (print (time ($sum ($index w 0 ($0 *input-dataset*)) 0))))
+
+;; for auto backpropagation support
+(let ((w ($variable (rnd ($count *words*) 100))))
+  (print (time ($sum ($index w 0 ($0 *input-dataset*)) 0))))
+
+(defparameter *alpha* 0.01)
+(defparameter *iterations* 100)
+(defparameter *hidden-size* 100)
+
+(defparameter *w01* ($- ($* 0.2 (rnd ($count *words*) *hidden-size*)) 0.1))
+(defparameter *w12* ($- ($* 0.2 (rnd *hidden-size* 1)) 0.1))
+
+(loop :for iter :from 1 :to *iterations*
+      :do (let ((total 0)
+                (correct 0))
+            (loop :for i :from 0 :below ($count *input-dataset*)
+                  :for x = ($ *input-dataset* i)
+                  :for y = ($ *target-dataset* i)
+                  :for w01 = ($index *w01* 0 x)
+                  :for l1 = (-> ($sum w01 0)
+                                ($sigmoid))
+                  :for l2 = (-> ($dot l1 *w12*)
+                                ($sigmoid))
+                  :for dl2 = ($sub l2 y)
+                  :for dl1 = ($* dl2 ($transpose *w12*))
+                  :do (let ((d1 ($mul! dl1 *alpha*))
+                            (d2 ($mul! l1 (* dl2 *alpha*))))
+                        (setf ($index *w01* 0 x)
+                              ($sub! w01 ($expand! d1 ($size w01))))
+                        ($sub! *w12* d2)
+                        (incf total)
+                        (when (< (abs dl2) 0.5)
+                          (incf correct))))
+            (when (zerop (rem iter 2))
+              (prn iter total correct))))
+
+(defun predict-sentiment (x)
+  (let* ((w01 ($index *w01* 0 x))
+         (l1 (-> ($sum w01 0)
+                 ($sigmoid!)))
+         (l2 (-> ($dot l1 *w12*)
+                 ($sigmoid!))))
+    l2))
+
+(print (predict-sentiment ($ *input-dataset* 10)))
+(print (predict-sentiment ($ *input-dataset* 1234)))
+
+(let* ((review ($0 *test-reviews*))
+       (sentiment ($0 ($ *imdb* :test-labels)))
+       (input (review-to-indices review)))
+  (prn review)
+  (prn sentiment)
+  (prn input)
+  (prn (predict-sentiment input)))
+
+(defparameter *test-dataset* (mapcar #'review-to-indices *test-reviews*))
+(defparameter *test-target* (tensor (mapcar (lambda (s) (if (equal s "pos") 1 0))
+                                            ($ *imdb* :test-labels))))
+
+(print ($count *test-dataset*))
+
+(let ((total 0)
+      (correct 0))
+  (loop :for i :from 0 :below (min 1000 ($count *test-dataset*))
+        :for x = ($ *test-dataset* i)
+        :for y = ($ *test-target* i)
+        :do (let ((s (predict-sentiment x)))
+              (incf total)
+              (when (< (abs (- s y)) 0.5)
+                (incf correct))))
+  (prn total correct))

@@ -48,4 +48,5 @@
                                         (:file "conv")
                                         (:file "utility")))
                (:module db :components ((:file "mnist")
-                                        (:file "fashion")))))
+                                        (:file "fashion")
+                                        (:file "imdb")))))
