@@ -49,10 +49,10 @@
                                    (mapcar #'process-review)))
 (defparameter *test-reviews* (->> ($ *imdb* :test-reviews)
                                   (mapcar #'process-review)))
-(defparameter *words* (->> ($ *imdb* :train-reviews)
-                           (mapcar #'process-review)
-                           (apply #'$concat)
-                           (remove-duplicates)))
+(defparameter *words* (remove-duplicates (->> ($ *imdb* :train-reviews)
+                                              (mapcar #'process-review)
+                                              (apply #'$concat))
+                                         :test #'equal))
 (defparameter *w2i* (let ((h (make-hash-table :test 'equal :size ($count *words*))))
                       (loop :for i :from 0 :below ($count *words*)
                             :for w = ($ *words* i)
@@ -84,7 +84,7 @@
   (print (time ($sum ($index w 0 ($0 *input-dataset*)) 0))))
 
 (defparameter *alpha* 0.01)
-(defparameter *iterations* 200)
+(defparameter *iterations* 180)
 (defparameter *hidden-size* 100)
 
 (defparameter *w01* ($- ($* 0.2 (rnd ($count *words*) *hidden-size*)) 0.1))
@@ -157,3 +157,28 @@
        (x (review-to-indices review)))
   (print x)
   (print (predict-sentiment x)))
+
+(let* ((my-review "this movie is just a political propaganda, it has neither entertainment or message. i just regret my spending of precious time on this one.")
+       (review (process-review my-review))
+       (x (review-to-indices review)))
+  (print x)
+  (print (predict-sentiment x)))
+
+;; what hidden layer learns
+(defun similar (word)
+  (let ((target-index ($ *w2i* word)))
+    (when target-index
+      (let ((weight-target ($ *w01* target-index))
+            (scores nil))
+        (loop :for w :in *words*
+              :for weight = ($ *w01* ($ *w2i* w))
+              :for difference = ($sub weight weight-target)
+              :for wdiff = ($dot difference difference)
+              :do (let ((score (sqrt wdiff)))
+                    (push (cons w score) scores)))
+        (subseq (sort scores (lambda (a b) (< (cdr a) (cdr b)))) 0 (min 10 ($count scores)))))))
+
+(print ($count *words*))
+(print (similar "beautiful"))
+(print (similar "terrible"))
+(print (similar "atmosphere"))
