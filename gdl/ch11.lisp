@@ -124,7 +124,7 @@
     l2))
 
 (print (predict-sentiment ($ *input-dataset* 10)))
-(print (predict-sentiment ($ *input-dataset* 1234)))
+(print (predict-sentiment ($ *input-dataset* 2345)))
 
 (let* ((review ($0 *test-reviews*))
        (sentiment ($0 ($ *imdb* :test-labels)))
