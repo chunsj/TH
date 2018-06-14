@@ -90,6 +90,30 @@
 (defparameter *w01* ($- ($* 0.2 (rnd ($count *words*) *hidden-size*)) 0.1))
 (defparameter *w12* ($- ($* 0.2 (rnd *hidden-size* 1)) 0.1))
 
+(defun predict-sentiment (x)
+  (let* ((w01 ($index *w01* 0 x))
+         (l1 (-> ($sum w01 0)
+                 ($sigmoid!)))
+         (l2 (-> ($dot l1 *w12*)
+                 ($sigmoid!))))
+    l2))
+
+(defparameter *test-dataset* (mapcar #'review-to-indices *test-reviews*))
+(defparameter *test-target* (tensor (mapcar (lambda (s) (if (equal s "pos") 1 0))
+                                            ($ *imdb* :test-labels))))
+
+(defun print-test-perf ()
+  (let ((total 0)
+        (correct 0))
+    (loop :for i :from 0 :below (min 1000 ($count *test-dataset*))
+          :for x = ($ *test-dataset* i)
+          :for y = ($ *test-target* i)
+          :do (let ((s (predict-sentiment x)))
+                (incf total)
+                (when (< (abs (- s y)) 0.5)
+                  (incf correct))))
+    (prn "=>" total correct)))
+
 (loop :for iter :from 1 :to *iterations*
       :do (let ((total 0)
                 (correct 0))
@@ -113,15 +137,8 @@
                           (incf correct))))
             (when (zerop (rem iter 1))
               (prn iter total correct)
+              (print-test-perf)
               (gcf))))
-
-(defun predict-sentiment (x)
-  (let* ((w01 ($index *w01* 0 x))
-         (l1 (-> ($sum w01 0)
-                 ($sigmoid!)))
-         (l2 (-> ($dot l1 *w12*)
-                 ($sigmoid!))))
-    l2))
 
 (print (predict-sentiment ($ *input-dataset* 10)))
 (print (predict-sentiment ($ *input-dataset* 2345)))
@@ -134,22 +151,7 @@
   (prn input)
   (prn (predict-sentiment input)))
 
-(defparameter *test-dataset* (mapcar #'review-to-indices *test-reviews*))
-(defparameter *test-target* (tensor (mapcar (lambda (s) (if (equal s "pos") 1 0))
-                                            ($ *imdb* :test-labels))))
-
-(print ($count *test-dataset*))
-
-(let ((total 0)
-      (correct 0))
-  (loop :for i :from 0 :below (min 1000 ($count *test-dataset*))
-        :for x = ($ *test-dataset* i)
-        :for y = ($ *test-target* i)
-        :do (let ((s (predict-sentiment x)))
-              (incf total)
-              (when (< (abs (- s y)) 0.5)
-                (incf correct))))
-  (prn total correct))
+(print-test-perf)
 
 ;; wow, this really works
 (let* ((my-review "this so called franchise movie of avengers is great master piece. i've enjoyed it very much and my kids love this one as well. though my wife generally does not like this kind of genre, she said this one is better than others.")
@@ -178,7 +180,5 @@
                     (push (cons w score) scores)))
         (subseq (sort scores (lambda (a b) (< (cdr a) (cdr b)))) 0 (min 10 ($count scores)))))))
 
-(print ($count *words*))
 (print (similar "beautiful"))
 (print (similar "terrible"))
-(print (similar "atmosphere"))
