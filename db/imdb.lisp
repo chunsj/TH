@@ -2,7 +2,8 @@
   (:use #:common-lisp
         #:mu
         #:th)
-  (:export #:read-imdb-data))
+  (:export #:read-imdb-data
+           #:read-imdb-data2))
 
 (in-package :th.db.imdb)
 
@@ -29,3 +30,15 @@
     :train-labels (imdb-labels path)
     :test-reviews (imdb-reviews-test path)
     :test-labels (imdb-labels-test path)})
+
+(defun imdb-reviews2 (path)
+  (let ((filename ($concat path "/greviews.txt")))
+    (read-lines-from filename)))
+
+(defun imdb-labels2 (path)
+  (let ((filename ($concat path "/glabels.txt")))
+    (read-lines-from filename)))
+
+(defun read-imdb-data2 (&key (path +imdb-location+))
+  #{:reviews (imdb-reviews2 path)
+    :labels (imdb-labels2 path)})
