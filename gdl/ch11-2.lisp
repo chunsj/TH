@@ -7,7 +7,7 @@
 (in-package :gdl-ch11-2)
 
 (defun process-review (review)
-  (remove-duplicates (->> (remove-duplicates (split #\space review) :test #'equal)
+  (remove-duplicates (->> (split #\space review)
                           (mapcar (lambda (w)
                                     (cl-ppcre:regex-replace-all
                                      "[^a-z0-9A-Z]"
@@ -48,11 +48,15 @@
 
 ;; neural network
 (defparameter *alpha* 0.01)
-(defparameter *iterations* 4)
+(defparameter *iterations* 2)
 (defparameter *hidden-size* 100)
 
 (defparameter *w01* ($- ($* 0.2 (rnd ($count *words*) *hidden-size*)) 0.1))
 (defparameter *w12* ($- ($* 0.2 (rnd *hidden-size* 1)) 0.1))
+
+(defun reset-weights ()
+  (setf *w01* ($- ($* 0.2 (rnd ($count *words*) *hidden-size*)) 0.1))
+  (setf *w12* ($- ($* 0.2 (rnd *hidden-size* 1)) 0.1)))
 
 ;; prediction utility function
 (defun predict-sentiment (x)
@@ -104,6 +108,7 @@
                 (gcf)))))
 
 ;; execute training
+(reset-weights)
 (train)
 
 ;; personal test to check the network really works
@@ -135,3 +140,89 @@
 
 (print (similar "beautiful"))
 (print (similar "terrible"))
+
+(defun tokenize-review (review)
+  (->> (split #\space review)
+       (mapcar (lambda (w)
+                 (cl-ppcre:regex-replace-all
+                  "[^a-z0-9A-Z]"
+                  (string-downcase w)
+                  "")))
+       (remove-if-not (lambda (w) (> ($count w) 0)))))
+
+(defparameter *review-tokens* (mapcar #'tokenize-review ($ *imdb* :reviews)))
+(defparameter *vocab* (let ((counts #{}))
+                        (loop :for sentence :in *review-tokens*
+                              :do (loop :for word :in sentence
+                                        :do (let ((pcnt ($ counts word 0)))
+                                              (setf ($ counts word) (1+ pcnt)))))
+                        (let ((cnts (loop :for w :in (hash-table-keys counts)
+                                          :collect (cons w ($ counts w)))))
+                          (->> (sort cnts (lambda (p1 p2) (> (cdr p1) (cdr p2))))
+                               (mapcar #'car)))))
+
+(defparameter *word2index* #{})
+(loop :for i :from 0 :below ($count *vocab*) :do (setf ($ *word2index* ($ *vocab* i)) i))
+
+(defparameter *concatenated* nil)
+(defparameter *input-dataset* nil)
+(loop :for sentence :in *review-tokens*
+      :do (let ((sentence-indices nil))
+            (loop :for word :in sentence
+                  :do (let ((wi ($ *word2index* word)))
+                        (push wi sentence-indices)
+                        (push wi *concatenated*)))
+            (push (reverse sentence-indices) *input-dataset*)))
+(setf *concatenated* (reverse *concatenated*))
+(setf *input-dataset* (reverse *input-dataset*))
+
+;; shuffle input-dataset
+(let ((indices (tensor.int (rndperm ($count *input-dataset*)))))
+  (setf *input-dataset* (loop :for i :in ($list indices)
+                              :collect ($ *input-dataset* i))))
+
+(defparameter *alpha* 0.05)
+(defparameter *iterations* 2)
+
+(defparameter *hidden-size* 50)
+(defparameter *window* 2)
+(defparameter *negative* 5)
+
+(defparameter *w01* ($* ($- (rnd ($count *vocab*) *hidden-size*) 0.5) 0.2))
+(defparameter *w12* (zeros ($count *vocab*) *hidden-size*))
+
+(defparameter *layer-2-target* (zeros (1+ *negative*)))
+(setf ($ *layer-2-target* 0) 1)
+
+(defun similar (word)
+  (let ((target-index ($ *w2i* word)))
+    (when target-index
+      (let ((weight-target ($ *w01* target-index))
+            (scores nil))
+        (loop :for w :in *vocab*
+              :for weight = ($ *w01* ($ *word2index* w))
+              :for difference = ($sub weight weight-target)
+              :for wdiff = ($dot difference difference)
+              :do (let ((score (sqrt wdiff)))
+                    (push (cons w score) scores)))
+        (subseq (sort scores (lambda (a b) (< (cdr a) (cdr b)))) 0 (min 10 ($count scores)))))))
+
+(defun negsample (target &optional (negative *negative*))
+  (let ((rns (loop :for k :from 0 :below negative :collect (random ($count *concatenated*)))))
+    (append (list target) (mapcar (lambda (i) ($ *concatenated* i)) rns))))
+
+(loop :for niter :from 0 :below (min 1 *iterations*)
+      :do (loop :for review :in (subseq *input-dataset* 0 1)
+                :do (loop :for target-i :from 0 :below ($count review)
+                          :for review-target-i = ($ review target-i)
+                          :for rnds = (loop :for k :from 0 :below *negative*
+                                            :collect (random ($count *concatenated*)))
+                          :for rcats = (mapcar (lambda (idx) ($ *concatenated* idx)) rnds)
+                          :for target-samples = (cons review-target-i rcats)
+                          :for lctx = (subseq review (max 0 (- target-i *window*)) target-i)
+                          :for rctx = (subseq review (1+ target-i) (min ($count review)
+                                                                        (+ target-i *window*)))
+                          :for ctx = (append lctx rctx)
+                          :do (when (zerop (rem target-i 100))
+                                (prn "TS" target-samples)
+                                (prn "CTX" ctx)))))
