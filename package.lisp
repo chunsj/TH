@@ -349,4 +349,5 @@
            #:$conv2d
            #:$maxpool2d
            #:$avgpool2d
-           #:$xwpb))
+           #:$xwpb
+           #:$wimb))
