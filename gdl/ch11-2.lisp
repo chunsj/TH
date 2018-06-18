@@ -158,8 +158,9 @@
                                               (setf ($ counts word) (1+ pcnt)))))
                         (let ((cnts (loop :for w :in (hash-table-keys counts)
                                           :collect (cons w ($ counts w)))))
-                          (->> (sort cnts (lambda (p1 p2) (> (cdr p1) (cdr p2))))
-                               (mapcar #'car)))))
+                          (coerce (->> (sort cnts (lambda (p1 p2) (> (cdr p1) (cdr p2))))
+                                       (mapcar #'car))
+                                  'vector))))
 
 (defparameter *word2index* #{})
 (loop :for i :from 0 :below ($count *vocab*) :do (setf ($ *word2index* ($ *vocab* i)) i))
@@ -173,13 +174,14 @@
                         (push wi sentence-indices)
                         (push wi *concatenated*)))
             (push (reverse sentence-indices) *input-dataset*)))
-(setf *concatenated* (reverse *concatenated*))
+(setf *concatenated* (coerce (reverse *concatenated*) 'vector))
 (setf *input-dataset* (reverse *input-dataset*))
 
 ;; shuffle input-dataset
 (let ((indices (tensor.int (rndperm ($count *input-dataset*)))))
   (setf *input-dataset* (loop :for i :in ($list indices)
                               :collect ($ *input-dataset* i))))
+(setf *input-dataset* (coerce *input-dataset* 'vector))
 
 (defparameter *alpha* 0.05)
 (defparameter *iterations* 2)
@@ -199,7 +201,8 @@
     (when target-index
       (let ((weight-target ($ *w01* target-index))
             (scores nil))
-        (loop :for w :in *vocab*
+        (loop :for i :from 0 :below ($count *vocab*)
+              :for w = ($ *vocab* i)
               :for weight = ($ *w01* ($ *word2index* w))
               :for difference = ($sub weight weight-target)
               :for wdiff = ($dot difference difference)
@@ -208,21 +211,36 @@
         (subseq (sort scores (lambda (a b) (< (cdr a) (cdr b)))) 0 (min 10 ($count scores)))))))
 
 (defun negsample (target &optional (negative *negative*))
-  (let ((rns (loop :for k :from 0 :below negative :collect (random ($count *concatenated*)))))
+  (let ((rns (loop :for k :from 0 :below negative :collect (round (* (random 1.0)
+                                                                     ($count *concatenated*))))))
     (append (list target) (mapcar (lambda (i) ($ *concatenated* i)) rns))))
 
-(loop :for niter :from 0 :below (min 1 *iterations*)
-      :do (loop :for review :in (subseq *input-dataset* 0 1)
-                :do (loop :for target-i :from 0 :below ($count review)
-                          :for review-target-i = ($ review target-i)
-                          :for rnds = (loop :for k :from 0 :below *negative*
-                                            :collect (random ($count *concatenated*)))
-                          :for rcats = (mapcar (lambda (idx) ($ *concatenated* idx)) rnds)
-                          :for target-samples = (cons review-target-i rcats)
-                          :for lctx = (subseq review (max 0 (- target-i *window*)) target-i)
-                          :for rctx = (subseq review (1+ target-i) (min ($count review)
-                                                                        (+ target-i *window*)))
-                          :for ctx = (append lctx rctx)
-                          :do (when (zerop (rem target-i 100))
-                                (prn "TS" target-samples)
-                                (prn "CTX" ctx)))))
+(defun mkctx (review i)
+  (let ((left (subseq review (max 0 (- i *window*)) i))
+        (right (subseq review (1+ i) (min ($count review) (+ 1 i *window*)))))
+    (append left right)))
+
+(loop :for niter :from 0 :below *iterations*
+      :for nci = ($count *input-dataset*)
+      :do (loop :for nreview :from 0 :below nci
+                :for review = ($ *input-dataset* nreview)
+                :for nr = ($count review)
+                :do (progn
+                      (loop :for i :from 0 :below nr
+                            :for targetw = ($ review i)
+                            :for x = (mkctx review i)
+                            :for sample = (negsample targetw)
+                            :for w01 = ($index *w01* 0 x)
+                            :for l1 = ($resize! ($mean w01 0) (list 1 *hidden-size*))
+                            :for w2s = ($index *w12* 0 sample)
+                            :for l2 = ($sigmoid ($mm l1 ($transpose w2s)))
+                            :for dl2 = ($sub l2 *layer-2-target*)
+                            :for dl1 = ($mm dl2 w2s)
+                            :do (let ((dw1 ($mul! dl1 *alpha*))
+                                      (dw2 ($mul! ($vv ($resize! dl2 (list (1+ *negative*)))
+                                                       ($resize! l1 (list *hidden-size*)))
+                                                  *alpha*)))
+                                  (setf ($index *w01* 0 x) ($sub w01 ($expand! dw1 ($size w01))))
+                                  (setf ($index *w12* 0 sample) ($sub w2s dw2))))
+                      (when (zerop (rem nreview 200))
+                        (prn nreview (similar "terrible"))))))
