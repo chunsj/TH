@@ -193,6 +193,10 @@
 (defparameter *w01* ($* ($- (rnd ($count *vocab*) *hidden-size*) 0.5) 0.2))
 (defparameter *w12* ($- ($* 0.2 (rnd ($count *vocab*) *hidden-size*)) 0.1))
 
+(defun reset-weights ()
+  (setf *w01* ($* ($- (rnd ($count *vocab*) *hidden-size*) 0.5) 0.2))
+  (setf *w12* ($- ($* 0.2 (rnd ($count *vocab*) *hidden-size*)) 0.1)))
+
 (defparameter *layer-2-target* (zeros (1+ *negative*)))
 (setf ($ *layer-2-target* 0) 1)
 
@@ -204,7 +208,7 @@
         (loop :for i :from 0 :below ($count *vocab*)
               :for w = ($ *vocab* i)
               :for index = ($ *w2i* w)
-              :for weight = ($ *w01* ($ *w2i* w))
+              :for weight = ($ *w01* index)
               :for difference = ($sub weight weight-target)
               :for wdiff = ($dot difference difference)
               :do (let ((score (sqrt wdiff)))
@@ -220,27 +224,60 @@
         (right (subseq review (1+ i) (min ($count review) (+ 1 i *window*)))))
     (append left right)))
 
-(loop :for niter :from 0 :below *iterations*
-      :for nci = ($count *input-dataset*)
-      :do (loop :for nreview :from 0 :below nci
-                :for review = ($ *input-dataset* nreview)
-                :for nr = ($count review)
-                :do (progn
-                      (loop :for i :from 0 :below nr
-                            :for targetw = ($ review i)
-                            :for x = (mkctx review i)
-                            :for sample = (negsample targetw)
-                            :for w01 = ($index *w01* 0 x)
-                            :for l1 = ($resize! ($mean w01 0) (list 1 *hidden-size*))
-                            :for w2s = ($index *w12* 0 sample)
-                            :for l2 = ($sigmoid ($mm l1 ($transpose w2s)))
-                            :for dl2 = ($sub l2 *layer-2-target*)
-                            :for dl1 = ($mm dl2 w2s)
-                            :do (let ((dw1 ($mul! dl1 *alpha*))
-                                      (dw2 ($mul! ($vv ($resize! dl2 (list (1+ *negative*)))
-                                                       ($resize! l1 (list *hidden-size*)))
-                                                  *alpha*)))
-                                  (setf ($index *w01* 0 x) ($sub w01 ($expand! dw1 ($size w01))))
-                                  (setf ($index *w12* 0 sample) ($sub w2s dw2))))
-                      (when (zerop (rem nreview 200))
-                        (prn nreview (similar "terrible"))))))
+(defun train (&optional (iterations *iterations*))
+  (loop :for niter :from 0 :below iterations
+        :for nci = ($count *input-dataset*)
+        :do (loop :for nreview :from 0 :below nci
+                  :for review = ($ *input-dataset* nreview)
+                  :for nr = ($count review)
+                  :do (progn
+                        (loop :for i :from 0 :below nr
+                              :for targetw = ($ review i)
+                              :for x = (mkctx review i)
+                              :for sample = (negsample targetw)
+                              :for w01 = ($index *w01* 0 x)
+                              :for l1 = ($resize! ($mean w01 0) (list 1 *hidden-size*))
+                              :for w2s = ($index *w12* 0 sample)
+                              :for l2 = ($sigmoid ($mm l1 ($transpose w2s)))
+                              :for dl2 = ($sub l2 *layer-2-target*)
+                              :for dl1 = ($mm dl2 w2s)
+                              :do (let ((dw1 ($mul! dl1 *alpha*))
+                                        (dw2 ($mul! ($vv ($resize! dl2 (list (1+ *negative*)))
+                                                         ($resize! l1 (list *hidden-size*)))
+                                                    *alpha*)))
+                                    (setf ($index *w01* 0 x) ($sub w01 ($expand! dw1 ($size w01))))
+                                    (setf ($index *w12* 0 sample) ($sub w2s dw2))))
+                        (when (zerop (rem nreview 200))
+                          (prn niter nreview (similar "terrible")))))))
+
+(reset-weights)
+(train)
+
+(prn (similar "terrible"))
+(prn (similar "king"))
+(prn (similar "queen"))
+
+(defun analogy (positives negatives)
+  (let* ((norms (-> ($sum ($mul *w01* *w01*) 1)
+                    ($resize! (list ($size *w01* 0) 1))))
+         (normed-weights ($mul ($expand! norms ($size *w01*)) *w01*))
+         (query-vector (zeros ($size *w01* 1)))
+         (scores nil))
+    (loop :for word :in positives
+          :do ($add! query-vector ($ normed-weights ($ *w2i* word))))
+    (loop :for word :in negatives
+          :do ($sub! query-vector ($ normed-weights ($ *w2i* word))))
+    (loop :for i :from 0 :below ($count *vocab*)
+          :for w = ($ *vocab* i)
+          :for index = ($ *w2i* w)
+          :for weight = ($ *w01* index)
+          :for difference = ($sub weight query-vector)
+          :for wdiff = ($dot difference difference)
+          :for score = (sqrt wdiff)
+          :do (push (cons w score) scores))
+    (-> (sort scores (lambda (a b) (< (cdr a) (cdr b))))
+        (subseq  1 (min 10 ($count scores))))))
+
+(print (analogy '("terrible" "good") '("bad")))
+(print (analogy '("elizabeth" "he") '("she")))
+(print (analogy '("king" "woman") '("man")))
