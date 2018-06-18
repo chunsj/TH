@@ -162,15 +162,15 @@
                                        (mapcar #'car))
                                   'vector))))
 
-(defparameter *word2index* #{})
-(loop :for i :from 0 :below ($count *vocab*) :do (setf ($ *word2index* ($ *vocab* i)) i))
+(defparameter *w2i* #{})
+(loop :for i :from 0 :below ($count *vocab*) :do (setf ($ *w2i* ($ *vocab* i)) i))
 
 (defparameter *concatenated* nil)
 (defparameter *input-dataset* nil)
 (loop :for sentence :in *review-tokens*
       :do (let ((sentence-indices nil))
             (loop :for word :in sentence
-                  :do (let ((wi ($ *word2index* word)))
+                  :do (let ((wi ($ *w2i* word)))
                         (push wi sentence-indices)
                         (push wi *concatenated*)))
             (push (reverse sentence-indices) *input-dataset*)))
@@ -191,7 +191,7 @@
 (defparameter *negative* 5)
 
 (defparameter *w01* ($* ($- (rnd ($count *vocab*) *hidden-size*) 0.5) 0.2))
-(defparameter *w12* (zeros ($count *vocab*) *hidden-size*))
+(defparameter *w12* ($- ($* 0.2 (rnd ($count *vocab*) *hidden-size*)) 0.1))
 
 (defparameter *layer-2-target* (zeros (1+ *negative*)))
 (setf ($ *layer-2-target* 0) 1)
@@ -203,7 +203,8 @@
             (scores nil))
         (loop :for i :from 0 :below ($count *vocab*)
               :for w = ($ *vocab* i)
-              :for weight = ($ *w01* ($ *word2index* w))
+              :for index = ($ *w2i* w)
+              :for weight = ($ *w01* ($ *w2i* w))
               :for difference = ($sub weight weight-target)
               :for wdiff = ($dot difference difference)
               :do (let ((score (sqrt wdiff)))
@@ -211,8 +212,7 @@
         (subseq (sort scores (lambda (a b) (< (cdr a) (cdr b)))) 0 (min 10 ($count scores)))))))
 
 (defun negsample (target &optional (negative *negative*))
-  (let ((rns (loop :for k :from 0 :below negative :collect (round (* (random 1.0)
-                                                                     ($count *concatenated*))))))
+  (let ((rns (loop :for k :from 0 :below negative :collect (random ($count *concatenated*)))))
     (append (list target) (mapcar (lambda (i) ($ *concatenated* i)) rns))))
 
 (defun mkctx (review i)
