@@ -63,7 +63,7 @@
   node)
 
 (defmethod $mse ((a node) (b node))
-  (let ((result (node ($mse a b))))
+  (let ((result (node ($mse ($data a) ($data b)))))
     (setf ($children result) (list a b))
     (setf ($gradientp result) (or ($gradientp a) ($gradientp b)))
     (setf ($bpfn result) #'mse-backprop)
