@@ -1,5 +1,9 @@
 # Common Lisp binding for libTH (in fact, libATen)
 
+## Why?
+  There should be a tensor/neural network library in common lisp which is easy to use(byte me!).
+  I'd like to learn deep learning and I think building one from scratch will be the best way.
+
 ## How to Load
   1. Build libATen from pytorch source code or try with prebuilt binary files under libs.
   2. You'll need my utility library mu.
