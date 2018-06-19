@@ -11,8 +11,12 @@
 ## How to Use
   1. Basic tensor operations: examples/tensor.lisp
   2. Some auto-gradient/auto-backpropagation: examples/ad.lisp
-  3. Deep Learning from Scratch follow ups: dlfs
-  4. Grokking Deep Learning follow ups: gdl
+  3. XOR neural network: examples/xor.lisp
+  4. MNIST convolutional neural network: example/mnist.lisp
+
+## Book Follow Ups
+  1. Deep Learning from Scratch: dlfs
+  2. Grokking Deep Learning: gdl
 
 ## Test Data Support
   1. MNIST: db/mnist.lisp
