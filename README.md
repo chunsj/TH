@@ -16,7 +16,8 @@
   1. Basic tensor operations: examples/tensor.lisp
   2. Some auto-gradient/auto-backpropagation: examples/ad.lisp
   3. XOR neural network: examples/xor.lisp
-  4. MNIST convolutional neural network: example/mnist.lisp
+  4. MNIST convolutional neural network: examples/mnist.lisp
+  5. IMDB sentiment analysis: examples/sentiment.lisp (cl-ppcre is required)
 
 ## Book Follow Ups
   1. Deep Learning from Scratch: dlfs
