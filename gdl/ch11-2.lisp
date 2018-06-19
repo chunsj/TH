@@ -1,3 +1,5 @@
+(ql:quickload :cl-ppcre)
+
 (defpackage :gdl-ch11-2
   (:use #:common-lisp
         #:mu
