@@ -7,6 +7,7 @@ Another feature I'd like to have is some kind of automatic backpropagation, so I
 
 * How to Use
 - You have to build libATen from pytorch - You may have to install another libraries for building libATen.
+- (If you're on macos or linux 64 bit, you can use prebuilt binaries under libs folder if they work)
 - Clone this repository and setup local project for quicklisp.
 - You can quick load th.
 
