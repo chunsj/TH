@@ -112,6 +112,7 @@
               (gcf))))
 
 ;; direct implementation, faster than above
+;; (XXX, there're differences in backpropagation in this code and the book has no explanation)
 (defparameter *w01* ($- ($* 0.2 (rnd ($count *words*) *hidden-size*)) 0.1))
 (defparameter *w12* ($- ($* 0.2 (rnd *hidden-size* 1)) 0.1))
 
