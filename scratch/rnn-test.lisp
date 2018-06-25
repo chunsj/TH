@@ -58,24 +58,24 @@
                 (layer2-deltas nil)
                 (layer1-histories (list (zeros 1 *hidden-dim*))))
             ;; forward propagation
-            (loop :for position :from 0 :below *binary-dim*
-                  :for x = (tensor (list (list ($ a (- *binary-dim* position 1))
-                                               ($ b (- *binary-dim* position 1)))))
-                  :for y = ($transpose (tensor (list (list ($ c (- *binary-dim* position 1))))))
+            ;; we start with the least significant bit or the right most bit
+            (loop :for position :from (1- *binary-dim*) :downto 0
+                  :for x = (tensor (list (list ($ a position) ($ b position))))
                   :for z1 = ($add! ($mm x *synapse0*) ($mm (car layer1-histories) *synapseh*))
                   :for a1 = ($sigmoid z1)
                   :for z2 = ($mm a1 *synapse1*)
                   :for a2 = ($sigmoid z2)
-                  :for l2e = ($- y a2)
+                  :for y = ($transpose (tensor (list (list ($ c position)))))
+                  :for l2e = ($- y a2) ;; cf. if reverted, then, update should be subtracted
                   :for l2d = ($* l2e (dsigmoid a2))
                   :do (progn
-                        (push l2d layer2-deltas)
+                        (push a1 layer1-histories)
                         (incf overall-error (abs ($ l2e 0 0)))
-                        (setf ($ d (- *binary-dim* position 1)) (round ($ a2 0 0)))
-                        (push a1 layer1-histories)))
+                        (setf ($ d position) (round ($ a2 0 0)))
+                        (push l2d layer2-deltas)))
+            ;; backward propagation through time
             ;; note that layer2-deltas and layer1-histories are in reverse order
             ;; which means most current one is at first
-            ;; backward propagation through time
             (loop :for position :from 0 :below *binary-dim*
                   :with future-layer1-delta = (zeros 1 *hidden-dim*)
                   :for x = (tensor (list (list ($ a position) ($ b position))))
@@ -100,15 +100,8 @@
             ($zero! *synapse1-update*)
             ($zero! *synapseh-update*)
             (when (zerop (rem j 1000))
-              (prn "ITR:" j)
-              (prn "ERR:" overall-error)
+              (prn "ITR:" j "ERR: " overall-error)
               (prn "PRD:" d)
               (prn "TRU:" c)
               (prn a-int "+" b-int "=" (bin->dec ($list d)) "/" c-int)
               (gcf))))
-
-(loop :for i :from 0 :below 5
-      :with x = 0
-      :do (progn
-            (incf x)
-            (print x)))
