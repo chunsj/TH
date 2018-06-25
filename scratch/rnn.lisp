@@ -1,3 +1,6 @@
+;; XXX this is just a scratching, please ignore this
+;; what i'd like to do is creating something like $bptt!
+
 (defpackage :rnn-test
   (:use #:common-lisp
         #:mu
