@@ -1,3 +1,7 @@
+;; this is from
+;; https://iamtrask.github.io/2015/11/15/anyone-can-code-lstm/
+;; read the blog, this one is one of the most great blog for neural network.
+
 (defpackage :rnn-trask
   (:use #:common-lisp
         #:mu
