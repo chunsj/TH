@@ -53,11 +53,11 @@
       :for b = ($ *int2binary* b-int)
       :for c-int = (+ a-int b-int)
       :for c = ($ *int2binary* c-int)
-      :for d = ($zero c)
-      :for overall-error = 0
-      :for layer2-deltas = nil
-      :for layer1-histories = (list (zeros 1 *hidden-dim*))
-      :do (let ((future-layer1-delta (zeros 1 *hidden-dim*)))
+      :do (let ((d ($zero c))
+                (overall-error 0)
+                (layer2-deltas nil)
+                (layer1-histories (list (zeros 1 *hidden-dim*))))
+            ;; forward propagation
             (loop :for position :from 0 :below *binary-dim*
                   :for x = (tensor (list (list ($ a (- *binary-dim* position 1))
                                                ($ b (- *binary-dim* position 1)))))
@@ -75,7 +75,9 @@
                         (push a1 layer1-histories)))
             ;; note that layer2-deltas and layer1-histories are in reverse order
             ;; which means most current one is at first
+            ;; backward propagation through time
             (loop :for position :from 0 :below *binary-dim*
+                  :with future-layer1-delta = (zeros 1 *hidden-dim*)
                   :for x = (tensor (list (list ($ a position) ($ b position))))
                   :for l1 = ($ layer1-histories position) ;; note
                   :for l1p = ($ layer1-histories (1+ position)) ;; note
@@ -104,3 +106,9 @@
               (prn "TRU:" c)
               (prn a-int "+" b-int "=" (bin->dec ($list d)) "/" c-int)
               (gcf))))
+
+(loop :for i :from 0 :below 5
+      :with x = 0
+      :do (progn
+            (incf x)
+            (print x)))
