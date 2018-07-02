@@ -594,6 +594,11 @@
     (tensor-index-select result tensor dimension (tensor.long indices))
     result))
 
+(defmethod $index ((tensor tensor) dimension (index number))
+  (let ((result ($empty tensor)))
+    (tensor-index-select result tensor dimension (tensor.long (list index)))
+    result))
+
 (defmethod $index ((tensor tensor) dimension (indices tensor.long))
   (let ((result ($empty tensor)))
     (tensor-index-select result tensor dimension indices)
@@ -608,6 +613,10 @@
   (tensor-index-fill tensor value dimension (tensor.long indices))
   value)
 
+(defmethod (setf $index) ((value number) (tensor tensor) dimension (index number))
+  (tensor-index-fill tensor value dimension (tensor.long (list index)))
+  value)
+
 (defmethod (setf $index) ((value number) (tensor tensor) dimension (indices tensor.long))
   (tensor-index-fill tensor value dimension indices)
   value)
@@ -618,6 +627,10 @@
 
 (defmethod (setf $index) ((value tensor) (tensor tensor) dimension (indices list))
   (tensor-index-copy tensor value dimension (tensor.long indices))
+  value)
+
+(defmethod (setf $index) ((value tensor) (tensor tensor) dimension (index number))
+  (tensor-index-copy tensor value dimension (tensor.long (list index)))
   value)
 
 (defmethod (setf $index) ((value tensor) (tensor tensor) dimension (indices tensor.long))
@@ -631,6 +644,11 @@
 (defmethod (setf $index) ((value list) (tensor tensor) dimension (indices list))
   (tensor-index-copy tensor (make-tensor-args (type-of tensor) (list value))
                      dimension (storage.long indices))
+  value)
+
+(defmethod (setf $index) ((value list) (tensor tensor) dimension (index number))
+  (tensor-index-copy tensor (make-tensor-args (type-of tensor) (list value))
+                     dimension (storage.long (list index)))
   value)
 
 (defmethod (setf $index) ((value list) (tensor tensor) dimension (indices tensor.long))
