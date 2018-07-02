@@ -1,6 +1,7 @@
 (in-package :th)
 
 (defgeneric $bp! (node &optional gradient) (:documentation "Executes backward error propagation."))
+(defgeneric $zg! (node) (:documentation "Reset previous gradient values."))
 
 (defgeneric $variable (object) (:documentation "Returns variable node."))
 (defgeneric $constant (object) (:documentation "Returns constant node."))
@@ -31,8 +32,13 @@
 
 (defmethod $tensorp ((node node)) ($tensorp ($data node)))
 
+(defun setgradient (node value)
+  (if ($gradient node)
+      (setf ($gradient node) ($add ($gradient node) value))
+      (setf ($gradient node) value)))
+
 (defun default-bpfn (node gradient)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   node)
 
 (defun node (data &optional need-gradient-p)
@@ -51,11 +57,18 @@
 (defmethod $variable ((data t)) (node data t))
 (defmethod $constant ((data t)) (node data nil))
 
+(defmethod $zg! ((node node))
+  (setf ($gradient node) nil)
+  (when ($children node)
+    (loop :for child :in ($children node) :do ($zg! child))))
+
 (defmethod $bp! ((node node) &optional gradient)
   (if (null gradient)
-      (if ($tensorp node)
-          (funcall ($bpfn node) node ($broadcast 1 ($data node)))
-          (funcall ($bpfn node) node 1))
+      (progn
+        ($zg! node)
+        (if ($tensorp node)
+            (funcall ($bpfn node) node ($broadcast 1 ($data node)))
+            (funcall ($bpfn node) node 1)))
       (funcall ($bpfn node) node gradient)))
 
 (defmethod $zero ((x node)) (node ($zero ($data x)) ($gradientp x)))

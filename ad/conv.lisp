@@ -16,7 +16,7 @@
     out))
 
 (defun conv2d-backprop (node gradient f df dw dh pw ph)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (if (eq 3 ($count ($children node)))
                                (let* ((x ($c0 node))
@@ -109,7 +109,7 @@
     out))
 
 (defun maxpool2d-backprop (node gradient indices kw kh dw dh pw ph ceilp)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let* ((x ($c0 node))
                                   (dx ($empty ($data x))))
@@ -141,7 +141,7 @@
     out))
 
 (defun avgpool2d-backprop (node gradient kw kh dw dh pw ph ceilp count-pad-p)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let* ((x ($c0 node))
                                   (dx ($empty ($data x))))
@@ -169,7 +169,7 @@
 
 (defun conv2-backprop (node gradient type)
   (declare (ignore type))
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let ((x ($c0 node))
                                  (k ($c1 node)))

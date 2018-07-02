@@ -327,6 +327,7 @@
            #:$fname
            #:$tapep
            #:$bp!
+           #:$zg!
            #:tape
            #:$variable
            #:$constant

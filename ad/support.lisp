@@ -20,7 +20,7 @@
     dinput))
 
 (defun bce-backprop (node gradient)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let ((a ($c0 node))
                                  (b ($c1 node)))
@@ -50,7 +50,7 @@
     dinput))
 
 (defun mse-backprop (node gradient)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let ((a ($c0 node))
                                  (b ($c1 node)))
@@ -92,7 +92,7 @@
     dinput))
 
 (defun relu-backprop (node gradient)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let ((x ($c0 node)))
                              (list (if ($gradientp x)
@@ -118,7 +118,7 @@
     dinput))
 
 (defun softmax-backprop (node gradient)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let ((x ($c0 node)))
                              (list (if ($gradientp x)

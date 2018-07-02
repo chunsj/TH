@@ -1,7 +1,7 @@
 (in-package :th)
 
 (defun abs-backprop (node gradient)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let ((x ($c0 node)))
                              (list (if ($gradientp x)
@@ -21,7 +21,7 @@
       result)))
 
 (defun acos-backprop (node gradient)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let ((x ($c0 node)))
                              (list (if ($gradientp x)
@@ -37,7 +37,7 @@
     result))
 
 (defun asin-backprop (node gradient)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let ((x ($c0 node)))
                              (list (if ($gradientp x)
@@ -53,7 +53,7 @@
     result))
 
 (defun atan-backprop (node gradient)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let ((x ($c0 node)))
                              (list (if ($gradientp x)
@@ -69,7 +69,7 @@
     result))
 
 (defun atan2-backprop (node gradient)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let ((y ($c0 node))
                                  (x ($c1 node)))
@@ -91,7 +91,7 @@
     result))
 
 (defun cos-backprop (node gradient)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let ((x ($c0 node)))
                              (list (if ($gradientp x)
@@ -107,7 +107,7 @@
     result))
 
 (defun cosh-backprop (node gradient)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let ((x ($c0 node)))
                              (list (if ($gradientp x)
@@ -123,7 +123,7 @@
     result))
 
 (defun exp-backprop (node gradient)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let ((x ($c0 node)))
                              (list (if ($gradientp x)
@@ -139,7 +139,7 @@
     result))
 
 (defun expt-backprop (node gradient)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let ((a ($c0 node))
                                  (b ($c1 node)))
@@ -164,7 +164,7 @@
 (defun dlog (x) ($div 1.0 x))
 
 (defun log-backprop (node gradient)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let ((x ($c0 node)))
                              (list (if ($gradientp x)
@@ -180,7 +180,7 @@
     result))
 
 (defun sin-backprop (node gradient)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let ((x ($c0 node)))
                              (list (if ($gradientp x)
@@ -198,7 +198,7 @@
 (defun dsigmoid (s) ($mul s ($sub 1 s)))
 
 (defun sigmoid-backprop (node gradient)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let ((x ($c0 node)))
                              (list (if ($gradientp x)
@@ -214,7 +214,7 @@
     result))
 
 (defun sinh-backprop (node gradient)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let ((x ($c0 node)))
                              (list (if ($gradientp x)
@@ -230,7 +230,7 @@
     result))
 
 (defun sqrt-backprop (node gradient)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let ((x ($c0 node)))
                              (list (if ($gradientp x)
@@ -247,7 +247,7 @@
     result))
 
 (defun tan-backprop (node gradient)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let ((x ($c0 node)))
                              (list (if ($gradientp x)
@@ -265,7 +265,7 @@
 (defun dtanh (s) ($sub 1 ($* s s)))
 
 (defun tanh-backprop (node gradient)
-  (setf ($gradient node) gradient)
+  (setgradient node gradient)
   (setf ($children node) (when ($children node)
                            (let ((x ($c0 node)))
                              (list (if ($gradientp x)
