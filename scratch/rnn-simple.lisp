@@ -40,6 +40,7 @@
         :for grad = ($index *grad-over-time* 1 (1+ k))
         :do (setf ($index *grad-over-time* 1 k) ($mul grad *wr*))))
 
+;; XXX how can i make a function for proceccing each forward/backward step?
 (loop :for iter :from 0 :below *number-of-epoch*
       :for y = (forward)
       :for cost = ($div ($sum ($expt ($sub y *y*) 2)) *number-of-training-data*)
