@@ -1,3 +1,6 @@
+;; from
+;; https://towardsdatascience.com/only-numpy-vanilla-recurrent-neural-network-back-propagation-practice-math-956fbea32704
+
 (defpackage :rnn-simple
   (:use #:common-lisp
         #:mu
