@@ -51,7 +51,12 @@
 (defmethod $variable ((data t)) (node data t))
 (defmethod $constant ((data t)) (node data nil))
 
-(defmethod $bp! ((node node) &optional (gradient 1)) (funcall ($bpfn node) node gradient))
+(defmethod $bp! ((node node) &optional gradient)
+  (if (null gradient)
+      (if ($tensorp node)
+          (funcall ($bpfn node) node ($broadcast 1 ($data node)))
+          (funcall ($bpfn node) node 1))
+      (funcall ($bpfn node) node gradient)))
 
 (defmethod $zero ((x node)) (node ($zero ($data x)) ($gradientp x)))
 (defmethod $one ((x node)) (node ($one ($data x)) ($gradientp x)))
