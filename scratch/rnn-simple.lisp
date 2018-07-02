@@ -13,8 +13,8 @@
                             (1 1 1))))
 (defparameter *y* (tensor '((1) (2) (3))))
 
-(defparameter *wx* 0.2)
-(defparameter *wr* 1.5)
+(defparameter *wx* (tensor '((0.2))))
+(defparameter *wr* (tensor '((1.5))))
 
 (defparameter *number-of-epoch* 30000)
 (defparameter *number-of-training-data* 3)
@@ -25,10 +25,10 @@
 (defparameter *grad-over-time* (zeros 3 4))
 
 (defun forward-step (i)
-  (let ((layer-1 ($add ($mul ($index *x* 1 i) *wx*)
-                       ($mul ($index *states* 1 i) *wr*))))
-    (setf ($index *states* 1 (1+ i)) layer-1)
-    layer-1))
+  (let ((layer ($add ($mm ($index *x* 1 i) *wx*)
+                     ($mm ($index *states* 1 i) *wr*))))
+    (setf ($index *states* 1 (1+ i)) layer)
+    layer))
 
 (defun forward ()
   (loop :for i :from 0 :below ($size *x* 1) :do (forward-step i))
@@ -38,7 +38,7 @@
   (setf ($index *grad-over-time* 1 n) grad-out)
   (loop :for k :from (1- n) :downto 1
         :for grad = ($index *grad-over-time* 1 (1+ k))
-        :do (setf ($index *grad-over-time* 1 k) ($mul grad *wr*))))
+        :do (setf ($index *grad-over-time* 1 k) ($mm grad *wr*))))
 
 ;; XXX how can i make a function for proceccing each forward/backward step?
 (loop :for iter :from 0 :below *number-of-epoch*
@@ -59,8 +59,8 @@
                                            ($index *states* 1 1))
                                      ($mul ($index *grad-over-time* 1 1)
                                            ($index *states* 1 0))))))
-              (setf *wx* (- *wx* (* *learnig-rate-x* grad-wx))
-                    *wr* (- *wr* (* *learnig-rate-r* grad-wr)))
+              ($sub! *wx* ($mul *learnig-rate-x* grad-wx))
+              ($sub! *wr* ($mul *learnig-rate-r* grad-wr))
               (when (zerop (rem iter 1000))
                 (prn iter y)))))
 
@@ -68,3 +68,9 @@
 (progn
   (prn (forward))
   (prn *wx* *wr*))
+
+;; ad
+(let* ((x ($variable '(0)))
+       (y ($sigmoid x)))
+  ($bp! y)
+  (prn y ($gradient x)))
