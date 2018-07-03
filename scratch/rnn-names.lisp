@@ -55,13 +55,13 @@
 
 (defparameter *wh* ($variable (rnd (+ *letters-length* *hidden-size*) *hidden-size*)))
 (defparameter *bh* ($variable (zeros *hidden-size*)))
-(defparameter *wo* ($variable (rnd *hidden-size* *category-size*)))
+(defparameter *wo* ($variable (rnd (+ *letters-length* *hidden-size*) *category-size*)))
 (defparameter *bo* ($variable (zeros *category-size*)))
 
 (defun predict (tensor hidden-state)
   (let* ((input ($cat tensor hidden-state 1))
          (hidden ($xwpb input *wh* *bh*))
-         (ho ($xwpb hidden *wo* *bo*))
+         (ho ($xwpb input *wo* *bo*))
          (output ($softmax ho)))
     (setf ($data hidden-state) ($data hidden))
     output))
