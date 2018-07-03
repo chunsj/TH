@@ -29,3 +29,17 @@
   (prn y)
   ($bp! y)
   (prn "DY/DX" ($gradient x)))
+
+(defun muladd (x y z) ($+ ($* x y) z))
+
+(let* ((x ($variable ($- ($* 2 (rnd 3 2)) 1)))
+       (y ($variable ($- ($* 2 (rnd 3 2)) 1)))
+       (z ($variable ($- ($* 2 (rnd 3 2)) 1)))
+       (r (muladd x y z)))
+  (prn r)
+  ($bp! r)
+  (prn "X" x)
+  (prn "Y" y)
+  (prn "DR/DX=Y"($gradient x))
+  (prn "DR/DY=X"($gradient y))
+  (prn "DR/DZ=1"($gradient z)))
