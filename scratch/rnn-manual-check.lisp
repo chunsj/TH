@@ -97,6 +97,17 @@
 
 ;; next code is a simple linear recurrent neural network.
 ;; the network is for counting how many 1's in the input sequence.
+;; this simple linear network is for checking the implementation of
+;; back propagation through time in ad.
+;;
+;; input x contains 1's
+;; output y is the count 1's upto current time step
+;; a = s(t-1) @ w
+;; b = x @ v
+;; s = a + b
+;; p = s @ u
+;; d = y - p
+;; l = d^2, yes, mse
 
 (defparameter *x* ($constant '((1) (1) (1))))
 (defparameter *y* ($constant '((1) (2) (3))))
