@@ -105,7 +105,7 @@
 (defparameter *u* ($variable '((1))))
 (defparameter *v* ($variable '((1))))
 
-(loop :for iter :from 0 :below 100
+(loop :for iter :from 0 :below 50
       :for states = (list ($constant '((0))))
       :for losses = '()
       :do (progn
@@ -142,4 +142,4 @@
                   :for p = ($@ s *u*)
                   :do (progn
                         (push s states)
-                        (prn i p y)))))
+                        (prn i ($round ($ p 0 0)) ($ y 0 0))))))
