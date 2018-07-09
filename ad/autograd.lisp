@@ -81,6 +81,13 @@
       (bpglobal node nil)
       (bplocal node gradient)))
 
+(defun $bptt! (nodes &optional gradient)
+  (let ((fnode (car nodes))
+        (rnodes (cdr nodes)))
+    ($bp! fnode gradient)
+    (when rnodes
+      (loop :for n :in rnodes :do ($np! n gradient)))))
+
 (defmethod $zero ((x node)) (node ($zero ($data x)) ($gradientp x)))
 (defmethod $one ((x node)) (node ($one ($data x)) ($gradientp x)))
 (defmethod $fill ((x node) value) (node ($fill ($data x) value) ($gradientp x)))
