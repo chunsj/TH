@@ -105,7 +105,7 @@
 (defparameter *u* ($variable '((1))))
 (defparameter *v* ($variable '((1))))
 
-(loop :for iter :from 0 :below 1
+(loop :for iter :from 0 :below 100
       :for states = (list ($constant '((0))))
       :for losses = '()
       :do (progn
@@ -123,11 +123,23 @@
                         (push s states)
                         (push l losses)))
             ($bptt! losses)
-            ;; (prn "*******")
-            ;; ($bp! ($0 losses))
-            ;; ($np! ($1 losses))
-            ;; ($np! ($2 losses))
-            ;; (prn "*******")
-            (prn ($gradient *u*))
-            (prn ($gradient *v*))
-            (prn ($gradient *w*))))
+            ;; (prn ($gradient *u*))
+            ;; (prn ($gradient *v*))
+            ;; (prn ($gradient *w*))
+            ($gd! ($0 losses))))
+
+(loop :for iter :from 0 :below 1
+      :for states = (list ($constant '((0))))
+      :for losses = '()
+      :do (progn
+            (loop :for i :from 0 :below ($size *x* 0)
+                  :for x = ($index *x* 0 i)
+                  :for y = ($index *y* 0 i)
+                  :for ps = ($0 states)
+                  :for a = ($@ ps *w*)
+                  :for b = ($@ x *v*)
+                  :for s = ($+ a b)
+                  :for p = ($@ s *u*)
+                  :do (progn
+                        (push s states)
+                        (prn i p y)))))
