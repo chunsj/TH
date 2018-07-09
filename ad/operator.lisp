@@ -506,3 +506,11 @@
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) (lambda (node gradient) (index-backprop node gradient dimension indices)))
     result))
+
+(defmethod $index ((x node) dimension (index number))
+  (let ((result (node ($index ($data x) dimension index))))
+    (setf ($children result) (list x))
+    (setf ($gradientp result) ($gradientp x))
+    (setf ($bpfn result) (lambda (node gradient)
+                           (index-backprop node gradient dimension (list index))))
+    result))

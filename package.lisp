@@ -328,6 +328,7 @@
            #:$tapep
            #:$bp!
            #:$zg!
+           #:$np!
            #:tape
            #:$variable
            #:$constant

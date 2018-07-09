@@ -161,6 +161,13 @@
     (setf ($bpfn result) #'expt-backprop)
     result))
 
+(defmethod $expt ((a node) (b number))
+  (let ((result (node ($expt ($data a) b))))
+    (setf ($children result) (list a ($constant b)))
+    (setf ($gradientp result) ($gradientp a))
+    (setf ($bpfn result) #'expt-backprop)
+    result))
+
 (defun dlog (x) ($div 1.0 x))
 
 (defun log-backprop (node gradient)

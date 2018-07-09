@@ -62,8 +62,8 @@
   (when ($children node)
     (loop :for child :in ($children node) :do ($zg! child))))
 
-(defun bpglobal (node)
-  ($zg! node)
+(defun bpglobal (node &optional (resetp T))
+  (when resetp ($zg! node))
   (if ($tensorp node)
       (funcall ($bpfn node) node ($broadcast 1 ($data node)))
       (funcall ($bpfn node) node 1)))
@@ -74,6 +74,11 @@
 (defmethod $bp! ((node node) &optional gradient)
   (if (null gradient)
       (bpglobal node)
+      (bplocal node gradient)))
+
+(defmethod $np! ((node node) &optional gradient)
+  (if (null gradient)
+      (bpglobal node nil)
       (bplocal node gradient)))
 
 (defmethod $zero ((x node)) (node ($zero ($data x)) ($gradientp x)))
