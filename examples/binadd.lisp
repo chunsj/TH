@@ -26,9 +26,6 @@
         :for pad = (loop :for k :from 0 :below (- 8 ($count bin)) :collect 0)
         :do (setf ($ *int2binary* i) (tensor.byte (append pad bin)))))
 
-(loop :for i :from 0 :below (round (expt 2 *binary-dim*))
-      :do (prn i ($ *int2binary* i)))
-
 (defparameter *alpha* 0.1)
 (defparameter *input-dim* 2)
 (defparameter *hidden-dim* 16)
