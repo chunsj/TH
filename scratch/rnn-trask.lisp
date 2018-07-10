@@ -105,3 +105,44 @@
               (prn "TRU:" c)
               (prn a-int "+" b-int "=" (bin->dec ($list d)) "/" c-int)
               (gcf))))
+
+(defparameter *synapse0* ($variable ($- ($* 2 (rnd *input-dim* *hidden-dim*)) 1)))
+(defparameter *synapse1* ($variable ($- ($* 2 (rnd *hidden-dim* *output-dim*)) 1)))
+(defparameter *synapseh* ($variable ($- ($* 2 (rnd *hidden-dim* *hidden-dim*)) 1)))
+
+(loop :for j :from 0 :below 5000
+      :for half-largest-number = (round (expt 2 (1- *binary-dim*)))
+      :for a-int = (random half-largest-number)
+      :for a = ($ *int2binary* a-int)
+      :for b-int = (random half-largest-number)
+      :for b = ($ *int2binary* b-int)
+      :for c-int = (+ a-int b-int)
+      :for c = ($ *int2binary* c-int)
+      :do (let ((d ($zero c))
+                (overall-error 0)
+                (losses nil)
+                (ps ($constant (zeros 1 *hidden-dim*))))
+            ;; forward propagation
+            ;; we start with the least significant bit or the right most bit
+            (loop :for position :from (1- *binary-dim*) :downto 0
+                  :for x = ($constant (tensor (list (list ($ a position) ($ b position)))))
+                  :for z1 = ($add ($mm x *synapse0*) ($mm ps *synapseh*))
+                  :for a1 = ($sigmoid z1)
+                  :for z2 = ($mm a1 *synapse1*)
+                  :for a2 = ($sigmoid z2)
+                  :for y = ($constant ($transpose (tensor (list (list ($ c position))))))
+                  :for l2e = ($- y a2) ;; cf. if reverted, then, update should be subtracted
+                  :for l = ($expt l2e 2)
+                  :do (progn
+                        (setf ps a1)
+                        (push l losses)
+                        (incf overall-error (abs ($ l2e 0 0)))
+                        (setf ($ d position) (round ($ a2 0 0)))))
+            ($bptt! losses)
+            ($gd! ($0 losses) *alpha*)
+            (when (zerop (rem j 1000))
+              (prn "ITR:" j "ERR: " overall-error)
+              (prn "PRD:" d)
+              (prn "TRU:" c)
+              (prn a-int "+" b-int "=" (bin->dec ($list d)) "/" c-int)
+              (gcf))))
