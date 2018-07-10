@@ -24,12 +24,6 @@
 (defun $c1 (node) ($1 ($children node)))
 (defun $c2 (node) ($2 ($children node)))
 
-(defmethod $ ((node node) location &rest others-and-default)
-  (apply #'$ ($children ($data node)) (cons location others-and-default)))
-
-(defmethod (setf $) (value (node node) location &rest others)
-  (setf (apply #'$ ($data node) (cons location others)) value))
-
 (defmethod $tensorp ((node node)) ($tensorp ($data node)))
 
 (defun setgradient (node value)
@@ -93,9 +87,6 @@
 (defmethod $fill ((x node) value) (node ($fill ($data x) value) ($gradientp x)))
 (defmethod $ndim ((x node)) ($ndim ($data x)))
 (defmethod $count ((x node)) ($count ($data x)))
-
-(defmethod $ ((x node) location &rest others-and-default)
-  (apply #'$ ($data x) location others-and-default))
 
 (defmethod $zero! ((x node))
   ($zero! ($data x))

@@ -74,3 +74,5 @@
               (prn "TRU:" c)
               (prn a-int "+" b-int "=" (bin->dec ($list d)) "/" c-int)
               (gcf))))
+
+(prn (type-of ($ ($constant '((0))) 0 0)))
