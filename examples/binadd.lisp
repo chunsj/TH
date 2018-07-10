@@ -67,6 +67,8 @@
                         (push l losses)
                         (incf overall-error (abs ($ l2e 0 0)))
                         (setf ($ d position) (round ($ a2 0 0)))))
+            ;; of course, bptt will take losses in given order, so losses should be in reverse order.
+            ;; that's why we use push.
             ($bptt! losses)
             ($gd! ($0 losses) *alpha*)
             (when (zerop (rem j 1000))
