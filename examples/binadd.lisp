@@ -62,8 +62,8 @@
                   :do (progn
                         (setf ps a1)
                         (push l losses)
-                        (incf overall-error (abs ($ l2e 0 0)))
-                        (setf ($ d position) (round ($ a2 0 0)))))
+                        (incf overall-error (abs ($data ($ l2e 0 0))))
+                        (setf ($ d position) (round ($data ($ a2 0 0))))))
             ;; of course, bptt will take losses in given order, so losses should be in reverse order.
             ;; that's why we use push.
             ($bptt! losses)
@@ -74,5 +74,3 @@
               (prn "TRU:" c)
               (prn a-int "+" b-int "=" (bin->dec ($list d)) "/" c-int)
               (gcf))))
-
-(prn (type-of ($ ($constant '((0))) 0 0)))

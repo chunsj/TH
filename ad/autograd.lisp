@@ -94,6 +94,7 @@
 (defmethod $one! ((x node))
   ($one! ($data x))
   x)
+
 (defmethod $fill! ((x node) value)
   ($fill! ($data x) value)
   x)
