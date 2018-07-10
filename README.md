@@ -18,6 +18,7 @@
   3. XOR neural network: examples/xor.lisp
   4. MNIST convolutional neural network: examples/mnist.lisp
   5. IMDB sentiment analysis: examples/sentiment.lisp (cl-ppcre is required)
+  6. Binary number addition using RNN: examples/binadd.lisp
 
 ## Book Follow Ups
   1. Deep Learning from Scratch: dlfs
