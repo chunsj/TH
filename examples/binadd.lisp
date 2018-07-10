@@ -64,8 +64,6 @@
                 (setf ($ d position) (round ($data ($ y* 0 0))))))
     (list (round (bin->dec ($list d))) d losses overall-error)))
 
-(prn (binadd ($ *int2binary* 11) ($ *int2binary* 32)))
-
 (loop :for j :from 0 :below *iterations*
       :for half-largest-number = (round (expt 2 (1- *binary-dim*)))
       :for a-int = (random half-largest-number)
@@ -85,6 +83,9 @@
               (prn "TRU:" c)
               (prn a-int "+" b-int "=" ($0 prediction) "/" c-int)
               (gcf))))
+
+(prn (binadd ($ *int2binary* 11) ($ *int2binary* 32)))
+(prn (binadd ($ *int2binary* 27) ($ *int2binary* 98)))
 
 ;; expanded code logic without functions
 ;; you can refer this code to see how the forward/backward propagation through time works
