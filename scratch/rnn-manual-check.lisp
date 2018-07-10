@@ -154,3 +154,24 @@
                   :do (progn
                         (push s states)
                         (prn i ($round ($ p 0 0)) ($ y 0 0))))))
+
+;; yes, we do not keep every previous states. we just need previous one
+;; the computation graph is constructed and it has required nodes.
+(loop :for iter :from 0 :below 50
+      :for ps = ($constant '((0)))
+      :for losses = '()
+      :do (progn
+            (loop :for i :from 0 :below ($size *x* 0)
+                  :for x = ($index *x* 0 i)
+                  :for y = ($index *y* 0 i)
+                  :for a = ($@ ps *w*)
+                  :for b = ($@ x *v*)
+                  :for s = ($+ a b)
+                  :for p = ($@ s *u*)
+                  :for d = ($- y p)
+                  :for l = ($expt d 2)
+                  :do (progn
+                        (setf ps s)
+                        (push l losses)))
+            ($bptt! losses)
+            ($gd! ($0 losses))))
