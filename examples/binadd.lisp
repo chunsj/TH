@@ -84,8 +84,8 @@
               (prn a-int "+" b-int "=" ($0 prediction) "/" c-int)
               (gcf))))
 
-(prn (binadd ($ *int2binary* 11) ($ *int2binary* 32)))
-(prn (binadd ($ *int2binary* 27) ($ *int2binary* 98)))
+(prn (+ 11 32) (binadd ($ *int2binary* 11) ($ *int2binary* 32)))
+(prn (+ 27 98) (binadd ($ *int2binary* 27) ($ *int2binary* 98)))
 
 ;; expanded code logic without functions
 ;; you can refer this code to see how the forward/backward propagation through time works
