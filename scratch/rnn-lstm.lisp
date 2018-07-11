@@ -56,6 +56,7 @@
             ($bptt! losses)
             ($gd! ($0 losses) *alpha*)))
 
+;; check whether the result is correct with values in the blog
 (let ((ws (list *wa* *wi* *wf* *wo*)))
   (prn "GRADS")
   (loop :for w :in ws :do (prn ($gradient w)))
