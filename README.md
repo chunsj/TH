@@ -28,6 +28,7 @@
   1. MNIST: db/mnist.lisp
   2. Fashion MNIST: db/fashion.lisp
   3. IMDB: db/imdb.lisp
+  4. Misc CSV Files: data
 
 ## On Scratch
   1. Most of the code in this folder is just for testing, teasing, or random trashing.
