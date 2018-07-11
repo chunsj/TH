@@ -15,7 +15,8 @@
                 (grv ($gradient node)))
             (cond ((null grv) nil)
                   ((numberp grv) (setf ($data node) (- data (* grv learning-rate))))
-                  (t ($axpy! (- learning-rate) grv data))))))
+                  (t ($axpy! (- learning-rate) grv data)))
+            (setf ($gradient node) nil))))
     node))
 
 (defmethod $mgd! ((object t) &optional (learning-rate 0.01) (momentum 0.9))
@@ -35,7 +36,8 @@
                                    (setf ($ ($attrs node) :v) v)))
                   (t (let ((v ($ ($attrs node) :v (apply #'zeros ($size grv)))))
                        (setf ($ ($attrs node) :v) ($axpy! (- learning-rate) grv ($mul! v momentum)))
-                       ($axpy! 1 ($ ($attrs node) :v) data)))))))
+                       ($axpy! 1 ($ ($attrs node) :v) data))))
+            (setf ($gradient node) nil))))
     node))
 
 (defmethod $agd! ((object t) &optional (learning-rate 0.01))
@@ -55,5 +57,6 @@
                                    (setf ($ ($attrs node) :h) h)))
                   (t (let ((h ($ ($attrs node) :h (-> ($empty grv) ($resize! grv) ($fill! 1E-8)))))
                        (setf ($ ($attrs node) :h) ($add! ($mul grv grv) h))
-                       ($axpy! (- learning-rate) ($div grv ($sqrt ($ ($attrs node) :h))) data)))))))
+                       ($axpy! (- learning-rate) ($div grv ($sqrt ($ ($attrs node) :h))) data))))
+            (setf ($gradient node) nil))))
     node))
