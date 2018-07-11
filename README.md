@@ -32,3 +32,11 @@
 ## On Scratch
   1. Most of the code in this folder is just for testing, teasing, or random trashing.
   2. They may not work at all.
+
+## On API
+  1. Variable creation: $variable
+  2. Value/Constant creation: $constant
+  3. Operators: $+, $-, $*, $/ $@, ...
+  4. Functions: $sigmoid, $tanh, $softmax
+  5. Backpropagation: $bp!, $bptt!
+  6. Gradient descent or parameter update: $gd!, $mgd!, $agd!
