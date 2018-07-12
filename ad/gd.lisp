@@ -3,6 +3,8 @@
 (defgeneric $gd! (node &optional learning-rate) (:documentation "Executes gradient descent."))
 (defgeneric $mgd! (node &optional learning-rate momentum) (:documentation "Executes momentum."))
 (defgeneric $agd! (node &optional learning-rate) (:documentation "Executes adagrad."))
+(defgeneric $amgd! (node &optional learning-rate β1 β2) (:documentation "Executes adam."))
+(defgeneric $rmgd! (node &optional learning-rate) (:documentation "Executes rmsprop."))
 
 (defmethod $gd! ((object t) &optional (learning-rate 0.01)) (declare (ignore learning-rate)))
 
@@ -60,3 +62,14 @@
                        ($axpy! (- learning-rate) ($div grv ($sqrt ($ ($attrs node) :h))) data))))
             (setf ($gradient node) nil))))
     node))
+
+(defmethod $amgd! ((object t) &optional (learning-rate 0.01) (β1 0.9) (β2 0.999))
+  (declare (ignore learning-rate β1 β2)))
+
+(defmethod $amgd! ((node node) &optional (learning-rate 0.01) (β1 0.9) (β2 0.999))
+  )
+
+(defmethod $rmgd! ((object t) &optional (learning-rate 0.001))
+  (declare (ignore learning-rate)))
+
+(defmethod $rmgd! ((node node) &optional (learning-rate 0.001)))

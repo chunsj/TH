@@ -342,6 +342,8 @@
            #:$gd!
            #:$mgd!
            #:$agd!
+           #:$amgd!
+           #:$rmgd!
            #:$bce
            #:$cee
            #:$mse
