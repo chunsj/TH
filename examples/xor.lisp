@@ -98,3 +98,16 @@
               ($bp! out)
               ($rmgd! out lr)))
   (prn ($sigmoid ($mm ($sigmoid ($mm X w1)) w2))))
+
+(let* ((w1 ($variable (rndn 3 3)))
+       (w2 ($variable (rndn 3 1)))
+       (X ($constant '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
+       (Y ($constant '(0 1 1 0))))
+  (loop :for i :from 0 :below 1000
+        :do (let* ((l1 ($sigmoid ($mm X w1)))
+                   (l2 ($sigmoid ($mm l1 w2)))
+                   (d ($sub l2 Y))
+                   (out ($dot d d)))
+              ($bp! out)
+              ($adgd! out)))
+  (prn ($sigmoid ($mm ($sigmoid ($mm X w1)) w2))))
