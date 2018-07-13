@@ -119,6 +119,8 @@
                         (setf ($ d position) (round ($data ($ a2 0 0))))))
             ($bptt! losses)
             ($gd! ($0 losses) *alpha*)
+            ;;($rmgd! ($0 losses) 0.005)
+            ;;($amgd! ($0 losses))
             (when (zerop (rem j 1000))
               (prn "ITR:" j "ERR:" overall-error)
               (prn "PRD:" d)
