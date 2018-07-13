@@ -117,7 +117,7 @@
                       (format t "[~A|~A]: ~A~%" (1+ i) epoch ($data loss))
                       (finish-output)
                       ($bp! loss)
-                      ($agd! loss 0.01)
+                      ($adgd! loss)
                       (gcf))))
 
 ;; test stats
