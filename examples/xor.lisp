@@ -60,7 +60,7 @@
        (w2 ($variable (rndn 3 1)))
        (X ($constant '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
        (Y ($constant '(0 1 1 0)))
-       (lr 0.01))
+       (lr 1))
   (loop :for i :from 0 :below 1000
         :do (let* ((l1 ($sigmoid ($mm X w1)))
                    (l2 ($sigmoid ($mm l1 w2)))
@@ -74,7 +74,7 @@
        (w2 ($variable (rndn 3 1)))
        (X ($constant '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
        (Y ($constant '(0 1 1 0)))
-       (lr 0.1))
+       (lr 0.01))
   (loop :for i :from 0 :below 1000
         :do (let* ((l1 ($sigmoid ($mm X w1)))
                    (l2 ($sigmoid ($mm l1 w2)))
@@ -89,7 +89,7 @@
        (w2 ($variable (rndn 3 1)))
        (X ($constant '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
        (Y ($constant '(0 1 1 0)))
-       (lr 0.01))
+       (lr 0.1))
   (loop :for i :from 0 :below 1000
         :do (let* ((l1 ($sigmoid ($mm X w1)))
                    (l2 ($sigmoid ($mm l1 w2)))

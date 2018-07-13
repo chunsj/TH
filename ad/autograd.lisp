@@ -108,3 +108,15 @@
 (defmethod $offset ((node node)) ($offset ($data node)))
 (defmethod $size ((node node) &optional dimension) ($size ($data node) dimension))
 (defmethod $stride ((node node) &optional dimension) ($stride ($data node) dimension))
+
+(defgeneric $attr (node key &optional default))
+(defmethod $attr ((node node) key &optional default)
+  (let ((v ($ ($attrs node) key nil)))
+    (when (and (null v) default)
+      (setf ($ ($attrs node) key) default)
+      (setf v default))
+    v))
+
+(defmethod (setf $attr) (value (node node) key)
+  (setf ($ ($attrs node) key) value)
+  value)
