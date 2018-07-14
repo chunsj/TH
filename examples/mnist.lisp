@@ -56,12 +56,12 @@
     ($fclose f)))
 
 (defun mnist-cnn-write-weights ()
-  (mnist-write-weight-to *k* "dlfs/mnist-cnn-k.dat")
-  (mnist-write-weight-to *kb* "dlfs/mnist-cnn-kb.dat")
-  (mnist-write-weight-to *w2* "dlfs/mnist-cnn-w2.dat")
-  (mnist-write-weight-to *b2* "dlfs/mnist-cnn-b2.dat")
-  (mnist-write-weight-to *w3* "dlfs/mnist-cnn-w3.dat")
-  (mnist-write-weight-to *b3* "dlfs/mnist-cnn-b3.dat"))
+  (mnist-write-weight-to *k* "examples/mnist-cnn-k.dat")
+  (mnist-write-weight-to *kb* "examples/mnist-cnn-kb.dat")
+  (mnist-write-weight-to *w2* "examples/mnist-cnn-w2.dat")
+  (mnist-write-weight-to *b2* "examples/mnist-cnn-b2.dat")
+  (mnist-write-weight-to *w3* "examples/mnist-cnn-w3.dat")
+  (mnist-write-weight-to *b3* "examples/mnist-cnn-b3.dat"))
 
 (defun mnist-read-weight-from (w fname)
   (let ((f (file.disk fname "r")))
@@ -69,12 +69,12 @@
     ($fclose f)))
 
 (defun mnist-cnn-read-weights ()
-  (mnist-read-weight-from *k* "dlfs/mnist-cnn-k.dat")
-  (mnist-read-weight-from *kb* "dlfs/mnist-cnn-kb.dat")
-  (mnist-read-weight-from *w2* "dlfs/mnist-cnn-w2.dat")
-  (mnist-read-weight-from *b2* "dlfs/mnist-cnn-b2.dat")
-  (mnist-read-weight-from *w3* "dlfs/mnist-cnn-w3.dat")
-  (mnist-read-weight-from *b3* "dlfs/mnist-cnn-b3.dat"))
+  (mnist-read-weight-from *k* "examples/mnist-cnn-k.dat")
+  (mnist-read-weight-from *kb* "examples/mnist-cnn-kb.dat")
+  (mnist-read-weight-from *w2* "examples/mnist-cnn-w2.dat")
+  (mnist-read-weight-from *b2* "examples/mnist-cnn-b2.dat")
+  (mnist-read-weight-from *w3* "examples/mnist-cnn-w3.dat")
+  (mnist-read-weight-from *b3* "examples/mnist-cnn-b3.dat"))
 
 ;; x should have been reshaped before entering
 (defun mnist-predict (x)
@@ -136,3 +136,7 @@
 
 ;; print test stats after training
 (prn (mnist-test-stat))
+
+;; writing/reading
+(mnist-cnn-write-weights)
+(mnist-cnn-read-weights)
