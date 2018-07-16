@@ -65,7 +65,7 @@
     (coerce (mapcar (lambda (i) ($ *idx-to-char* i)) (reverse indices)) 'string)))
 
 (let ((n 0))
-  (loop :for p :from 0 :below (- *data-size* *sequence-length* 1) :by *sequence-length*
+  (loop :for p :from 0 :below (min 10 (- *data-size* *sequence-length* 1)) :by *sequence-length*
         :for input = (let ((m (zeros *sequence-length* *vocab-size*)))
                        (loop :for i :from p :below (+ p *sequence-length*)
                              :for ch = ($ *data* i)
@@ -93,7 +93,7 @@
               ($bptt! losses)
               ($adgd! ($0 losses))
               (when (zerop (rem n 100))
-                (prn p tloss (sample ph (round ($ input 0 0)) 50))
+                (prn p tloss (sample ph (round ($ input 0 0)) 80))
                 (gcf))
               (incf n))))
 
@@ -121,3 +121,5 @@
   (read-weight-from *wy* "char-rnn-wy.dat")
   (read-weight-from *bh* "char-rnn-bh.dat")
   (read-weight-from *by* "char-rnn-by.dat"))
+
+(rnn-write-weights)
