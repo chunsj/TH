@@ -97,6 +97,8 @@
                 (gcf))
               (incf n))))
 
+(prn (sample ($constant (zeros 1 *hidden-size*)) (random *vocab-size*) 100))
+
 ;; reading/writing network weights - this example comes from dlfs follow-ups
 (defun write-weight-to (w fname)
   (let ((f (file.disk fname "w")))
