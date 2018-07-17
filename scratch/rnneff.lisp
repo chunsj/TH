@@ -36,6 +36,51 @@
 (defparameter *sequence-length* 50)
 
 ;;
+;; gru trial
+;;
+(defparameter *wz* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
+(defparameter *uz* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *bz* ($variable (zeros 1 *hidden-size*)))
+
+(defparameter *wr* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
+(defparameter *ur* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *br* ($variable (zeros 1 *hidden-size*)))
+
+(defparameter *wh* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
+(defparameter *uh* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *bh* ($variable (zeros 1 *hidden-size*)))
+
+(defparameter *wy* ($variable ($* 0.01 (rndn *hidden-size* *vocab-size*))))
+(defparameter *by* ($variable (zeros 1 *vocab-size*)))
+
+(let ((input (zeros *sequence-length* *vocab-size*))
+      (target (zeros *sequence-length* *vocab-size*)))
+  (loop :for k :from 0 :below *sequence-length*
+        :do (setf ($ input k (random *vocab-size*)) 1))
+  (loop :for k :from 0 :below *sequence-length*
+        :do (setf ($ target k (random *vocab-size*)) 1))
+  (let ((ph ($constant (zeros 1 *hidden-size*)))
+        (losses nil))
+    (loop :for i :from 0 :below (min 7 *sequence-length*)
+          :for xt = ($constant ($index input 0 i))
+          :for zt = ($sigmoid ($+ ($@ xt *wz*) ($@ ph *uz*) *bz*))
+          :for rt = ($sigmoid ($+ ($@ xt *wr*) ($@ ph *ur*) *br*))
+          :for ht = ($+ ($* ($- ($constant 1) zt) ph)
+                        ($* zt ($sigmoid ($+ ($@ xt *wh*)
+                                             ($@ ($* rt ph) *uh*)
+                                             *bh*))))
+          :for p = ($+ ($@ ht *wy*) *by*)
+          :for yt = ($softmax p)
+          :for y = ($constant ($index target 0 i))
+          :for l = ($cee yt y)
+          :do (progn
+                (setf ph ht)
+                (push l losses)))
+    ($bptt! losses)
+    ($adgd! ($0 losses))
+    (gcf)))
+
+;;
 ;; even simple 1 layer lstm takes too much time.
 ;;
 (defparameter *wa* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
