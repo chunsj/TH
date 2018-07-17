@@ -66,6 +66,7 @@
   (let ((pout ($constant (zeros 1 *hidden-size*)))
         (ps ($constant (zeros 1 *hidden-size*)))
         (losses nil))
+    ;; even with length 7 it takes almost 20 secs in bptt
     (loop :for i :from 0 :below (min 7 *sequence-length*)
           :for xt = ($constant ($index input 0 i))
           :for at = ($tanh ($+ ($@ xt *wa*) ($@ pout *ua*) *ba*))
