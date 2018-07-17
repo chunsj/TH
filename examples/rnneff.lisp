@@ -20,7 +20,7 @@
 
 (in-package :rnneff)
 
-(defparameter *data* (format nil "~{~A~^~%~}"(read-lines-from "data/tinyshakespeare.txt")))
+(defparameter *data* (format nil "~{~A~^~%~}" (read-lines-from "data/tinyshakespeare.txt")))
 (defparameter *chars* (remove-duplicates (coerce *data* 'list)))
 (defparameter *data-size* ($count *data*))
 (defparameter *vocab-size* ($count *chars*))
@@ -35,6 +35,60 @@
 (defparameter *hidden-size* 128)
 (defparameter *sequence-length* 50)
 
+;;
+;; even simple 1 layer lstm takes too much time.
+;;
+(defparameter *wa* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
+(defparameter *ua* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *ba* ($variable (zeros 1 *hidden-size*)))
+
+(defparameter *wi* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
+(defparameter *ui* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *bi* ($variable (zeros 1 *hidden-size*)))
+
+(defparameter *wf* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
+(defparameter *uf* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *bf* ($variable (zeros 1 *hidden-size*)))
+
+(defparameter *wo* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
+(defparameter *uo* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *bo* ($variable (zeros 1 *hidden-size*)))
+
+(defparameter *wy* ($variable ($* 0.01 (rndn *hidden-size* *vocab-size*))))
+(defparameter *by* ($variable (zeros 1 *vocab-size*)))
+
+(let ((input (zeros *sequence-length* *vocab-size*))
+      (target (zeros *sequence-length* *vocab-size*)))
+  (loop :for k :from 0 :below *sequence-length*
+        :do (setf ($ input k (random *vocab-size*)) 1))
+  (loop :for k :from 0 :below *sequence-length*
+        :do (setf ($ target k (random *vocab-size*)) 1))
+  (let ((pout ($constant (zeros 1 *hidden-size*)))
+        (ps ($constant (zeros 1 *hidden-size*)))
+        (losses nil))
+    (loop :for i :from 0 :below (min 7 *sequence-length*)
+          :for xt = ($constant ($index input 0 i))
+          :for at = ($tanh ($+ ($@ xt *wa*) ($@ pout *ua*) *ba*))
+          :for it = ($sigmoid ($+ ($@ xt *wi*) ($@ pout *ui*) *bi*))
+          :for ft = ($sigmoid ($+ ($@ xt *wf*) ($@ pout *uf*) *bf*))
+          :for ot = ($sigmoid ($+ ($@ xt *wo*) ($@ pout *uo*) *bo*))
+          :for st = ($+ ($* at it) ($* ft ps))
+          :for out = ($* ($tanh st) ot)
+          :for p = ($+ ($@ out *wy*) *by*)
+          :for yt = ($softmax p)
+          :for y = ($constant ($index target 0 i))
+          :for l = ($cee yt y)
+          :do (progn
+                (setf ps st)
+                (setf pout out)
+                (push l losses)))
+    ($bptt! losses)
+    ($adgd! ($0 losses))
+    (gcf)))
+
+;;
+;; 2 layer - very slow even for single sample iteration
+;;
 (defparameter *wa1* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
 (defparameter *ua1* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
 (defparameter *ba1* ($variable (zeros 1 *hidden-size*)))
@@ -67,15 +121,17 @@
 (defparameter *uo2* ($variable ($* 0.01 (rndn *vocab-size* *vocab-size*))))
 (defparameter *bo2* ($variable (zeros 1 *vocab-size*)))
 
-;; test with single example
-(let ((input (zeros *sequence-length* *vocab-size*)))
+(let ((input (zeros *sequence-length* *vocab-size*))
+      (target (zeros *sequence-length* *vocab-size*)))
   (loop :for k :from 0 :below *sequence-length*
         :do (setf ($ input k (random *vocab-size*)) 1))
-  (prn input)
+  (loop :for k :from 0 :below *sequence-length*
+        :do (setf ($ target k (random *vocab-size*)) 1))
   (let ((pout1 ($constant (zeros 1 *hidden-size*)))
         (ps1 ($constant (zeros 1 *hidden-size*)))
         (pout2 ($constant (zeros 1 *vocab-size*)))
-        (ps2 ($constant (zeros 1 *vocab-size*))))
+        (ps2 ($constant (zeros 1 *vocab-size*)))
+        (losses nil))
     (loop :for i :from 0 :below *sequence-length*
           :for xt = ($constant ($index input 0 i))
           :for at1 = ($tanh ($+ ($@ xt *wa1*) ($@ pout1 *ua1*) *ba1*))
@@ -91,4 +147,14 @@
           :for st2 = ($+ ($* at2 it2) ($* ft2 ps2))
           :for out2 = ($* ($tanh st2) ot2)
           :for yt = ($softmax out2)
-          :do (prn yt))))
+          :for y = ($constant ($index target 0 i))
+          :for l = ($cee yt y)
+          :do (progn
+                (setf ps1 st1)
+                (setf ps2 st2)
+                (setf pout1 out1)
+                (setf pout2 out2)
+                (push l losses)))
+    ($bptt! losses)
+    ($adgd! ($0 losses))
+    (gcf)))
