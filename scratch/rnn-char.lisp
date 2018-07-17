@@ -98,7 +98,7 @@
                         (gcf))
                       (incf n))))
 
-(prn (sample ($constant (zeros 1 *hidden-size*)) (random *vocab-size*) 200))
+(prn (sample ($constant (zeros 1 *hidden-size*)) (random *vocab-size*) 800))
 
 ;; reading/writing network weights - this example comes from dlfs follow-ups
 (defun write-weight-to (w fname)
