@@ -487,6 +487,16 @@
     (setf ($bpfn result) (lambda (node gradient) (cat-backprop node gradient dimension)))
     result))
 
+(defmethod $concat ((x node) nodes &rest others)
+  (let ((pd ($last others)))
+    (if (numberp pd)
+        (let ((dimension pd)
+              (xs (cons x (cons nodes (butlast others)))))
+          (reduce (lambda (r n) ($cat r n dimension)) xs))
+        (let ((dimension 0)
+              (xs (cons x (cons nodes others))))
+          (reduce (lambda (r n) ($cat r n dimension)) xs)))))
+
 (defun index-backprop (node gradient dimension indices)
   (setgradient node gradient)
   (setf ($children node) (when ($children node)
