@@ -1,7 +1,7 @@
 (defsystem th
   :name "th"
   :author "Sungjin Chun <chunsj@gmail.com>"
-  :version "0.9"
+  :version "0.91"
   :maintainer "Sungjin Chun <chunsj@gmail.com>"
   :license "GPL3"
   :description "common lisp binding for TH library"

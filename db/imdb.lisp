@@ -1,3 +1,5 @@
+(declaim (optimize (speed 3) (debug 0) (safety 0)))
+
 (defpackage :th.db.imdb
   (:use #:common-lisp
         #:mu

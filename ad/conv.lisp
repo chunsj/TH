@@ -1,3 +1,5 @@
+(declaim (optimize (speed 3) (debug 0) (safety 0)))
+
 (in-package :th)
 
 (defgeneric $conv2d (x k &optional b dw dh pw ph)

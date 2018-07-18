@@ -164,4 +164,5 @@
                                                 ($@ dot ($transpose *wo*))))
                                   (setf dhn ($index dzt 1 hindices))
                                   (setf dcn ($* ft dct))))
+                      (prn *dwv*)
                       (incf n))))

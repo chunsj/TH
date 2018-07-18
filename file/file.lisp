@@ -1,3 +1,5 @@
+(declaim (optimize (speed 3) (debug 0) (safety 0)))
+
 (in-package :th)
 
 (cffi:defcfun ("THFile_isOpened" th-file-is-opened) :int (self th-file-ptr))

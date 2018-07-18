@@ -1,3 +1,5 @@
+(declaim (optimize (speed 3) (debug 0) (safety 0)))
+
 (in-package :th)
 
 (defmethod $fopenedp ((file file)) (eq 1 (th-file-is-opened ($handle file))))
