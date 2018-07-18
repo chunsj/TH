@@ -9,7 +9,7 @@
 (in-package :rnn-char)
 
 (defparameter *data-lines* (read-lines-from "data/tinyshakespeare.txt"))
-(defparameter *data* (format nil "~{~A~^ ~}" *data-lines*))
+(defparameter *data* (format nil "~{~A~^~%~}" *data-lines*))
 (defparameter *chars* (remove-duplicates (coerce *data* 'list)))
 (defparameter *data-size* ($count *data*))
 (defparameter *vocab-size* ($count *chars*))
@@ -64,7 +64,7 @@
                 (setf ($ x 0 nidx) 1)))
     (coerce (mapcar (lambda (i) ($ *idx-to-char* i)) (reverse indices)) 'string)))
 
-(loop :for iter :from 1 :to 2
+(loop :for iter :from 1 :to 1
       :for n = 0
       :do (loop :for p :from 0 :below (- *data-size* *sequence-length* 1) :by *sequence-length*
                 :for input = (let ((m (zeros *sequence-length* *vocab-size*)))
@@ -94,7 +94,8 @@
                       ($bptt! losses)
                       ($adgd! ($0 losses))
                       (when (zerop (rem n 100))
-                        (prn p tloss (sample ph (round ($ input 0 0)) 72))
+                        (prn n tloss)
+                        (prn (sample ph (round ($ input 0 0)) 72))
                         (gcf))
                       (incf n))))
 
