@@ -61,6 +61,22 @@
               (prn n))))
 
 (let ((ph ($constant (zeros 1 *h-size*)))
+      (yy nil)
+      (ys nil))
+  (loop :for step :from 0 :below 100
+        :for xt = ($constant (ones 1 *x-size*))
+        :for ht = ($tanh ($+ ($@ xt *wx*) ($@ ph *wh*) *bh*))
+        :for yt = ($+ ($@ ht *wy*) *by*)
+        :do (progn
+              (setf ($ *names* xt) (format nil "xt:~A" step))
+              (setf ($ *names* ht) (format nil "ht:~A" step))
+              (setf ($ *names* yt) (format nil "yt:~A" step))
+              (setf ph ht)
+              (setf yy yt)
+              (push yt ys)))
+  (prn (reduce #'+ (mapcar (lambda (y) ($count (allchildren y))) ys))))
+
+(let ((ph ($constant (zeros 1 *h-size*)))
       (pc ($constant (zeros 1 *h-size*)))
       (yy nil)
       (ys nil))
