@@ -40,15 +40,15 @@
                      :collect (list datum total)))
              (pick (ranges)
                (declare (optimize (speed 3) (safety 0) (debug 0)))
-               (loop with random = (random 1D0)
-                     for (datum below) of-type (t double-float) in ranges
-                     when (< random below)
-                       do (return datum))))
+               (loop :with random = (random 1D0)
+                     :for (datum below) :of-type (t double-float) :in ranges
+                     :when (< random below)
+                       :do (return datum))))
       (pick (make-ranges)))))
 
 (defun sample (h seed-idx n)
   (let ((x (zeros 1 *vocab-size*))
-        (indices nil)
+        (indices (list seed-idx))
         (ph h))
     (setf ($ x 0 seed-idx) 1)
     (loop :for i :from 0 :below n
@@ -66,16 +66,19 @@
 
 (loop :for iter :from 1 :to 1
       :for n = 0
-      :do (loop :for p :from 0 :below (- *data-size* *sequence-length* 1) :by *sequence-length*
+      :for upto = (max 1 (- *data-size* *sequence-length* 1))
+      :do (loop :for p :from 0 :below upto :by *sequence-length*
+                :for input-str = (subseq *data* p (+ p *sequence-length*))
+                :for target-str = (subseq *data* (1+ p) (+ p *sequence-length* 1))
                 :for input = (let ((m (zeros *sequence-length* *vocab-size*)))
-                               (loop :for i :from p :below (+ p *sequence-length*)
-                                     :for ch = ($ *data* i)
-                                     :do (setf ($ m (- i p) ($ *char-to-idx* ch)) 1))
+                               (loop :for i :from 0 :below *sequence-length*
+                                     :for ch = ($ input-str i)
+                                     :do (setf ($ m i ($ *char-to-idx* ch)) 1))
                                m)
                 :for target = (let ((m (zeros *sequence-length* *vocab-size*)))
-                                (loop :for i :from (1+ p) :below (+ p *sequence-length* 1)
-                                      :for ch = ($ *data* i)
-                                      :do (setf ($ m (- i p 1) ($ *char-to-idx* ch)) 1))
+                                (loop :for i :from 0 :below *sequence-length*
+                                      :for ch = ($ target-str i)
+                                      :do (setf ($ m i ($ *char-to-idx* ch)) 1))
                                 m)
                 :do (let ((ph ($constant (zeros 1 *hidden-size*)))
                           (losses nil)
@@ -94,8 +97,8 @@
                       ($bptt! losses)
                       ($adgd! ($0 losses))
                       (when (zerop (rem n 100))
-                        (prn n tloss)
-                        (prn (sample ph ($ *char-to-idx* ($ *data* p)) 72))
+                        (prn "ITER:" n tloss)
+                        (prn (sample ph ($ *char-to-idx* ($ input-str 0)) 72))
                         (gcf))
                       (incf n))))
 
