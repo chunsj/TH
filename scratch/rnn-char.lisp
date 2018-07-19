@@ -95,7 +95,7 @@
                       ($adgd! ($0 losses))
                       (when (zerop (rem n 100))
                         (prn n tloss)
-                        (prn (sample ph (round ($ input 0 0)) 72))
+                        (prn (sample ph ($ *char-to-idx* ($ *data* p)) 72))
                         (gcf))
                       (incf n))))
 
