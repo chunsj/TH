@@ -9,6 +9,17 @@
 (defgeneric $rmgd! (node &optional learning-rate decay-rate) (:documentation "Executes rmsprop."))
 (defgeneric $adgd! (node &optional decay-rate) (:documentation "Executes adadelta."))
 
+(defun children (node)
+  (let* ((children ($children node))
+         (cnt ($count children)))
+    (if (= cnt 0)
+        nil
+        (apply #'append children
+               (loop :for c :in children
+                     :collect (children c))))))
+
+(defun allchildren (node) (remove-duplicates (children node)))
+
 (defmethod $gd! ((object t) &optional (learning-rate 0.01)) (declare (ignore learning-rate)))
 
 (defmethod $gd! ((node node) &optional (learning-rate 0.01))
