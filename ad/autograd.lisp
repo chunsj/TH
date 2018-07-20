@@ -17,7 +17,8 @@
    (children :initform nil :accessor $children)
    (backward-function :initform nil :accessor $bpfn)
    (attrs :initform #{} :accessor $attrs)
-   (nm :initform nil :accessor $name)))
+   (nm :initform nil :accessor $name)
+   (bphook :initform nil :accessor $bphookfn)))
 
 (defmethod print-object ((node node) stream)
   (format stream "[~A] " (if (null ($name node))
@@ -57,36 +58,25 @@
 (defmethod $variable ((data t)) (node data t))
 (defmethod $constant ((data t)) (node data nil))
 
-(defmethod $zg! ((node node))
-  (setf ($gradient node) nil)
-  (when ($children node)
-    (loop :for child :in ($children node) :do ($zg! child))))
+(defun runbpfn (node gradient)
+  (let ((r (funcall ($bpfn node) node gradient)))
+    (when ($bphookfn node) (funcall ($bphookfn node) node))
+    r))
 
 (defun bpglobal (node)
-  ;;(when resetp ($zg! node))
   (if ($tensorp node)
-      (funcall ($bpfn node) node ($broadcast 1 ($data node)))
-      (funcall ($bpfn node) node 1)))
+      (runbpfn node ($broadcast 1 ($data node)))
+      (runbpfn node 1)))
 
-(defun bplocal (node gradient)
-  (funcall ($bpfn node) node gradient))
+(defun bplocal (node gradient) (runbpfn node gradient))
 
 (defmethod $bp! ((node node) &optional gradient)
   (if (null gradient)
       (bpglobal node)
       (bplocal node gradient)))
 
-(defmethod $np! ((node node) &optional gradient)
-  (if (null gradient)
-      (bpglobal node)
-      (bplocal node gradient)))
-
 (defun $bptt! (nodes &optional gradient)
-  (let ((fnode (car nodes))
-        (rnodes (cdr nodes)))
-    ($bp! fnode gradient)
-    (when rnodes
-      (loop :for n :in rnodes :do ($np! n gradient)))))
+  (loop :for node :in nodes :do ($bp! node gradient)))
 
 (defmethod $zero ((x node)) (node ($zero ($data x)) ($gradientp x)))
 (defmethod $one ((x node)) (node ($one ($data x)) ($gradientp x)))
