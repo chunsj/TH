@@ -1,3 +1,6 @@
+;; from
+;; http://blog.varunajayasiri.com/numpy_lstm.html
+
 (defpackage :vanilla-lstm
   (:use #:common-lisp
         #:mu
