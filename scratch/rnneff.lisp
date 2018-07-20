@@ -292,7 +292,6 @@
             ($adgd! ($0 losses))
             (gcf)))
 
-
 ;;
 ;; 2 layer - very slow even for single sample iteration
 ;;
