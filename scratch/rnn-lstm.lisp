@@ -63,7 +63,10 @@
               (prn "GRADS")
               (loop :for w :in ws :do (prn ($gradient w))))
             ;; after update, gradients are gone
-            ($gd! ($0 losses) *alpha*)))
+            (time ($gd! ($0 losses) *alpha*))
+            (let ((ws (list *wa* *wi* *wf* *wo*)))
+              (prn "UVALS")
+              (loop :for w :in ws :do (prn w)))))
 
 ;;
 ;; broken down to reduce graph depth, this is supposed to be faster when time step is longer
@@ -130,4 +133,8 @@
             ;; check whether the result is correct with values in the blog
             (let ((ws (list *wa* *wi* *wf* *wo*)))
               (prn "GRADS")
-              (loop :for w :in ws :do (prn ($gradient w))))))
+              (loop :for w :in ws :do (prn ($gradient w))))
+            ($gd! ($0 losses) *alpha*)
+            (let ((ws (list *wa* *wi* *wf* *wo*)))
+              (prn "UVALS")
+              (loop :for w :in ws :do (prn w)))))
