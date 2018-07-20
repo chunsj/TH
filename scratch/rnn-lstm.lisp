@@ -63,7 +63,7 @@
               (prn "GRADS")
               (loop :for w :in ws :do (prn ($gradient w))))
             ;; after update, gradients are gone
-            (time ($gd! ($0 losses) *alpha*))
+            ($gd! ($0 losses) *alpha*)
             (let ((ws (list *wa* *wi* *wf* *wo*)))
               (prn "UVALS")
               (loop :for w :in ws :do (prn w)))))
