@@ -16,10 +16,14 @@
    (need-gradient-p :initform nil :accessor $gradientp)
    (children :initform nil :accessor $children)
    (backward-function :initform nil :accessor $bpfn)
-   (attrs :initform #{} :accessor $attrs)))
+   (attrs :initform #{} :accessor $attrs)
+   (nm :initform nil :accessor $name)))
 
 (defmethod print-object ((node node) stream)
-  (format stream "[NODE] ")
+  (format stream "[~A] " (if (null ($name node))
+                            (cond (($gradientp node) "VARIABLE")
+                                  (t "CONSTANT"))
+                            ($name node)))
   (print-object ($data node) stream))
 
 (defun $c0 (node) ($0 ($children node)))
@@ -58,8 +62,8 @@
   (when ($children node)
     (loop :for child :in ($children node) :do ($zg! child))))
 
-(defun bpglobal (node &optional (resetp T))
-  (when resetp ($zg! node))
+(defun bpglobal (node)
+  ;;(when resetp ($zg! node))
   (if ($tensorp node)
       (funcall ($bpfn node) node ($broadcast 1 ($data node)))
       (funcall ($bpfn node) node 1)))
@@ -74,7 +78,7 @@
 
 (defmethod $np! ((node node) &optional gradient)
   (if (null gradient)
-      (bpglobal node nil)
+      (bpglobal node)
       (bplocal node gradient)))
 
 (defun $bptt! (nodes &optional gradient)

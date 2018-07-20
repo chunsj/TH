@@ -36,6 +36,7 @@
 
 (defmethod $bce ((a node) (b node))
   (let ((result (node ($bce ($data a) ($data b)))))
+    (setf ($name result) "BCE")
     (setf ($children result) (list a b))
     (setf ($gradientp result) (or ($gradientp a) ($gradientp b)))
     (setf ($bpfn result) #'bce-backprop)
@@ -66,6 +67,7 @@
 
 (defmethod $mse ((a node) (b node))
   (let ((result (node ($mse ($data a) ($data b)))))
+    (setf ($name result) "MSE")
     (setf ($children result) (list a b))
     (setf ($gradientp result) (or ($gradientp a) ($gradientp b)))
     (setf ($bpfn result) #'mse-backprop)
@@ -104,6 +106,7 @@
 
 (defmethod $relu ((x node))
   (let ((result (node ($relu ($data x)))))
+    (setf ($name result) "RELU")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) #'relu-backprop)
@@ -130,6 +133,7 @@
 
 (defmethod $softmax ((x node))
   (let ((result (node ($softmax ($data x)))))
+    (setf ($name result) "SOFTMAX")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) #'softmax-backprop)

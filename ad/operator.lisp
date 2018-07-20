@@ -29,6 +29,7 @@
 
 (defmethod $broadcast ((c node) (m node))
   (let ((result (node ($mul! ($one ($data m)) ($data c)))))
+    (setf ($name result) "BROADCAST")
     (setf ($children result) (list c))
     (setf ($gradientp result) ($gradientp c))
     (setf ($bpfn result) #'broadcast-backprop)
@@ -46,6 +47,7 @@
 
 (defmethod $add ((a node) (b node))
   (let ((result (node ($add ($data a) ($data b)))))
+    (setf ($name result) "ADD")
     (setf ($children result) (list a b))
     (setf ($gradientp result) (or ($gradientp a) ($gradientp b)))
     (setf ($bpfn result) #'add-backprop)
@@ -62,6 +64,7 @@
 
 (defmethod $sub ((a node) (b node))
   (let ((result (node ($sub ($data a) ($data b)))))
+    (setf ($name result) "SUB")
     (setf ($children result) (list a b))
     (setf ($gradientp result) (or ($gradientp a) ($gradientp b)))
     (setf ($bpfn result) #'sub-backprop)
@@ -76,6 +79,7 @@
 
 (defmethod $neg ((a node))
   (let ((result (node ($neg ($data a)))))
+    (setf ($name result) "NEG")
     (setf ($children result) (list a))
     (setf ($gradientp result) ($gradientp a))
     (setf ($bpfn result) #'neg-backprop)
@@ -92,6 +96,7 @@
 
 (defmethod $dot ((a node) (b node))
   (let ((result (node ($dot ($data a) ($data b)))))
+    (setf ($name result) "DOT")
     (setf ($children result) (list a b))
     (setf ($gradientp result) (or ($gradientp a) ($gradientp b)))
     (setf ($bpfn result) #'dot-backprop)
@@ -112,6 +117,7 @@
 
 (defmethod $mv ((m node) (v node))
   (let ((result (node ($mv ($data m) ($data v)))))
+    (setf ($name result) "MV")
     (setf ($children result) (list m v))
     (setf ($gradientp result) (or ($gradientp m) ($gradientp v)))
     (setf ($bpfn result) #'mv-backprop)
@@ -132,6 +138,7 @@
 
 (defmethod $mm ((a node) (b node))
   (let ((result (node ($mm ($data a) ($data b)))))
+    (setf ($name result) "MM")
     (setf ($children result) (list a b))
     (setf ($gradientp result) (or ($gradientp a) ($gradientp b)))
     (setf ($bpfn result) #'mm-backprop)
@@ -152,6 +159,7 @@
 
 (defmethod $mul ((a node) (b node))
   (let ((result (node ($mul ($data a) ($data b)))))
+    (setf ($name result) "MUL")
     (setf ($children result) (list a b))
     (setf ($gradientp result) (or ($gradientp a) ($gradientp b)))
     (setf ($bpfn result) #'mul-backprop)
@@ -171,6 +179,7 @@
 
 (defmethod $bmm ((bx node) (by node))
   (let ((result (node ($bmm ($data bx) ($data by)))))
+    (setf ($name result) "BMM")
     (setf ($children result) (list bx by))
     (setf ($gradientp result) (or ($gradientp bx) ($gradientp by)))
     (setf ($bpfn result) #'bmm-backprop)
@@ -198,6 +207,7 @@
 
 (defmethod $div ((a node) (b node))
   (let ((result (node ($div ($data a) ($data b)))))
+    (setf ($name result) "DIV")
     (setf ($children result) (list a b))
     (setf ($gradientp result) (or ($gradientp a) ($gradientp b)))
     (setf ($bpfn result) #'div-backprop)
@@ -218,6 +228,7 @@
 
 (defmethod $vv ((a node) (b node))
   (let ((result (node ($vv ($data a) ($data b)))))
+    (setf ($name result) "VV")
     (setf ($children result) (list a b))
     (setf ($gradientp result) (or ($gradientp a) ($gradientp b)))
     (setf ($bpfn result) #'vv-backprop)
@@ -235,6 +246,7 @@
 
 (defmethod $inverse ((a node))
   (let ((result (node ($inverse ($data a)))))
+    (setf ($name result) "INVERSE")
     (setf ($children result) (list a))
     (setf ($gradientp result) ($gradientp a))
     (setf ($bpfn result) #'inverse-backprop)
@@ -251,6 +263,7 @@
 
 (defmethod $view ((a node) &rest sizes)
   (let ((result (node (apply #'$view ($data a) sizes))))
+    (setf ($name result) "VIEW")
     (setf ($children result) (list a))
     (setf ($gradientp result) ($gradientp a))
     (setf ($bpfn result) #'view-backprop)
@@ -274,6 +287,7 @@
 
 (defmethod $expand ((a node) size)
   (let ((result (node ($expand ($data a) size))))
+    (setf ($name result) "EXPAND")
     (setf ($children result) (list a))
     (setf ($gradientp result) ($gradientp a))
     (setf ($bpfn result) #'expand-backprop)
@@ -294,6 +308,7 @@
 
 (defmethod $sum ((x node) &optional (dimension -1))
   (let ((result (node ($sum ($data x) dimension))))
+    (setf ($name result) "SUM")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) (lambda (node gradient) (sum-backprop node gradient dimension)))
@@ -316,6 +331,7 @@
 
 (defmethod $mean ((x node) &optional (dimension -1))
   (let ((result (node ($mean ($data x) dimension))))
+    (setf ($name result) "MEAN")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) (lambda (node gradient) (mean-backprop node gradient dimension)))
@@ -342,6 +358,7 @@
 
 (defmethod $min ((x node) &optional (dimension -1))
   (let ((result (node ($min ($data x) dimension))))
+    (setf ($name result) "MIN")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) (lambda (node gradient) (min-backprop node gradient dimension)))
@@ -364,6 +381,7 @@
 
 (defmethod $max ((x node) &optional (dimension -1))
   (let ((result (node ($max ($data x) dimension))))
+    (setf ($name result) "MAX")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) (lambda (node gradient) (max-backprop node gradient dimension)))
@@ -380,6 +398,7 @@
 
 (defmethod $transpose ((x node) &optional dimension0 dimension1)
   (let ((result (node ($transpose ($data x) dimension0 dimension1))))
+    (setf ($name result) "TRANSPOSE")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) (lambda (node gradient)
@@ -397,6 +416,7 @@
 
 (defmethod $reshape ((x node) &rest sizes)
   (let ((result (node (apply #'$reshape ($data x) sizes))))
+    (setf ($name result) "RESHAPE")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) #'reshape-backprop)
@@ -415,6 +435,7 @@
 
 (defmethod $ ((x node) location &rest others-and-default)
   (let ((result (node (apply #'$ ($data x) (cons location others-and-default)))))
+    (setf ($name result) "$")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) (lambda (node gradient)
@@ -443,6 +464,7 @@
   (let ((nx ($clone ($data x))))
     (setf (apply #'$ nx (cons location others)) value)
     (let ((result (node nx)))
+      (setf ($name result) "SET$")
       (setf ($children result) (list x value))
       (setf ($gradientp result) (or ($gradientp x) ($gradientp value)))
       (setf ($bpfn result) (lambda (node gradient)
@@ -460,6 +482,7 @@
 
 (defmethod $clone ((x node))
   (let ((result (node ($clone ($data x)))))
+    (setf ($name result) "CLONE")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) #'clone-backprop)
@@ -484,6 +507,7 @@
 
 (defmethod $cat ((x node) (y node) &optional (dimension 0))
   (let ((result (node ($cat ($data x) ($data y) dimension))))
+    (setf ($name result) "CAT")
     (setf ($children result) (list x y))
     (setf ($gradientp result) (or ($gradientp x) ($gradientp y)))
     (setf ($bpfn result) (lambda (node gradient) (cat-backprop node gradient dimension)))
@@ -514,6 +538,7 @@
 
 (defmethod $index ((x node) dimension (indices list))
   (let ((result (node ($index ($data x) dimension indices))))
+    (setf ($name result) "INDEX")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) (lambda (node gradient) (index-backprop node gradient dimension indices)))
@@ -521,6 +546,7 @@
 
 (defmethod $index ((x node) dimension (index number))
   (let ((result (node ($index ($data x) dimension index))))
+    (setf ($name result) "INDEX")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) (lambda (node gradient)

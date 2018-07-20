@@ -95,6 +95,7 @@
     (nn-spatial-convolution-mm-update-output ($data x) out ($data k) (if b ($data b) b)
                                              f df ($size k 2) ($size k 3) dw dh pw ph)
     (let ((result (th::node out)))
+      (setf ($name result) "CONV2D")
       (setf ($children result) (if b
                                    (list x k b)
                                    (list x k)))
@@ -131,6 +132,7 @@
         (indices (tensor.long)))
     (nn-spatial-max-pooling-update-output ($data x) out indices kw kh dw dh pw ph ceilp)
     (let ((result (node out)))
+      (setf ($name result) "MAXPOOL2D")
       (setf ($children result) (list x))
       (setf ($gradientp result) ($gradientp x))
       (setf ($bpfn result) (lambda (node gradient)
@@ -162,6 +164,7 @@
   (let ((out ($empty ($data x))))
     (nn-spatial-average-pooling-update-output ($data x) out kw kh dw dh pw ph ceilp count-pad-p)
     (let ((result (node out)))
+      (setf ($name result) "AVGPOOL2D")
       (setf ($children result) (list x))
       (setf ($gradientp result) ($gradientp x))
       (setf ($bpfn result) (lambda (node gradient)
@@ -185,6 +188,7 @@
 
 (defmethod $conv2 ((x node) (k node) &optional (type :valid))
   (let ((result (node ($conv2 ($data x) ($data k) type))))
+    (setf ($name result) "CONV2")
     (setf ($children result) (list x k))
     (setf ($gradientp result) (or ($gradientp x) ($gradientp k)))
     (setf ($bpfn result) (lambda (node gradient)

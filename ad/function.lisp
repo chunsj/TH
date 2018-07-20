@@ -17,6 +17,7 @@
   (let ((out ($empty ($data x))))
     (nn-abs-update-output ($data x) out)
     (let ((result (node out)))
+      (setf ($name result) "ABS")
       (setf ($children result) x)
       (setf ($gradientp result) ($gradientp x))
       (setf ($bpfn result) #'abs-backprop)
@@ -33,6 +34,7 @@
 
 (defmethod $acos ((x node))
   (let ((result (node ($acos ($data x)))))
+    (setf ($name result) "ACOS")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) #'acos-backprop)
@@ -49,6 +51,7 @@
 
 (defmethod $asin ((x node))
   (let ((result (node ($asin ($data x)))))
+    (setf ($name result) "ASIN")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) #'asin-backprop)
@@ -65,6 +68,7 @@
 
 (defmethod $atan ((x node))
   (let ((result (node ($atan ($data x)))))
+    (setf ($name result) "ATAN")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) #'atan-backprop)
@@ -87,6 +91,7 @@
 
 (defmethod $atan2 ((y node) (x node))
   (let ((result (node ($atan2 ($data y) ($data x)))))
+    (setf ($name result) "ATAN2")
     (setf ($children result) (list y x))
     (setf ($gradientp result) (or ($gradientp y) ($gradientp x)))
     (setf ($bpfn result) #'atan2-backprop)
@@ -103,6 +108,7 @@
 
 (defmethod $cos ((x node))
   (let ((result (node ($cos ($data x)))))
+    (setf ($name result) "COS")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) #'cos-backprop)
@@ -119,6 +125,7 @@
 
 (defmethod $cosh ((x node))
   (let ((result (node ($cosh ($data x)))))
+    (setf ($name result) "COSH")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) #'cosh-backprop)
@@ -135,6 +142,7 @@
 
 (defmethod $exp ((x node))
   (let ((result (node ($exp ($data x)))))
+    (setf ($name result) "EXP")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) #'exp-backprop)
@@ -158,6 +166,7 @@
 
 (defmethod $expt ((a node) (b node))
   (let ((result (node ($expt ($data a) ($data b)))))
+    (setf ($name result) "EXPT")
     (setf ($children result) (list a b))
     (setf ($gradientp result) (or ($gradientp a) ($gradientp b)))
     (setf ($bpfn result) #'expt-backprop)
@@ -183,6 +192,7 @@
 
 (defmethod $log ((x node))
   (let ((result (node ($log ($data x)))))
+    (setf ($name result) "LOG")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) #'log-backprop)
@@ -199,6 +209,7 @@
 
 (defmethod $sin ((x node))
   (let ((result (node ($sin ($data x)))))
+    (setf ($name result) "SIN")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) #'sin-backprop)
@@ -217,6 +228,7 @@
 
 (defmethod $sigmoid ((x node))
   (let ((result (node ($sigmoid ($data x)))))
+    (setf ($name result) "SIGMOID")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) #'sigmoid-backprop)
@@ -233,6 +245,7 @@
 
 (defmethod $sinh ((x node))
   (let ((result (node ($sinh ($data x)))))
+    (setf ($name result) "SINH")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) #'sinh-backprop)
@@ -250,6 +263,7 @@
 
 (defmethod $sqrt ((x node))
   (let ((result (node ($sqrt ($data x)))))
+    (setf ($name result) "SQRT")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) #'sqrt-backprop)
@@ -266,6 +280,7 @@
 
 (defmethod $tan ((x node))
   (let ((result (node ($tan ($data x)))))
+    (setf ($name result) "TAN")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) #'tan-backprop)
@@ -284,6 +299,7 @@
 
 (defmethod $tanh ((x node))
   (let ((result (node ($tanh ($data x)))))
+    (setf ($name result) "TANH")
     (setf ($children result) (list x))
     (setf ($gradientp result) ($gradientp x))
     (setf ($bpfn result) #'tanh-backprop)

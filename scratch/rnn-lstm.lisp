@@ -54,11 +54,11 @@
                         (push out preds)
                         (push l losses)))
             ($bptt! losses)
+            ;; check whether the result is correct with values in the blog
+            (let ((ws (list *wa* *wi* *wf* *wo*)))
+              (prn "GRADS")
+              (loop :for w :in ws :do (prn ($gradient w)))
+              (prn "VALS")
+              (loop :for w :in ws :do (prn w)))
+            ;; after update, gradients are gone
             ($gd! ($0 losses) *alpha*)))
-
-;; check whether the result is correct with values in the blog
-(let ((ws (list *wa* *wi* *wf* *wo*)))
-  (prn "GRADS")
-  (loop :for w :in ws :do (prn ($gradient w)))
-  (prn "VALS")
-  (loop :for w :in ws :do (prn w)))
