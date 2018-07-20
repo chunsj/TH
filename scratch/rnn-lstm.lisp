@@ -115,21 +115,14 @@
                   :for d = ($- y out)
                   :for l = ($* ($expt d 2) ($constant 0.5))
                   :do (progn
-                        (setf pout ($variable ($clone ($data out))))
-                        (setf pstate ($variable ($clone ($data state))))
+                        (setf pout ($state out))
+                        (setf pstate ($state state))
                         (push (list out pout) outs)
                         (push (list state pstate) states)
                         (push out preds)
                         (push l losses)))
             ($bptt! losses)
-            (setf outs (cdr outs))
-            (setf states (cdr states))
-            (loop :for (out pout) :in outs
-                  :for cg = ($gradient pout)
-                  :do ($bp! out cg))
-            (loop :for (out pout) :in states
-                  :for cg = ($gradient pout)
-                  :do ($bp! out cg))
+            ($bpst! outs states)
             ;; check whether the result is correct with values in the blog
             (let ((ws (list *wa* *wi* *wf* *wo*)))
               (prn "GRADS")

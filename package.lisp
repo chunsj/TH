@@ -328,6 +328,8 @@
            #:$tapep
            #:$bp!
            #:$bptt!
+           #:$bpst!
+           #:$state
            #:tape
            #:$variable
            #:$constant
