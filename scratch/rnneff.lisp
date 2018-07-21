@@ -455,3 +455,5 @@
             ($bpst! states2 outs2 states1 outs1)
             ($adgd! ($0 losses))
             (gcf)))
+
+;; XXX what about special node which contains above previous node and history?
