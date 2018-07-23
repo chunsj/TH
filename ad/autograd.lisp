@@ -17,8 +17,7 @@
    (children :initform nil :accessor $children)
    (backward-function :initform nil :accessor $bpfn)
    (attrs :initform #{} :accessor $attrs)
-   (nm :initform nil :accessor $name)
-   (bphook :initform nil :accessor $bphookfn)))
+   (nm :initform nil :accessor $name)))
 
 (defmethod print-object ((node node) stream)
   (format stream "[~A] " (if (null ($name node))
@@ -58,10 +57,7 @@
 (defmethod $variable ((data t)) (node data t))
 (defmethod $constant ((data t)) (node data nil))
 
-(defun runbpfn (node gradient)
-  (let ((r (funcall ($bpfn node) node gradient)))
-    (when ($bphookfn node) (funcall ($bphookfn node) node))
-    r))
+(defun runbpfn (node gradient) (funcall ($bpfn node) node gradient))
 
 (defun bpglobal (node)
   (if ($tensorp node)
