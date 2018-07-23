@@ -37,7 +37,8 @@
 ## On API
   1. Variable creation: $variable
   2. Value/Constant creation: $constant
-  3. Operators: $+, $-, $*, $/ $@, ...
-  4. Functions: $sigmoid, $tanh, $softmax
-  5. Backpropagation: $bp!, $bptt!
-  6. Gradient descent or parameter update: $gd!, $mgd!, $agd!
+  3. State (recurrent) creation/accessing: $state, $prev
+  4. Operators: $+, $-, $*, $/ $@, ...
+  5. Functions: $sigmoid, $tanh, $softmax
+  6. Backpropagation: $bp!, $bptt!
+  7. Gradient descent or parameter update: $gd!, $mgd!, $agd!, $amgd!, $rmgd!, $adgd!
