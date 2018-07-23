@@ -75,17 +75,6 @@
       (bpglobal node)
       (bplocal node gradient)))
 
-(defun $bptt! (nodes &optional gradient)
-  (loop :for node :in nodes :do ($bp! node gradient)))
-
-(defun bps! (states)
-  (loop :for (s ps) :in (cdr states)
-        :for g = ($gradient ps)
-        :do ($bp! s g)))
-
-(defun $bpst! (states &rest more-states)
-  (loop :for sts :in (cons states more-states) :do (bps! sts)))
-
 (defmethod $zero ((x node)) (node ($zero ($data x)) ($gradientp x)))
 (defmethod $one ((x node)) (node ($one ($data x)) ($gradientp x)))
 (defmethod $fill ((x node) value) (node ($fill ($data x) value) ($gradientp x)))
@@ -125,5 +114,30 @@
   (setf ($ ($attrs node) key) value)
   value)
 
-(defgeneric $state (node))
-(defmethod $state ((node node)) ($variable ($clone ($data node))))
+(defclass state ()
+  ((current :initform nil :accessor $prev)
+   (history :initform nil :accessor $history)))
+
+(defun $state (initial-value)
+  (let ((st (make-instance 'state)))
+    (setf ($prev st) ($constant initial-value))
+    st))
+
+(defun $update! (state new-state)
+  (let ((current-state ($variable ($clone ($data new-state)))))
+    (setf ($prev state) current-state)
+    (push (list new-state current-state) ($history state))
+    state))
+
+(defun bps! (state)
+  (loop :for (s ps) :in ($history state)
+        :for g = ($gradient ps)
+        :when g
+          :do ($bp! s g)))
+
+(defun $bpst! (state &rest more-states)
+  (loop :for st :in (cons state more-states) :do (bps! st)))
+
+(defun $bptt! (nodes &rest states)
+  (loop :for node :in nodes :do ($bp! node))
+  (loop :for st :in states :do (bps! st)))

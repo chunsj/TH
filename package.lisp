@@ -329,8 +329,9 @@
            #:$bp!
            #:$bptt!
            #:$bpst!
+           #:$update!
+           #:$prev
            #:$state
-           #:tape
            #:$variable
            #:$constant
            #:$children
