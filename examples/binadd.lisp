@@ -45,24 +45,24 @@
     (list a2 a1)))
 
 (defun binadd (a b &optional c)
-  (let ((ps ($constant (zeros 1 *hidden-dim*)))
+  (let ((states ($state (zeros 1 *hidden-dim*)))
         (d (zeros *binary-dim*))
         (losses nil)
         (overall-error 0))
     ;; forward propagation
     ;; we start with the least significant bit or the right most bit
     (loop :for position :from (1- *binary-dim*) :downto 0
-          :for res = (binadd* ($ a position) ($ b position) ps)
+          :for res = (binadd* ($ a position) ($ b position) ($prev states))
           :for y* = ($0 res)
           :for y = (when c ($constant ($transpose (tensor (list (list ($ c position)))))))
           :for l2e = (when c ($- y y*))
           :for l = (when c ($expt l2e 2))
           :do (progn
-                (setf ps ($1 res))
+                ($update! states ($1 res))
                 (when c (push l losses))
                 (when c (incf overall-error (abs ($data ($ l2e 0 0)))))
                 (setf ($ d position) (round ($data ($ y* 0 0))))))
-    (list (round (bin->dec ($list d))) d losses overall-error)))
+    (list (round (bin->dec ($list d))) d losses overall-error states)))
 
 (loop :for j :from 0 :below *iterations*
       :for half-largest-number = (round (expt 2 (1- *binary-dim*)))
@@ -75,7 +75,7 @@
       :do (let ((prediction (binadd a b c)))
             ;; of course, bptt will take losses in given order, so losses should be in reverse order.
             ;; that's why we use push.
-            ($bptt! ($2 prediction))
+            ($bptt! ($2 prediction) ($4 prediction))
             ($gd! ($0 ($2 prediction)) *alpha*)
             (when (zerop (rem j 1000))
               (prn "ITR:" j "ERR: " ($3 prediction))
@@ -100,12 +100,12 @@
       :do (let ((d ($zero c))
                 (overall-error 0)
                 (losses nil)
-                (ps ($constant (zeros 1 *hidden-dim*))))
+                (states ($state (zeros 1 *hidden-dim*))))
             ;; forward propagation
             ;; right most bit is least significant bit
             (loop :for position :from (1- *binary-dim*) :downto 0
                   :for x = ($constant (list (list ($ a position) ($ b position))))
-                  :for z1 = ($add ($mm x *synapse0*) ($mm ps *synapseh*))
+                  :for z1 = ($add ($mm x *synapse0*) ($mm ($prev states) *synapseh*))
                   :for a1 = ($sigmoid z1)
                   :for z2 = ($mm a1 *synapse1*)
                   :for a2 = ($sigmoid z2)
@@ -113,11 +113,11 @@
                   :for l2e = ($- y a2)
                   :for l = ($expt l2e 2)
                   :do (progn
-                        (setf ps a1)
+                        ($update! states a1)
                         (push l losses)
                         (incf overall-error (abs ($data ($ l2e 0 0))))
                         (setf ($ d position) (round ($data ($ a2 0 0))))))
-            ($bptt! losses)
+            ($bptt! losses states)
             ($gd! ($0 losses) *alpha*)
             ;;($rmgd! ($0 losses) *alpha*)
             ;;($amgd! ($0 losses))
