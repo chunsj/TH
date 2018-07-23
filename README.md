@@ -12,13 +12,13 @@
   5. Load with quicklisp (ql:quickload :th)
   6. If there's error, you need check previous processes.
 
-## How to Use
+## How to Use/Examples
   1. Basic tensor operations: examples/tensor.lisp
   2. Some auto-gradient/auto-backpropagation: examples/ad.lisp
   3. XOR neural network: examples/xor.lisp
   4. MNIST convolutional neural network: examples/mnist.lisp
   5. IMDB sentiment analysis: examples/sentiment.lisp (cl-ppcre is required)
-  6. Binary number addition using RNN: examples/binadd.lisp
+  6. Binary number addition using vanilla RNN: examples/binadd.lisp
 
 ## Book Follow Ups
   1. Deep Learning from Scratch: dlfs
