@@ -102,7 +102,7 @@
                       ($adgd! ($0 losses))
                       (when (zerop (rem n 100))
                         (prn "")
-                        (prn "[ITER]" n tloss)
+                        (prn "[ITER]" n (/ tloss (* 1.0 *sequence-lengt*)))
                         (prn (sample ($data ($prev hs)) ($ *char-to-idx* ($ input-str 0)) 72))
                         (prn "")
                         (gcf))
@@ -115,7 +115,7 @@
 ;;
 
 (defparameter *hidden-size* 128)
-(defparameter *sequence-length* 50)
+(defparameter *sequence-length* 80)
 
 (defparameter *wa* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
 (defparameter *ua* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
@@ -136,7 +136,7 @@
 (defparameter *wy* ($variable ($* 0.01 (rndn *hidden-size* *vocab-size*))))
 (defparameter *by* ($variable (ones 1 *vocab-size*)))
 
-(defun sample (h o seed-idx n)
+(defun sample (h o seed-idx n &optional (temperature 1))
   (let ((x (zeros 1 *vocab-size*))
         (indices (list seed-idx))
         (hs ($state h))
@@ -150,7 +150,7 @@
           :for ot = ($sigmoid ($+ ($@ xt *wo*) ($@ ($prev os) *uo*) *bo*))
           :for st = ($+ ($* at it) ($* ft ($prev hs)))
           :for out = ($* ($tanh st) ot)
-          :for yt = ($+ ($@ out *wy*) *by*)
+          :for yt = ($/ ($+ ($@ out *wy*) *by*) ($constant temperature))
           :for ps = ($softmax yt)
           :for nidx = (choose ($data ps))
           :do (progn
@@ -160,9 +160,6 @@
                 ($zero! x)
                 (setf ($ x 0 nidx) 1)))
     (coerce (mapcar (lambda (i) ($ *idx-to-char* i)) (reverse indices)) 'string)))
-
-(prn (sample (zeros 1 *hidden-size*) (zeros 1 *hidden-size*)
-             (random *vocab-size*) 400))
 
 (loop :for iter :from 1 :to 1
       :for n = 0
@@ -205,7 +202,7 @@
                       ($adgd! ($0 losses))
                       (when (zerop (rem n 100))
                         (prn "")
-                        (prn "[ITER]" n tloss)
+                        (prn "[ITER]" n (/ tloss (* 1.0 *sequence-lengt*)))
                         (prn (sample ($data ($prev hs))
                                      ($data ($prev os))
                                      ($ *char-to-idx* ($ input-str 0))
@@ -213,6 +210,9 @@
                         (prn "")
                         (gcf))
                       (incf n))))
+
+(prn (sample (zeros 1 *hidden-size*) (zeros 1 *hidden-size*)
+             (random *vocab-size*) 800 0.7))
 
 ;;
 ;; 2-layer lstm - current implementation does not work well (maybe there's a problem in bptt)
@@ -287,10 +287,6 @@
                 (setf ($ x 0 nidx) 1)))
     (coerce (mapcar (lambda (i) ($ *idx-to-char* i)) (reverse indices)) 'string)))
 
-(prn (sample (zeros 1 *hidden-size*) (zeros 1 *hidden-size*)
-             (zeros 1 *vocab-size*) (zeros 1 *vocab-size*)
-             (random *vocab-size*) 800))
-
 (loop :for iter :from 1 :to 1
       :for n = 0
       :for upto = (max 1 (- *data-size* *sequence-length* 1))
@@ -341,7 +337,7 @@
                       ($adgd! ($0 losses))
                       (when (zerop (rem n 10))
                         (prn "")
-                        (prn "[ITER]" n tloss)
+                        (prn "[ITER]" n (/ tloss (* 1.0 *sequence-lengt*)))
                         (prn (sample ($data ($prev hs1))
                                      ($data ($prev os1))
                                      ($data ($prev hs2))
@@ -351,3 +347,7 @@
                         (prn "")
                         (gcf))
                       (incf n))))
+
+(prn (sample (zeros 1 *hidden-size*) (zeros 1 *hidden-size*)
+             (zeros 1 *vocab-size*) (zeros 1 *vocab-size*)
+             (random *vocab-size*) 800))
