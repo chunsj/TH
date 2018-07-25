@@ -325,8 +325,10 @@
            #:$ftell
            #:$fclose
            #:$fname
+           #:parameters
            #:$variable
            #:$constant
+           #:$parameter
            #:$data
            #:$gradient
            #:$broadcast

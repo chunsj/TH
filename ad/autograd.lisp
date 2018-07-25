@@ -22,6 +22,11 @@
                              ($name node)))
   (format stream "~A" ($data node)))
 
+(defclass parameters ()
+  ((variables :initform nil :accessor $variables)))
+
+(defun parameters () (make-instance 'parameters))
+
 (defmethod $tensorp ((node node)) ($tensorp ($data node)))
 
 (defgeneric $gradient (node))
@@ -120,3 +125,23 @@
 (defmethod (setf $attr) (value (node node) key)
   (setf ($ ($attrs node) key) value)
   value)
+
+(defgeneric $parameter (parameters object) (:documentation "Group the object into parameters."))
+
+(defmethod $parameter ((parameters parameters) (node node))
+  (let ((v ($variable node)))
+    (push v ($variables parameters))
+    v))
+
+(defmethod $parameter ((parameters parameters) (data list))
+  (let ((v ($variable data)))
+    (push v ($variables parameters))
+    v))
+
+(defmethod $parameter ((parameters parameters) (data t))
+  (let ((v ($variable data)))
+    (push v ($variables parameters))
+    v))
+
+(defmethod $cg! ((parameters parameters))
+  (loop :for p :in ($variables parameters) :do ($cg! p)))
