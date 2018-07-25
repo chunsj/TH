@@ -58,7 +58,6 @@
 (let* ((x ($variable '(0.5)))
        (y ($variable '(4.2)))
        (z ($add ($mul x y) ($sin x))))
-  (setf (th::$gradientv z) (tensor '(1.0)))
   (prn z)
   (prn ($gradient x))
   (prn ($gradient y)))
