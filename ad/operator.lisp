@@ -61,7 +61,7 @@
     (setf ($name result) "MV")
     ($gp! result m v)
     ($pfn! m (lambda () ($vv ($gradient result) ($data v))))
-    ($pfn! v (lambda () ($mm ($transpose ($data m)) ($gradient result))))
+    ($pfn! v (lambda () ($@ ($transpose ($data m)) ($gradient result))))
     result))
 
 (defmethod $mm ((a node) (b node))

@@ -18,7 +18,7 @@
       (cond ((null grv) nil)
             ((numberp grv) (setf ($data node) (- data (* grv learning-rate))))
             (t ($axpy! (- learning-rate) grv data)))
-      (setf ($gradient node) nil))))
+      ($cg! node))))
 
 (defmethod $mgd! ((object t) &optional (learning-rate 0.01) (momentum 0.9))
   (declare (ignore learning-rate momentum)))
@@ -35,7 +35,7 @@
             (t (let ((v ($attr node :v (apply #'zeros ($size grv)))))
                  (setf ($ ($attrs node) :v) ($axpy! (- learning-rate) grv ($mul! v momentum)))
                  ($axpy! 1 ($ ($attrs node) :v) data))))
-      (setf ($gradient node) nil))))
+      ($cg! node))))
 
 (defmethod $agd! ((object t) &optional (learning-rate 0.01))
   (declare (ignore learning-rate)))
@@ -54,7 +54,7 @@
             (t (let ((h ($attr node :h (apply #'zeros ($size grv)))))
                  ($axpy! 1 ($expt grv 2) h)
                  ($axpy! (- learning-rate) ($div grv ($add! ($sqrt h) eps)) data))))
-      (setf ($gradient node) nil))))
+      ($cg! node))))
 
 (defmethod $amgd! ((object t) &optional (learning-rate 0.01) (β1 0.9) (β2 0.999))
   (declare (ignore learning-rate β1 β2)))
@@ -86,7 +86,7 @@
                  ($axpy! (- 1 β1) ($sub grv m) m)
                  ($axpy! (- 1 β2) ($sub! ($expt grv 2) v) v)
                  ($axpy! (- clr) ($div m ($add! ($sqrt v) 1E-8)) data))))
-      (setf ($gradient node) nil))))
+      ($cg! node))))
 
 (defmethod $rmgd! ((object t) &optional (learning-rate 0.001) (decay-rate 0.99))
   (declare (ignore learning-rate decay-rate)))
@@ -107,7 +107,7 @@
                  ($mul! h decay-rate)
                  ($axpy! (- 1 decay-rate) ($expt grv 2) h)
                  ($axpy! (- learning-rate) ($div grv ($add! ($sqrt h) eps)) data))))
-      (setf ($gradient node) nil))))
+      ($cg! node))))
 
 (defmethod $adgd! ((object t) &optional (decay-rate 0.95)) (declare (ignore decay-rate)))
 
@@ -136,4 +136,4 @@
                    ($mul! d decay-rate)
                    ($axpy! (- 1 decay-rate) ($expt delta 2) d)
                    ($axpy! -1 delta data)))))
-      (setf ($gradient node) nil))))
+      ($cg! node))))

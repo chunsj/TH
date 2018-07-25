@@ -20,7 +20,7 @@
                              (cond (($gradientp node) "VARIABLE")
                                    (t "CONSTANT"))
                              ($name node)))
-  (print-object ($data node) stream))
+  (format stream "~A" ($data node)))
 
 (defmethod $tensorp ((node node)) ($tensorp ($data node)))
 
@@ -51,6 +51,12 @@
 (defun $gp! (node input &rest inputs)
   (setf ($gradientp node) (reduce (lambda (r i) (or ($gradientp r) ($gradientp i)))
                                   (cons input inputs))))
+
+(defgeneric $cg! (node))
+
+(defmethod $cg! ((node node))
+  (setf ($fns node) nil)
+  (setf ($gradientv node) nil))
 
 (defun node (data &optional need-gradient-p)
   (let ((n (make-instance 'node)))
