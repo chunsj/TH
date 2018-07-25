@@ -205,6 +205,46 @@
   (prn x)
   (prn ($dot ($reshape ($transpose x) 1 4) a)))
 
+;; from chainer ad example
+(let* ((x ($variable '(5)))
+       (y ($+ ($expt x ($constant 2)) ($* ($constant -2) x) ($constant 1)))
+       (y1 ($expt x ($constant 2)))
+       (y2 ($* ($constant -2) x))
+       (y3 ($+ y1 y2 ($constant 1))))
+  (prn y)
+  ($gs! y)
+  (prn "DY/DX" ($gradient x))
+  (prn y3)
+  ($gs! y3)
+  (prn "DY3/DX" ($gradient x)))
+
+(let* ((x ($variable '(5)))
+       (z ($* ($constant -2) x))
+       (y ($+ ($expt x ($constant 2)) z ($constant 1))))
+  (prn y)
+  ($gs! y)
+  (prn "DY/DX" ($gradient x)))
+
+(let* ((x ($variable '((1 2 3) (4 5 6))))
+       (y ($+ ($expt x ($constant 2)) ($* ($constant -2) x) ($constant 1))))
+  (prn y)
+  ($gs! y)
+  (prn "DY/DX" ($gradient x)))
+
+(defun muladd (x y z) ($+ ($* x y) z))
+
+(let* ((x ($variable ($- ($* 2 (rnd 3 2)) 1)))
+       (y ($variable ($- ($* 2 (rnd 3 2)) 1)))
+       (z ($variable ($- ($* 2 (rnd 3 2)) 1)))
+       (r (muladd x y z)))
+  (prn r)
+  ($gs! r)
+  (prn "X" x)
+  (prn "Y" y)
+  (prn "DR/DX=Y"($gradient x))
+  (prn "DR/DY=X"($gradient y))
+  (prn "DR/DZ=1"($gradient z)))
+
 ;; linear mapping
 (let* ((X ($constant (tensor '((1) (3)))))
        (Y ($constant (tensor '(-10 -30))))
