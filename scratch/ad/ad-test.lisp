@@ -7,14 +7,11 @@
 
 (let* ((a ($constant (tensor '(5 5 5))))
        (c ($variable 5))
-       (out ($broadcast c a))
-       (gradient ($bp! out (tensor '(1 1 1)))))
+       (out ($broadcast c a)))
+  ($gs! out)
   (unless ($eq ($data out) ($data a))
     (error "out should be the same one as a"))
-  (unless (= 3 (-> gradient
-                   ($children)
-                   ($first)
-                   ($gradient)))
+  (unless (= 3 ($gradient c))
     (error "should be 3")))
 
 (let* ((a ($constant (tensor '(1 0 -3.21))))
@@ -39,18 +36,18 @@
                          -0.10536051565782628
                          1.1662709371419244)))
     (error "invalid log"))
-  (unless (= ($data ($bce ($constant (tensor '(0.1 0.5 0.9)))
-                          ($constant (tensor '(0 0 1)))))
-             0.9038682400222361d0)
+  (unless (= ($data ($bce ($constant (tensor '((0.1 0.5 0.9))))
+                          ($constant (tensor '((0 0 1))))))
+             0.3012894)
     (error "invalid bce")))
 
 (let* ((m ($variable (tensor '((2 0) (0 2)))))
        (v ($constant (tensor '(2 3))))
-       (out ($mv m v))
-       (gradient ($bp! out (tensor '(1 1)))))
-  (unless ($eq (-> gradient ($children) ($first) ($gradient))
+       (out ($mv m v)))
+  ($gs! out)
+  (unless ($eq ($gradient m)
                (tensor '((2.0 2.0) (3.0 3.0))))
-    (print (-> gradient ($children) ($first) ($gradient)))
+    (prn ($gradient m))
     (error "mv")))
 
 (let* ((A (tensor '((1 1 1) (1 1 1))))

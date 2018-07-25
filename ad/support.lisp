@@ -14,11 +14,11 @@
 (defmethod $bce ((a tensor) (b tensor))
   (let ((output ($empty a)))
     (nn-bce-criterion-update-output a b output t nil)
-    output))
+    ($ output 0)))
 
 (defun dbce (input target gradient)
   (let ((dinput ($empty input)))
-    (nn-bce-criterion-update-grad-input input target gradient dinput t nil)
+    (nn-bce-criterion-update-grad-input input target (tensor (list gradient)) dinput t nil)
     dinput))
 
 (defmethod $bce ((a node) (b node))
