@@ -23,7 +23,7 @@
         (out ($empty ($data x))))
     (nn-spatial-convolution-mm-update-output ($data x) out ($data k) (if b ($data b) b)
                                              f df ($size k 2) ($size k 3) dw dh pw ph)
-    (let ((result (th::node out)))
+    (let ((result (node out)))
       (setf ($name result) "CONV2D")
       (if b
           ($gp! result x k b)

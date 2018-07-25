@@ -102,6 +102,9 @@
                          :collect k)
         :collect ($contiguous! ($index ($ *mnist* :train-labels) 0 rng))))
 
+(loop :for p :in (list *k* *kb* *w2* *b2* *w3* *b3*)
+      :do (th::$cg! p))
+
 ;; the actual training
 (loop :for epoch :from 1 :to 50
       :do (loop :for i :from 0 :below 60
@@ -114,10 +117,8 @@
                 :for y* = (mnist-predict x)
                 :for loss = ($cee y* y)
                 :do (progn
-                      (format t "[~A|~A]: ~A~%" (1+ i) epoch ($data loss))
-                      (finish-output)
-                      ($bp! loss)
-                      ($adgd! loss)
+                      (prn (format nil "[~A|~A]: ~A" (1+ i) epoch ($data loss)))
+                      ($adgd! (list *k* *kb* *w2* *b2* *w3* *b3*))
                       (gcf))))
 
 ;; test stats

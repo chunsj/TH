@@ -333,6 +333,7 @@
            #:$krows
            #:$kcols
            #:$gs!
+           #:$cg!
            #:$gd!
            #:$mgd!
            #:$agd!

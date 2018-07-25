@@ -93,7 +93,7 @@
   (let ((result (node ($log ($data x)))))
     (setf ($name result) "LOG")
     ($gp! result x)
-    ($pfn! x ($* (dlog ($data x)) ($gradient result)))
+    ($pfn! x (lambda () ($* (dlog ($data x)) ($gradient result))))
     result))
 
 (defmethod $sin ((x node))

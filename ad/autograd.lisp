@@ -32,7 +32,11 @@
         (unless ($gradientv node)
           (if ($fns node)
               (setf ($gradientv node)
-                    (reduce #'$+ (mapcar (lambda (fn) (funcall fn)) (reverse ($fns node)))))
+                    (reduce #'$+ (mapcar (lambda (fn)
+                                           (unless (functionp fn)
+                                             (error "IN ~A FOUND ~A~%" node fn))
+                                           (funcall fn))
+                                         (reverse ($fns node)))))
               (setf ($gradientv node) (if ($tensorp ($data node))
                                           ($one ($data node))
                                           1))))
@@ -49,8 +53,8 @@
 (defmethod $gs! ((node node) gradient) (setf ($gradientv node) gradient))
 
 (defun $gp! (node input &rest inputs)
-  (setf ($gradientp node) (reduce (lambda (r i) (or ($gradientp r) ($gradientp i)))
-                                  (cons input inputs))))
+  (setf ($gradientp node) (reduce (lambda (r i) (or r ($gradientp i))) inputs
+                                  :initial-value ($gradientp input))))
 
 (defgeneric $cg! (node))
 
