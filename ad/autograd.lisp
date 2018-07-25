@@ -2,50 +2,60 @@
 
 (in-package :th)
 
-(defgeneric $bp! (node &optional gradient) (:documentation "Executes backward error propagation."))
-(defgeneric $zg! (node) (:documentation "Reset previous gradient values."))
-
 (defgeneric $variable (object) (:documentation "Returns variable node."))
 (defgeneric $constant (object) (:documentation "Returns constant node."))
 
 (defgeneric $broadcast (constant matrix))
 
 (defclass node ()
-  ((data :initform nil :accessor $data)
-   (gradient :initform nil :accessor $gradient)
+  ((nm :initform nil :accessor $name)
+   (data :initform nil :accessor $data)
+   (fns :initform nil :accessor $fns)
+   (gradientv :initform nil :accessor $gradientv)
    (need-gradient-p :initform nil :accessor $gradientp)
-   (children :initform nil :accessor $children)
-   (backward-function :initform nil :accessor $bpfn)
-   (attrs :initform #{} :accessor $attrs)
-   (nm :initform nil :accessor $name)))
+   (attrs :initform #{} :accessor $attrs)))
 
 (defmethod print-object ((node node) stream)
   (format stream "[~A] " (if (null ($name node))
-                            (cond (($gradientp node) "VARIABLE")
-                                  (t "CONSTANT"))
-                            ($name node)))
+                             (cond (($gradientp node) "VARIABLE")
+                                   (t "CONSTANT"))
+                             ($name node)))
   (print-object ($data node) stream))
-
-(defun $c0 (node) ($0 ($children node)))
-(defun $c1 (node) ($1 ($children node)))
-(defun $c2 (node) ($2 ($children node)))
 
 (defmethod $tensorp ((node node)) ($tensorp ($data node)))
 
-(defun setgradient (node value)
-  (if ($gradient node)
-      (setf ($gradient node) ($add ($gradient node) value))
-      (setf ($gradient node) value)))
+(defgeneric $gradient (node))
 
-(defun default-bpfn (node gradient)
-  (setgradient node gradient)
-  node)
+(defmethod $gradient ((node node))
+  (if ($gradientp node)
+      (progn
+        (unless ($gradientv node)
+          (if ($fns node)
+              (setf ($gradientv node)
+                    (reduce #'$+ (mapcar (lambda (fn) (funcall fn)) (reverse ($fns node)))))
+              (setf ($gradientv node) (if ($tensorp ($data node))
+                                          ($one ($data node))
+                                          1))))
+        ($gradientv node))
+      (if ($tensorp ($data node))
+          (apply #'zeros ($size ($data node)))
+          0)))
+
+(defun $pfn! (node fn) (when ($gradientp node) (push fn ($fns node))))
+
+(defgeneric $gs! (node gradient)
+  (:documentation "Set the gradient value, mostly for backpropagation."))
+
+(defmethod $gs! ((node node) gradient) (setf ($gradientv node) gradient))
+
+(defun $gp! (node input &rest inputs)
+  (setf ($gradientp node) (reduce (lambda (r i) (or ($gradientp r) ($gradientp i)))
+                                  (cons input inputs))))
 
 (defun node (data &optional need-gradient-p)
   (let ((n (make-instance 'node)))
     (setf ($data n) data)
     (setf ($gradientp n) need-gradient-p)
-    (setf ($bpfn n) #'default-bpfn)
     n))
 
 (defmethod $variable ((node node)) (setf ($gradientp node) t) node)
@@ -56,20 +66,6 @@
 
 (defmethod $variable ((data t)) (node data t))
 (defmethod $constant ((data t)) (node data nil))
-
-(defun runbpfn (node gradient) (funcall ($bpfn node) node gradient))
-
-(defun bpglobal (node)
-  (if ($tensorp node)
-      (runbpfn node ($broadcast 1 ($data node)))
-      (runbpfn node 1)))
-
-(defun bplocal (node gradient) (runbpfn node gradient))
-
-(defmethod $bp! ((node node) &optional gradient)
-  (if (null gradient)
-      (bpglobal node)
-      (bplocal node gradient)))
 
 (defmethod $zero ((x node)) (node ($zero ($data x)) ($gradientp x)))
 (defmethod $one ((x node)) (node ($one ($data x)) ($gradientp x)))
@@ -109,31 +105,3 @@
 (defmethod (setf $attr) (value (node node) key)
   (setf ($ ($attrs node) key) value)
   value)
-
-(defclass state ()
-  ((current :initform nil :accessor $prev)
-   (history :initform nil :accessor $history)))
-
-(defun $state (initial-value)
-  (let ((st (make-instance 'state)))
-    (setf ($prev st) ($constant initial-value))
-    st))
-
-(defun $update! (state new-state)
-  (let ((current-state ($variable ($clone ($data new-state)))))
-    (setf ($prev state) current-state)
-    (push (list new-state current-state) ($history state))
-    state))
-
-(defun bps! (state)
-  (loop :for (s ps) :in ($history state)
-        :for g = ($gradient ps)
-        :when g
-          :do ($bp! s g)))
-
-(defun $bpst! (state &rest more-states)
-  (loop :for st :in (cons state more-states) :do (bps! st)))
-
-(defun $bptt! (nodes &rest states)
-  (loop :for node :in nodes :do ($bp! node))
-  (loop :for st :in states :do (bps! st)))

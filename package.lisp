@@ -325,20 +325,14 @@
            #:$ftell
            #:$fclose
            #:$fname
-           #:$tapep
-           #:$bp!
-           #:$bptt!
-           #:$update!
-           #:$prev
-           #:$state
            #:$variable
            #:$constant
-           #:$children
            #:$data
            #:$gradient
            #:$broadcast
            #:$krows
            #:$kcols
+           #:$gs!
            #:$gd!
            #:$mgd!
            #:$agd!
