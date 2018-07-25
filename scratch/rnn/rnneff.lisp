@@ -70,58 +70,11 @@
                           (setf ph ht)
                           (incf tloss ($data l))
                           (push l losses)))
-              ($bptt! losses)
-              ($adgd! ($0 losses))
+              ($adgd! (list *wx* *wh* *wy* *bh* *by*))
               (when (zerop (rem n 100))
                 ;;(prn p tloss (sample ph (round ($ input 0 0)) 72))
                 (gcf))
               (incf n))))
-
-;;
-;; simple rnn - revised
-;;
-(defparameter *wx* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *wh* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *wy* ($variable ($* 0.01 (rndn *hidden-size* *vocab-size*))))
-(defparameter *bh* ($variable (zeros 1 *hidden-size*)))
-(defparameter *by* ($variable (zeros 1 *vocab-size*)))
-
-(let ((n 0))
-  (loop :for p :from 0 :below (min 1 (- *data-size* *sequence-length* 1)) :by *sequence-length*
-        :for input = (let ((m (zeros *sequence-length* *vocab-size*)))
-                       (loop :for i :from p :below (+ p *sequence-length*)
-                             :for ch = ($ *data* i)
-                             :do (setf ($ m (- i p) ($ *char-to-idx* ch)) 1))
-                       m)
-        :for target = (let ((m (zeros *sequence-length* *vocab-size*)))
-                        (loop :for i :from (1+ p) :below (+ p *sequence-length* 1)
-                              :for ch = ($ *data* i)
-                              :do (setf ($ m (- i p 1) ($ *char-to-idx* ch)) 1))
-                        m)
-        :do (let ((ph ($constant (zeros 1 *hidden-size*)))
-                  (hs nil)
-                  (losses nil)
-                  (tloss 0))
-              (loop :for i :from 0 :below ($size input 0)
-                    :for xt = ($constant ($index input 0 i))
-                    :for ht = ($tanh ($+ ($@ xt *wx*) ($@ ph *wh*) *bh*))
-                    :for yt = ($+ ($@ ht *wy*) *by*)
-                    :for ps = ($softmax yt)
-                    :for y = ($constant ($index target 0 i))
-                    :for l = ($cee ps y)
-                    :do (progn
-                          (setf ph ($state ht))
-                          (push (list ht ph) hs)
-                          (incf tloss ($data l))
-                          (push l losses)))
-              ($bptt! losses)
-              ($bpst! hs)
-              ($adgd! ($0 losses))
-              (when (zerop (rem n 100))
-                ;;(prn p tloss (sample ph (round ($ input 0 0)) 72))
-                (gcf))
-              (incf n))))
-
 
 ;;
 ;; gru trial
@@ -227,68 +180,12 @@
                         (setf ps st)
                         (setf pout out)
                         (push l losses)))
-            ($bptt! losses)
-            ($adgd! ($0 losses))
+            ($adgd! (list *wa* *ua* *ba* *wi* *ui* *bi* *wf* *uf* *bf* *wo* *uo* *bo*
+                          *wy* *by*))
             (gcf)))
 
 ;;
-;; even simple 1 layer lstm - revised
-;;
-(defparameter *wa* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *ua* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *ba* ($variable (zeros 1 *hidden-size*)))
-
-(defparameter *wi* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *ui* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *bi* ($variable (zeros 1 *hidden-size*)))
-
-(defparameter *wf* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *uf* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *bf* ($variable (zeros 1 *hidden-size*)))
-
-(defparameter *wo* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *uo* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *bo* ($variable (zeros 1 *hidden-size*)))
-
-(defparameter *wy* ($variable ($* 0.01 (rndn *hidden-size* *vocab-size*))))
-(defparameter *by* ($variable (zeros 1 *vocab-size*)))
-
-(loop :for p :from 0 :below (min 1 (- *data-size* *sequence-length* 1)) :by *sequence-length*
-      :for input = (let ((m (zeros *sequence-length* *vocab-size*)))
-                     (loop :for i :from p :below (+ p *sequence-length*)
-                           :for ch = ($ *data* i)
-                           :do (setf ($ m (- i p) ($ *char-to-idx* ch)) 1))
-                     m)
-      :for target = (let ((m (zeros *sequence-length* *vocab-size*)))
-                      (loop :for i :from (1+ p) :below (+ p *sequence-length* 1)
-                            :for ch = ($ *data* i)
-                            :do (setf ($ m (- i p 1) ($ *char-to-idx* ch)) 1))
-                      m)
-      :do (let ((outs ($state (zeros 1 *hidden-size*)))
-                (states ($state (zeros 1 *hidden-size*)))
-                (losses nil))
-            (loop :for i :from 0 :below *sequence-length*
-                  :for xt = ($constant ($index input 0 i))
-                  :for at = ($tanh ($+ ($@ xt *wa*) ($@ ($prev outs) *ua*) *ba*))
-                  :for it = ($sigmoid ($+ ($@ xt *wi*) ($@ ($prev outs) *ui*) *bi*))
-                  :for ft = ($sigmoid ($+ ($@ xt *wf*) ($@ ($prev outs) *uf*) *bf*))
-                  :for ot = ($sigmoid ($+ ($@ xt *wo*) ($@ ($prev outs) *uo*) *bo*))
-                  :for st = ($+ ($* at it) ($* ft ($prev states)))
-                  :for out = ($* ($tanh st) ot)
-                  :for p = ($+ ($@ out *wy*) *by*)
-                  :for yt = ($softmax p)
-                  :for y = ($constant ($index target 0 i))
-                  :for l = ($cee yt y)
-                  :do (progn
-                        ($update! states st)
-                        ($update! outs out)
-                        (push l losses)))
-            ($bptt! losses states outs)
-            ($adgd! ($0 losses))
-            (gcf)))
-
-;;
-;; 2 layer - very slow even for single sample iteration
+;; 2 layer lstm
 ;;
 (defparameter *wa1* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
 (defparameter *ua1* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
@@ -338,7 +235,7 @@
                 (pout2 ($constant (zeros 1 *vocab-size*)))
                 (ps2 ($constant (zeros 1 *vocab-size*)))
                 (losses nil))
-            (loop :for i :from 0 :below *sequence-length*
+            (loop :for i :from 0 :below (min 5 *sequence-length*)
                   :for xt = ($constant ($index input 0 i))
                   :for at1 = ($tanh ($+ ($@ xt *wa1*) ($@ pout1 *ua1*) *ba1*))
                   :for it1 = ($sigmoid ($+ ($@ xt *wi1*) ($@ pout1 *ui1*) *bi1*))
@@ -361,97 +258,6 @@
                         (setf pout1 out1)
                         (setf pout2 out2)
                         (push l losses)))
-            ($bptt! losses)
-            ($adgd! ($0 losses))
+            ($adgd! (list *wa1* *ua1* *ba1* *wi1* *ui1* *bi1* *wf1* *uf1* *bf1* *wo1* *uo1* *bo1*
+                          *wa2* *ua2* *ba2* *wi2* *ui2* *bi2* *wf2* *uf2* *bf2* *wo2* *uo2* *bo2*))
             (gcf)))
-
-;;
-;; 2 layer lstm - revised
-;;
-(defparameter *wa1* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *ua1* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *ba1* ($variable (zeros 1 *hidden-size*)))
-
-(defparameter *wi1* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *ui1* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *bi1* ($variable (zeros 1 *hidden-size*)))
-
-(defparameter *wf1* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *uf1* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *bf1* ($variable (zeros 1 *hidden-size*)))
-
-(defparameter *wo1* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *uo1* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *bo1* ($variable (zeros 1 *hidden-size*)))
-
-(defparameter *wa2* ($variable ($* 0.01 (rndn *hidden-size* *vocab-size*))))
-(defparameter *ua2* ($variable ($* 0.01 (rndn *vocab-size* *vocab-size*))))
-(defparameter *ba2* ($variable (zeros 1 *vocab-size*)))
-
-(defparameter *wi2* ($variable ($* 0.01 (rndn *hidden-size* *vocab-size*))))
-(defparameter *ui2* ($variable ($* 0.01 (rndn *vocab-size* *vocab-size*))))
-(defparameter *bi2* ($variable (zeros 1 *vocab-size*)))
-
-(defparameter *wf2* ($variable ($* 0.01 (rndn *hidden-size* *vocab-size*))))
-(defparameter *uf2* ($variable ($* 0.01 (rndn *vocab-size* *vocab-size*))))
-(defparameter *bf2* ($variable (zeros 1 *vocab-size*)))
-
-(defparameter *wo2* ($variable ($* 0.01 (rndn *hidden-size* *vocab-size*))))
-(defparameter *uo2* ($variable ($* 0.01 (rndn *vocab-size* *vocab-size*))))
-(defparameter *bo2* ($variable (zeros 1 *vocab-size*)))
-
-(loop :for p :from 0 :below (min 1 (- *data-size* *sequence-length* 1)) :by *sequence-length*
-      :for input = (let ((m (zeros *sequence-length* *vocab-size*)))
-                     (loop :for i :from p :below (+ p *sequence-length*)
-                           :for ch = ($ *data* i)
-                           :do (setf ($ m (- i p) ($ *char-to-idx* ch)) 1))
-                     m)
-      :for target = (let ((m (zeros *sequence-length* *vocab-size*)))
-                      (loop :for i :from (1+ p) :below (+ p *sequence-length* 1)
-                            :for ch = ($ *data* i)
-                            :do (setf ($ m (- i p 1) ($ *char-to-idx* ch)) 1))
-                      m)
-      :do (let ((pout1 ($constant (zeros 1 *hidden-size*)))
-                (ps1 ($constant (zeros 1 *hidden-size*)))
-                (pout2 ($constant (zeros 1 *vocab-size*)))
-                (ps2 ($constant (zeros 1 *vocab-size*)))
-                (outs1 nil)
-                (states1 nil)
-                (outs2 nil)
-                (states2 nil)
-                (losses nil))
-            (loop :for i :from 0 :below *sequence-length*
-                  :for xt = ($constant ($index input 0 i))
-                  :for at1 = ($tanh ($+ ($@ xt *wa1*) ($@ pout1 *ua1*) *ba1*))
-                  :for it1 = ($sigmoid ($+ ($@ xt *wi1*) ($@ pout1 *ui1*) *bi1*))
-                  :for ft1 = ($sigmoid ($+ ($@ xt *wf1*) ($@ pout1 *uf1*) *bf1*))
-                  :for ot1 = ($sigmoid ($+ ($@ xt *wo1*) ($@ pout1 *uo1*) *bo1*))
-                  :for st1 = ($+ ($* at1 it1) ($* ft1 ps1))
-                  :for out1 = ($* ($tanh st1) ot1)
-                  :for at2 = ($tanh ($+ ($@ out1 *wa2*) ($@ pout2 *ua2*) *ba2*))
-                  :for it2 = ($sigmoid ($+ ($@ out1 *wi2*) ($@ pout2 *ui2*) *bi2*))
-                  :for ft2 = ($sigmoid ($+ ($@ out1 *wf2*) ($@ pout2 *uf2*) *bf2*))
-                  :for ot2 = ($sigmoid ($+ ($@ out1 *wo2*) ($@ pout2 *uo2*) *bo2*))
-                  :for st2 = ($+ ($* at2 it2) ($* ft2 ps2))
-                  :for out2 = ($* ($tanh st2) ot2)
-                  :for yt = ($softmax out2)
-                  :for y = ($constant ($index target 0 i))
-                  :for l = ($cee yt y)
-                  :do (progn
-                        (setf ps1 ($state st1))
-                        (setf ps2 ($state st2))
-                        (setf pout1 ($state out1))
-                        (setf pout2 ($state out2))
-                        (push (list st1 ps1) states1)
-                        (push (list out1 pout1) outs1)
-                        (push (list out2 pout2) outs2)
-                        (push l losses)))
-            ($bptt! losses)
-            ($bpst! states2 outs2 states1 outs1)
-            ($adgd! ($0 losses))
-            (gcf)))
-
-;; XXX what about special node which contains above previous node and history?
-;; as follows
-($update! ps1 st1)
-;; this will update the data and attrs (history)
