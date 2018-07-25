@@ -20,6 +20,10 @@
             (t ($axpy! (- learning-rate) grv data)))
       ($cg! node))))
 
+(defmethod $gd! ((nodes list) &optional (learning-rate 0.01))
+  (loop :for n :in nodes
+        :do ($gd! n learning-rate)))
+
 (defmethod $mgd! ((object t) &optional (learning-rate 0.01) (momentum 0.9))
   (declare (ignore learning-rate momentum)))
 
@@ -36,6 +40,10 @@
                  (setf ($ ($attrs node) :v) ($axpy! (- learning-rate) grv ($mul! v momentum)))
                  ($axpy! 1 ($ ($attrs node) :v) data))))
       ($cg! node))))
+
+(defmethod $mgd! ((nodes list) &optional (learning-rate 0.01) (momentum 0.9))
+  (loop :for n :in nodes
+        :do ($mgd! n learning-rate momentum)))
 
 (defmethod $agd! ((object t) &optional (learning-rate 0.01))
   (declare (ignore learning-rate)))
@@ -55,6 +63,10 @@
                  ($axpy! 1 ($expt grv 2) h)
                  ($axpy! (- learning-rate) ($div grv ($add! ($sqrt h) eps)) data))))
       ($cg! node))))
+
+(defmethod $agd! ((nodes list) &optional (learning-rate 0.01))
+  (loop :for n :in nodes
+        :do ($agd! n learning-rate)))
 
 (defmethod $amgd! ((object t) &optional (learning-rate 0.01) (β1 0.9) (β2 0.999))
   (declare (ignore learning-rate β1 β2)))
@@ -88,6 +100,10 @@
                  ($axpy! (- clr) ($div m ($add! ($sqrt v) 1E-8)) data))))
       ($cg! node))))
 
+(defmethod $amgd! ((nodes list) &optional (learning-rate 0.01) (β1 0.9) (β2 0.999))
+  (loop :for n :in nodes
+        :do ($amgd! n learning-rate β1 β2)))
+
 (defmethod $rmgd! ((object t) &optional (learning-rate 0.001) (decay-rate 0.99))
   (declare (ignore learning-rate decay-rate)))
 
@@ -108,6 +124,10 @@
                  ($axpy! (- 1 decay-rate) ($expt grv 2) h)
                  ($axpy! (- learning-rate) ($div grv ($add! ($sqrt h) eps)) data))))
       ($cg! node))))
+
+(defmethod $rmgd! ((nodes list) &optional (learning-rate 0.001) (decay-rate 0.99))
+  (loop :for n :in nodes
+        :do ($rmgd! n learning-rate decay-rate)))
 
 (defmethod $adgd! ((object t) &optional (decay-rate 0.95)) (declare (ignore decay-rate)))
 
@@ -137,3 +157,7 @@
                    ($axpy! (- 1 decay-rate) ($expt delta 2) d)
                    ($axpy! -1 delta data)))))
       ($cg! node))))
+
+(defmethod $adgd! ((nodes list) &optional (decay-rate 0.95))
+  (loop :for n :in nodes
+        :do ($adgd! n decay-rate)))
