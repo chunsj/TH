@@ -210,8 +210,11 @@
     (setf ($name result) "$")
     ($gp! result x)
     ($pfn! x (lambda ()
-               (let ((z ($zero ($data x))))
-                 ($copy! (apply #'$ z (cons location others-and-default)) ($gradient result))
+               (let ((z ($zero ($data x)))
+                     (locs (cons location others-and-default)))
+                 (if (= ($count locs) ($ndim z))
+                     (setf (apply #'$ z locs) ($gradient result))
+                     ($copy! (apply #'$ z (cons location others-and-default)) ($gradient result)))
                  z)))
     result))
 

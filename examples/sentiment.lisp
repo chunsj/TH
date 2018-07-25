@@ -99,8 +99,8 @@
                   :for d = ($sub y* ($constant y))
                   :for er = ($dot d d)
                   :do (progn
-                        ($bp! er)
-                        ($gd! er *alpha*)
+                        ($gs! er 1)
+                        ($adgd! (list *w01* *w12*))
                         (incf total)
                         (when (< (abs ($data d)) 0.5)
                           (incf correct))
