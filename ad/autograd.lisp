@@ -31,22 +31,31 @@
       (progn
         (unless ($gradientv node)
           (if ($fns node)
-              (setf ($gradientv node)
-                    (reduce #'$+ (mapcar (lambda (fn) (funcall fn)) (reverse ($fns node)))))
+              (let ((gv (reduce #'$+ (mapcar (lambda (fn) (funcall fn)) (reverse ($fns node))))))
+                (setf ($fns node) nil)
+                (setf ($gradientv node) gv))
               (setf ($gradientv node) (if ($tensorp ($data node))
                                           ($one ($data node))
                                           1))))
         ($gradientv node))
-      (if ($tensorp ($data node))
-          (apply #'zeros ($size ($data node)))
-          0)))
+      (let ((o (if ($tensorp ($data node))
+                   (apply #'zeros ($size ($data node)))
+                   0)))
+        (setf ($gradientv node) o)
+        (setf ($fns node) nil)
+        ($gradientv node))))
 
 (defun $pfn! (node fn) (when ($gradientp node) (push fn ($fns node))))
 
-(defgeneric $gs! (node gradient)
+(defgeneric $gs! (node &optional gradient)
   (:documentation "Set the gradient value, mostly for backpropagation."))
 
-(defmethod $gs! ((node node) gradient) (setf ($gradientv node) gradient))
+(defmethod $gs! ((node node) &optional gradient)
+  (setf ($fns node) nil)
+  (let ((gradient (or gradient (if ($tensorp ($data node))
+                                   ($one ($data node))
+                                   1))))
+    (setf ($gradientv node) gradient)))
 
 (defun $gp! (node input &rest inputs)
   (setf ($gradientp node) (reduce (lambda (r i) (or r ($gradientp i))) inputs
