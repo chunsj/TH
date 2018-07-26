@@ -21,21 +21,11 @@
                               ht))
 (defparameter *idx-to-char* *chars*)
 
-(defun choose (probs)
-  (let ((choices (sort (loop :for i :from 0 :below ($size probs 1)
-                             :collect (list i ($ probs 0 i)))
-                       (lambda (a b) (> (cadr a) (cadr b))))))
-    (labels ((make-ranges ()
-               (loop :for (datum probability) :in choices
-                     :sum (coerce probability 'double-float) :into total
-                     :collect (list datum total)))
-             (pick (ranges)
-               (declare (optimize (speed 3) (safety 0) (debug 0)))
-               (loop :with random = (random 1D0)
-                     :for (datum below) :of-type (t double-float) :in ranges
-                     :when (< random below)
-                       :do (return datum))))
-      (pick (make-ranges)))))
+(defun choose (probs &optional (temperature 1))
+  (let* ((eprobs ($/ probs temperature))
+         (sprobs ($sum eprobs))
+         (probs ($div! eprobs sprobs)))
+    ($ ($reshape! ($multinomial probs 1) ($count probs)) 0)))
 
 ;;
 ;; vanilla rnn
@@ -44,13 +34,14 @@
 (defparameter *hidden-size* 100)
 (defparameter *sequence-length* 25)
 
-(defparameter *wx* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *wh* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *wy* ($variable ($* 0.01 (rndn *hidden-size* *vocab-size*))))
-(defparameter *bh* ($variable (zeros 1 *hidden-size*)))
-(defparameter *by* ($variable (zeros 1 *vocab-size*)))
+(defparameter *rnn* (parameters))
+(defparameter *wx* ($parameter *rnn* ($* 0.01 (rndn *vocab-size* *hidden-size*))))
+(defparameter *wh* ($parameter *rnn* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *wy* ($parameter *rnn* ($* 0.01 (rndn *hidden-size* *vocab-size*))))
+(defparameter *bh* ($parameter *rnn* (zeros 1 *hidden-size*)))
+(defparameter *by* ($parameter *rnn* (zeros 1 *vocab-size*)))
 
-(defun sample (h seed-idx n)
+(defun sample (h seed-idx n &optional (temperature 1))
   (let ((x (zeros 1 *vocab-size*))
         (indices (list seed-idx))
         (ph ($constant h)))
@@ -60,7 +51,7 @@
           :for ht = ($tanh ($+ ($@ xt *wx*) ($@ ph *wh*) *bh*))
           :for yt = ($+ ($@ ht *wy*) *by*)
           :for ps = ($softmax yt)
-          :for nidx = (choose ($data ps))
+          :for nidx = (choose ($data ps) temperature)
           :do (progn
                 (setf ph ht)
                 (push nidx indices)
@@ -98,7 +89,7 @@
                                   (setf ph ht)
                                   (incf tloss ($data l))
                                   (push l losses)))
-                      ($adgd! (list *wx* *wh* *bh* *wy* *by*))
+                      ($adgd! *rnn*)
                       (when (zerop (rem n 100))
                         (prn "")
                         (prn "[ITER]" n (/ tloss (* 1.0 *sequence-length*)))
@@ -114,26 +105,28 @@
 ;;
 
 (defparameter *hidden-size* 128)
-(defparameter *sequence-length* 80)
+(defparameter *sequence-length* 64)
 
-(defparameter *wa* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *ua* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *ba* ($variable (ones 1 *hidden-size*)))
+(defparameter *lstm1* (parameters))
 
-(defparameter *wi* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *ui* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *bi* ($variable (ones 1 *hidden-size*)))
+(defparameter *wa* ($parameter *lstm1* ($* 0.01 (rndn *vocab-size* *hidden-size*))))
+(defparameter *ua* ($parameter *lstm1* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *ba* ($parameter *lstm1* (ones 1 *hidden-size*)))
 
-(defparameter *wf* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *uf* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *bf* ($variable (ones 1 *hidden-size*)))
+(defparameter *wi* ($parameter *lstm1* ($* 0.01 (rndn *vocab-size* *hidden-size*))))
+(defparameter *ui* ($parameter *lstm1* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *bi* ($parameter *lstm1* (ones 1 *hidden-size*)))
 
-(defparameter *wo* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *uo* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *bo* ($variable (ones 1 *hidden-size*)))
+(defparameter *wf* ($parameter *lstm1* ($* 0.01 (rndn *vocab-size* *hidden-size*))))
+(defparameter *uf* ($parameter *lstm1* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *bf* ($parameter *lstm1* (ones 1 *hidden-size*)))
 
-(defparameter *wy* ($variable ($* 0.01 (rndn *hidden-size* *vocab-size*))))
-(defparameter *by* ($variable (ones 1 *vocab-size*)))
+(defparameter *wo* ($parameter *lstm1* ($* 0.01 (rndn *vocab-size* *hidden-size*))))
+(defparameter *uo* ($parameter *lstm1* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *bo* ($parameter *lstm1* (ones 1 *hidden-size*)))
+
+(defparameter *wy* ($parameter *lstm1* ($* 0.01 (rndn *hidden-size* *vocab-size*))))
+(defparameter *by* ($parameter *lstm1* (ones 1 *vocab-size*)))
 
 (defun sample (h o seed-idx n &optional (temperature 1))
   (let ((x (zeros 1 *vocab-size*))
@@ -149,9 +142,9 @@
           :for ot = ($sigmoid ($+ ($@ xt *wo*) ($@ po *uo*) *bo*))
           :for st = ($+ ($* at it) ($* ft ph))
           :for out = ($* ($tanh st) ot)
-          :for yt = ($/ ($+ ($@ out *wy*) *by*) ($constant temperature))
+          :for yt = ($+ ($@ out *wy*) *by*)
           :for ps = ($softmax yt)
-          :for nidx = (choose ($data ps))
+          :for nidx = (choose ($data ps) temperature)
           :do (progn
                 (setf ph st)
                 (setf po out)
@@ -159,6 +152,8 @@
                 ($zero! x)
                 (setf ($ x 0 nidx) 1)))
     (coerce (mapcar (lambda (i) ($ *idx-to-char* i)) (reverse indices)) 'string)))
+
+($cg! *lstm1*)
 
 (loop :for iter :from 1 :to 1
       :for n = 0
@@ -197,8 +192,7 @@
                                   (setf po out)
                                   (incf tloss ($data l))
                                   (push l losses)))
-                      ($adgd! (list *wa* *ua* *ba* *wi* *ui* *bi* *wf* *uf* *bf* *wo* *uo* *bo*
-                                    *wy* *by*))
+                      ($adgd! *lstm1*)
                       (when (zerop (rem n 100))
                         (prn "")
                         (prn "[ITER]" n (/ tloss (* 1.0 *sequence-length*)))
@@ -251,7 +245,7 @@
 (defparameter *uo2* ($variable ($* 0.01 (rndn *vocab-size* *vocab-size*))))
 (defparameter *bo2* ($variable (ones 1 *vocab-size*)))
 
-(defun sample (h1 o1 h2 o2 seed-idx n)
+(defun sample (h1 o1 h2 o2 seed-idx n &optional (temperature 1))
   (let ((x (zeros 1 *vocab-size*))
         (indices (list seed-idx))
         (hs1 ($constant h1))
@@ -274,12 +268,14 @@
           :for st2 = ($+ ($* at2 it2) ($* ft2 hs2))
           :for out2 = ($* ($tanh st2) ot2)
           :for ps = ($softmax out2)
-          :for nidx = (choose ($data ps))
+          :for nidx = (choose ($data ps) temperature)
           :do (progn
                 (setf hs1 st1)
                 (setf os1 out1)
                 (setf hs2 st2)
                 (setf os2 out2)
+                (unless (typep nidx 'number)
+                  (prn nidx))
                 (push nidx indices)
                 ($zero! x)
                 (setf ($ x 0 nidx) 1)))
