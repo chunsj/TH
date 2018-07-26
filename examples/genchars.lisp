@@ -8,8 +8,7 @@
 
 (in-package :genchars)
 
-;;(defparameter *data-lines* (read-lines-from "data/tinyshakespeare.txt"))
-(defparameter *data-lines* (read-lines-from "/Users/Sungjin/TXTDB/shakespeare.txt"))
+(defparameter *data-lines* (read-lines-from "data/tinyshakespeare.txt"))
 (defparameter *data* (format nil "~{~A~^~%~}" *data-lines*))
 (defparameter *chars* (remove-duplicates (coerce *data* 'list)))
 (defparameter *data-size* ($count *data*))
@@ -210,8 +209,8 @@
 ;; 2-layer lstm
 ;;
 
-(defparameter *hidden-size* 128)
-(defparameter *sequence-length* 50)
+(defparameter *hidden-size* 512)
+(defparameter *sequence-length* 128)
 
 (defparameter *wa1* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
 (defparameter *ua1* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
