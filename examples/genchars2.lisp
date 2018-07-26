@@ -31,45 +31,45 @@
          (probs ($div probs sprobs)))
     ($ ($reshape! ($multinomial probs 1) ($count probs)) 0)))
 
-(defparameter *hidden-size* 512)
+(defparameter *hidden-size* 128)
 (defparameter *sequence-length* 50)
 
 (defparameter *lstm2* (parameters))
 
-(defparameter *wa1* ($parameter *lstm2* ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *ua1* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *ba1* ($parameter *lstm2* (zeros 1 *hidden-size*)))
+(defparameter *wa1* ($parameter *lstm2* ($- ($* 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
+(defparameter *ua1* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
+(defparameter *ba1* ($parameter *lstm2* ($- ($* 0.16 (rnd 1 *hidden-size*)) 0.08)))
 
-(defparameter *wi1* ($parameter *lstm2* ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *ui1* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *bi1* ($parameter *lstm2* (zeros 1 *hidden-size*)))
+(defparameter *wi1* ($parameter *lstm2* ($- ($* 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
+(defparameter *ui1* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
+(defparameter *bi1* ($parameter *lstm2* ($- ($* 0.16 (rnd 1 *hidden-size*)) 0.08)))
 
-(defparameter *wf1* ($parameter *lstm2* ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *uf1* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *wf1* ($parameter *lstm2* ($- ($* 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
+(defparameter *uf1* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
 (defparameter *bf1* ($parameter *lstm2* (ones 1 *hidden-size*)))
 
-(defparameter *wo1* ($parameter *lstm2* ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *uo1* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *bo1* ($parameter *lstm2* (zeros 1 *hidden-size*)))
+(defparameter *wo1* ($parameter *lstm2* ($- ($* 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
+(defparameter *uo1* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
+(defparameter *bo1* ($parameter *lstm2* ($- ($* 0.16 (rnd 1 *hidden-size*)) 0.08)))
 
-(defparameter *wa2* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *ua2* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *ba2* ($parameter *lstm2* (zeros 1 *hidden-size*)))
+(defparameter *wa2* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
+(defparameter *ua2* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
+(defparameter *ba2* ($parameter *lstm2* ($- ($* 0.16 (rnd 1 *hidden-size*)) 0.08)))
 
-(defparameter *wi2* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *ui2* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *bi2* ($parameter *lstm2* (zeros 1 *hidden-size*)))
+(defparameter *wi2* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
+(defparameter *ui2* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
+(defparameter *bi2* ($parameter *lstm2* ($- ($* 0.16 (rnd 1 *hidden-size*)) 0.08)))
 
-(defparameter *wf2* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *uf2* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *wf2* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
+(defparameter *uf2* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
 (defparameter *bf2* ($parameter *lstm2* (ones 1 *hidden-size*)))
 
-(defparameter *wo2* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *uo2* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *bo2* ($parameter *lstm2* (zeros 1 *hidden-size*)))
+(defparameter *wo2* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
+(defparameter *uo2* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
+(defparameter *bo2* ($parameter *lstm2* ($- ($* 0.16 (rnd 1 *hidden-size*)) 0.08)))
 
-(defparameter *wy* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *vocab-size*))))
-(defparameter *by* ($parameter *lstm2* (zeros 1 *vocab-size*)))
+(defparameter *wy* ($parameter *lstm2* ($- ($* 0.16 (rndn *hidden-size* *vocab-size*)) 0.08)))
+(defparameter *by* ($parameter *lstm2* ($- ($* 0.16 (rnd 1 *vocab-size*)) 0.08)))
 
 (defun sample (h1 o1 h2 o2 seed-idx n &optional (temperature 1))
   (let ((x (zeros 1 *vocab-size*))
@@ -106,6 +106,7 @@
                 (push nidx indices)
                 ($zero! x)
                 (setf ($ x 0 nidx) 1)))
+    ($cg! *lstm2*)
     (coerce (mapcar (lambda (i) ($ *idx-to-char* i)) (reverse indices)) 'string)))
 
 (loop :for iter :from 1 :to 1
@@ -130,6 +131,7 @@
                           (os2 ($constant (zeros 1 *hidden-size*)))
                           (losses nil)
                           (tloss 0))
+                      ($cg! *lstm2*)
                       (loop :for i :from 0 :below ($size input 0)
                             :for xt = ($constant ($index input 0 i))
                             :for at1 = ($tanh ($+ ($@ xt *wa1*) ($@ os1 *ua1*) *ba1*))
