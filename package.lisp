@@ -290,6 +290,7 @@
            #:$inverse!
            #:$qr
            #:$qr!
+           #:$multinomial
            #:file.disk
            #:file.pipe
            #:file.memory
@@ -347,6 +348,7 @@
            #:$mse
            #:$relu
            #:$softmax
+           #:$logsoftmax
            #:$bnorm
            #:$dropout
            #:$conv2d

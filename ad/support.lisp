@@ -93,6 +93,23 @@
     ($pfn! x (lambda () (dsoftmax ($data x) ($data result) ($gradient result))))
     result))
 
+(defmethod $logsoftmax ((x tensor))
+  (let ((output ($empty x)))
+    (nn-log-softmax-update-output x output)
+    output))
+
+(defun dlogsoftmax (input output gradient)
+  (let ((dinput ($empty input)))
+    (nn-log-softmax-update-grad-input input gradient dinput output)
+    dinput))
+
+(defmethod $logsoftmax ((x node))
+  (let ((result (node ($logsoftmax ($data x)))))
+    (setf ($name result) "LOGSOFTMAX")
+    ($gp! result x)
+    ($pfn! x (lambda () (dlogsoftmax ($data x) ($data result) ($gradient result))))
+    result))
+
 (defun runstat (x mean var trainp momentum)
   (let* ((x (if (eq 1 ($ndim x))
                 (apply #'$reshape x (cons 1 ($size x)))

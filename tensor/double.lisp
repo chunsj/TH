@@ -467,7 +467,7 @@
   (stdv :double))
 ;; void THTensor_(multinomial)(THLongTensor *self, THGenerator *_generator, THTensor *prob_dist, int n_sample, int with_replacement);
 (cffi:defcfun ("THDoubleTensor_multinomial" th-double-tensor-multinomial) :void
-  (tensor th-double-tensor-ptr)
+  (tensor th-long-tensor-ptr)
   (generator th-generator-ptr)
   (prob-dist th-double-tensor-ptr)
   (n-sample :int)

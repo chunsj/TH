@@ -1974,3 +1974,21 @@
 (defmethod $qr! ((q tensor) (r tensor) (x tensor))
   (tensor-qr q r x)
   (list q r))
+
+(defmethod $multinomial ((probdist tensor.float) n)
+  (let ((result (tensor.long)))
+    (th-float-tensor-multinomial ($handle result)
+                                 ($handle *generator*)
+                                 ($handle probdist)
+                                 n
+                                 1)
+    result))
+
+(defmethod $multinomial ((probdist tensor.double) n)
+  (let ((result (tensor.long)))
+    (th-double-tensor-multinomial ($handle result)
+                                  ($handle *generator*)
+                                  ($handle probdist)
+                                  n
+                                  1)
+    result))

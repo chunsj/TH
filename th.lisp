@@ -509,6 +509,8 @@
 (defgeneric $qr (x) (:documentation "Returns qr decomposition (q, r) of a."))
 (defgeneric $qr! (q r x) (:documentation "Returns qr decomposition (q, r) of a."))
 
+(defgeneric $multinomial (probdist n) (:documentation "Returns multinomial samples."))
+
 (defgeneric $fopenedp (file) (:documentation "Check file is opened."))
 (defgeneric $fquietp (file) (:documentation "Check file is in quiet mode."))
 (defgeneric $fpedanticp (file) (:documentation "Check file is in pedantic mode."))
