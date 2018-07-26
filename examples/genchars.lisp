@@ -210,39 +210,44 @@
 ;;
 
 (defparameter *hidden-size* 512)
-(defparameter *sequence-length* 128)
+(defparameter *sequence-length* 50)
 
-(defparameter *wa1* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *ua1* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *ba1* ($variable (zeros 1 *hidden-size*)))
+(defparameter *lstm2* (parameters))
 
-(defparameter *wi1* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *ui1* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *bi1* ($variable (zeros 1 *hidden-size*)))
+(defparameter *wa1* ($parameter *lstm2* ($* 0.01 (rndn *vocab-size* *hidden-size*))))
+(defparameter *ua1* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *ba1* ($parameter *lstm2* (zeros 1 *hidden-size*)))
 
-(defparameter *wf1* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *uf1* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *bf1* ($variable (ones 1 *hidden-size*)))
+(defparameter *wi1* ($parameter *lstm2* ($* 0.01 (rndn *vocab-size* *hidden-size*))))
+(defparameter *ui1* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *bi1* ($parameter *lstm2* (zeros 1 *hidden-size*)))
 
-(defparameter *wo1* ($variable ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *uo1* ($variable ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *bo1* ($variable (zeros 1 *hidden-size*)))
+(defparameter *wf1* ($parameter *lstm2* ($* 0.01 (rndn *vocab-size* *hidden-size*))))
+(defparameter *uf1* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *bf1* ($parameter *lstm2* (ones 1 *hidden-size*)))
 
-(defparameter *wa2* ($variable ($* 0.01 (rndn *hidden-size* *vocab-size*))))
-(defparameter *ua2* ($variable ($* 0.01 (rndn *vocab-size* *vocab-size*))))
-(defparameter *ba2* ($variable (zeros 1 *vocab-size*)))
+(defparameter *wo1* ($parameter *lstm2* ($* 0.01 (rndn *vocab-size* *hidden-size*))))
+(defparameter *uo1* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *bo1* ($parameter *lstm2* (zeros 1 *hidden-size*)))
 
-(defparameter *wi2* ($variable ($* 0.01 (rndn *hidden-size* *vocab-size*))))
-(defparameter *ui2* ($variable ($* 0.01 (rndn *vocab-size* *vocab-size*))))
-(defparameter *bi2* ($variable (zeros 1 *vocab-size*)))
+(defparameter *wa2* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *ua2* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *ba2* ($parameter *lstm2* (zeros 1 *hidden-size*)))
 
-(defparameter *wf2* ($variable ($* 0.01 (rndn *hidden-size* *vocab-size*))))
-(defparameter *uf2* ($variable ($* 0.01 (rndn *vocab-size* *vocab-size*))))
-(defparameter *bf2* ($variable (ones 1 *vocab-size*)))
+(defparameter *wi2* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *ui2* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *bi2* ($parameter *lstm2* (zeros 1 *hidden-size*)))
 
-(defparameter *wo2* ($variable ($* 0.01 (rndn *hidden-size* *vocab-size*))))
-(defparameter *uo2* ($variable ($* 0.01 (rndn *vocab-size* *vocab-size*))))
-(defparameter *bo2* ($variable (zeros 1 *vocab-size*)))
+(defparameter *wf2* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *uf2* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *bf2* ($parameter *lstm2* (ones 1 *hidden-size*)))
+
+(defparameter *wo2* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *uo2* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *bo2* ($parameter *lstm2* (zeros 1 *hidden-size*)))
+
+(defparameter *wy* ($parameter *lstm2* ($* 0.01 (rndn *hidden-size* *vocab-size*))))
+(defparameter *by* ($parameter *lstm2* (zeros 1 *vocab-size*)))
 
 (defun sample (h1 o1 h2 o2 seed-idx n &optional (temperature 1))
   (let ((x (zeros 1 *vocab-size*))
@@ -266,7 +271,8 @@
           :for ot2 = ($sigmoid ($+ ($@ out1 *wo2*) ($@ os2 *uo2*) *bo2*))
           :for st2 = ($+ ($* at2 it2) ($* ft2 hs2))
           :for out2 = ($* ($tanh st2) ot2)
-          :for ps = ($softmax ($/ out2 ($constant temperature)))
+          :for yt = ($+ ($@ out2 *wy*) *by*)
+          :for ps = ($softmax ($/ yt ($constant temperature)))
           :for nidx = (choose ($data ps))
           :do (progn
                 (setf hs1 st1)
@@ -316,9 +322,10 @@
                             :for ot2 = ($sigmoid ($+ ($@ out1 *wo2*) ($@ os2 *uo2*) *bo2*))
                             :for st2 = ($+ ($* at2 it2) ($* ft2 hs2))
                             :for out2 = ($* ($tanh st2) ot2)
-                            :for yt = ($softmax out2)
+                            :for yt = ($+ ($@ out2 *wy*) *by*)
+                            :for ps = ($softmax yt)
                             :for y = ($constant ($index target 0 i))
-                            :for l = ($cee yt y)
+                            :for l = ($cee ps y)
                             :do (progn
                                   (setf hs1 st1)
                                   (setf os1 out1)
@@ -326,10 +333,7 @@
                                   (setf os2 out2)
                                   (incf tloss ($data l))
                                   (push l losses)))
-                      ($adgd! (list *wa1* *ua1* *ba1* *wi1* *ui1* *bi1* *wf1* *uf1* *bf1*
-                                    *wo1* *uo1* *bo1*
-                                    *wa2* *ua2* *ba2* *wi2* *ui2* *bi2* *wf2* *uf2* *bf2*
-                                    *wo2* *uo2* *bo2*))
+                      ($adgd! *lstm2*)
                       (when (zerop (rem n 10))
                         (prn "")
                         (prn "[ITER]" n (/ tloss (* 1.0 *sequence-length*)))
