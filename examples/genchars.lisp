@@ -192,7 +192,7 @@
                                   (incf tloss ($data l))
                                   (push l losses)))
                       ($adgd! *lstm1*)
-                      (when (zerop (rem n 100))
+                      (when (zerop (rem n 50))
                         (prn "")
                         (prn "[ITER]" n (/ tloss (* 1.0 *sequence-length*)))
                         (prn (sample ($data ph) ($data pc)
