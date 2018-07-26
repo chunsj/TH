@@ -103,8 +103,8 @@
 ;; 1-layer lstm
 ;;
 
-(defparameter *hidden-size* 256)
-(defparameter *sequence-length* 64)
+(defparameter *hidden-size* 200)
+(defparameter *sequence-length* 50)
 
 (defparameter *lstm1* (parameters))
 
