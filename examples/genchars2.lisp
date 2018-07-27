@@ -34,42 +34,66 @@
 (defparameter *hidden-size* 128)
 (defparameter *sequence-length* 50)
 
+(defparameter *batch-size* 50)
+
+(defparameter *input* (let* ((sz *data-size*)
+                             (nbatch *batch-size*)
+                             (nseq *sequence-length*)
+                             (nlen (* nbatch nseq (floor (/ sz (* nbatch nseq)))))
+                             (data (tensor.byte nlen)))
+                        (prn "NLEN:" nlen)
+                        (loop :for i :from 0 :below nlen
+                              :do (setf ($ data i) ($ *char-to-idx* ($ *data* i))))
+                        data))
+(defparameter *target* (let ((ydata ($clone *input*)))
+                         (setf ($subview ydata 0 (1- ($size ydata 0)))
+                               ($subview *input* 1 (1- ($size *input* 0))))
+                         (setf ($ ydata (1- ($size *input* 0))) ($ *input* 0))
+                         ydata))
+(defparameter *input-batches* ($split ($view *input* *batch-size*
+                                             (/ ($size *input* 0) *batch-size*))
+                                      *sequence-length* 1))
+(defparameter *target-batches* ($split ($view *target* *batch-size*
+                                              (/ ($size *target* 0) *batch-size*))
+                                       *sequence-length* 1))
+(defparameter *nbatches* ($count *input-batches*))
+
 (defparameter *lstm2* (parameters))
 
 (defparameter *wa1* ($parameter *lstm2* ($- ($* 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
 (defparameter *ua1* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *ba1* ($parameter *lstm2* ($- ($* 0.16 (rnd 1 *hidden-size*)) 0.08)))
+(defparameter *ba1* ($parameter *lstm2* ($- ($* 0.16 (rnd *batch-size* *hidden-size*)) 0.08)))
 
 (defparameter *wi1* ($parameter *lstm2* ($- ($* 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
 (defparameter *ui1* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *bi1* ($parameter *lstm2* ($- ($* 0.16 (rnd 1 *hidden-size*)) 0.08)))
+(defparameter *bi1* ($parameter *lstm2* ($- ($* 0.16 (rnd *batch-size* *hidden-size*)) 0.08)))
 
 (defparameter *wf1* ($parameter *lstm2* ($- ($* 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
 (defparameter *uf1* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *bf1* ($parameter *lstm2* (ones 1 *hidden-size*)))
+(defparameter *bf1* ($parameter *lstm2* (ones *batch-size* *hidden-size*)))
 
 (defparameter *wo1* ($parameter *lstm2* ($- ($* 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
 (defparameter *uo1* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *bo1* ($parameter *lstm2* ($- ($* 0.16 (rnd 1 *hidden-size*)) 0.08)))
+(defparameter *bo1* ($parameter *lstm2* ($- ($* 0.16 (rnd *batch-size* *hidden-size*)) 0.08)))
 
 (defparameter *wa2* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
 (defparameter *ua2* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *ba2* ($parameter *lstm2* ($- ($* 0.16 (rnd 1 *hidden-size*)) 0.08)))
+(defparameter *ba2* ($parameter *lstm2* ($- ($* 0.16 (rnd *batch-size* *hidden-size*)) 0.08)))
 
 (defparameter *wi2* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
 (defparameter *ui2* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *bi2* ($parameter *lstm2* ($- ($* 0.16 (rnd 1 *hidden-size*)) 0.08)))
+(defparameter *bi2* ($parameter *lstm2* ($- ($* 0.16 (rnd *batch-size* *hidden-size*)) 0.08)))
 
 (defparameter *wf2* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
 (defparameter *uf2* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *bf2* ($parameter *lstm2* (ones 1 *hidden-size*)))
+(defparameter *bf2* ($parameter *lstm2* (ones *batch-size* *hidden-size*)))
 
 (defparameter *wo2* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
 (defparameter *uo2* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *bo2* ($parameter *lstm2* ($- ($* 0.16 (rnd 1 *hidden-size*)) 0.08)))
+(defparameter *bo2* ($parameter *lstm2* ($- ($* 0.16 (rnd *batch-size* *hidden-size*)) 0.08)))
 
-(defparameter *wy* ($parameter *lstm2* ($- ($* 0.16 (rndn *hidden-size* *vocab-size*)) 0.08)))
-(defparameter *by* ($parameter *lstm2* ($- ($* 0.16 (rnd 1 *vocab-size*)) 0.08)))
+(defparameter *wy* ($parameter *lstm2* ($- ($* 0.16 (rnd *hidden-size* *vocab-size*)) 0.08)))
+(defparameter *by* ($parameter *lstm2* ($- ($* 0.16 (rnd *batch-size* *vocab-size*)) 0.08)))
 
 (defun sample (h1 o1 h2 o2 seed-idx n &optional (temperature 1))
   (let ((x (zeros 1 *vocab-size*))
@@ -108,6 +132,14 @@
                 (setf ($ x 0 nidx) 1)))
     ($cg! *lstm2*)
     (coerce (mapcar (lambda (i) ($ *idx-to-char* i)) (reverse indices)) 'string)))
+
+(let* ((nbatch 50)
+       (nseq *sequence-length*)
+       (nlen (* nbatch nseq (floor (/ *data-size* (* nbatch nseq)))))
+       (data (tensor.byte nlen)))
+  (loop :for i :from 0 :below nlen
+        :do (setf ($ data i) ($ *char-to-idx* ($ *data* i))))
+  (prn "NLEN:" nlen))
 
 (loop :for iter :from 1 :to 1
       :for n = 0
