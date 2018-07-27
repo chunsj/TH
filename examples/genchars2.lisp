@@ -154,7 +154,7 @@
 
 ($cg! *lstm2*)
 
-(loop :for epoch :from 0 :below 50
+(loop :for iter :from 1 :to 5
       :do (progn
             (loop :for bidx :from 0
                   :for input :in *input-batches*
@@ -196,7 +196,7 @@
                         ($adgd! *lstm2*)
                         (when (zerop (rem bidx 50))
                           (prn "")
-                          (prn "[ITER/EPOCH]" bidx "/" epoch (* loss (/ 1.0 *sequence-length*)))
+                          (prn "[BTCH/ITER]" bidx "/" iter (* loss (/ 1.0 *sequence-length*)))
                           (prn (sample ($index ($data ph1) 0 0) ($index ($data pc1) 0 0)
                                        ($index ($data ph2) 0 0) ($index ($data pc2) 0 0)
                                        (random *vocab-size*) 72))
