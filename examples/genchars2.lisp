@@ -36,6 +36,13 @@
 
 (defparameter *batch-size* 100)
 
+(defparameter *max-epochs* 50)
+
+(defparameter *learning-rate* 2E-3)
+(defparameter *learning-rate-decay* 0.97)
+(defparameter *learning-rate-decay-after* 10)
+(defparameter *decay-rate* 0.95)
+
 (defparameter *input* (let* ((sz *data-size*)
                              (nbatch *batch-size*)
                              (nseq *sequence-length*)
@@ -154,7 +161,7 @@
 
 ($cg! *lstm2*)
 
-(loop :for iter :from 1 :to 5
+(loop :for epoch :from 1 :to (min 1 *max-epochs*)
       :do (progn
             (loop :for bidx :from 0
                   :for input :in *input-batches*
@@ -193,10 +200,14 @@
                                     (setf ph2 ht2)
                                     (setf pc2 ht2)
                                     (incf loss ($data l))))
-                        ($adgd! *lstm2*)
+                        ($rmgd! *lstm2* *learning-rate* *decay-rate*)
+                        (when (and (= bidx 0) (>= epoch *learning-rate-decay-after*))
+                          (setf *learning-rate* (* *learning-rate* *learning-rate-decay*))
+                          (prn "DECAYED LR:" *learning-rate*))
+                        ;;($adgd! *lstm2*)
                         (when (zerop (rem bidx 50))
                           (prn "")
-                          (prn "[BTCH/ITER]" bidx "/" iter (* loss (/ 1.0 *sequence-length*)))
+                          (prn "[BTCH/ITER]" bidx "/" epoch (* loss (/ 1.0 *sequence-length*)))
                           (prn (sample ($index ($data ph1) 0 0) ($index ($data pc1) 0 0)
                                        ($index ($data ph2) 0 0) ($index ($data pc2) 0 0)
                                        (random *vocab-size*) 72))
@@ -208,3 +219,6 @@
 (prn (sample (zeros 1 *hidden-size*) (zeros 1 *hidden-size*)
              (zeros 1 *hidden-size*) (zeros 1 *hidden-size*)
              (random *vocab-size*) 100 0.2))
+
+;; XXX need to adapt this for comparison
+(th::nn-class-nll-criterion-update-output )
