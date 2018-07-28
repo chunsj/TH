@@ -220,5 +220,6 @@
              (zeros 1 *hidden-size*) (zeros 1 *hidden-size*)
              (random *vocab-size*) 100 0.2))
 
-;; XXX need to adapt this for comparison
-(th::nn-class-nll-criterion-update-output )
+;; XXX apply $cnll and $logsoftmax
+;; XXX modify sample so that it can generate as in the original version
+;; XXX test adgd! as well after testing/comparing
