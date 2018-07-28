@@ -3,6 +3,8 @@
 ## Why?
   There should be a tensor/neural network library in common lisp which is easy to use(byte me!).
   I'd like to learn deep learning and I think building one from scratch will be the best way.
+  I hope this library can be applied to the problems of differentiable programming. You can see
+  what this library can do from examples. They are mostly neural network applications.
 
 ## How to Load
   1. Build libATen from pytorch source code or try with prebuilt binary files under libs.
