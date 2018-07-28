@@ -346,6 +346,8 @@
            #:$bce
            #:$cee
            #:$mse
+           #:$cnll
+           #:$cec
            #:$relu
            #:$softmax
            #:$logsoftmax

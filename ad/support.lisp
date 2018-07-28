@@ -10,6 +10,8 @@
 (defgeneric $bce (a b))
 (defgeneric $mse (a b))
 (defgeneric $cee (a b))
+(defgeneric $cnll (a b))
+(defgeneric $cec (a b))
 
 (defmethod $bce ((a tensor) (b tensor))
   (let ((output ($empty a)))
@@ -172,3 +174,28 @@
       (let ((mask ($gt (apply #'rnd ($size x)) p)))
         ($mul ($constant (tensor mask)) x))
       ($mul x ($broadcast ($constant (- 1 p)) x))))
+
+;; b should be 1-d
+(defmethod $cnll ((a tensor) (b tensor))
+  (let ((result (zeros 1))
+        (tw (ones 1)))
+    (nn-class-nll-criterion-update-output a (tensor.long ($reshape b ($count b)))
+                                          result t nil tw -100)
+    ($ result 0)))
+
+(defun dcnll (input target gradient)
+  (let ((dinput ($empty input)))
+    (nn-class-nll-criterion-update-grad-input input (tensor.long ($reshape target ($count target)))
+                                              gradient dinput t nil
+                                              (ones 1) -100)
+    dinput))
+
+(defmethod $cnll ((a node) (b node))
+  (let ((result (node ($cnll ($data a) ($data b)))))
+    (setf ($name result) "CNLL")
+    ($gp! result a)
+    ($pfn! a (lambda () (dcnll ($data a) ($data b) ($gradient result))))
+    result))
+
+(defmethod $cec ((a tensor) (b tensor)) ($cnll ($logsoftmax a) b))
+(defmethod $cec ((a node) (b node)) ($cnll ($logsoftmax a) b))
