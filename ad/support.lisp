@@ -186,7 +186,7 @@
 (defun dcnll (input target gradient)
   (let ((dinput ($empty input)))
     (nn-class-nll-criterion-update-grad-input input (tensor.long ($reshape target ($count target)))
-                                              gradient dinput t nil
+                                              (tensor (list gradient)) dinput t nil
                                               (ones 1) -100)
     dinput))
 

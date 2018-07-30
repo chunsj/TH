@@ -34,7 +34,7 @@
 (defparameter *hidden-size* 128)
 (defparameter *sequence-length* 50)
 
-(defparameter *batch-size* 100)
+(defparameter *batch-size* 50)
 
 (defparameter *max-epochs* 50)
 
@@ -161,7 +161,7 @@
 
 ($cg! *lstm2*)
 
-(loop :for epoch :from 1 :to (min 1 *max-epochs*)
+(loop :for epoch :from 1 :to *max-epochs*
       :do (progn
             (loop :for bidx :from 0
                   :for input :in *input-batches*
@@ -171,9 +171,9 @@
                             (ph2 ($constant (zeros ($size input 0) *hidden-size*)))
                             (pc2 ($constant (zeros ($size input 0) *hidden-size*)))
                             (loss 0))
-                        (loop :for time :from 0 :below (min 1 ($size input 1))
-                              :for xt = (let ((m (zeros ($size input 0) *vocab-size*)))
-                                          (loop :for i :from 0 :below ($size input 0)
+                        (loop :for time :from 0 :below ($size input 1)
+                              :for xt = (let ((m (zeros *batch-size* *vocab-size*)))
+                                          (loop :for i :from 0 :below *batch-size*
                                                 :do (setf ($ m i ($ input i time)) 1))
                                           ($constant m))
                               :for it1 = (sigmoid-gate xt ph1 *wi1* *ui1* *bi1*)
@@ -188,12 +188,10 @@
                               :for at2 = (tanh-gate ht1 ph2 *wa2* *ua2* *ba2*)
                               :for ct2 = ($+ ($* at2 it2) ($* ft2 pc2))
                               :for ht2 = ($* ($tanh ct2) ot2)
-                              :for yt = ($softmax (affine ht2 *wy* *by*))
-                              :for y = (let ((m (zeros ($size target 0) *vocab-size*)))
-                                         (loop :for i :from 0 :below ($size target 0)
-                                               :do (setf ($ m i ($ target i time)) 1))
-                                         ($constant m))
-                              :for l = ($cee yt y)
+                              :for yt = ($logsoftmax (affine ht2 *wy* *by*))
+                              :for y = (let ((m ($index target 1 time)))
+                                         ($constant ($reshape m *batch-size*)))
+                              :for l = ($cnll yt y)
                               :do (progn
                                     (setf ph1 ht1)
                                     (setf pc1 ct1)
@@ -205,21 +203,21 @@
                           (setf *learning-rate* (* *learning-rate* *learning-rate-decay*))
                           (prn "DECAYED LR:" *learning-rate*))
                         ;;($adgd! *lstm2*)
-                        (when (zerop (rem bidx 50))
+                        (when (zerop (rem bidx 20))
                           (prn "")
                           (prn "[BTCH/ITER]" bidx "/" epoch (* loss (/ 1.0 *sequence-length*)))
                           (prn (sample ($index ($data ph1) 0 0) ($index ($data pc1) 0 0)
                                        ($index ($data ph2) 0 0) ($index ($data pc2) 0 0)
                                        (random *vocab-size*) 72))
-                          (prn ""))))
-            (gcf)))
+                          (prn "")
+                          (gcf))))))
 
 (gcf)
 
 (prn (sample (zeros 1 *hidden-size*) (zeros 1 *hidden-size*)
              (zeros 1 *hidden-size*) (zeros 1 *hidden-size*)
-             (random *vocab-size*) 100 0.2))
+             (random *vocab-size*) 800 1))
 
-;; XXX apply $cnll and $logsoftmax
+;; XXX check time for single batch, optimize performance/gc timing
 ;; XXX modify sample so that it can generate as in the original version
 ;; XXX test adgd! as well after testing/comparing
