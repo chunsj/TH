@@ -21,6 +21,7 @@
   4. MNIST convolutional neural network: examples/mnist.lisp
   5. IMDB sentiment analysis: examples/sentiment.lisp (cl-ppcre is required)
   6. Binary number addition using vanilla RNN: examples/binadd.lisp
+  7. Karpathy's character generation using RNN/LSTM: examples/genchars.lisp, genchars{1,2}.lisp
 
 ## Book Follow Ups
   1. Deep Learning from Scratch: dlfs
