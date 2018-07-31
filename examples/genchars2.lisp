@@ -208,7 +208,3 @@
 (prn (sample (zeros 1 *hidden-size*) (zeros 1 *hidden-size*)
              (zeros 1 *hidden-size*) (zeros 1 *hidden-size*)
              (random *vocab-size*) 800 1))
-
-;; XXX check time for single batch, optimize performance/gc timing
-;; XXX modify sample so that it can generate as in the original version
-;; XXX test adgd! as well after testing/comparing

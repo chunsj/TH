@@ -97,4 +97,4 @@
                         (gcf))
                       (incf n))))
 
-(prn (sample (zeros 1 *hidden-size*) (random *vocab-size*) 200 0.5))
+(prn (sample (zeros 1 *hidden-size*) (random *vocab-size*) 800 0.5))
