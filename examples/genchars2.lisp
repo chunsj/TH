@@ -34,14 +34,9 @@
 (defparameter *hidden-size* 128)
 (defparameter *sequence-length* 50)
 
-(defparameter *batch-size* 50)
+(defparameter *batch-size* 100)
 
 (defparameter *max-epochs* 50)
-
-(defparameter *learning-rate* 2E-3)
-(defparameter *learning-rate-decay* 0.97)
-(defparameter *learning-rate-decay-after* 10)
-(defparameter *decay-rate* 0.95)
 
 (defparameter *input* (let* ((sz *data-size*)
                              (nbatch *batch-size*)
@@ -198,19 +193,15 @@
                                     (setf ph2 ht2)
                                     (setf pc2 ht2)
                                     (incf loss ($data l))))
-                        ($rmgd! *lstm2* *learning-rate* *decay-rate*)
-                        (when (and (= bidx 0) (>= epoch *learning-rate-decay-after*))
-                          (setf *learning-rate* (* *learning-rate* *learning-rate-decay*))
-                          (prn "DECAYED LR:" *learning-rate*))
-                        ;;($adgd! *lstm2*)
-                        (when (zerop (rem bidx 20))
+                        ($adgd! *lstm2*)
+                        (when (and (> bidx 0) (zerop (rem bidx 5))) (gcf))
+                        (when (zerop (rem bidx 10))
                           (prn "")
                           (prn "[BTCH/ITER]" bidx "/" epoch (* loss (/ 1.0 *sequence-length*)))
                           (prn (sample ($index ($data ph1) 0 0) ($index ($data pc1) 0 0)
                                        ($index ($data ph2) 0 0) ($index ($data pc2) 0 0)
                                        (random *vocab-size*) 72))
-                          (prn "")
-                          (gcf))))))
+                          (prn ""))))))
 
 (gcf)
 
