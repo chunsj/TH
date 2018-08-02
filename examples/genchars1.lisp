@@ -10,7 +10,6 @@
 ;;
 
 (defparameter *data-lines* (read-lines-from "data/tinyshakespeare.txt"))
-;;(defparameter *data-lines* (read-lines-from "/Users/Sungjin/TXTDB/shakespeare.txt"))
 (defparameter *data* (format nil "~{~A~^~%~}" *data-lines*))
 (defparameter *chars* (remove-duplicates (coerce *data* 'list)))
 (defparameter *data-size* ($count *data*))
