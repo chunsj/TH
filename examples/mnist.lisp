@@ -6,7 +6,7 @@
 
 (in-package :mnist-example)
 
-;; load mnist data
+;; load mnist data, takes ~22 secs in macbook 2017
 (defparameter *mnist* (read-mnist-data))
 
 ;; mnist data has following dataset
