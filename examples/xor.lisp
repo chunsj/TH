@@ -43,6 +43,21 @@
               ($gd! w2 lr)))
   (prn ($sigmoid ($mm ($sigmoid ($mm X w1)) w2))))
 
+(let* ((w1 ($variable ($xaviern! (tensor 3 3))))
+       (w2 ($variable ($xaviern! (tensor 3 1))))
+       (X ($constant '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
+       (Y ($constant '(0 1 1 0)))
+       (lr 1))
+  (loop :for i :from 0 :below 1000
+        :do (let* ((l1 ($sigmoid ($mm X w1)))
+                   (l2 ($sigmoid ($mm l1 w2)))
+                   (d ($sub l2 Y))
+                   (out ($dot d d)))
+              ($gs! out 1)
+              ($gd! w1 lr)
+              ($gd! w2 lr)))
+  (prn ($sigmoid ($mm ($sigmoid ($mm X w1)) w2))))
+
 (let* ((w1 ($variable (rndn 3 3)))
        (w2 ($variable (rndn 3 1)))
        (X ($constant '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
