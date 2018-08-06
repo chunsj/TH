@@ -37,7 +37,7 @@
   1. Most of the code in this folder is just for testing, teasing, or random trashing.
   2. They may not work at all.
 
-## On API
+## On API - Neural Network related
   1. Variable creation: $variable
   2. Value/Constant creation: $constant
   3. State (recurrent) creation/accessing: $state, $prev
