@@ -357,4 +357,13 @@
            #:$maxpool2d
            #:$avgpool2d
            #:$xwpb
-           #:$wimb))
+           #:$wimb
+           #:$rn!
+           #:$ru!
+           #:$rnt!
+           #:$xavieru!
+           #:$xaviern!
+           #:$heu!
+           #:$hen!
+           #:$lecunu!
+           #:$lecunn!))
