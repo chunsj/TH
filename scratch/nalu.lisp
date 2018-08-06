@@ -11,6 +11,10 @@
 
 (in-package :nalu-work)
 
+;; XXX
+;; for this kind of problem, we may need more accurate tensor data than float
+;; sometimes, the computation emits overflow error.
+
 (defparameter *batch-size* 10)
 (defparameter *shape* (list 2 1))
 
@@ -24,8 +28,8 @@
       :do (let ((args (tensor *batch-size* 2))
                 (vals (tensor *batch-size* 1)))
             (loop :for i :from 0 :below 10
-                  :for n1 = (random 10)
-                  :for n2 = (random 10)
+                  :for n1 = (random 7)
+                  :for n2 = (random 7)
                   :for r = (funcall *operation* n1 n2)
                   :do (progn
                         (setf ($ args i 0) n1)
@@ -89,8 +93,8 @@
       :do (let ((args (tensor *batch-size* 2))
                 (vals (tensor *batch-size* 1)))
             (loop :for i :from 0 :below 10
-                  :for n1 = (random 10)
-                  :for n2 = (random 10)
+                  :for n1 = (random 12)
+                  :for n2 = (random 12)
                   :for r = (funcall *operation* n1 n2)
                   :do (progn
                         (setf ($ args i 0) n1)
