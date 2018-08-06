@@ -366,4 +366,10 @@
            #:$heu!
            #:$hen!
            #:$lecunu!
-           #:$lecunn!))
+           #:$lecunn!
+           #:vrn
+           #:vru
+           #:vrnt
+           #:vxavier
+           #:vhe
+           #:vlecun))
