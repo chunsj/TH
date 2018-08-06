@@ -45,3 +45,5 @@
   5. Functions: $sigmoid, $tanh, $softmax
   6. Backpropagation: $bp!, $bptt!
   7. Gradient descent or parameter update: $gd!, $mgd!, $agd!, $amgd!, $rmgd!, $adgd!
+  8. Weight initialization: $rn!, $ru!, $rnt!, $xavieru!, $xaviern!, $heu!, $hen!, $lecunu!, ...
+  9. Weight creation utilities: vrn, vru, vrnt, vxavier, vhe, vlecun
