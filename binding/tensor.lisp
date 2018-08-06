@@ -479,7 +479,7 @@
   tensor)
 
 (defmethod $set! ((tensor tensor) (source storage) &optional offset size stride)
-  (tensorn-set-storage tensor source offset size stride)
+  (tensor-set-storage tensor source offset size stride)
   tensor)
 
 (defmethod $setp ((tensor tensor) (source tensor))

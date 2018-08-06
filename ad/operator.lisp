@@ -153,8 +153,8 @@
     result))
 
 (defmethod $mean ((x node) &optional (dimension -1))
-  (let ((result (node ($sum ($data x) dimension))))
-    (setf ($name result) "SUM")
+  (let ((result (node ($mean ($data x) dimension))))
+    (setf ($name result) "MEAN")
     ($gp! result x)
     ($pfn! x (lambda ()
                (if (< dimension 0)
