@@ -22,6 +22,8 @@
   5. IMDB sentiment analysis: examples/sentiment.lisp (cl-ppcre is required)
   6. Binary number addition using vanilla RNN: examples/binadd.lisp
   7. Karpathy's character generation using RNN/LSTM: examples/genchars.lisp, genchars{1,2}.lisp
+  8. Sparse autoencoder: examples/autoenc.lisp
+  9. Neural Arithmetic Logic Unit or NALU: examples/nalu.lisp
 
 ## Selected Book Follow Ups
   1. Deep Learning from Scratch: dlfs
