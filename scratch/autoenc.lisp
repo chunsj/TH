@@ -67,7 +67,8 @@
 
 ($cg! *ae*)
 
-(loop :for epoch :from 1 :to (min 5 *epochs*)
+;; train with sparsity penalty
+(loop :for epoch :from 1 :to *epochs*
       :do (progn
             (loop :for input :in *mnist-train-image-batches*
                   :for bidx :from 1
@@ -84,5 +85,23 @@
                         ($adgd! *ae*)
                         (when (zerop (rem bidx 10))
                           (prn "LOSS:" bidx "/" epoch ($data loss) ($data mse) ($data esparsity)))))
+            (prn "[TEST]" epoch (validate))
+            (gcf)))
+
+;; train without sparsity consideration
+(loop :for epoch :from 1 :to *epochs*
+      :do (progn
+            (loop :for input :in *mnist-train-image-batches*
+                  :for bidx :from 1
+                  :for x = ($constant input)
+                  :for encoded = ($sigmoid ($+ ($@ x *wenc*) ($@ ($constant *os*) *benc*)))
+                  :for decoded = ($sigmoid ($+ ($@ encoded *wdec*) ($@ ($constant *os*) *bdec*)))
+                  :for d = ($- decoded x)
+                  :for mse = ($/ ($dot d d) ($constant *num-batch*))
+                  :for loss = mse
+                  :do (progn
+                        ($adgd! *ae*)
+                        (when (zerop (rem bidx 10))
+                          (prn "LOSS:" bidx "/" epoch ($data loss)))))
             (prn "[TEST]" epoch (validate))
             (gcf)))
