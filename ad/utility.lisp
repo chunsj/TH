@@ -24,7 +24,7 @@
 
 (defgeneric $rn! (tensor &optional µ σ) (:documentation "Fills with random normal."))
 (defgeneric $rnt! (tensor &optional µ σ) (:documentation "Fills with truncated random normal."))
-(defgeneric $ru! (tensor &optional mean max) (:documentation "Fills with random uniform."))
+(defgeneric $ru! (tensor &optional min max) (:documentation "Fills with random uniform."))
 (defgeneric $xavieru! (tensor) (:documentation "Fills with Xavier uniform."))
 (defgeneric $xaviern! (tensor) (:documentation "Fills with Xavier normal."))
 (defgeneric $heu! (tensor) (:documentation "Fills with He uniform."))
