@@ -17,6 +17,8 @@
 (print *mnist*)
 
 ;; training data - uses batches for performance
+(defparameter *batch-size* 1000)
+
 (defparameter *mnist-train-image-batches*
   (loop :for i :from 0 :below 60
         :for rng = (loop :for k :from (* i 1000) :below (* (1+ i) 1000)
@@ -28,8 +30,6 @@
         :for rng = (loop :for k :from (* i 1000) :below (* (1+ i) 1000)
                          :collect k)
         :collect ($contiguous! ($index ($ *mnist* :train-labels) 0 rng))))
-
-(defparameter *batch-size* 1000)
 
 (defparameter *discriminator* (parameters))
 (defparameter *generator* (parameters))
@@ -63,13 +63,16 @@
 ($cg! *discriminator*)
 ($cg! *generator*)
 
-(defparameter *k* 5)
+(defparameter *k* 1)
 (defparameter *epoch* 10)
 
 (loop :for epoch :from 1 :to *epoch*
       :do (progn
             (loop :for k :from 1 :to *k*
+                  :for iter = 0
                   :for tloss = 0
+                  :for mdreal = 0
+                  :for mdfake = 0
                   :do (progn
                         (loop :for input :in *mnist-train-image-batches*
                               :for x = ($constant input)
@@ -80,13 +83,21 @@
                               :for d-loss = ($neg ($mean ($+ ($log d-real)
                                                              ($log ($- ($constant 1) d-fake)))))
                               :do (progn
+                                    (incf iter)
                                     (incf tloss ($data d-loss))
+                                    (incf mdreal ($mean ($data d-real)))
+                                    (incf mdfake ($mean ($data d-fake)))
                                     ($adgd! *discriminator*)
                                     ($cg! *generator*)))
-                        (when (eq k *k*) (prn "DL:" (/ tloss *k*)))
+                        (when (eq k *k*)
+                          (prn "[DL]" epoch (/ tloss iter))
+                          (prn "  PR:" (/ mdreal iter))
+                          (prn "  PF:" (/ mdfake iter)))
                         (gcf)))
             (loop :for k :from 1 :to *k*
+                  :for iter = 0
                   :for tloss = 0
+                  n                  :for mdfake = 0
                   :do (progn
                         (loop :for i :from 0 :below ($count *mnist-train-image-batches*)
                               :for z = (samplez)
@@ -94,8 +105,34 @@
                               :for g-fake = (discriminate g)
                               :for g-loss = ($neg ($mean ($log g-fake)))
                               :do (progn
+                                    (incf iter)
                                     (incf tloss ($data g-loss))
+                                    (incf mdfake ($mean ($data g-fake)))
                                     ($adgd! *generator*)
                                     ($cg! *discriminator*)))
-                        (when (eq k *k*) (prn "GL:" (/ tloss *k*)))
+                        (when (eq k *k*)
+                          (prn "[GL]" epoch (/ tloss iter))
+                          (prn "  PG:" (/ mdfake iter)))
                         (gcf)))))
+
+(-> (samplez)
+    (generate)
+    (discriminate)
+    ($mean)
+    (prn))
+
+(-> ($ *mnist-train-image-batches* (random ($count *mnist-train-image-batches*)))
+    ($constant)
+    (discriminate)
+    ($mean)
+    (prn))
+
+(-> (samplez)
+    (generate)
+    ($data)
+    ($sum)
+    (prn))
+
+(-> ($ *mnist-train-image-batches* (random ($count *mnist-train-image-batches*)))
+    ($sum)
+    (prn))
