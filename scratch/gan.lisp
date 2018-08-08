@@ -77,6 +77,7 @@
 (defparameter *k* 1)
 (defparameter *epoch* 50)
 
+;; XXX alternating style training is required
 (loop :for epoch :from 1 :to *epoch*
       :do (progn
             (loop :for k :from 1 :to *k*
@@ -167,7 +168,7 @@
 (defparameter *samples* (-> (samplez)
                             (generate)
                             ($data)))
-(defparameter *data* (car *mnist-train-image-batches*))
+(defparameter *data* ($ *mnist-train-image-batches* (random 60)))
 
 (let ((datag ($reshape ($index *samples* 0 (random 1000)) 28 28))
       (datad ($reshape ($index *data* 0 (random 1000)) 28 28)))
