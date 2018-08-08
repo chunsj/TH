@@ -1,6 +1,8 @@
 ;; from
 ;; https://wiseodd.github.io/techblog/2016/09/17/gan-tensorflow/
 
+(ql:quickload :opticl)
+
 (defpackage :gan-work
   (:use #:common-lisp
         #:mu
@@ -60,11 +62,20 @@
 
 (defun samplez () ($constant ($ru! (tensor *batch-size* 100) -1 1)))
 
+(defun outpng (data fname)
+  (let ((img (opticl:make-8-bit-gray-image 28 28))
+        (d ($reshape data 28 28)))
+    (loop :for i :from 0 :below 28
+          :do (loop :for j :from 0 :below 28
+                    :do (progn
+                          (setf (aref img i j) (round (* 255 ($ d i j)))))))
+    (opticl:write-png-file fname img)))
+
 ($cg! *discriminator*)
 ($cg! *generator*)
 
 (defparameter *k* 1)
-(defparameter *epoch* 10)
+(defparameter *epoch* 50)
 
 (loop :for epoch :from 1 :to *epoch*
       :do (progn
@@ -75,6 +86,7 @@
                   :for mdfake = 0
                   :do (progn
                         (loop :for input :in *mnist-train-image-batches*
+                              :for bidx :from 0
                               :for x = ($constant input)
                               :for z = (samplez)
                               :for g = (generate z)
@@ -88,7 +100,11 @@
                                     (incf mdreal ($mean ($data d-real)))
                                     (incf mdfake ($mean ($data d-fake)))
                                     ($adgd! *discriminator*)
-                                    ($cg! *generator*)))
+                                    ($cg! *generator*)
+                                    (let ((fname (format nil
+                                                         "/Users/Sungjin/Desktop/img~A.png"
+                                                         bidx)))
+                                      (outpng ($index ($data g) 0 (random *batch-size*)) fname))))
                         (when (eq k *k*)
                           (prn "[DL]" epoch (/ tloss iter))
                           (prn "  PR:" (/ mdreal iter))
@@ -97,7 +113,7 @@
             (loop :for k :from 1 :to *k*
                   :for iter = 0
                   :for tloss = 0
-                  n                  :for mdfake = 0
+                  :for mdfake = 0
                   :do (progn
                         (loop :for i :from 0 :below ($count *mnist-train-image-batches*)
                               :for z = (samplez)
@@ -136,3 +152,26 @@
 (-> ($ *mnist-train-image-batches* (random ($count *mnist-train-image-batches*)))
     ($sum)
     (prn))
+
+(ql:quickload :opticl)
+
+(defun outpng (data fname)
+  (let ((img (opticl:make-8-bit-gray-image 28 28))
+        (d ($reshape data 28 28)))
+    (loop :for i :from 0 :below 28
+          :do (loop :for j :from 0 :below 28
+                    :do (progn
+                          (setf (aref img i j) (round (* 255 ($ d i j)))))))
+    (opticl:write-png-file fname img)))
+
+(defparameter *samples* (-> (samplez)
+                            (generate)
+                            ($data)))
+(defparameter *data* (car *mnist-train-image-batches*))
+
+(let ((datag ($reshape ($index *samples* 0 (random 1000)) 28 28))
+      (datad ($reshape ($index *data* 0 (random 1000)) 28 28)))
+  (prn datag)
+  (prn datad)
+  (outpng datag "/Users/Sungjin/Desktop/testg.png")
+  (outpng datad "/Users/Sungjin/Desktop/testd.png"))
