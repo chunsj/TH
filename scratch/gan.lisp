@@ -72,13 +72,6 @@
                           (setf (aref img i j) (round (* 255 ($ d i j)))))))
     (opticl:write-png-file fname img)))
 
-($cg! *discriminator*)
-($cg! *generator*)
-
-(defparameter *epoch* 20)
-(defparameter *k* 1)
-(defparameter *j* 1)
-
 (defparameter *eps* ($constant 1E-7))
 
 (defun bced (dr df)
@@ -97,6 +90,12 @@
 (defun lossd (dr df) (logd dr df))
 (defun lossg (df) (logg df))
 
+(defparameter *epoch* 20)
+(defparameter *k* 1)
+
+($cg! *discriminator*)
+($cg! *generator*)
+
 (loop :for epoch :from 1 :to *epoch*
       :do (progn
             ($cg! *discriminator*)
@@ -107,13 +106,14 @@
                   :for z = (samplez)
                   :do (progn
                         ;; discriminator
-                        (let* ((dr (discriminate x))
-                               (g (generate z))
-                               (df (discriminate g)))
-                          (lossd dr df)
-                          ($adgd! *discriminator*)
-                          ($cg! *discriminator*)
-                          ($cg! *generator*))
+                        (dotimes (k *k*)
+                          (let* ((dr (discriminate x))
+                                 (g (generate z))
+                                 (df (discriminate g)))
+                            (lossd dr df)
+                            ($adgd! *discriminator*)
+                            ($cg! *discriminator*)
+                            ($cg! *generator*)))
                         ;; generator
                         (let* ((g (generate z))
                                (df (discriminate g)))
@@ -136,191 +136,3 @@
                     :for fname = (format nil "/Users/Sungjin/Desktop/img~A-~A.png" epoch i)
                     :do (outpng ($index ($data g) 0 s) fname)))
             (gcf)))
-
-(loop :for epoch :from 1 :to *epoch*
-      :do (loop :for data :in *mnist-train-image-batches*
-                :for bidx :from 0
-                :for x = ($constant data)
-                :do (progn
-                      (when (zerop (rem bidx 10)) (prn epoch "=>" bidx))
-                      ($cg! *discriminator*)
-                      ($cg! *generator*)
-                      (loop :for k :from 1 :to *k*
-                            :for z = (samplez)
-                            :for g = (generate z)
-                            :for dr = (discriminate x)
-                            :for df = (discriminate g)
-                            :for ldr = ($log ($+ dr *eps*))
-                            :for ldf = ($log ($+ ($- 1 df) *eps*))
-                            :for l = ($neg ($mean ($+ ldr ldf)))
-                            :do (progn
-                                  ($adgd! *discriminator*)
-                                  ($cg! *discriminator*)
-                                  ($cg! *generator*)
-                                  (when (and (zerop (rem bidx 100)) (eq k *k*))
-                                    (prn "  LD:" ($data l))
-                                    (prn "  PR:" ($mean ($data dr)))
-                                    (prn "  PG:" ($mean ($data df))))))
-                      (loop :for j :from 1 :to *j*
-                            :for z = (samplez)
-                            :for g = (generate z)
-                            :for df = (discriminate g)
-                            :for l = ($neg ($mean ($log ($+ df *eps*))))
-                            :do (progn
-                                  ($adgd! *generator*)
-                                  ($cg! *discriminator*)
-                                  ($cg! *generator*)
-                                  (when (and (zerop (rem bidx 100)) (eq j *j*))
-                                    (prn "  LG:" ($data l))
-                                    (prn "  GF:" ($mean ($data df)))
-                                    (let ((fname (format nil
-                                                         "/Users/Sungjin/Desktop/img~A.png"
-                                                         bidx)))
-                                      (outpng ($index ($data g) 0 0) fname)))))
-                      (gcf))))
-
-;; train D for data sitribution
-(loop :for data :in *mnist-train-image-batches*
-      :for x = ($constant data)
-      :for d = (discriminate x)
-      :for ld = ($log ($+ d *eps*))
-      :for l = ($neg ($mean ld))
-      :do (progn
-            (prn ($data l))
-            ($adgd! *discriminator*)
-            ($cg! *discriminator*)
-            ($cg! *generator*)))
-
-;; train G for fake generator
-(loop :for i :from 1 :to 2
-      :for z = (samplez)
-      :for g = (generate z)
-      :for d = (discriminate g)
-      :for ld = ($log ($+ d *eps*))
-      :for l = ($neg ($mean ld))
-      :do (progn
-            (prn ($data l))
-            ($adgd! *generator*)
-            ($cg! *discriminator*)
-            ($cg! *generator*)))
-
-;; train
-(loop :for epoch :from 1 :to *epoch*
-      :do (loop :for data :in *mnist-train-image-batches*
-                :for bidx :from 0
-                :for x = ($constant data)
-                :do (progn
-                      (when (zerop (rem bidx 10))
-                        (prn epoch "=>" bidx))
-                      ($cg! *discriminator*)
-                      ($cg! *generator*)
-                      (loop :for k :from 1 :to *k*
-                            :do (let* ((z (samplez))
-                                       (g (generate z))
-                                       (dr (discriminate x))
-                                       (df (discriminate g))
-                                       (ldr ($log ($+ dr *eps*)))
-                                       (ldf ($log ($+ ($- 1 df) *eps*)))
-                                       (l ($neg ($mean ($+ ldr ldf)))))
-                                  ($adgd! *discriminator*)
-                                  ;;($adgd! *generator*)
-                                  ($cg! *discriminator*)
-                                  ($cg! *generator*)
-                                  (when (and (zerop (rem bidx 100)) (eq k *k*))
-                                    (prn "  LD:" ($data l))
-                                    (prn "  PR:" ($mean ($data dr)))
-                                    (prn "  PG:" ($mean ($data df)))
-                                    (let ((fname (format nil
-                                                         "/Users/Sungjin/Desktop/img~A.png"
-                                                         bidx)))
-                                      (outpng ($index ($data g) 0 0) fname)))))
-                      (let* ((z (samplez))
-                             (g (generate z))
-                             (gf (discriminate g))
-                             (l ($mean ($log ($+ ($- 1 gf) *eps*)))))
-                        ($adgd! *generator*)
-                        ($cg! *discriminator*)
-                        ($cg! *generator*)
-                        (when (zerop (rem bidx 100))
-                          (prn "  LG:" ($data l))
-                          (prn "  GF:" ($mean ($data gf)))))
-                      (gcf))))
-
-(loop :for epoch :from 1 :to *epoch*
-      :do (loop :for input :in *mnist-train-image-batches*
-                :for bidx :from 0
-                :for x = ($constant input)
-                :do (progn
-                      (when (zerop (rem bidx 10))
-                        (prn epoch "=>" bidx))
-                      ($cg! *discriminator*)
-                      ($cg! *generator*)
-                      (loop :for k :from 1 :to *k*
-                            :do (let* ((z (samplez))
-                                       (g (generate z))
-                                       (dr (discriminate x))
-                                       (df (discriminate g))
-                                       (ldr ($log ($+ dr *eps*)))
-                                       (ldf ($log ($+ ($- ($constant 1) df) *eps*)))
-                                       (l ($neg ($mean ($+ ldr ldf)))))
-                                  ($adgd! *discriminator*)
-                                  ;;($adgd! *generator*)
-                                  ($cg! *discriminator*)
-                                  ($cg! *generator*)
-                                  (when (and (zerop (rem bidx 100)) (eq k *k*))
-                                    (prn "  LD:" ($data l))
-                                    (prn "  PR:" ($mean ($data dr)))
-                                    (prn "  PG:" ($mean ($data df)))
-                                    (let ((fname (format nil
-                                                         "/Users/Sungjin/Desktop/img~A.png"
-                                                         bidx)))
-                                      (outpng ($index ($data g) 0 0) fname)))))
-                      (loop :for j :from 1 :to *j*
-                            :do (let* ((z (samplez))
-                                       (g (generate z))
-                                       (gf (discriminate g))
-                                       (l ($neg ($mean ($log ($+ gf *eps*))))))
-                                  ($adgd! *generator*)
-                                  ($cg! *discriminator*)
-                                  ($cg! *generator*)
-                                  (when (and (zerop (rem bidx 100)) (eq j *j*))
-                                    (prn "  LG:" ($data l))
-                                    (prn "  GF:" ($mean ($data gf))))))
-                      (gcf))))
-
-(-> (samplez)
-    (generate)
-    (discriminate)
-    ($mean)
-    (prn))
-
-(-> ($ *mnist-train-image-batches* (random ($count *mnist-train-image-batches*)))
-    ($constant)
-    (discriminate)
-    ($mean)
-    (prn))
-
-(-> (samplez)
-    (generate)
-    ($data)
-    ($mean)
-    (prn))
-
-(-> ($ *mnist-train-image-batches* (random ($count *mnist-train-image-batches*)))
-    ($mean)
-    (prn))
-
-(defparameter *samples* (-> (samplez)
-                            (generate)
-                            ($data)))
-(defparameter *data* ($ *mnist-train-image-batches*
-                        (random ($count *mnist-train-image-batches*))))
-
-(let ((datag ($reshape ($index *samples* 0 (random *batch-size*)) 28 28))
-      (datad ($reshape ($index *data* 0 (random *batch-size*)) 28 28)))
-  (prn datag)
-  (prn datad)
-  (outpng datag "/Users/Sungjin/Desktop/testg.png")
-  (outpng datad "/Users/Sungjin/Desktop/testd.png")
-  ($cg! *discriminator*)
-  ($cg! *generator*))
