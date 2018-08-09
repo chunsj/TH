@@ -349,6 +349,7 @@
            #:$cnll
            #:$cec
            #:$relu
+           #:$lrelu
            #:$softmax
            #:$logsoftmax
            #:$bnorm

@@ -3,6 +3,7 @@
 (in-package :th)
 
 (defgeneric $relu (x))
+(defgeneric $lrelu (x &optional nv))
 (defgeneric $softmax (x))
 (defgeneric $bnorm (x gamma beta mean sd &optional trainp momentum eps))
 (defgeneric $dropout (x &optional trainp p))
@@ -76,6 +77,25 @@
     (setf ($name result) "RELU")
     ($gp! result x)
     ($pfn! x (lambda () (drelu ($data x) ($gradient result))))
+    result))
+
+(defmethod $lrelu ((x number) &optional (nv 0.01)) (max (* nv x) x))
+
+(defmethod $lrelu ((x tensor) &optional (nv 0.01))
+  (let ((output ($empty x)))
+    (nn-leaky-relu-update-output x output nv nil)
+    output))
+
+(defun dlrelu (input gradient &optional (nv 0.01))
+  (let ((dinput ($empty input)))
+    (nn-leaky-relu-update-grad-input input gradient dinput nv nil)
+    dinput))
+
+(defmethod $lrelu ((x node) &optional (nv 0.01))
+  (let ((result (node ($lrelu ($data x) nv))))
+    (setf ($name result) "LEAKYRELU")
+    ($gp! result x)
+    ($pfn! x (lambda () (dlrelu ($data x) ($gradient result) nv)))
     result))
 
 (defmethod $softmax ((x tensor))
