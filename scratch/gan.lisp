@@ -90,7 +90,7 @@
 (defun lossd (dr df) (logd dr df))
 (defun lossg (df) (logg df))
 
-(defparameter *epoch* 20)
+(defparameter *epoch* 100)
 (defparameter *k* 1)
 
 ($cg! *discriminator*)
@@ -131,8 +131,9 @@
               ($cg! *discriminator*)
               ($cg! *generator*)
               (prn "LOSS:" epoch ($data ld) ($data lf))
-              (loop :for i :from 1 :to 1
-                    :for s = (random *batch-size*)
-                    :for fname = (format nil "/Users/Sungjin/Desktop/i~A-~A.png" epoch i)
-                    :do (outpng ($index ($data g) 0 s) fname)))
+              (when (zerop (rem epoch 10))
+                (loop :for i :from 1 :to 1
+                      :for s = (random *batch-size*)
+                      :for fname = (format nil "/Users/Sungjin/Desktop/i~A-~A.png" epoch i)
+                      :do (outpng ($index ($data g) 0 s) fname))))
             (gcf)))
