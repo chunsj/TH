@@ -78,17 +78,18 @@
 
 (defparameter *eps* ($constant 1E-7))
 
-(loop :for epoch :from 1 :to (max 10 *epoch*)
+(loop :for epoch :from 1 :to *epoch*
       :do (loop :for input :in *mnist-train-image-batches*
                 :for bidx :from 0
                 :for x = ($constant input)
+                :for z = (samplez)
                 :do (progn
                       (when (zerop (rem bidx 10))
                         (prn epoch "=>" bidx))
                       ($cg! *discriminator*)
                       ($cg! *generator*)
                       (loop :for k :from 1 :to *k*
-                            :do (let* ((z (samplez))
+                            :do (let* (;;(z (samplez))
                                        (g (generate z))
                                        (dr (discriminate x))
                                        (df (discriminate g))
@@ -107,7 +108,7 @@
                                                          bidx)))
                                       (outpng ($index ($data g) 0 0) fname)))))
                       (loop :for j :from 1 :to *j*
-                            :do (let* ((z (samplez))
+                            :do (let* (;;(z (samplez))
                                        (g (generate z))
                                        (gf (discriminate g))
                                        (l ($neg ($mean ($log ($+ gf *eps*))))))
