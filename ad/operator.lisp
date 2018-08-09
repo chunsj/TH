@@ -87,14 +87,14 @@
   (let ((result (node ($sub a ($data b)))))
     (setf ($name result) "SUB")
     ($gp! result b)
-    ($pfn! b (lambda () ($gradient result)))
+    ($pfn! b (lambda () ($neg ($gradient result))))
     result))
 
 (defmethod $sub ((a number) (b node))
   (let ((result (node ($sub a ($data b)))))
     (setf ($name result) "SUB")
     ($gp! result b)
-    ($pfn! b (lambda () ($gradient result)))
+    ($pfn! b (lambda () ($neg ($gradient result))))
     result))
 
 (defmethod $neg ((a node))
