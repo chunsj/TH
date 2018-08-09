@@ -133,6 +133,6 @@
               (prn "LOSS:" epoch ($data ld) ($data lf))
               (loop :for i :from 1 :to 1
                     :for s = (random *batch-size*)
-                    :for fname = (format nil "/Users/Sungjin/Desktop/img~A-~A.png" epoch i)
+                    :for fname = (format nil "/Users/Sungjin/Desktop/i~A-~A.png" epoch i)
                     :do (outpng ($index ($data g) 0 s) fname)))
             (gcf)))
