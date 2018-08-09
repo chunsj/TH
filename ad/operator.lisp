@@ -2,9 +2,6 @@
 
 (in-package :th)
 
-(defmethod $broadcast ((c number) (m tensor))
-  ($mul! ($one m) c))
-
 (defgeneric $krows (vector n))
 (defgeneric $kcols (vector n))
 
@@ -12,17 +9,31 @@
 (defmethod $kcols ((vector tensor) n) ($vv vector (ones n)))
 
 (defmethod $broadcast ((vector tensor) (matrix tensor))
-  (let ((nv ($count vector))
-        (sz ($size matrix)))
-    (cond ((eq nv ($ sz 1)) ($krows vector ($ sz 0)))
-          ((eq nv ($ sz 0)) ($kcols vector ($ sz 1)))
-          (t (error "cannot broadcast automatically")))))
+  (cond ((eq 1 ($ndim vector)) (let ((nv ($count vector))
+                                     (sz ($size matrix)))
+                                 (cond ((eq nv ($ sz 1)) ($krows vector ($ sz 0)))
+                                       ((eq nv ($ sz 0)) ($kcols vector ($ sz 1)))
+                                       (t (error "cannot broadcast automatically")))))
+        ((and (eq 2 ($ndim vector)) (or (eq 1 ($size vector 0)) (eq 1 ($size vector 1))))
+         (let ((nv ($count vector))
+               (sz ($size matrix)))
+           (cond ((eq nv ($ sz 1)) ($krows ($reshape vector nv) ($ sz 0)))
+                 ((eq nv ($ sz 0)) ($kcols ($reshape vector nv) ($ sz 1)))
+                 (t (error "cannot broadcast automatically")))))))
+
+(defmethod $broadcast ((c number) (m tensor)) ($mul! ($one m) c))
 
 (defmethod $broadcast ((c node) (m node))
-  (let ((result (node ($mul! ($one ($data m)) ($data c)))))
+  (cond ((eq 1 ($count ($data c))) (let ((result (node ($mul! ($one ($data m)) ($data c)))))
+                                     (setf ($name result) "BROADCAST")
+                                     ($gp! result c)
+                                     ($pfn! c (lambda () ($dot ($one ($data m)) ($gradient result))))
+                                     result))
+        (t "cannot broadcast automatically other than number.")))
+
+(defmethod $broadcast ((c number) (m node))
+  (let ((result (node ($mul! ($one ($data m)) c))))
     (setf ($name result) "BROADCAST")
-    ($gp! result c)
-    ($pfn! c (lambda () ($dot ($one ($data m)) ($gradient result))))
     result))
 
 (defmethod $add ((a node) (b node))
