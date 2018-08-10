@@ -118,7 +118,6 @@
               ($amgd! w2 lr)))
   (prn ($sigmoid ($mm ($sigmoid ($mm X w1)) w2))))
 
-
 (let* ((w1 ($variable (rndn 3 3)))
        (w2 ($variable (rndn 3 1)))
        (X ($constant '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
