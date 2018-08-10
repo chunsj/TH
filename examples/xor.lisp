@@ -103,8 +103,9 @@
               ($agd! w2 lr)))
   (prn ($sigmoid ($mm ($sigmoid ($mm X w1)) w2))))
 
-(let* ((w1 ($variable (rndn 3 3)))
-       (w2 ($variable (rndn 3 1)))
+(let* ((ps (parameters))
+       (w1 ($parameter ps ($variable (rndn 3 3))))
+       (w2 ($parameter ps ($variable (rndn 3 1))))
        (X ($constant '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
        (Y ($constant '(0 1 1 0)))
        (lr 0.01))
@@ -114,8 +115,7 @@
                    (d ($sub l2 Y))
                    (out ($dot d d)))
               ($gs! out 1)
-              ($amgd! w1 lr)
-              ($amgd! w2 lr)))
+              ($amgd! ps lr)))
   (prn ($sigmoid ($mm ($sigmoid ($mm X w1)) w2))))
 
 (let* ((w1 ($variable (rndn 3 3)))
