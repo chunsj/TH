@@ -24,6 +24,7 @@
   7. Karpathy's character generation using RNN/LSTM: examples/genchars.lisp, genchars{1,2}.lisp
   8. Sparse autoencoder: examples/autoenc.lisp
   9. Neural Arithmetic Logic Unit or NALU: examples/nalu.lisp
+  10. Generative Adversarial Network: examples/gan.lisp
 
 ## Selected Book Follow Ups
   1. Deep Learning from Scratch: dlfs
