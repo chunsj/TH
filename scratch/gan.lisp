@@ -19,7 +19,6 @@
 (print *mnist*)
 
 (defparameter *eps* ($constant 1E-7))
-(defparameter *smoother* 1)
 
 (defun logd (dr df)
   ($neg ($mean ($+ ($log ($+ dr *eps*))
