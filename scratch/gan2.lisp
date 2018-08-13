@@ -138,15 +138,15 @@
             (prn " LOSS:" epoch (/ dloss *train-count*) (/ gloss *train-count*))
             (gcf)))
 
-(defun outpngs49 (data49 fname &optional (w 28) (h 28))
-  (let* ((n 7)
+(defun outpngs (data fname &optional (w 28) (h 28))
+  (let* ((n 3)
          (img (opticl:make-8-bit-gray-image (* n w) (* n h)))
-         (datas (mapcar (lambda (data) ($reshape data w h)) data49)))
+         (data (mapcar (lambda (data) ($reshape data w h)) data)))
     (loop :for i :from 0 :below n
           :do (loop :for j :from 0 :below n
                     :for sx = (* j w)
                     :for sy = (* i h)
-                    :for d = ($ datas (+ (* j n) i))
+                    :for d = ($ data (+ (* j n) i))
                     :do (loop :for i :from 0 :below h
                               :do (loop :for j :from 0 :below w
                                         :do (progn
@@ -156,8 +156,8 @@
 
 ;; generate samples
 (let ((generated (generate (samplez))))
-  (outpngs49 (loop :for i :from 0 :below 49
-                   :collect ($index ($data generated) 0 i))
-             (format nil "~A/49.png" *output*))
+  (outpngs (loop :for i :from 0 :below 9
+                 :collect ($index ($data generated) 0 i))
+           (format nil "~A/samples.png" *output*))
   ($cg! *discriminator*)
   ($cg! *generator*))

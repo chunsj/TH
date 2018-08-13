@@ -38,7 +38,7 @@
                           (setf (aref img i j) (round (* 255 ($ d i j)))))))
     (opticl:write-png-file fname img)))
 
-;; training data - uses batches for performance
+;; training data - uses batches for performance, 30, 60 works well
 (defparameter *batch-size* 60)
 (defparameter *batch-count* (/ 60000 *batch-size*))
 
