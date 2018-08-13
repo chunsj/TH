@@ -1,15 +1,15 @@
 ;; from
-;; https://wiseodd.github.io/techblog/2017/01/20/gan-pytorch/
+;; https://wiseodd.github.io/techblog/2017/03/02/least-squares-gan/
 
 (ql:quickload :opticl)
 
-(defpackage :gan
+(defpackage :lsgan
   (:use #:common-lisp
         #:mu
         #:th
         #:th.db.mnist))
 
-(in-package :gan)
+(in-package :lsgan)
 
 ;; load mnist data, takes ~22 secs in macbook 2017
 (defparameter *mnist* (read-mnist-data))
@@ -26,7 +26,6 @@
 (defun lossd (dr df) (bced dr df))
 (defun lossg (df) (bceg df))
 
-;; XXX cannot figure out why adam works best (adadelta does not work well)
 (defun optm (params) ($amgd! params 1E-3))
 
 (defun outpng (data fname &optional (w 28) (h 28))
@@ -38,8 +37,8 @@
                           (setf (aref img i j) (round (* 255 ($ d i j)))))))
     (opticl:write-png-file fname img)))
 
-;; training data - uses batches for performance
-(defparameter *batch-size* 60)
+;; training data - uses batches for performance, it affects quantity as well; 60 works well
+(defparameter *batch-size* 30)
 (defparameter *batch-count* (/ 60000 *batch-size*))
 
 (defparameter *mnist-train-image-batches*
@@ -65,9 +64,8 @@
 (defparameter *gw2* ($parameter *generator* (xinit (list *hidden-size* *img-size*))))
 (defparameter *gb2* ($parameter *generator* (zeros 1 *img-size*)))
 
-;; you can apply leaky relu, $lrelu
 (defun generate (z)
-  (let* ((h ($relu ($+ ($@ z *gw1*) ($@ ($constant *os*) *gb1*))))
+  (let* ((h ($lrelu ($+ ($@ z *gw1*) ($@ ($constant *os*) *gb1*))))
          (x ($sigmoid ($+ ($@ h *gw2*) ($@ ($constant *os*) *gb2*)))))
     x))
 
@@ -77,9 +75,8 @@
 (defparameter *dw2* ($parameter *discriminator* (xinit (list *hidden-size* 1))))
 (defparameter *db2* ($parameter *discriminator* (zeros 1 1)))
 
-;; you can apply leaky relu, $lrelu
 (defun discriminate (x)
-  (let* ((h ($relu ($+ ($@ x *dw1*) ($@ ($constant *os*) *db1*))))
+  (let* ((h ($lrelu ($+ ($@ x *dw1*) ($@ ($constant *os*) *db1*))))
          (y ($sigmoid ($+ ($@ h *dw2*) ($@ ($constant *os*) *db2*)))))
     y))
 
@@ -141,10 +138,10 @@
             (prn " LOSS:" epoch (/ dloss *train-count*) (/ gloss *train-count*))
             (gcf)))
 
-(defun outpngs49 (data81 fname &optional (w 28) (h 28))
+(defun outpngs49 (data49 fname &optional (w 28) (h 28))
   (let* ((n 7)
          (img (opticl:make-8-bit-gray-image (* n w) (* n h)))
-         (datas (mapcar (lambda (data) ($reshape data w h)) data81)))
+         (datas (mapcar (lambda (data) ($reshape data w h)) data49)))
     (loop :for i :from 0 :below n
           :do (loop :for j :from 0 :below n
                     :for sx = (* j w)
