@@ -21,7 +21,7 @@
   4. MNIST convolutional neural network: examples/mnist.lisp
   5. IMDB sentiment analysis: examples/sentiment.lisp (cl-ppcre is required)
   6. Binary number addition using vanilla RNN: examples/binadd.lisp
-  7. Karpathy's character generation using RNN/LSTM: examples/genchars.lisp, genchars{1,2}.lisp
+  7. Karpathy's character generation using RNN/LSTM: examples/gench{ars,-lstm,-lstm2}.lisp
   8. Sparse autoencoder: examples/autoenc.lisp
   9. Neural Arithmetic Logic Unit or NALU: examples/nalu.lisp
   10. Generative Adversarial Network: examples/gan.lisp

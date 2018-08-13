@@ -1,12 +1,12 @@
 ;; from
 ;; http://karpathy.github.io/2015/05/21/rnn-effectiveness/
 
-(defpackage :genchars2
+(defpackage :gench-lstm2
   (:use #:common-lisp
         #:mu
         #:th))
 
-(in-package :genchars2)
+(in-package :gench-lstm2)
 
 ;;
 ;; 2-layer lstm

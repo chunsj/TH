@@ -1,9 +1,9 @@
-(defpackage :genchars1
+(defpackage :gench-lstm
   (:use #:common-lisp
         #:mu
         #:th))
 
-(in-package :genchars1)
+(in-package :gench-lstm)
 
 ;;
 ;; 1-layer lstm

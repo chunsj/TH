@@ -18,6 +18,8 @@
 ;; train-images, train-labels and test-images, test-labels
 (print *mnist*)
 
+(defparameter *output* (format nil "~A/Desktop" (user-homedir-pathname)))
+
 (defun bced (dr df) ($+ ($bce dr ($constant ($one dr))) ($bce df ($constant ($zero df)))))
 (defun bceg (df) ($bce df ($constant ($one df))))
 
@@ -132,7 +134,7 @@
                 ($cg! *generator*)
                 (loop :for i :from 1 :to 1
                       :for s = (random *batch-size*)
-                      :for fname = (format nil "./i~A-~A.png" epoch i)
+                      :for fname = (format nil "~A/i~A-~A.png" *output* epoch i)
                       :do (outpng ($index ($data g) 0 s) fname))))
             (prn " LOSS:" epoch (/ dloss *train-count*) (/ gloss *train-count*))
             (gcf)))
@@ -156,6 +158,6 @@
 (let ((generated (generate (samplez))))
   (outpngs49 (loop :for i :from 0 :below 49
                    :collect ($index ($data generated) 0 i))
-             "./49.png")
+             (format nil "~A/49.png" *output*))
   ($cg! *discriminator*)
   ($cg! *generator*))
