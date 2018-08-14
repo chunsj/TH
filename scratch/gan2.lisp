@@ -1,6 +1,9 @@
 ;; from
 ;; https://wiseodd.github.io/techblog/2017/01/20/gan-pytorch/
 
+;; XXX more tests
+;; instead of 0 to 1, apply -1 to 1 as other people says
+
 (ql:quickload :opticl)
 
 (defpackage :gan
@@ -65,7 +68,7 @@
 (defparameter *gb2* ($parameter *generator* (zeros 1 *img-size*)))
 
 (defun generate (z)
-  (let* ((h ($lrelu ($+ ($@ z *gw1*) ($@ ($constant *os*) *gb1*))))
+  (let* ((h ($lrelu ($+ ($@ z *gw1*) ($@ ($constant *os*) *gb1*)) 0.2))
          (x ($sigmoid ($+ ($@ h *gw2*) ($@ ($constant *os*) *gb2*)))))
     x))
 
@@ -76,7 +79,7 @@
 (defparameter *db2* ($parameter *discriminator* (zeros 1 1)))
 
 (defun discriminate (x)
-  (let* ((h ($lrelu ($+ ($@ x *dw1*) ($@ ($constant *os*) *db1*))))
+  (let* ((h ($lrelu ($+ ($@ x *dw1*) ($@ ($constant *os*) *db1*)) 0.2))
          (y ($sigmoid ($+ ($@ h *dw2*) ($@ ($constant *os*) *db2*)))))
     y))
 
