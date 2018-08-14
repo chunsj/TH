@@ -20,11 +20,9 @@
 
 (defparameter *output* (format nil "~A/Desktop" (user-homedir-pathname)))
 
-(defun bced (dr df) ($+ ($bce dr ($constant ($one dr))) ($bce df ($constant ($zero df)))))
-(defun bceg (df) ($bce df ($constant ($one df))))
-
-(defun lossd (dr df) (bced dr df))
-(defun lossg (df) (bceg df))
+(defun lossd (dr df) ($* ($constant 0.5) ($+ ($mean ($expt ($- dr ($constant ($one dr))) 2))
+                                             ($mean ($expt df 2)))))
+(defun lossg (df) ($* ($constant 0.5) ($mean ($expt ($- df ($constant ($one df))) 2))))
 
 (defun optm (params) ($amgd! params 1E-3))
 
@@ -37,7 +35,7 @@
                           (setf (aref img i j) (round (* 255 ($ d i j)))))))
     (opticl:write-png-file fname img)))
 
-;; training data - uses batches for performance, it affects quantity as well; 60 works well
+;; training data - uses batches for performance, it affects quantity as well
 (defparameter *batch-size* 30)
 (defparameter *batch-count* (/ 60000 *batch-size*))
 
@@ -50,7 +48,7 @@
 (defparameter *discriminator* (parameters))
 (defparameter *generator* (parameters))
 
-(defparameter *gen-size* 100)
+(defparameter *gen-size* 10)
 (defparameter *hidden-size* 128)
 (defparameter *img-size* (* 28 28))
 
@@ -77,13 +75,13 @@
 
 (defun discriminate (x)
   (let* ((h ($lrelu ($+ ($@ x *dw1*) ($@ ($constant *os*) *db1*))))
-         (y ($sigmoid ($+ ($@ h *dw2*) ($@ ($constant *os*) *db2*)))))
+         (y ($+ ($@ h *dw2*) ($@ ($constant *os*) *db2*))))
     y))
 
 (defun samplez () ($constant (rndn *batch-size* *gen-size*)))
 
-(defparameter *epoch* 100)
-(defparameter *k* 1)
+(defparameter *epoch* 10)
+(defparameter *k* 3)
 
 ($cg! *discriminator*)
 ($cg! *generator*)
@@ -126,7 +124,9 @@
                           ($cg! *discriminator*)
                           ($cg! *generator*))
                         (when (zerop (rem bidx 100))
-                          (prn "  D/L:" bidx dlv dgv))))
+                          (prn "  D/L:" bidx dlv dgv))
+                        (when (zerop (rem bidx 500))
+                          (gcf))))
             (when (zerop (rem epoch 1))
               (let ((g (generate (samplez))))
                 ($cg! *discriminator*)
@@ -135,11 +135,11 @@
                       :for s = (random *batch-size*)
                       :for fname = (format nil "~A/i~A-~A.png" *output* epoch i)
                       :do (outpng ($index ($data g) 0 s) fname))))
-            (prn " LOSS:" epoch (/ dloss *train-count*) (/ gloss *train-count*))
+            (prn " LOSS:" epoch (/ dloss (* *k* *train-count*)) (/ gloss *train-count*))
             (gcf)))
 
-(defun outpngs49 (data49 fname &optional (w 28) (h 28))
-  (let* ((n 7)
+(defun outpngs (data49 fname &optional (w 28) (h 28))
+  (let* ((n 4)
          (img (opticl:make-8-bit-gray-image (* n w) (* n h)))
          (datas (mapcar (lambda (data) ($reshape data w h)) data49)))
     (loop :for i :from 0 :below n
@@ -156,8 +156,8 @@
 
 ;; generate samples
 (let ((generated (generate (samplez))))
-  (outpngs49 (loop :for i :from 0 :below 49
-                   :collect ($index ($data generated) 0 i))
-             (format nil "~A/49.png" *output*))
+  (outpngs (loop :for i :from 0 :below 16
+                 :collect ($index ($data generated) 0 i))
+           (format nil "~A/49.png" *output*))
   ($cg! *discriminator*)
   ($cg! *generator*))
