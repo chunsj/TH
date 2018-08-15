@@ -1,18 +1,16 @@
 ;; from
 ;; https://wiseodd.github.io/techblog/2017/01/20/gan-pytorch/
-
-;; XXX more tests
-;; instead of 0 to 1, apply -1 to 1 as other people says
+;; with tanh generator
 
 (ql:quickload :opticl)
 
-(defpackage :gan
+(defpackage :gan2
   (:use #:common-lisp
         #:mu
         #:th
         #:th.db.mnist))
 
-(in-package :gan)
+(in-package :gan2)
 
 ;; load mnist data, takes ~22 secs in macbook 2017
 (defparameter *mnist* (read-mnist-data))
@@ -37,18 +35,23 @@
     (loop :for i :from 0 :below h
           :do (loop :for j :from 0 :below w
                     :do (progn
-                          (setf (aref img i j) (round (* 255 ($ d i j)))))))
+                          (setf (aref img i j) (round (* 255 (* 0.5 (+ 1 ($ d i j)))))))))
     (opticl:write-png-file fname img)))
 
 ;; training data - uses batches for performance, it affects quantity as well; 60 works well
-(defparameter *batch-size* 30)
+(defparameter *batch-size* 50)
 (defparameter *batch-count* (/ 60000 *batch-size*))
 
 (defparameter *mnist-train-image-batches*
   (loop :for i :from 0 :below *batch-count*
         :for range = (loop :for k :from (* i *batch-size*) :below (* (1+ i) *batch-size*)
                            :collect k)
-        :collect ($contiguous! ($index ($ *mnist* :train-images) 0 range))))
+        :collect ($contiguous! ($- ($* 2 ($index ($ *mnist* :train-images) 0 range)) 1))))
+
+;; check range of -1 to 1
+(prn (car *mnist-train-image-batches*))
+(prn ($max (car *mnist-train-image-batches*)))
+(prn ($min (car *mnist-train-image-batches*)))
 
 (defparameter *discriminator* (parameters))
 (defparameter *generator* (parameters))
@@ -69,7 +72,7 @@
 
 (defun generate (z)
   (let* ((h ($lrelu ($+ ($@ z *gw1*) ($@ ($constant *os*) *gb1*)) 0.2))
-         (x ($sigmoid ($+ ($@ h *gw2*) ($@ ($constant *os*) *gb2*)))))
+         (x ($tanh ($+ ($@ h *gw2*) ($@ ($constant *os*) *gb2*)))))
     x))
 
 ;; discriminator network
@@ -142,7 +145,7 @@
             (gcf)))
 
 (defun outpngs (data fname &optional (w 28) (h 28))
-  (let* ((n 3)
+  (let* ((n 7)
          (img (opticl:make-8-bit-gray-image (* n w) (* n h)))
          (data (mapcar (lambda (data) ($reshape data w h)) data)))
     (loop :for i :from 0 :below n
@@ -154,12 +157,12 @@
                               :do (loop :for j :from 0 :below w
                                         :do (progn
                                               (setf (aref img (+ sx i) (+ sy j))
-                                                    (round (* 255 ($ d i j)))))))))
+                                                    (round (* 255 (* 0.5 (+ 1 ($ d i j)))))))))))
     (opticl:write-png-file fname img)))
 
 ;; generate samples
 (let ((generated (generate (samplez))))
-  (outpngs (loop :for i :from 0 :below 9
+  (outpngs (loop :for i :from 0 :below 49
                  :collect ($index ($data generated) 0 i))
            (format nil "~A/samples.png" *output*))
   ($cg! *discriminator*)
