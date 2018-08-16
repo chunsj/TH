@@ -25,6 +25,7 @@
   8. Sparse autoencoder: examples/autoenc.lisp
   9. Neural Arithmetic Logic Unit or NALU: examples/nalu.lisp
   10. Generative Adversarial Network: examples/[ls]gan[2].lisp (opticl is required)
+  11. Restricted Boltzmann Machine: examples/rbm.lisp
 
 ## Selected Book Follow Ups
   1. Deep Learning from Scratch: dlfs
