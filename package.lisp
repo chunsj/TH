@@ -357,6 +357,7 @@
            #:$conv2d
            #:$maxpool2d
            #:$avgpool2d
+           #:$affine
            #:$xwpb
            #:$wimb
            #:$rn!

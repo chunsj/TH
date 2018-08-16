@@ -3,6 +3,7 @@
 (in-package :th)
 
 (defgeneric $xwpb (x w b &optional ones))
+(defgeneric $affine (x w b &optional ones))
 
 (defmethod $xwpb ((x tensor) (w tensor) (b tensor) &optional ones)
   (let ((o (or ones (ones (if (eq 1 ($ndim x)) 1 ($size x 0))))))
@@ -11,6 +12,14 @@
 (defmethod $xwpb ((x node) (w node) (b node) &optional ones)
   (let ((o (or ones ($constant (ones (if (eq 1 ($ndim x)) 1 ($size x 0)))))))
     ($add ($mm x w) ($vv o b))))
+
+(defmethod $affine ((x tensor) (w tensor) (b tensor) &optional ones)
+  (let ((o (or ones (ones ($size x 0) 1))))
+    ($add! ($mm x w) ($mm o b))))
+
+(defmethod $affine ((x node) (w node) (b node) &optional ones)
+  (let ((o (or ones ($constant (ones ($size x 0) 1)))))
+    ($add ($mm x w) ($mm o b))))
 
 (defgeneric $wimb (xwi w))
 
