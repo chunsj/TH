@@ -1,3 +1,6 @@
+;; from
+;; https://github.com/odie2630463/Restricted-Boltzmann-Machines-in-pytorch
+
 (ql:quickload :opticl)
 
 (defpackage :rbm
@@ -83,11 +86,11 @@
 
 ($cg! *rbm*)
 
-(loop :for epoch :from 1 :to (min 1 *epoch*)
+(loop :for epoch :from 1 :to *epoch*
       :for loss = nil
       :do (progn
             ($cg! *rbm*)
-            (loop :for input :in (subseq *mnist-train-image-batches* 0 1)
+            (loop :for input :in *mnist-train-image-batches*
                   :for sample = ($bernoulli input input)
                   :for res = (run ($constant sample))
                   :for v = (car res)
@@ -96,7 +99,8 @@
                   :do (progn
                         (push ($data l) loss)
                         (opt!)))
-            (prn (mean loss))))
+            (prn epoch (mean loss))
+            (gcf)))
 
 (defparameter *output* (format nil "~A/Desktop" (user-homedir-pathname)))
 
@@ -113,6 +117,8 @@
        (sample ($bernoulli input input))
        (res (run ($constant sample)))
        (v ($data (car res)))
-       (v1 ($data (cdr res))))
-  (outpng ($index v 0 0) "outv.png")
-  (outpng ($index v1 0 0) "outv1.png"))
+       (v1 ($data (cdr res)))
+       (idx (random ($size input 0))))
+  (outpng ($index input 0 idx) "input.png")
+  (outpng ($index v 0 idx) "outv.png")
+  (outpng ($index v1 0 idx) "outv1.png"))
