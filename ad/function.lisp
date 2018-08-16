@@ -141,3 +141,10 @@
     ($gp! result x)
     ($pfn! x (lambda () ($mul! (dtanh ($data result)) ($gradient result))))
     result))
+
+(defmethod $sign ((x node))
+  (let ((result (node ($sign ($data x)))))
+    (setf ($name result) "SIGN")
+    ($gp! result x)
+    ($pfn! x (lambda () ($zero ($gradient result))))
+    result))

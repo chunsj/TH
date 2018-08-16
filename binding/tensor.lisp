@@ -1556,11 +1556,11 @@
       (tensor-max-all x)
       (let ((indices (tensor.long))
             (vals ($empty x)))
-        (tensor-max vals indices x dimension nil)
+        (tensor-max vals indices x dimension t)
         (list vals indices))))
 
 (defmethod $max! ((vals tensor) (indices tensor.long) (x tensor) &optional (dimension 0))
-  (tensor-max vals indices x dimension nil)
+  (tensor-max vals indices x dimension t)
   (list vals indices))
 
 (defmethod $min ((x tensor) &optional (dimension -1))
@@ -1568,22 +1568,22 @@
       (tensor-min-all x)
       (let ((indices (tensor.long))
             (vals ($empty x)))
-        (tensor-min vals indices x dimension nil)
+        (tensor-min vals indices x dimension t)
         (list vals indices))))
 
 (defmethod $min! ((vals tensor) (indices tensor.long) (x tensor) &optional (dimension 0))
-  (tensor-min vals indices x dimension nil)
+  (tensor-min vals indices x dimension t)
   (list vals indices))
 
 (defmethod $mean ((x tensor) &optional (dimension -1))
   (if (< dimension 0)
       (tensor-mean-all x)
       (let ((vals ($empty x)))
-        (tensor-mean vals x dimension nil)
+        (tensor-mean vals x dimension t)
         vals)))
 
 (defmethod $mean! ((m tensor) (x tensor) &optional (dimension 0))
-  (tensor-mean m x dimension nil)
+  (tensor-mean m x dimension t)
   m)
 
 (defmethod $cmax ((tensor tensor) &rest tensors)
@@ -1682,18 +1682,18 @@
   (if (< dimension 0)
       (tensor-prd-all x)
       (let ((result ($empty x)))
-        (tensor-prd result x dimension nil)
+        (tensor-prd result x dimension t)
         result)))
 
 (defmethod $prd! ((z tensor) (x tensor) &optional (dimension 0))
-  (tensor-prd z x dimension nil)
+  (tensor-prd z x dimension t)
   z)
 
 (defmethod $sum ((x tensor) &optional (dimension -1))
   (if (< dimension 0)
       (tensor-sum-all x)
       (let ((result ($empty x)))
-        (tensor-sum result x dimension nil)
+        (tensor-sum result x dimension t)
         result)))
 
 (defmethod $sum ((x number) &optional (dimension -1))
@@ -1701,42 +1701,54 @@
   x)
 
 (defmethod $sum! ((z tensor) (x tensor) &optional (dimension 0))
-  (tensor-sum z x dimension nil)
+  (tensor-sum z x dimension t)
   z)
 
 (defmethod $sd ((x tensor) &optional (dimension -1) biased)
   (if (< dimension 0)
       (tensor-sd-all x biased)
       (let ((result ($empty x)))
-        (tensor-sd result x dimension nil biased)
+        (tensor-sd result x dimension t biased)
         result)))
 
 (defmethod $sd! ((z tensor) (x tensor) &optional (dimension 0) biased)
-  (tensor-sd z x dimension nil biased)
+  (tensor-sd z x dimension t biased)
   z)
 
 (defmethod $var ((x tensor) &optional (dimension -1) biased)
   (if (< dimension 0)
       (tensor-var-all x biased)
       (let ((result ($empty x)))
-        (tensor-var result x dimension nil biased)
+        (tensor-var result x dimension t biased)
         result)))
 
 (defmethod $var! ((z tensor) (x tensor) &optional (dimension 0) biased)
-  (tensor-var z x dimension nil biased)
+  (tensor-var z x dimension t biased)
   z)
 
 (defmethod $uniform! ((x tensor) a b)
   (tensor-uniform x a b)
   x)
 
+(defmethod $uniform ((x tensor) a b)
+  (let ((r ($resize! ($empty x) ($size x))))
+    (tensor-uniform r a b)))
+
 (defmethod $normal! ((x tensor) m sd)
   (tensor-normal x m sd)
   x)
 
+(defmethod $normal ((x tensor) m sd)
+  (let ((r ($resize! ($empty x) ($size x))))
+    (tensor-normal r m sd)))
+
 (defmethod $bernoulli! ((x tensor) p)
   (tensor-bernoulli x p)
   x)
+
+(defmethod $bernoulli ((x tensor) p)
+  (let ((r ($resize! ($empty x) ($size x))))
+    (tensor-bernoulli r p)))
 
 (defmethod $norm ((x tensor) &optional (p 2) (dimension -1))
   (if (< dimension 0)
