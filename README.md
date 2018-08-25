@@ -24,7 +24,7 @@
   7. Karpathy's character generation using RNN/LSTM: examples/gench{ars,-lstm,-lstm2}.lisp
   8. Sparse autoencoder: examples/autoenc.lisp
   9. Restricted Boltzmann Machine: examples/rbm.lisp
-  10. Generative Adversarial Network: examples/[ls]gan[2].lisp (opticl is required)
+  10. Generative Adversarial Network: examples/{ls,c}gan[2].lisp (opticl is required)
   11. Neural Arithmetic Logic Unit or NALU: examples/nalu.lisp
 
 ## Selected Book Follow Ups

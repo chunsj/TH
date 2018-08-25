@@ -1,3 +1,7 @@
+;; from
+;; https://wiseodd.github.io/techblog/2016/12/24/conditional-gan-tensorflow/
+;; https://github.com/wiseodd/generative-models/blob/master/GAN/conditional_gan/cgan_pytorch.py
+
 (ql:quickload :opticl)
 
 (defpackage :cgan
@@ -168,9 +172,14 @@
     (opticl:write-png-file fname img)))
 
 ;; generate samples
-(let ((generated (generate (samplez))))
+(let* ((c ($constant (car *train-data-labels*)))
+       (generated (generate (samplez) c))
+       (data ($constant (car *train-data-batches*))))
   (outpngs49 (loop :for i :from 0 :below 49
                    :collect ($index ($data generated) 0 i))
-             (format nil "~A/49.png" *output*))
+             (format nil "~A/G49.png" *output*))
+  (outpngs49 (loop :for i :from 0 :below 49
+                   :collect ($index ($data data) 0 i))
+             (format nil "~A/D49.png" *output*))
   ($cg! *discriminator*)
   ($cg! *generator*))
