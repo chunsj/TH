@@ -40,7 +40,7 @@
     (opticl:write-png-file fname img)))
 
 ;; training data - uses batches for performance, 30, 60 works well
-(defparameter *batch-size* 60)
+(defparameter *batch-size* 30)
 (defparameter *batch-count* (/ 60000 *batch-size*))
 
 (defparameter *mnist-train-image-batches*
@@ -98,17 +98,27 @@
          (c ($softmax ($+ ($@ h *qw2*) ($@ ($constant *os*) *qb2*)))))
     c))
 
+(defun rones (nrows cprobs)
+  (let* ((indices ($multinomial cprobs nrows))
+         (res (zeros ($size indices 0) ($size cprobs 0))))
+    (loop :for i :from 0 :below nrows
+          :for j = ($ indices i)
+          :do (setf ($ res i j) 1))
+    res))
+
+(defparameter *cprobs* ($/ (ones 10) *lbl-size*))
+
 (defun samplez () ($constant (rndn *batch-size* *gen-size*)))
-(defun samplec () )
+(defun samplec () ($constant (rones *batch-size* *cprobs*)))
 
 (defparameter *epoch* 100)
 (defparameter *k* 1)
 
 ($cg! *discriminator*)
 ($cg! *generator*)
+($cg! *qnet*)
 
 (defparameter *train-data-batches* (subseq *mnist-train-image-batches* 0))
-(defparameter *train-data-labels* (subseq *mnist-train-image-labels* 0))
 (defparameter *train-count* ($count *train-data-batches*))
 
 (gcf)
@@ -116,49 +126,66 @@
 (loop :for epoch :from 1 :to *epoch*
       :for dloss = 0
       :for gloss = 0
+      :for qloss = 0
       :do (progn
             ($cg! *discriminator*)
             ($cg! *generator*)
             (prn "*****")
             (prn "EPOCH:" epoch)
             (loop :for data :in *train-data-batches*
-                  :for condition :in *train-data-labels*
                   :for bidx :from 0
                   :for x = ($constant data)
-                  :for c = ($constant condition)
+                  :for c = (samplec)
                   :for z = (samplez)
                   :do (let ((dlv nil)
-                            (dgv nil))
+                            (dgv nil)
+                            (dqv nil))
                         ;; discriminator
                         (dotimes (k *k*)
-                          (let* ((dr (discriminate x c))
-                                 (df (discriminate (generate z c) c))
+                          (let* ((dr (discriminate x))
+                                 (df (discriminate (generate z c)))
                                  (l ($data (lossd dr df))))
                             (incf dloss l)
                             (setf dlv l)
                             (optm *discriminator*)
                             ($cg! *discriminator*)
-                            ($cg! *generator*)))
+                            ($cg! *generator*)
+                            ($cg! *qnet*)))
                         ;; generator
-                        (let* ((df (discriminate (generate z c) c))
+                        (let* ((df (discriminate (generate z c)))
                                (l ($data (lossg df))))
                           (incf gloss l)
                           (setf dgv l)
                           (optm *generator*)
                           ($cg! *discriminator*)
-                          ($cg! *generator*))
-                        (when (zerop (rem bidx 100))
-                          (prn "  D/L:" bidx dlv dgv))))
+                          ($cg! *generator*)
+                          ($cg! *qnet*))
+                        ;; q network
+                        (let* ((g-sample (generate z c))
+                               (qc (qnet g-sample))
+                               (eps ($constant 1E-8))
+                               (l ($data ($mean ($neg ($sum ($* c ($log ($+ qc eps))) 1))))))
+                          (incf qloss l)
+                          (setf dqv l)
+                          (optm *qnet*)
+                          ($cg! *discriminator*)
+                          ($cg! *generator*)
+                          ($cg! *qnet*))
+                        (when (zerop (rem bidx 200))
+                          (prn "  D/L/Q:" bidx dlv dgv dqv))
+                        (when (zerop (rem bidx 400))
+                          (gcf))))
             (when (zerop (rem epoch 1))
-              (let* ((c ($constant (car *train-data-labels*)))
-                     (g (generate (samplez) c)))
+              (let ((g (generate (samplez) (samplec))))
                 ($cg! *discriminator*)
                 ($cg! *generator*)
+                ($cg! *qnet*)
                 (loop :for i :from 1 :to 1
                       :for s = (random *batch-size*)
                       :for fname = (format nil "~A/i~A-~A.png" *output* epoch i)
                       :do (outpng ($index ($data g) 0 s) fname))))
-            (prn " LOSS:" epoch (/ dloss *train-count*) (/ gloss *train-count*))
+            (prn " LOSS:" epoch (/ dloss *train-count*) (/ gloss *train-count*)
+                 (/ qloss *train-count*))
             (gcf)))
 
 (defun outpngs49 (data81 fname &optional (w 28) (h 28))
