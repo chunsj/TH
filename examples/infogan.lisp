@@ -21,11 +21,18 @@
 
 (defparameter *output* (format nil "~A/Desktop" (user-homedir-pathname)))
 
-(defun bced (dr df) ($+ ($bce dr ($constant ($one dr))) ($bce df ($constant ($zero df)))))
-(defun bceg (df) ($bce df ($constant ($one df))))
+(defparameter *eps* ($constant 1E-8))
 
-(defun lossd (dr df) (bced dr df))
-(defun lossg (df) (bceg df))
+(defun lossd (dr df)
+  (let ((dr ($+ dr *eps*))
+        (df ($+ df *eps*)))
+    ($neg ($mean ($+ ($log dr) ($log ($- 1 df)))))))
+(defun lossg (df)
+  (let ((df ($+ df *eps*)))
+    ($neg ($mean ($log df)))))
+(defun lossq (c qc)
+  (let ((qc ($+ qc *eps*)))
+    ($mean ($neg ($sum ($* c ($log qc)) 1)))))
 
 ;; XXX cannot figure out why adam works best (adadelta does not work well)
 (defun optm (params) ($amgd! params 1E-3))
@@ -163,10 +170,10 @@
                         ;; q network
                         (let* ((g-sample (generate z c))
                                (qc (qnet g-sample))
-                               (eps ($constant 1E-8))
-                               (l ($data ($mean ($neg ($sum ($* c ($log ($+ qc eps))) 1))))))
+                               (l ($data (lossq c qc))))
                           (incf qloss l)
                           (setf dqv l)
+                          (optm *generator*)
                           (optm *qnet*)
                           ($cg! *discriminator*)
                           ($cg! *generator*)
@@ -188,8 +195,8 @@
                  (/ qloss *train-count*))
             (gcf)))
 
-(defun outpngs49 (data81 fname &optional (w 28) (h 28))
-  (let* ((n 7)
+(defun outpngs25 (data81 fname &optional (w 28) (h 28))
+  (let* ((n 5)
          (img (opticl:make-8-bit-gray-image (* n w) (* n h)))
          (datas (mapcar (lambda (data) ($reshape data w h)) data81)))
     (loop :for i :from 0 :below n
@@ -205,14 +212,16 @@
     (opticl:write-png-file fname img)))
 
 ;; generate samples
-(let* ((c ($constant (car *train-data-labels*)))
-       (generated (generate (samplez) c))
-       (data ($constant (car *train-data-batches*))))
-  (outpngs49 (loop :for i :from 0 :below 49
+(let* ((c (let ((c (zeros *batch-size* *lbl-size*)))
+            (loop :for i :from 0 :below *batch-size*
+                  :do (if (< i 10)
+                          (setf ($ c i i) 1)
+                          (setf ($ c i (rem i 10)) 1)))
+            ($constant c)))
+       (generated (generate (samplez) c)))
+  (outpngs25 (loop :for i :from 0 :below 25
                    :collect ($index ($data generated) 0 i))
-             (format nil "~A/G49.png" *output*))
-  (outpngs49 (loop :for i :from 0 :below 49
-                   :collect ($index ($data data) 0 i))
-             (format nil "~A/D49.png" *output*))
+             (format nil "~A/G9.png" *output*))
   ($cg! *discriminator*)
-  ($cg! *generator*))
+  ($cg! *generator*)
+  ($cg! *qnet*))
