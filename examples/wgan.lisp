@@ -82,7 +82,7 @@
 
 (defun samplez () ($constant (rndn *batch-size* *gen-size*)))
 
-(defparameter *epoch* 100)
+(defparameter *epoch* 200)
 (defparameter *k* 5)
 
 ($cg! *discriminator*)
