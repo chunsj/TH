@@ -23,7 +23,6 @@
 (defun lossd (dr df) ($neg ($- ($mean dr) ($mean df))))
 (defun lossg (df) ($neg ($mean df)))
 
-;; XXX cannot figure out why adam works best (adadelta does not work well)
 (defun optm (params) ($rmgd! params 1E-4))
 
 (defun outpng (data fname &optional (w 28) (h 28))
@@ -36,7 +35,7 @@
     (opticl:write-png-file fname img)))
 
 ;; training data - uses batches for performance, 30, 60 works well
-(defparameter *batch-size* 30)
+(defparameter *batch-size* 60)
 (defparameter *batch-count* (/ 60000 *batch-size*))
 
 (defparameter *mnist-train-image-batches*
