@@ -350,6 +350,7 @@
            #:$cec
            #:$relu
            #:$lrelu
+           #:$elu
            #:$softmax
            #:$logsoftmax
            #:$bnorm
