@@ -376,4 +376,5 @@
            #:vrnt
            #:vxavier
            #:vhe
-           #:vlecun))
+           #:vlecun
+           #:vselu))
