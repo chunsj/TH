@@ -5,6 +5,7 @@
 (defgeneric $relu (x))
 (defgeneric $lrelu (x &optional nv))
 (defgeneric $elu (x &optional α))
+(defgeneric $selu (x))
 (defgeneric $softmax (x))
 (defgeneric $bnorm (x gamma beta mean sd &optional trainp momentum eps))
 (defgeneric $dropout (x &optional trainp p))
@@ -102,7 +103,7 @@
 (defmethod $elu ((x number) &optional (α 1))
   (if (<= x 0)
       (* α (- (exp x) 1))
-      (* α x)))
+      x))
 
 (defmethod $elu ((x tensor) &optional (α 1))
   (let ((output ($empty x)))
@@ -119,6 +120,35 @@
     (setf ($name result) "ELU")
     ($gp! result x)
     ($pfn! x (lambda () (delu ($data result) ($gradient result) α)))
+    result))
+
+(defmethod $selu ((x number))
+  (let ((alpha 1.6732632423543772848170429916717)
+        (scale 1.0507009873554804934193349852946))
+    (* scale
+       (if (<= x 0)
+           (* alpha (- (exp x) 1))
+           x))))
+
+(defmethod $selu ((x tensor))
+  (let ((output ($empty x))
+        (alpha 1.6732632423543772848170429916717)
+        (scale 1.0507009873554804934193349852946))
+    (nn-elu-update-output x output alpha scale nil)
+    output))
+
+(defun dselu (output gradient)
+  (let ((dinput ($empty output))
+        (alpha 1.6732632423543772848170429916717)
+        (scale 1.0507009873554804934193349852946))
+    (nn-elu-update-grad-input gradient dinput output alpha scale)
+    dinput))
+
+(defmethod $selu ((x node))
+  (let ((result (node ($selu ($data x)))))
+    (setf ($name result) "SELU")
+    ($gp! result x)
+    ($pfn! x (lambda () (dselu ($data result) ($gradient result))))
     result))
 
 (defmethod $softmax ((x tensor))

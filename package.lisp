@@ -351,6 +351,7 @@
            #:$relu
            #:$lrelu
            #:$elu
+           #:$selu
            #:$softmax
            #:$logsoftmax
            #:$bnorm
