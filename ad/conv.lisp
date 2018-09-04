@@ -9,6 +9,99 @@
 (defgeneric $avgpool2d (x kw kh &optional dw dh pw ph ceilp count-pad-p)
   (:documentation "Performs average pooling over x."))
 
+(defgeneric $dconv2d (x w &optional b dw dh pw ph aw ah)
+  (:documentation "Performs deconvolution using w weight, b bias and others."))
+
+(defmethod $dconv2d ((x tensor) (w tensor) &optional b (dw 1) (dh 1) (pw 0) (ph 0) (aw 0) (ah 0))
+  (let* ((wsz ($size w))
+         (kw ($ wsz 2))
+         (kh ($ wsz 3))
+         (out ($empty x))
+         (f ($empty x))
+         (df ($empty x)))
+    (nn-spatial-full-convolution-update-output x out w b f df kw kh dw dh pw ph aw ah)
+    out))
+
+(defmethod $dconv2d ((x node) (w node) &optional b (dw 1) (dh 1) (pw 0) (ph 0) (aw 0) (ah 0))
+  (let* ((wsz ($size w))
+         (kw ($ wsz 2))
+         (kh ($ wsz 3))
+         (f ($empty ($data x)))
+         (df ($empty ($data x)))
+         (out ($empty ($data x))))
+    (nn-spatial-full-convolution-update-output ($data x) out ($data w) (if b ($data b) b)
+                                               f df kw kh dw dh pw ph aw ah)
+    (let ((result (node out)))
+      (setf ($name result) "DCONV2D")
+      (if b
+          ($gp! result x w b)
+          ($gp! result x w))
+      (if b
+          (let* ((dx nil)
+                 (dw nil)
+                 (db nil)
+                 (gfn (lambda ()
+                        (unless (and dx dw db)
+                          (setf dx ($empty ($data x)))
+                          (setf dw (apply #'zeros ($size w)))
+                          (setf db (apply #'zeros ($size b)))
+                          (if (or ($gradientp x) ($gradientp w) ($gradientp b))
+                              (nn-spatial-full-convolution-update-grad-input ($data x)
+                                                                             ($gradient result)
+                                                                             dx
+                                                                             ($data w)
+                                                                             f
+                                                                             kw kh
+                                                                             dw dh
+                                                                             pw ph
+                                                                             aw ah))
+                          (if (or ($gradientp w) ($gradientp b))
+                              (nn-spatial-full-convolution-acc-grad-parameters ($data x)
+                                                                               ($gradient result)
+                                                                               dw
+                                                                               db
+                                                                               f
+                                                                               df
+                                                                               kw kh
+                                                                               dw dh
+                                                                               pw ph
+                                                                               aw ah
+                                                                               1))))))
+            ($pfn! x (lambda () (funcall gfn) dx))
+            ($pfn! w (lambda () (funcall gfn) dw))
+            ($pfn! b (lambda () (funcall gfn) db)))
+          (let* ((dx nil)
+                 (dw nil)
+                 (gfn (lambda ()
+                        (unless (and dx dw)
+                          (setf dx ($empty ($data x)))
+                          (setf dw (apply #'zeros ($size w)))
+                          (if (or ($gradientp x) ($gradientp w))
+                              (nn-spatial-full-convolution-update-grad-input ($data x)
+                                                                             ($gradient result)
+                                                                             dx
+                                                                             ($data w)
+                                                                             f
+                                                                             kw kh
+                                                                             dw dh
+                                                                             pw ph
+                                                                             aw ah))
+                          (if (or ($gradientp w))
+                              (nn-spatial-full-convolution-acc-grad-parameters ($data x)
+                                                                               ($gradient result)
+                                                                               dw
+                                                                               nil
+                                                                               f
+                                                                               df
+                                                                               kw kh
+                                                                               dw dh
+                                                                               pw ph
+                                                                               aw ah
+                                                                               1))))))
+            ($pfn! x (lambda () (funcall gfn) dx))
+            ($pfn! w (lambda () (funcall gfn) dw))))
+      result)))
+
 (defmethod $conv2d ((x tensor) (k tensor) &optional b (dw 1) (dh 1) (pw 0) (ph 0))
   (let ((out ($empty x))
         (f ($empty x))
