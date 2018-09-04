@@ -157,7 +157,8 @@
     ($pfn! k (lambda () ($conv2 ($data x) ($gradient result))))
     result))
 
-;; w should have shape of (input-planes, output-planes, kh, kw)
+;; w should have the shape of (input-planes, output-planes, kh, kw)
+;; b should have the shape of (1, output-planes)
 (defmethod $dconv2d ((x tensor) (w tensor) &optional b (dw 1) (dh 1) (pw 0) (ph 0) (aw 0) (ah 0))
   (let* ((wsz ($size w))
          (kw ($ wsz 2))
