@@ -12,6 +12,8 @@
 (defgeneric $dconv2d (x w &optional b dw dh pw ph aw ah)
   (:documentation "Performs deconvolution using w weight, b bias and others."))
 
+;; k should have the shape of (output-planes, intput-planes, kh, kw)
+;; b should have the shape of (output-planes)
 (defmethod $conv2d ((x tensor) (k tensor) &optional b (dw 1) (dh 1) (pw 0) (ph 0))
   (let ((out ($empty x))
         (f ($empty x))
@@ -158,7 +160,7 @@
     result))
 
 ;; w should have the shape of (input-planes, output-planes, kh, kw)
-;; b should have the shape of (1, output-planes)
+;; b should have the shape of (output-planes)
 (defmethod $dconv2d ((x tensor) (w tensor) &optional b (dw 1) (dh 1) (pw 0) (ph 0) (aw 0) (ah 0))
   (let* ((wsz ($size w))
          (kw ($ wsz 2))
@@ -169,43 +171,43 @@
     (nn-spatial-full-convolution-update-output x out w b f df kw kh dw dh pw ph aw ah)
     out))
 
-(defmethod $dconv2d ((x node) (w node) &optional b (dw 1) (dh 1) (pw 0) (ph 0) (aw 0) (ah 0))
-  (let* ((wsz ($size w))
-         (kw ($ wsz 2))
-         (kh ($ wsz 3))
+(defmethod $dconv2d ((x node) (k node) &optional b (dw 1) (dh 1) (pw 0) (ph 0) (aw 0) (ah 0))
+  (let* ((ksz ($size k))
+         (kw ($ ksz 2))
+         (kh ($ ksz 3))
          (f ($empty ($data x)))
          (df ($empty ($data x)))
          (out ($empty ($data x))))
-    (nn-spatial-full-convolution-update-output ($data x) out ($data w) (if b ($data b) b)
+    (nn-spatial-full-convolution-update-output ($data x) out ($data k) (if b ($data b) b)
                                                f df kw kh dw dh pw ph aw ah)
     (let ((result (node out)))
       (setf ($name result) "DCONV2D")
       (if b
-          ($gp! result x w b)
-          ($gp! result x w))
+          ($gp! result x k b)
+          ($gp! result x k))
       (if b
           (let* ((dx nil)
-                 (dw nil)
+                 (dk nil)
                  (db nil)
                  (gfn (lambda ()
-                        (unless (and dx dw db)
-                          (setf dx ($empty ($data x)))
-                          (setf dw (apply #'zeros ($size w)))
+                        (unless (and dx dk db)
+                          (setf dx (apply #'zeros ($size x)))
+                          (setf dk (apply #'zeros ($size k)))
                           (setf db (apply #'zeros ($size b)))
-                          (if (or ($gradientp x) ($gradientp w) ($gradientp b))
+                          (if (or ($gradientp x) ($gradientp k) ($gradientp b))
                               (nn-spatial-full-convolution-update-grad-input ($data x)
                                                                              ($gradient result)
                                                                              dx
-                                                                             ($data w)
+                                                                             ($data k)
                                                                              f
                                                                              kw kh
                                                                              dw dh
                                                                              pw ph
                                                                              aw ah))
-                          (if (or ($gradientp w) ($gradientp b))
+                          (if (or ($gradientp k) ($gradientp b))
                               (nn-spatial-full-convolution-acc-grad-parameters ($data x)
                                                                                ($gradient result)
-                                                                               dw
+                                                                               dk
                                                                                db
                                                                                f
                                                                                df
@@ -215,28 +217,28 @@
                                                                                aw ah
                                                                                1))))))
             ($pfn! x (lambda () (funcall gfn) dx))
-            ($pfn! w (lambda () (funcall gfn) dw))
+            ($pfn! k (lambda () (funcall gfn) dk))
             ($pfn! b (lambda () (funcall gfn) db)))
           (let* ((dx nil)
-                 (dw nil)
+                 (dk nil)
                  (gfn (lambda ()
-                        (unless (and dx dw)
+                        (unless (and dx dk)
                           (setf dx ($empty ($data x)))
-                          (setf dw (apply #'zeros ($size w)))
-                          (if (or ($gradientp x) ($gradientp w))
+                          (setf dk (apply #'zeros ($size k)))
+                          (if (or ($gradientp x) ($gradientp k))
                               (nn-spatial-full-convolution-update-grad-input ($data x)
                                                                              ($gradient result)
                                                                              dx
-                                                                             ($data w)
+                                                                             ($data k)
                                                                              f
                                                                              kw kh
                                                                              dw dh
                                                                              pw ph
                                                                              aw ah))
-                          (if (or ($gradientp w))
+                          (if (or ($gradientp k))
                               (nn-spatial-full-convolution-acc-grad-parameters ($data x)
                                                                                ($gradient result)
-                                                                               dw
+                                                                               dk
                                                                                nil
                                                                                f
                                                                                df
@@ -246,5 +248,5 @@
                                                                                aw ah
                                                                                1))))))
             ($pfn! x (lambda () (funcall gfn) dx))
-            ($pfn! w (lambda () (funcall gfn) dw))))
+            ($pfn! k (lambda () (funcall gfn) dk))))
       result)))
