@@ -130,7 +130,7 @@
 
 (defun optm (params) ($amgd! params 1E-3))
 
-(defparameter *epoch* 10);; 10, 10, 10
+(defparameter *epoch* 20)
 (defparameter *k* 1)
 
 ($cg! *generator*)
