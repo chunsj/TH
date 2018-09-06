@@ -86,3 +86,37 @@
 
 ;; XXX yes, without resizing this problem can be solved
 ;; just need to find proper deconvolution parameters
+;; okay, different trial with different network
+(defparameter *nz* 100)
+
+(defparameter *generator* (parameters))
+(defparameter *gw1* ($parameter *generator* (vxavier (list *nz* 784))))
+(defparameter *gb1* ($parameter *generator* (zeros 1 784)))
+(defparameter *gk2* ($parameter *generator* (rnd 16 32 4 4)))
+(defparameter *gb2* ($parameter *generator* (rnd 32)))
+(defparameter *gk3* ($parameter *generator* (rnd 32 1 4 4)))
+(defparameter *gb3* ($parameter *generator* (rnd 1)))
+
+(defun generate (z)
+  (let ((nbatch ($size z 0)))
+    (-> z
+        ($affine *gw1* *gb1*)
+        ($reshape nbatch 16 7 7) ;; 16 plane, 7x7
+        ($selu)
+        ($dconv2d *gk2* *gb2* 2 2 1 1) ;; 32 plane, 14x14
+        ($selu)
+        ($dconv2d *gk3* *gb3* 2 2 1 1) ;; 1 plane, 28x28
+        ($tanh))))
+
+(let* ((nbatch 10)
+       (noise ($constant (rndn nbatch *nz*))))
+  (prn noise)
+  (prn (-> noise
+           ($affine *gw1* *gb1*)
+           ($reshape nbatch 16 7 7) ;; 16 plane, 7x7
+           ($selu)
+           ($dconv2d *gk2* *gb2* 2 2 1 1) ;; 32 plane, 14x14
+           ($selu)
+           ($dconv2d *gk3* *gb3* 2 2 1 1) ;; 1 plane, 28x28
+           ($tanh)))
+  (prn (generate noise)))
