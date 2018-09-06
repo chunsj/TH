@@ -57,7 +57,7 @@
         ($reshape nbatch 784) ;; 1x784, flatten
         ($affine *dw3* *db3*)
         ($selu)
-        ($affine *dw4* *db4*)
+        ($affine *dw4* *db4*) ;; 1x1
         ($sigmoid))))
 
 (let* ((nbatch 10)
