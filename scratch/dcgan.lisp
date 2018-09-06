@@ -12,82 +12,6 @@
 (in-package :dcgan)
 
 (defparameter *nz* 100)
-(defparameter *ngf* 64)
-(defparameter *ndf* 64)
-(defparameter *nc* 1) ;; color plane
-
-(defparameter *stdv* (/ 1 (sqrt (* *nz* (* *ngf* 8) 4 4))))
-(defun initw (w) ($* *stdv* ($- ($* w 2) 1)))
-
-(defparameter *generator* (parameters))
-(defparameter *gk1* ($parameter *generator* (initw (rnd *nz* (* *ngf* 8) 4 4))))
-(defparameter *gb1* ($parameter *generator* (initw (rnd (* *ngf* 8)))))
-(defparameter *gk2* ($parameter *generator* (initw (rnd (* *ngf* 8) (* *ngf* 4) 4 4))))
-(defparameter *gb2* ($parameter *generator* (initw (rnd (* *ngf* 4)))))
-(defparameter *gk3* ($parameter *generator* (initw (rnd (* *ngf* 4) (* *ngf* 2) 4 4))))
-(defparameter *gb3* ($parameter *generator* (initw (rnd (* *ngf* 2)))))
-(defparameter *gk4* ($parameter *generator* (initw (rnd (* *ngf* 2) *ngf* 4 4))))
-(defparameter *gb4* ($parameter *generator* (initw (rnd *ngf*))))
-(defparameter *gk5* ($parameter *generator* (initw (rnd *ngf* *nc* 4 4))))
-(defparameter *gb5* ($parameter *generator* (initw (rnd *nc*))))
-
-(defun generate (z)
-  (-> z
-      ($dconv2d *gk1* *gb1*)
-      ($selu)
-      ($dconv2d *gk2* *gb2* 2 2 1 1)
-      ($selu)
-      ($dconv2d *gk3* *gb3* 2 2 1 1)
-      ($selu)
-      ($dconv2d *gk4* *gb4* 2 2 1 1)
-      ($selu)
-      ($dconv2d *gk5* *gb5* 2 2 1 1)))
-
-(let ((noise ($constant (rndn 10 *nz* 1 1))))
-  ($cg! *generator*)
-  (prn noise)
-  (prn (generate noise)))
-
-(defun initd (w) ($* 0.02 w))
-
-(defparameter *discriminator* (parameters))
-(defparameter *dk1* ($parameter *discriminator* (initd (rndn *ndf* *nc* 4 4))))
-(defparameter *db1* ($parameter *discriminator* (initd (rndn *ndf*))))
-(defparameter *dk2* ($parameter *discriminator* (initd (rndn (* 2 *ndf*) *ndf* 4 4))))
-(defparameter *db2* ($parameter *discriminator* (initd (rndn (* 2 *ndf*)))))
-(defparameter *dk3* ($parameter *discriminator* (initd (rndn (* 4 *ndf*) (* 2 *ndf*) 4 4))))
-(defparameter *db3* ($parameter *discriminator* (initd (rndn (* 4 *ndf*)))))
-(defparameter *dk4* ($parameter *discriminator* (initd (rndn (* 8 *ndf*) (* 4 *ndf*) 4 4))))
-(defparameter *db4* ($parameter *discriminator* (initd (rndn (* 8 *ndf*)))))
-(defparameter *dk5* ($parameter *discriminator* (initd (rndn 1 (* 8 *ndf*) 4 4))))
-(defparameter *db5* ($parameter *discriminator* (initd (rndn 1))))
-
-(defun discriminate (x)
-  (-> x
-      ($conv2d *dk1* *db1* 2 2 1 1)
-      ($selu)
-      ($conv2d *dk2* *db2* 2 2 1 1)
-      ($selu)
-      ($conv2d *dk3* *db3* 2 2 1 1)
-      ($selu)
-      ($conv2d *dk4* *db4* 2 2 1 1)
-      ($selu)
-      ($conv2d *dk5* *db5*)
-      ($sigmoid)
-      ($reshape 10 1)))
-
-(let ((input ($constant (rndn 10 *nc* 64 64))))
-  ($cg! *discriminator*)
-  (prn input)
-  (prn (discriminate input)))
-
-;; XXX use this to resize mnist data to 64x64
-;;(opticl:resize-image ...)
-
-;; XXX yes, without resizing this problem can be solved
-;; just need to find proper deconvolution parameters
-;; okay, different trial with different network
-(defparameter *nz* 100)
 
 (defparameter *generator* (parameters))
 (defparameter *gw1* ($parameter *generator* (vxavier (list *nz* 784))))
@@ -111,12 +35,32 @@
 (let* ((nbatch 10)
        (noise ($constant (rndn nbatch *nz*))))
   (prn noise)
-  (prn (-> noise
-           ($affine *gw1* *gb1*)
-           ($reshape nbatch 16 7 7) ;; 16 plane, 7x7
-           ($selu)
-           ($dconv2d *gk2* *gb2* 2 2 1 1) ;; 32 plane, 14x14
-           ($selu)
-           ($dconv2d *gk3* *gb3* 2 2 1 1) ;; 1 plane, 28x28
-           ($tanh)))
   (prn (generate noise)))
+
+(defparameter *discriminator* (parameters))
+(defparameter *dk1* ($parameter *discriminator* (rndn 32 1 4 4)))
+(defparameter *db1* ($parameter *discriminator* (rndn 32)))
+(defparameter *dk2* ($parameter *discriminator* (rndn 16 32 4 4)))
+(defparameter *db2* ($parameter *discriminator* (rndn 16)))
+(defparameter *dw3* ($parameter *discriminator* (rndn 784 784)))
+(defparameter *db3* ($parameter *discriminator* (zeros 1 784)))
+(defparameter *dw4* ($parameter *discriminator* (rndn 784 1)))
+(defparameter *db4* ($parameter *discriminator* (zeros 1 1)))
+
+(defun discriminate (x)
+  (let ((nbatch ($size x 0)))
+    (-> x
+        ($conv2d *dk1* *db1* 2 2 1 1) ;; 32 plane, 14x14
+        ($selu)
+        ($conv2d *dk2* *db2* 2 2 1 1) ;; 16 plane, 7x7
+        ($selu)
+        ($reshape nbatch 784) ;; 1x784, flatten
+        ($affine *dw3* *db3*)
+        ($selu)
+        ($affine *dw4* *db4*)
+        ($sigmoid))))
+
+(let* ((nbatch 10)
+       (x ($constant (rndn nbatch 1 28 28))))
+  (prn x)
+  (prn (discriminate x)))
