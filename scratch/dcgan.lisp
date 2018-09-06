@@ -83,3 +83,6 @@
 
 ;; XXX use this to resize mnist data to 64x64
 ;;(opticl:resize-image ...)
+
+;; XXX yes, without resizing this problem can be solved
+;; just need to find proper deconvolution parameters
