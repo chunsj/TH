@@ -27,9 +27,10 @@
   7. Karpathy's character generation using RNN/LSTM: examples/gench{ars,-lstm,-lstm2}.lisp
   8. Sparse autoencoder: examples/autoenc.lisp
   9. Restricted Boltzmann Machine: examples/rbm.lisp
-  10. Generative Adversarial Network: examples/{ls,c,info,w}gan[2].lisp (opticl is required)
-  11. Simple GAN (Fitting normal distribution): gan-simple.lisp
-  12. Neural Arithmetic Logic Unit or NALU: examples/nalu.lisp
+  10. Simple GAN (Fitting normal distribution): gan-simple.lisp
+  11. Generative Adversarial Network: examples/{ls,c,info,w}gan[2].lisp (opticl is required)
+  12. Deep Convolutional GAN: examples/dcgan.lisp
+  13. Neural Arithmetic Logic Unit or NALU: examples/nalu.lisp
 
 ## Selected Book Follow Ups
   1. Deep Learning from Scratch: dlfs
