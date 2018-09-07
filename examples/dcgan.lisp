@@ -84,21 +84,6 @@
 (defparameter *dw4* ($parameter *discriminator* ($* 0.04 (rndn *hidden-size* 1))))
 (defparameter *db4* ($parameter *discriminator* (zeros 1 1)))
 
-(let* ((x ($constant (rndn *batch-size* 1 28 28)))
-       (nbatch ($size x 0)))
-  ($cg! *discriminator*)
-  (prn (-> x
-           ($conv2d *dk1* *db1* 2 2 1 1) ;; 32 plane, 14x14
-           ($lrelu)
-           ($conv2d *dk2* *db2* 2 2 1 1) ;; 16 plane, 7x7
-           ($selu)
-           ($reshape nbatch *nimg*) ;; 1x784, flatten
-           ($affine *dw3* *db3*)
-           ($selu)
-           ($affine *dw4* *db4*) ;; 1x1
-           ($sigmoid)))
-  ($cg! *discriminator*))
-
 (defun discriminate (x)
   (let ((nbatch ($size x 0)))
     (-> x
@@ -143,7 +128,7 @@
                            :collect k)
         :collect ($contiguous! ($- ($* 2 ($index ($ *mnist* :train-images) 0 range)) 1))))
 
-(defparameter *train-data-batches* (subseq *mnist-train-image-batches* 0))
+(defparameter *train-data-batches* (subseq *mnist-train-image-batches* 0 1))
 (defparameter *train-count* ($count *train-data-batches*))
 
 (gcf)
@@ -181,7 +166,7 @@
                           ($cg! *generator*)
                           ($cg! *discriminator*))
                         (when (zerop (rem bidx 10))
-                          (prn "  D/L:" bidx dlv dgv)
+                          (prn "  D/G:" bidx dlv dgv)
                           (gcf))))
             ;; output at every epoch
             (prn " LOSS:" epoch (/ dloss *train-count* *k*) (/ gloss *train-count*))
@@ -193,7 +178,6 @@
               ($cg! *discriminator*)
               (gcf))))
 
-
 ;; generate samples
 (let ((generated (generate (samplez))))
   (outpngs (loop :for i :from 0 :below 49
@@ -201,3 +185,9 @@
            (format nil "~A/samples.png" *output*))
   ($cg! *generator*)
   ($cg! *discriminator*))
+
+;; check training data
+(let ((x (car *train-data-batches*)))
+  (outpngs (loop :for i :from 0 :below 49
+                 :collect ($index x 0 i))
+           (format nil "~A/images.png" *output*)))
