@@ -10,6 +10,12 @@
   I hope this library can be applied to the problems of differentiable programming. You can see
   what this library can do from examples. They are mostly neural network applications.
 
+## About libTH/libATen
+  I've done some modification (from lua version to pytorch) in aten and you need that if you want
+  to build from scratch. The location is https://bitbucket.org/chunsj/pytorch.personal/
+  Building one is as usual, refer README.md under aten; if you have proper dependencies, it's simple
+  as make a build directory, run cmake in it, and run make install.
+
 ## How to Load
   1. Build libATen from pytorch source code or try with prebuilt binary files under libs.
   2. You'll need my utility library mu.
