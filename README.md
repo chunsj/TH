@@ -1,7 +1,8 @@
-# Common Lisp binding for libTH (in fact, libATen)
+# My Deep Learning Library for Common Lisp using libTH (in fact, libATen)
 
 ## What is this?
-  Common Lisp Deep Learning Library which supports automatic backpropagation.
+  Common Lisp Deep Learning Library which supports automatic backpropagation. I'd like to learn how
+  neural network and automatic backpropagation works and this is my personal journey on the subject.
 
 ## Why?
   There should be a tensor/neural network library in common lisp which is easy to use(byte me!).
