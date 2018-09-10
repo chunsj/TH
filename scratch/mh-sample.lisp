@@ -22,11 +22,14 @@
           :for pres = (apply prop-fn (cons x0 prob-fn-args))
           :for x-star = (getf pres :new)
           :for factor = (getf pres :factor)
-          :for u = (random 1D0)
+          :for u = (apply #'rnd ($size x0))
           :for lnprob-star = (funcall lnprob-fn x-star)
           :for h = ($* factor ($exp ($- lnprob-star lnprob0)))
-          :do (progn
-                (prn u h)
+          :do (let ((nx0 ($clone x0)))
+                ;; (prn u h)
+                ;; XXX how to deal with (< u h) for multidimensional x?
+                (setf ($ nx0 ($lt u h)) x-star)
+                (setf ($ lnprob0 ($lt u h)) lnprob-star)
                 (when (< u h)
                   (setf x0 x-star)
                   (setf lnprob0 lnprob-star)
