@@ -1,5 +1,5 @@
 ;; from
-;; https://jellis18.github.
+;; https://jellis18.github.io/post/2018-01-02-mcmc-part1/
 
 (defpackage :mh-sample
   (:use #:common-lisp
