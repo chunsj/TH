@@ -58,7 +58,7 @@
     (/ (- ($sum ($mul! ($log ($add a tiny)) b))) nbatch)))
 
 (defmethod $cee ((a node) (b node))
-  (let ((tiny ($broadcast ($constant 1D-7) a))
+  (let ((tiny ($constant 1D-7))
         (nbatch ($constant (if (eq 1 ($ndim a)) 1 ($size a 0)))))
     ($div ($neg ($sum ($mul ($log ($add a tiny)) b))) nbatch)))
 
