@@ -30,7 +30,7 @@
 ;;(write-gray-png-file (read-train-dog-file 20 64 64) "dog20.png")
 
 (defparameter *batch-size* 10)
-(defparameter *batch-count* 50) ;; almost 20 secs or more
+(defparameter *batch-count* 500) ;; almost 20 secs or more
 (defparameter *img-size* 50)
 
 (defparameter *train-data*
@@ -51,38 +51,68 @@
   (let ((data nil))
     (loop :for bidx :from 0 :below *batch-count*
           :for sidx = (* bidx *batch-size*)
-          :do (push (let ((tensor (tensor (* 2 *batch-size*) 1)))
+          :do (push (let ((tensor (zeros (* 2 *batch-size*) 2)))
                       (loop :for i :from sidx :below (+ sidx *batch-size*)
-                            :do (setf ($ tensor (* 2 (- i sidx))) 0
-                                      ($ tensor (1+ (* 2 (- i sidx)))) 1))
+                            :do (setf ($ tensor (* 2 (- i sidx)) 0) 1
+                                      ($ tensor (1+ (* 2 (- i sidx))) 1) 1))
                       tensor)
                     data))
     (reverse data)))
 
 (defparameter *cnd* (parameters))
 
-(defparameter *k1* ($parameter *cnd* ($* 0.01 (rndn 16 3 5 5))))
-(defparameter *b1* ($parameter *cnd* (zeros 16)))
-(defparameter *k2* ($parameter *cnd* ($* 0.01 (rndn 32 16 5 5))))
-(defparameter *b2* ($parameter *cnd* (zeros 32)))
-(defparameter *w3* ($parameter *cnd* ($* 0.01 (rndn 51200 1024))))
-(defparameter *b3* ($parameter *cnd* (zeros 1 1024)))
-(defparameter *w4* ($parameter *cnd* ($* 0.01 (rndn 1024 2))))
-(defparameter *b4* ($parameter *cnd* (zeros 1 2)))
+(defparameter *k1* ($parameter *cnd* ($* 0.01 (rndn 32 3 5 5))))
+(defparameter *b1* ($parameter *cnd* (zeros 32)))
+(defparameter *k2* ($parameter *cnd* ($* 0.01 (rndn 64 32 5 5))))
+(defparameter *b2* ($parameter *cnd* (zeros 64)))
+(defparameter *k3* ($parameter *cnd* ($* 0.01 (rndn 128 64 5 5))))
+(defparameter *b3* ($parameter *cnd* (zeros 128)))
+(defparameter *k4* ($parameter *cnd* ($* 0.01 (rndn 64 128 5 5))))
+(defparameter *b4* ($parameter *cnd* (zeros 64)))
+(defparameter *k5* ($parameter *cnd* ($* 0.01 (rndn 32 64 5 5))))
+(defparameter *b5* ($parameter *cnd* (zeros 32)))
+(defparameter *w6* ($parameter *cnd* (vxavier '(3200 1024))))
+(defparameter *b6* ($parameter *cnd* (zeros 1 1024)))
+(defparameter *w7* ($parameter *cnd* (vxavier '(1024 2))))
+(defparameter *b7* ($parameter *cnd* (zeros 1 2)))
 
 (defun network (x)
   (-> x
       ($conv2d *k1* *b1*)
       ($selu)
-      ($maxpool2d 2 2)
+      ($maxpool2d 5 5)
       ($conv2d *k2* *b2*)
       ($selu)
-      ($maxpool2d 2 2)
-      ($reshape ($size x 0) 51200)
-      ($affine *w3* *b3*)
+      ($maxpool2d 5 5)
+      ($conv2d *k3* *b3*)
       ($selu)
-      ($affine *w4* *b4*)
+      ($maxpool2d 5 5)
+      ($conv2d *k4* *b4*)
+      ($selu)
+      ($maxpool2d 5 5)
+      ($conv2d *k5* *b5*)
+      ($selu)
+      ($maxpool2d 5 5)
+      ($reshape ($size x 0) 3200)
+      ($affine *w6* *b6*)
+      ($selu)
+      ($affine *w7* *b7*)
       ($softmax)))
 
 ($cg! *cnd*)
 (gcf)
+
+(defun opt! (parameters) ($gd! parameters 1E-3))
+
+(defparameter *epoch* 10)
+
+(loop :for epoch :from 1 :to *epoch*
+      :do (progn
+            (loop :for data :in (subseq *train-data* 0 5)
+                  :for labels :in (subseq *train-labels* 0 5)
+                  :for bidx :from 1
+                  :do (let* ((y* (network ($constant data)))
+                             (loss ($cee y* ($constant labels))))
+                        (prn epoch "|" bidx ($data loss))
+                        (opt! *cnd*)
+                        (gcf)))))
