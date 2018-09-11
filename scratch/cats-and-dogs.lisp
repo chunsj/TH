@@ -102,9 +102,9 @@
 ($cg! *cnd*)
 (gcf)
 
-(defun opt! (parameters) ($gd! parameters 1E-3))
+(defun opt! (parameters) ($adgd! parameters))
 
-(defparameter *epoch* 10)
+(defparameter *epoch* 5)
 
 (loop :for epoch :from 1 :to *epoch*
       :do (progn
@@ -112,7 +112,7 @@
                   :for labels :in (subseq *train-labels* 0 5)
                   :for bidx :from 1
                   :do (let* ((y* (network ($constant data)))
-                             (loss ($cee y* ($constant labels))))
+                             (loss ($bce y* ($constant labels))))
                         (prn epoch "|" bidx ($data loss))
                         (opt! *cnd*)
                         (gcf)))))
