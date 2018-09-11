@@ -95,7 +95,7 @@
       ($maxpool2d 5 5)
       ($reshape ($size x 0) 3200)
       ($affine *w6* *b6*)
-      ($selu)
+      ($relu)
       ($affine *w7* *b7*)
       ($softmax)))
 
