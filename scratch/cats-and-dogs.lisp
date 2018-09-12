@@ -31,6 +31,7 @@
 
 (defparameter *batch-size* 50)
 (defparameter *batch-count* 100)
+(defparameter *test-count* 10)
 (defparameter *img-size* 64)
 
 (defparameter *train-data*
@@ -57,6 +58,32 @@
                       tensor)
                     data))
     (reverse data)))
+
+(defparameter *test-data*
+  (let ((data nil))
+    (loop :for bidx :from *batch-count* :below (+ *batch-count* *test-count*)
+          :for sidx = (* bidx *batch-size*)
+          :do (push (let ((tensor (tensor (* 2 *batch-size*) 3 *img-size* *img-size*)))
+                      (loop :for i :from sidx :below (+ sidx *batch-size*)
+                            :for cat = (read-train-cat-file i *img-size* *img-size*)
+                            :for dog = (read-train-dog-file i *img-size* *img-size*)
+                            :do (setf ($ tensor (* 2 (- i sidx))) cat
+                                      ($ tensor (1+ (* 2 (- i sidx)))) dog))
+                      tensor)
+                    data))
+    (reverse data)))
+
+(defparameter *test-labels*
+  (let ((data nil))
+    (loop :for bidx :from *batch-count* :below (+ *batch-count* *test-count*)
+          :for sidx = (* bidx *batch-size*)
+          :do (push (let ((tensor (zeros (* 2 *batch-size*))))
+                      (loop :for i :from sidx :below (+ sidx *batch-size*)
+                            :do (setf ($ tensor (* 2 (- i sidx))) 1))
+                      tensor)
+                    data))
+    (reverse data)))
+
 
 (defparameter *cnd* (parameters))
 
@@ -88,11 +115,10 @@
 
 (defun opt! (parameters) ($amgd! parameters 1E-4))
 
-(defparameter *epoch* 1) ;; 200 is okay?
+(defparameter *epoch* 200) ;; 200 is okay?
 (defparameter *train-size* (min 100 ($count *train-data*))) ;; to reduce time
 
-;; 1,2,3,4,5,6,7
-(loop :for epoch :from 1 :to *epoch*
+(loop :for epoch :from 1 :to (min 1 *epoch*)
       :do (progn
             (loop :for data :in (subseq *train-data* 0 *train-size*)
                   :for labels :in (subseq *train-labels* 0 *train-size*)
@@ -104,15 +130,8 @@
                         (when (zerop (rem bidx 2))
                           (gcf))))
             (when (zerop (rem epoch 10))
-              (let* ((bidx 50)
-                     (sidx (* bidx *batch-size*))
-                     (tensor (tensor (* 2 *batch-size*) 3 *img-size* *img-size*)))
-                (loop :for i :from sidx :below (+ sidx *batch-size*)
-                      :for cat = (read-train-cat-file i *img-size* *img-size*)
-                      :for dog = (read-train-dog-file i *img-size* *img-size*)
-                      :do (setf ($ tensor (* 2 (- i sidx))) cat
-                                ($ tensor (1+ (* 2 (- i sidx)))) dog))
-                (prn "TEST" ($ge ($data (network ($constant tensor))) 0.5))
+              (let ((tdata (nth (random *test-count*) *test-data*)))
+                (prn "TEST" ($ge ($data (network ($constant tdata))) 0.5))
                 ($cg! *cnd*)))))
 
 (prn ($reshape (tensor.float ($ge ($data (network ($constant (car *train-data*)))) 0.5))
@@ -121,16 +140,12 @@
 ($cg! *cnd*)
 
 ;; test
-(let* ((bidx *train-size*)
-       (sidx (* bidx *batch-size*))
-       (tensor (tensor (* 2 *batch-size*) 3 *img-size* *img-size*)))
-  (loop :for i :from sidx :below (+ sidx *batch-size*)
-        :for cat = (read-train-cat-file i *img-size* *img-size*)
-        :for dog = (read-train-dog-file i *img-size* *img-size*)
-        :do (setf ($ tensor (* 2 (- i sidx))) cat
-                  ($ tensor (1+ (* 2 (- i sidx)))) dog))
-  (prn "ERROR:" (let ((d ($- ($reshape (tensor.float ($ge ($data (network ($constant tensor))) 0.5))
-                                    (* 2 *batch-size*))
-                          (car *train-labels*))))
-               (/ ($dot d d) (* 2 *batch-size*))))
+(let* ((idx (random *test-count*))
+       (tdata (nth idx *test-data*))
+       (tlbl (nth idx *test-labels*)))
+  (prn "IDX:" idx)
+  (prn "ERROR:" (let* ((res ($data (network ($constant tdata))))
+                       (fres (tensor.float ($ge res 0.5)))
+                       (d ($- ($reshape fres (* 2 *batch-size*)) tlbl)))
+                  (/ ($dot d d) (* 2 *batch-size*))))
   ($cg! *cnd*))
