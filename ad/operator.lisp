@@ -24,7 +24,12 @@
 (defmethod $broadcast ((c number) (m tensor)) ($mul! ($one m) c))
 
 (defmethod $broadcast ((c node) (m node))
-  (cond ((eq 1 ($count ($data c))) (let ((result (node ($mul! ($one ($data m)) ($data c)))))
+  (cond ((numberp ($data c)) (let ((result (node ($mul! ($one ($data m)) ($data c)))))
+                               (setf ($name result) "BROADCAST")
+                               ($gp! result c)
+                               ($pfn! c (lambda () ($dot ($one ($data m)) ($gradient result))))
+                               result))
+        ((eq 1 ($count ($data c))) (let ((result (node ($mul! ($one ($data m)) ($data c)))))
                                      (setf ($name result) "BROADCAST")
                                      ($gp! result c)
                                      ($pfn! c (lambda () ($dot ($one ($data m)) ($gradient result))))
