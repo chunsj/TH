@@ -17,6 +17,8 @@
   files. (If you want to do this, refer https://bitbucket.org/chunsj/pytorch.personal/)
   Though current version of th does not support CUDA, I have a plan to support them and for this, you
   will need libTHC and libTHCUNN under torch installation directory.
+  For this recent changes in libraries, there might be still some problems due to the function signature
+  changes between aten and TH/THNN, these problems are under fixing if found.
 
 ## How to Load
   1. Build torch (to get libTH/libTHNN) or if possible build those library files.
