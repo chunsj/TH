@@ -17,21 +17,21 @@
 (defgeneric $cec (a b))
 
 (defmethod $bce ((a tensor) (b tensor))
-  (let ((output ($empty a)))
+  (let ((output ($resize! ($empty a) '(1))))
     (nn-bce-criterion-update-output a b output t nil)
     ($ output 0)))
 
-(defun dbce (input target gradient)
+(defun dbce (input target)
   (let ((dinput ($empty input)))
-    (nn-bce-criterion-update-grad-input input target (tensor (list gradient)) dinput t nil)
+    (nn-bce-criterion-update-grad-input input target dinput t nil)
     dinput))
 
 (defmethod $bce ((a node) (b node))
   (let ((result (node ($bce ($data a) ($data b)))))
     (setf ($name result) "BCE")
     ($gp! result a b)
-    ($pfn! a (lambda () (dbce ($data a) ($data b) ($gradient result))))
-    ($pfn! b (lambda () (dbce ($data b) ($data a) ($gradient result))))
+    ($pfn! a (lambda () (dbce ($data a) ($data b))))
+    ($pfn! b (lambda () (dbce ($data b) ($data a))))
     result))
 
 (defmethod $mse ((a tensor) (b tensor))

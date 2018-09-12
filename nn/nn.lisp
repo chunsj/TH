@@ -76,8 +76,7 @@
                                           (if size-average 1 0)
                                           (if weights
                                               ($handle weights)
-                                              (nilptr))
-                                          1))
+                                              (nilptr))))
 (defmethod nn-bce-criterion-update-output ((input tensor.double) (target tensor.double)
                                            (output tensor.double)
                                            size-average weights)
@@ -88,35 +87,27 @@
                                            (if size-average 1 0)
                                            (if weights
                                                ($handle weights)
-                                               (nilptr))
-                                           1))
+                                               (nilptr))))
 
-(defgeneric nn-bce-criterion-update-grad-input (input target grad-output grad-input
-                                                size-average weights))
+(defgeneric nn-bce-criterion-update-grad-input (input target grad-input size-average weights))
 (defmethod nn-bce-criterion-update-grad-input ((input tensor.float) (target tensor.float)
-                                               (grad-output tensor.float)
                                                (grad-input tensor.float) size-average
                                                weights)
   (thnn-float-bce-criterion-update-grad-input (defstate)
                                               ($handle input)
                                               ($handle target)
-                                              ($handle grad-output)
                                               ($handle grad-input)
                                               (if size-average 1 0)
-                                              (if weights ($handle weights) (nilptr))
-                                              1))
+                                              (if weights ($handle weights) (nilptr))))
 (defmethod nn-bce-criterion-update-grad-input ((input tensor.double) (target tensor.double)
-                                               (grad-output tensor.double)
                                                (grad-input tensor.double) size-average
                                                weights)
   (thnn-double-bce-criterion-update-grad-input (defstate)
                                                ($handle input)
                                                ($handle target)
-                                               ($handle grad-output)
                                                ($handle grad-input)
                                                (if size-average 1 0)
-                                               (if weights ($handle weights) (nilptr))
-                                               1))
+                                               (if weights ($handle weights) (nilptr))))
 
 (defgeneric nn-batch-normalization-update-output (input output weight bias
                                                   running-mean running-var save-mean save-std

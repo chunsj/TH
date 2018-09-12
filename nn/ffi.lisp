@@ -75,8 +75,7 @@
   (target th-float-tensor-ptr)
   (output th-float-tensor-ptr)
   (size-average :char)
-  (weights th-float-tensor-ptr)
-  (reduce :char))
+  (weights th-float-tensor-ptr))
 (cffi:defcfun ("THNN_DoubleBCECriterion_updateOutput"
                thnn-double-bce-criterion-update-output) :void
   (state thnn-state-ptr)
@@ -84,29 +83,24 @@
   (target th-double-tensor-ptr)
   (output th-double-tensor-ptr)
   (size-average :char)
-  (weights th-double-tensor-ptr)
-  (reduce :char))
+  (weights th-double-tensor-ptr))
 
 (cffi:defcfun ("THNN_FloatBCECriterion_updateGradInput"
                thnn-float-bce-criterion-update-grad-input) :void
   (state thnn-state-ptr)
   (input th-float-tensor-ptr)
   (target th-float-tensor-ptr)
-  (grad-output th-float-tensor-ptr)
   (grad-input th-float-tensor-ptr)
   (size-average :char)
-  (weights th-float-tensor-ptr)
-  (reduce :char))
+  (weights th-float-tensor-ptr))
 (cffi:defcfun ("THNN_DoubleBCECriterion_updateGradInput"
                thnn-double-bce-criterion-update-grad-input) :void
   (state thnn-state-ptr)
   (input th-double-tensor-ptr)
   (target th-double-tensor-ptr)
-  (grad-output th-double-tensor-ptr)
   (grad-input th-double-tensor-ptr)
   (size-average :char)
-  (weights th-double-tensor-ptr)
-  (reduce :char))
+  (weights th-double-tensor-ptr))
 
 (cffi:defcfun ("THNN_FloatBatchNormalization_updateOutput"
                thnn-float-batch-normalization-update-output) :void
