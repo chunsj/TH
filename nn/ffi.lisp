@@ -316,31 +316,31 @@
   (input th-float-tensor-ptr)
   (output th-float-tensor-ptr)
   (alpha :double)
-  (scale :double)
   (in-place :char))
 (cffi:defcfun ("THNN_DoubleELU_updateOutput" thnn-double-elu-update-output) :void
   (state thnn-state-ptr)
   (input th-double-tensor-ptr)
   (output th-double-tensor-ptr)
   (alpha :double)
-  (scale :double)
   (in-place :char))
 
 ;; [OUT] grad-input
 (cffi:defcfun ("THNN_FloatELU_updateGradInput" thnn-float-elu-update-grad-input) :void
   (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
   (grad-output th-float-tensor-ptr)
   (grad-input th-float-tensor-ptr)
   (output th-float-tensor-ptr)
   (alpha :double)
-  (scale :double))
+  (in-place :char))
 (cffi:defcfun ("THNN_DoubleELU_updateGradInput" thnn-double-elu-update-grad-input) :void
   (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
   (grad-output th-double-tensor-ptr)
   (grad-input th-double-tensor-ptr)
   (output th-double-tensor-ptr)
   (alpha :double)
-  (scale :double))
+  (in-place :char))
 
 (cffi:defcfun ("THNN_FloatFeatureLPPooling_updateOutput"
                thnn-float-feature-lp-pooling-update-output) :void

@@ -107,19 +107,19 @@
 
 (defmethod $elu ((x tensor) &optional (α 1))
   (let ((output ($empty x)))
-    (nn-elu-update-output x output α 1 nil)
+    (nn-elu-update-output x output α nil)
     output))
 
-(defun delu (output gradient &optional (alpha 1))
+(defun delu (input output gradient &optional (alpha 1))
   (let ((dinput ($empty output)))
-    (nn-elu-update-grad-input gradient dinput output alpha 1)
+    (nn-elu-update-grad-input input gradient dinput output alpha nil)
     dinput))
 
 (defmethod $elu ((x node) &optional (α 1))
   (let ((result (node ($elu ($data x) α))))
     (setf ($name result) "ELU")
     ($gp! result x)
-    ($pfn! x (lambda () (delu ($data result) ($gradient result) α)))
+    ($pfn! x (lambda () (delu ($data x) ($data result) ($gradient result) α)))
     result))
 
 (defmethod $selu ((x number))
