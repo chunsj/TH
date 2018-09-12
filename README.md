@@ -1,4 +1,4 @@
-# My Deep Learning Library for Common Lisp using libTH (in fact, libATen)
+# My Deep Learning Library for Common Lisp using libTH/libTHNN
 
 ## What is this?
   Common Lisp Deep Learning Library which supports automatic backpropagation. I'd like to learn how
@@ -10,14 +10,16 @@
   I hope this library can be applied to the problems of differentiable programming. You can see
   what this library can do from examples. They are mostly neural network applications.
 
-## About libTH/libATen
-  I've done some modification (from lua version to pytorch) in aten and you need that if you want
-  to build from scratch. The location is https://bitbucket.org/chunsj/pytorch.personal/
-  Building one is as usual, refer README.md under aten; if you have proper dependencies, it's simple
-  as make a build directory, run cmake in it, and run make install.
+## About libTH/libTHNN
+  Refer http://torch.ch/docs/getting-started.html and build torch. After install, under lib directory,
+  you can find libTH and libTHNN (this file is under lua/5.1) which are required to use my library.
+  You may try to use ATen from pytorch, but this requires some patching some files and adding missing
+  files. (If you want to do this, refer https://bitbucket.org/chunsj/pytorch.personal/)
+  Though current version of th does not support CUDA, I have a plan to support them and for this, you
+  will need libTHC and libTHCUNN under torch installation directory.
 
 ## How to Load
-  1. Build libATen from pytorch source code or try with prebuilt binary files under libs.
+  1. Build torch (to get libTH/libTHNN) or if possible build those library files.
   2. You'll need my utility library mu.
   3. Link or clone this repository and mu into quicklisp's local-projects
   4. Check location of library path in the load.lisp file.
