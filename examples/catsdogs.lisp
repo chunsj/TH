@@ -1,3 +1,7 @@
+;; XXX
+;; this examples is for testing cnn on color images.
+;; to get better result, you have to define better network and more data.
+
 (defpackage :cats-and-dogs
   (:use #:common-lisp
         #:mu
@@ -84,13 +88,32 @@
                     data))
     (reverse data)))
 
+(defun odim (iw ih kw kh dw dh pw ph)
+  (list (1+ (round (/ (+ (- iw kw) (* 2 pw)) dw)))
+        (1+ (round (/ (+ (- ih kh) (* 2 ph)) dh)))))
+
+;; k should be (kw kh dw dh pw ph)
+(defun compute-size (input-size &rest ks)
+  (let ((sz input-size))
+    (loop :for k :in ks
+          :do (let ((o (apply #'odim (append sz k))))
+                (setf sz o)))
+    sz))
+
+;; output channel x output dimensions
+(defparameter *fdim* (reduce #'* (cons 32 (compute-size '(64 64)
+                                                        '(3 3 1 1 0 0)
+                                                        '(2 2 1 1 0 0)
+                                                        '(3 3 1 1 0 0)
+                                                        '(2 2 1 1 0 0)))))
+
 (defparameter *cnd* (parameters))
 
 (defparameter *k1* ($parameter *cnd* ($* 0.01 (rndn 32 3 3 3))))
 (defparameter *b1* ($parameter *cnd* (zeros 32)))
 (defparameter *k2* ($parameter *cnd* ($* 0.01 (rndn 32 32 3 3))))
 (defparameter *b2* ($parameter *cnd* (zeros 32)))
-(defparameter *w3* ($parameter *cnd* (vxavier (list (* 32 58 58) 128))))
+(defparameter *w3* ($parameter *cnd* (vxavier (list *fdim* 128))))
 (defparameter *b3* ($parameter *cnd* (zeros 1 128)))
 (defparameter *w4* ($parameter *cnd* (vxavier '(128 1))))
 (defparameter *b4* ($parameter *cnd* (zeros 1 1)))
@@ -103,7 +126,7 @@
       ($conv2d *k2* *b2*)
       ($relu)
       ($maxpool2d 2 2)
-      ($reshape ($size x 0) (* 32 58 58))
+      ($reshape ($size x 0) *fdim*)
       ($dropout trainp 0.4)
       ($affine *w3* *b3*)
       ($relu)
