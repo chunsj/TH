@@ -101,7 +101,7 @@
     sz))
 
 ;; output channel x output dimensions
-(defparameter *fdim* (reduce #'* (cons 32 (compute-size '(64 64)
+(defparameter *fdim* (reduce #'* (cons 32 (compute-size (list *img-size* *img-size*)
                                                         '(3 3 1 1 0 0)
                                                         '(2 2 1 1 0 0)
                                                         '(3 3 1 1 0 0)
