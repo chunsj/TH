@@ -1,6 +1,6 @@
-;; XXX
-;; this examples is for testing cnn on color images.
+;; note that this examples is for testing cnn on color images.
 ;; to get better result, you have to define better network and more data.
+;; this example, as is provided, will have 31~40% of error rates.
 
 (defpackage :cats-and-dogs
   (:use #:common-lisp
