@@ -3,12 +3,18 @@
 ## What is this?
   Common Lisp Deep Learning Library which supports automatic backpropagation. I'd like to learn how
   neural network and automatic backpropagation works and this is my personal journey on the subject.
+  From API design point of view, I'd like to use mathematical style operators rather than layer like
+  abstractions, which exposes more detailed information on the real operation behind neural network
+  but with slightly more tedious typings. However, you can always make some functions to reduce those
+  problems, if you want to.
 
 ## Why?
   There should be a tensor/neural network library in common lisp which is easy to use(byte me!).
   I'd like to learn deep learning and I think building one from scratch will be the best way.
   I hope this library can be applied to the problems of differentiable programming. You can see
   what this library can do from examples. They are mostly neural network applications.
+  Performance-wise, I think this library shows rather good performance, though I cannot find better,
+  automated way of keeping memory usage low yet; so you have to insert full gc instruction properly.
 
 ## About libTH/libTHNN
   Refer http://torch.ch/docs/getting-started.html and build torch. After install, under lib directory,
@@ -28,20 +34,21 @@
   5. Load with quicklisp (ql:quickload :th)
   6. If there's error, you need check previous processes.
 
-## How to Use/Examples
+## Examples using TH
   1. Basic tensor operations: examples/tensor.lisp
   2. Some auto-gradient/auto-backpropagation: examples/ad.lisp
   3. XOR neural network: examples/xor.lisp
   4. MNIST convolutional neural network: examples/mnist.lisp
-  5. IMDB sentiment analysis: examples/sentiment.lisp (cl-ppcre is required)
-  6. Binary number addition using vanilla RNN: examples/binadd.lisp
-  7. Karpathy's character generation using RNN/LSTM: examples/gench{ars,-lstm,-lstm2}.lisp
-  8. Sparse autoencoder: examples/autoenc.lisp
-  9. Restricted Boltzmann Machine: examples/rbm.lisp
-  10. Simple GAN (Fitting normal distribution): gan-simple.lisp
-  11. Generative Adversarial Network: examples/{ls,c,info,w}gan[2].lisp (opticl is required)
-  12. Deep Convolutional GAN: examples/dcgan.lisp
-  13. Neural Arithmetic Logic Unit or NALU: examples/nalu.lisp
+  5. Cats and Dogs CNN: examples/catsdogs.lisp
+  6. IMDB sentiment analysis: examples/sentiment.lisp (cl-ppcre is required)
+  7. Binary number addition using vanilla RNN: examples/binadd.lisp
+  8. Karpathy's character generation using RNN/LSTM: examples/gench{ars,-lstm,-lstm2}.lisp
+  9. Sparse autoencoder: examples/autoenc.lisp
+  10. Restricted Boltzmann Machine: examples/rbm.lisp
+  11. Simple GAN (Fitting normal distribution): gan-simple.lisp
+  12. Generative Adversarial Network: examples/{ls,c,info,w}gan[2].lisp (opticl is required)
+  13. Deep Convolutional GAN: examples/dcgan.lisp
+  14. Neural Arithmetic Logic Unit or NALU: examples/nalu.lisp
 
 ## Selected Book Follow Ups
   1. Deep Learning from Scratch: dlfs
