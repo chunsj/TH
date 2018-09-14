@@ -238,15 +238,19 @@
 
 (defmethod $dropout ((x tensor) &optional (trainp t) (p 0.1))
   (if trainp
-      (let ((mask ($gt (apply #'rnd ($size x)) p)))
-        ($mul! (tensor mask) x))
+      (let ((mask ($bernoulli! ($resize! ($empty x) ($size x)) (- 1 p))))
+        ($mul! mask x))
       ($mul x (- 1.0 p))))
 
 (defmethod $dropout ((x node) &optional (trainp t) (p 0.1))
-  (if trainp
-      (let ((mask ($gt (apply #'rnd ($size x)) p)))
-        ($mul ($constant (tensor mask)) x))
-      ($mul x ($broadcast ($constant (- 1 p)) x))))
+  (let ((result (node ($dropout ($data x) trainp p))))
+    (setf ($name result) "DROPOUT")
+    ($gp! result x)
+    ($pfn! x (lambda ()
+               (if trainp
+                   ($mul ($gradient result) p)
+                   ($mul ($gradient result) (- 1 p)))))
+    result))
 
 ;; b should be 1-d
 (defmethod $cnll ((a tensor) (b tensor))

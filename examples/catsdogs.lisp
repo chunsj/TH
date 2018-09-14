@@ -30,8 +30,8 @@
 ;;(write-gray-png-file (read-train-dog-file 20 64 64) "dog20.png")
 
 (defparameter *batch-size* 50)
-(defparameter *batch-count* 100)
-(defparameter *test-count* 10)
+(defparameter *batch-count* 10)
+(defparameter *test-count* 2)
 (defparameter *img-size* 64)
 
 (defparameter *train-data*
@@ -84,7 +84,6 @@
                     data))
     (reverse data)))
 
-
 (defparameter *cnd* (parameters))
 
 (defparameter *k1* ($parameter *cnd* ($* 0.01 (rndn 32 3 3 3))))
@@ -96,7 +95,7 @@
 (defparameter *w4* ($parameter *cnd* (vxavier '(128 1))))
 (defparameter *b4* ($parameter *cnd* (zeros 1 1)))
 
-(defun network (x)
+(defun network (x &optional (trainp t))
   (-> x
       ($conv2d *k1* *b1*)
       ($relu)
@@ -105,6 +104,7 @@
       ($relu)
       ($maxpool2d 2 2)
       ($reshape ($size x 0) (* 32 58 58))
+      ($dropout trainp 0.4)
       ($affine *w3* *b3*)
       ($relu)
       ($affine *w4* *b4*)
@@ -115,10 +115,10 @@
 
 (defun opt! (parameters) ($amgd! parameters 1E-4))
 
-(defparameter *epoch* 200) ;; 200 is okay?
-(defparameter *train-size* (min 100 ($count *train-data*))) ;; to reduce time
+(defparameter *epoch* 60)
+(defparameter *train-size* ($count *train-data*))
 
-(loop :for epoch :from 1 :to (min 1 *epoch*)
+(loop :for epoch :from 1 :to *epoch*
       :do (progn
             (loop :for data :in (subseq *train-data* 0 *train-size*)
                   :for labels :in (subseq *train-labels* 0 *train-size*)
@@ -129,23 +129,31 @@
                         (opt! *cnd*)
                         (when (zerop (rem bidx 2))
                           (gcf))))
-            (when (zerop (rem epoch 10))
-              (let ((tdata (nth (random *test-count*) *test-data*)))
-                (prn "TEST" ($ge ($data (network ($constant tdata))) 0.5))
+            (when (zerop (rem epoch 5))
+              (let* ((idx (random *test-count*))
+                     (tdata (nth idx *test-data*))
+                     (tlbl (nth idx *test-labels*))
+                     (res ($data (network ($constant tdata) nil)))
+                     (fres (tensor.float ($ge res 0.5)))
+                     (d ($- ($reshape fres (* 2 *batch-size*)) tlbl)))
+                (prn "IDX:" idx "ERROR:" (/ ($dot d d) (* 2 *batch-size*)))
                 ($cg! *cnd*)))))
 
-(prn ($reshape (tensor.float ($ge ($data (network ($constant (car *train-data*)))) 0.5))
-               (* 2 *batch-size*)))
-(prn (car *train-labels*))
-($cg! *cnd*)
+;; train check
+(let* ((idx (random *train-size*))
+       (data (nth idx *train-data*))
+       (lbl (car *train-labels*))
+       (res (tensor.float ($ge ($data (network ($constant data) nil)) 0.5)))
+       (d ($- ($reshape res (* 2 *batch-size*)) lbl)))
+  (prn "TRAIN IDX:" idx "ERROR:" (/ ($dot d d) (* 2 *batch-size*)))
+  ($cg! *cnd*))
 
-;; test
+;; test check
 (let* ((idx (random *test-count*))
        (tdata (nth idx *test-data*))
-       (tlbl (nth idx *test-labels*)))
-  (prn "IDX:" idx)
-  (prn "ERROR:" (let* ((res ($data (network ($constant tdata))))
-                       (fres (tensor.float ($ge res 0.5)))
-                       (d ($- ($reshape fres (* 2 *batch-size*)) tlbl)))
-                  (/ ($dot d d) (* 2 *batch-size*))))
+       (tlbl (nth idx *test-labels*))
+       (res ($data (network ($constant tdata) nil)))
+       (fres (tensor.float ($ge res 0.5)))
+       (d ($- ($reshape fres (* 2 *batch-size*)) tlbl)))
+  (prn "TEST IDX:" idx "ERROR:" (/ ($dot d d) (* 2 *batch-size*)))
   ($cg! *cnd*))
