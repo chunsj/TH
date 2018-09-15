@@ -16,6 +16,7 @@
     tx))
 
 ;; XXX maybe binary blob will be faster to read/create tensors
+;; ~ 80 secs in macbook 12 2017
 (defun read-vgg16-weights ()
   (list :k1 (read-weight-file "k1") :b1 (read-weight-file "b1")
         :k2 (read-weight-file "k2") :b2 (read-weight-file "b2")
