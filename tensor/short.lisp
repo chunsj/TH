@@ -409,17 +409,6 @@
 (cffi:defcfun ("THShortTensor_random" th-short-tensor-random) :void
   (tensor th-short-tensor-ptr)
   (generator th-generator-ptr))
-;; void THTensor_(clampedRandom)(THTensor *self, THGenerator *_generator, long min, long max)
-(cffi:defcfun ("THShortTensor_clampedRandom" th-short-tensor-clamped-random) :void
-  (tensor th-short-tensor-ptr)
-  (genrator th-generator-ptr)
-  (min :long)
-  (max :long))
-;; void THTensor_(cappedRandom)(THTensor *self, THGenerator *_generator, long max);
-(cffi:defcfun ("THShortTensor_cappedRandom" th-short-tensor-capped-random) :void
-  (tensor th-short-tensor-ptr)
-  (generator th-generator-ptr)
-  (max :long))
 ;; void THTensor_(geometric)(THTensor *self, THGenerator *_generator, double p);
 (cffi:defcfun ("THShortTensor_geometric" th-short-tensor-geometric) :void
   (tensor th-short-tensor-ptr)
@@ -834,18 +823,10 @@
 (cffi:defcfun ("THShortTensor_zeros" th-short-tensor-zeros) :void
   (result th-short-tensor-ptr)
   (size th-long-storage-ptr))
-;; void THTensor_(zerosLike)(THTensor *r_, THTensor *input);
-(cffi:defcfun ("THShortTensor_zerosLike" th-short-tensor-zero-like) :void
-  (result th-short-tensor-ptr)
-  (input th-short-tensor-ptr))
 ;; void THTensor_(ones)(THTensor *r_, THLongStorage *size);
 (cffi:defcfun ("THShortTensor_ones" th-short-tensor-ones) :void
   (result th-short-tensor-ptr)
   (size th-long-storage-ptr))
-;; void THTensor_(onesLike)(THTensor *r_, THTensor *input);
-(cffi:defcfun ("THShortTensor_onesLike" th-short-tensor-one-like) :void
-  (result th-short-tensor-ptr)
-  (input th-short-tensor-ptr))
 ;; void THTensor_(diag)(THTensor *r_, THTensor *t, int k);
 (cffi:defcfun ("THShortTensor_diag" th-short-tensor-diag) :void
   (result th-short-tensor-ptr)

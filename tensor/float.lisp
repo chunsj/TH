@@ -409,17 +409,6 @@
 (cffi:defcfun ("THFloatTensor_random" th-float-tensor-random) :void
   (tensor th-float-tensor-ptr)
   (generator th-generator-ptr))
-;; void THTensor_(clampedRandom)(THTensor *self, THGenerator *_generator, long min, long max)
-(cffi:defcfun ("THFloatTensor_clampedRandom" th-float-tensor-clamped-random) :void
-  (tensor th-float-tensor-ptr)
-  (genrator th-generator-ptr)
-  (min :long)
-  (max :long))
-;; void THTensor_(cappedRandom)(THTensor *self, THGenerator *_generator, long max);
-(cffi:defcfun ("THFloatTensor_cappedRandom" th-float-tensor-capped-random) :void
-  (tensor th-float-tensor-ptr)
-  (generator th-generator-ptr)
-  (max :long))
 ;; void THTensor_(geometric)(THTensor *self, THGenerator *_generator, double p);
 (cffi:defcfun ("THFloatTensor_geometric" th-float-tensor-geometric) :void
   (tensor th-float-tensor-ptr)
@@ -455,24 +444,6 @@
   (generator th-generator-ptr)
   (mean :double)
   (stdv :double))
-;; void THTensor_(normal_means)(THTensor *self, THGenerator *gen, THTensor *means, double stddev);
-(cffi:defcfun ("THFloatTensor_normal_means" th-float-tensor-normal-means) :void
-  (tensor th-float-tensor-ptr)
-  (generator th-generator-ptr)
-  (means th-float-tensor-ptr)
-  (stdv :double))
-;; void THTensor_(normal_stddevs)(THTensor *self, THGenerator *gen, double mean, THTensor *stddevs);
-(cffi:defcfun ("THFloatTensor_normal_stddevs" th-float-tensor-normal-stddevs) :void
-  (tensor th-float-tensor-ptr)
-  (generator th-generator-ptr)
-  (mean :double)
-  (stddevs th-float-tensor-ptr))
-;; void THTensor_(normal_means_stddevs)(THTensor *self, THGenerator *gen, THTensor *means, THTensor *stddevs);
-(cffi:defcfun ("THFloatTensor_normal_means_stddevs" th-float-tensor-normal-means-stddevs) :void
-  (tensor th-float-tensor-ptr)
-  (generator th-generator-ptr)
-  (means th-float-tensor-ptr)
-  (stddevs th-float-tensor-ptr))
 ;; void THTensor_(exponential)(THTensor *self, THGenerator *_generator, double lambda);
 (cffi:defcfun ("THFloatTensor_exponential" th-float-tensor-exponential) :void
   (tensor th-float-tensor-ptr)
@@ -913,18 +884,10 @@
 (cffi:defcfun ("THFloatTensor_zeros" th-float-tensor-zeros) :void
   (result th-float-tensor-ptr)
   (size th-long-storage-ptr))
-;; void THTensor_(zerosLike)(THTensor *r_, THTensor *input);
-(cffi:defcfun ("THFloatTensor_zerosLike" th-float-tensor-zero-like) :void
-  (result th-float-tensor-ptr)
-  (input th-float-tensor-ptr))
 ;; void THTensor_(ones)(THTensor *r_, THLongStorage *size);
 (cffi:defcfun ("THFloatTensor_ones" th-float-tensor-ones) :void
   (result th-float-tensor-ptr)
   (size th-long-storage-ptr))
-;; void THTensor_(onesLike)(THTensor *r_, THTensor *input);
-(cffi:defcfun ("THFloatTensor_onesLike" th-float-tensor-one-like) :void
-  (result th-float-tensor-ptr)
-  (input th-float-tensor-ptr))
 ;; void THTensor_(diag)(THTensor *r_, THTensor *t, int k);
 (cffi:defcfun ("THFloatTensor_diag" th-float-tensor-diag) :void
   (result th-float-tensor-ptr)

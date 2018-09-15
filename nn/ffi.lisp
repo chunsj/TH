@@ -218,60 +218,6 @@
   (ignore-index :long)
   (reduce :char))
 
-(cffi:defcfun ("THNN_FloatCol2Im_updateOutput" thnn-float-col2im-update-output) :void
-  (state thnn-state-ptr)
-  (input th-float-tensor-ptr)
-  (output th-float-tensor-ptr)
-  (oh :int)
-  (ow :int)
-  (kh :int)
-  (kw :int)
-  (dh :int)
-  (dw :int)
-  (ph :int)
-  (pw :int)
-  (sh :int)
-  (sw :int))
-(cffi:defcfun ("THNN_DoubleCol2Im_updateOutput" thnn-double-col2im-update-output) :void
-  (state thnn-state-ptr)
-  (input th-double-tensor-ptr)
-  (output th-double-tensor-ptr)
-  (oh :int)
-  (ow :int)
-  (kh :int)
-  (kw :int)
-  (dh :int)
-  (dw :int)
-  (ph :int)
-  (pw :int)
-  (sh :int)
-  (sw :int))
-
-(cffi:defcfun ("THNN_FloatCol2Im_updateGradInput" thnn-float-col2im-update-grad-input) :void
-  (state thnn-state-ptr)
-  (grad-output th-float-tensor-ptr)
-  (grad-input th-float-tensor-ptr)
-  (kh :int)
-  (kw :int)
-  (dh :int)
-  (dw :int)
-  (ph :int)
-  (pw :int)
-  (sh :int)
-  (sw :int))
-(cffi:defcfun ("THNN_DoubleCol2Im_updateGradInput" thnn-double-col2im-update-grad-input) :void
-  (state thnn-state-ptr)
-  (grad-output th-double-tensor-ptr)
-  (grad-input th-double-tensor-ptr)
-  (kh :int)
-  (kw :int)
-  (dh :int)
-  (dw :int)
-  (ph :int)
-  (pw :int)
-  (sh :int)
-  (sw :int))
-
 ;; [OUT] output
 (cffi:defcfun ("THNN_FloatDistKLDivCriterion_updateOutput"
                thnn-float-dist-kl-div-criterion-update-output) :void
@@ -2980,70 +2926,6 @@
   (kw :int)
   (dw :int))
 
-(cffi:defcfun ("THNN_FloatTemporalReflectionPadding_updateOutput"
-               thnn-float-temporal-reflection-padding-update-output) :void
-  (state thnn-state-ptr)
-  (input th-float-tensor-ptr)
-  (output th-float-tensor-ptr)
-  (pl :int)
-  (pr :int))
-(cffi:defcfun ("THNN_DoubleTemporalReflectionPadding_updateOutput"
-               thnn-double-temporal-reflection-padding-update-output) :void
-  (state thnn-state-ptr)
-  (input th-double-tensor-ptr)
-  (output th-double-tensor-ptr)
-  (pl :int)
-  (pr :int))
-
-(cffi:defcfun ("THNN_FloatTemporalReflectionPadding_updateGradInput"
-               thnn-float-temporal-reflection-padding-update-grad-input) :void
-  (state thnn-state-ptr)
-  (input th-float-tensor-ptr)
-  (grad-output th-float-tensor-ptr)
-  (grad-input th-float-tensor-ptr)
-  (pl :int)
-  (pr :int))
-(cffi:defcfun ("THNN_DoubleTemporalReflectionPadding_updateGradInput"
-               thnn-double-temporal-reflection-padding-update-grad-input) :void
-  (state thnn-state-ptr)
-  (input th-double-tensor-ptr)
-  (grad-output th-double-tensor-ptr)
-  (grad-input th-double-tensor-ptr)
-  (pl :int)
-  (pr :int))
-
-(cffi:defcfun ("THNN_FloatTemporalReplicationPadding_updateOutput"
-               thnn-float-temporal-replication-padding-update-output) :void
-  (state thnn-state-ptr)
-  (input th-float-tensor-ptr)
-  (output th-float-tensor-ptr)
-  (pl :int)
-  (pr :int))
-(cffi:defcfun ("THNN_DoubleTemporalReplicationPadding_updateOutput"
-               thnn-double-temporal-replication-padding-update-output) :void
-  (state thnn-state-ptr)
-  (input th-double-tensor-ptr)
-  (output th-double-tensor-ptr)
-  (pl :int)
-  (pr :int))
-
-(cffi:defcfun ("THNN_FloatTemporalReplicationPadding_updateGradInput"
-               thnn-float-temporal-replication-padding-update-grad-input) :void
-  (state thnn-state-ptr)
-  (input th-float-tensor-ptr)
-  (grad-output th-float-tensor-ptr)
-  (grad-input th-float-tensor-ptr)
-  (pl :int)
-  (pr :int))
-(cffi:defcfun ("THNN_DoubleTemporalReplicationPadding_updateGradInput"
-               thnn-double-temporal-replication-padding-update-grad-input) :void
-  (state thnn-state-ptr)
-  (input th-double-tensor-ptr)
-  (grad-output th-double-tensor-ptr)
-  (grad-input th-double-tensor-ptr)
-  (pl :int)
-  (pr :int))
-
 (cffi:defcfun ("THNN_FloatTemporalRowConvolution_updateOutput"
                thnn-float-temporal-row-convolution-update-output) :void
   (state thnn-state-ptr)
@@ -3187,70 +3069,6 @@
   (kw :int)
   (dw :int)
   (scale :double))
-
-(cffi:defcfun ("THNN_FloatTemporalUpSamplingLinear_updateOutput"
-               thnn-float-temporal-upsampling-linear-update-output) :void
-  (state thnn-state-ptr)
-  (input th-float-tensor-ptr)
-  (output th-float-tensor-ptr)
-  (ow :int)
-  (align-corners :char))
-(cffi:defcfun ("THNN_DoubleTemporalUpSamplingLinear_updateOutput"
-               thnn-double-temporal-upsampling-linear-update-output) :void
-  (state thnn-state-ptr)
-  (input th-double-tensor-ptr)
-  (output th-double-tensor-ptr)
-  (ow :int)
-  (align-corners :char))
-
-(cffi:defcfun ("THNN_FloatTemporalUpSamplingLinear_updateGradInput"
-               thnn-float-temporal-upsampling-linear-update-grad-input) :void
-  (state thnn-state-ptr)
-  (grad-output th-float-tensor-ptr)
-  (grad-input th-float-tensor-ptr)
-  (ib :int)
-  (ic :int)
-  (iw :int)
-  (ow :int)
-  (align-corners :char))
-(cffi:defcfun ("THNN_DoubleTemporalUpSamplingLinear_updateGradInput"
-               thnn-double-temporal-upsampling-linear-update-grad-input) :void
-  (state thnn-state-ptr)
-  (grad-output th-double-tensor-ptr)
-  (grad-input th-double-tensor-ptr)
-  (ib :int)
-  (ic :int)
-  (iw :int)
-  (ow :int)
-  (align-corners :char))
-
-(cffi:defcfun ("THNN_FloatTemporalUpSamplingNearest_updateOutput"
-               thnn-float-temporal-upsampling-nearest-update-output) :void
-  (state thnn-state-ptr)
-  (input th-float-tensor-ptr)
-  (output th-float-tensor-ptr)
-  (scale-factor :int))
-(cffi:defcfun ("THNN_DoubleTemporalUpSamplingNearest_updateOutput"
-               thnn-double-temporal-upsampling-nearest-update-output) :void
-  (state thnn-state-ptr)
-  (input th-double-tensor-ptr)
-  (output th-double-tensor-ptr)
-  (scale-factor :int))
-
-(cffi:defcfun ("THNN_FloatTemporalUpSamplingNearest_updateGradInput"
-               thnn-float-temporal-upsampling-nearest-update-grad-input) :void
-  (state thnn-state-ptr)
-  (input th-float-tensor-ptr)
-  (grad-output th-float-tensor-ptr)
-  (grad-input th-float-tensor-ptr)
-  (scale-factor :int))
-(cffi:defcfun ("THNN_DoubleTemporalUpSamplingNearest_updateGradInput"
-               thnn-double-temporal-upsampling-nearest-update-grad-input) :void
-  (state thnn-state-ptr)
-  (input th-double-tensor-ptr)
-  (grad-output th-double-tensor-ptr)
-  (grad-input th-double-tensor-ptr)
-  (scale-factor :int))
 
 (cffi:defcfun ("THNN_FloatThreshold_updateOutput" thnn-float-threshold-update-output) :void
   (state thnn-state-ptr)
