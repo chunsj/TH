@@ -49,4 +49,5 @@
                                         (:file "utility")))
                (:module db :components ((:file "mnist")
                                         (:file "fashion")
-                                        (:file "imdb")))))
+                                        (:file "imdb")))
+               (:module m :components ((:file "vgg16")))))

@@ -1,36 +1,9 @@
-(ql:quickload :cl-ppcre)
-(ql:quickload :parse-number)
-
 (defpackage :vgg16-weight-proc
   (:use #:common-lisp
         #:mu
         #:th))
 
 (in-package :vgg16-weight-proc)
-
-(defun write-conv-weights (in ksz kfname bfname)
-  (let* ((ks (mapcar #'parse-number:parse-number (cl-ppcre:split "\\s+" (read-line in nil))))
-         (bs (mapcar #'parse-number:parse-number (cl-ppcre:split "\\s+" (read-line in nil))))
-         (k1 ($resize! (tensor ks) ksz))
-         (b1 (tensor bs)))
-    (let ((f (file.disk kfname "w")))
-      ($fwrite k1 f)
-      ($fclose f))
-    (let ((f (file.disk bfname "w")))
-      ($fwrite b1 f)
-      ($fclose f))))
-
-(defun write-affine-weights (in ksz kfname bfname)
-  (let* ((ks (mapcar #'parse-number:parse-number (cl-ppcre:split "\\s+" (read-line in nil))))
-         (bs (mapcar #'parse-number:parse-number (cl-ppcre:split "\\s+" (read-line in nil))))
-         (k1 ($resize! (tensor ks) ksz))
-         (b1 ($resize! (tensor bs) (list (cadr ksz) (length bs)))))
-    (let ((f (file.disk kfname "w")))
-      ($fwrite k1 f)
-      ($fclose f))
-    (let ((f (file.disk bfname "w")))
-      ($fwrite b1 f)
-      ($fclose f))))
 
 (defun convert-vgg16-weights (filename)
   (with-open-file (in filename :direction :input)
@@ -51,4 +24,52 @@
     (write-affine-weights in '(4096 4096) "vgg16-w15.txt" "vgg16-b15.txt")
     (write-affine-weights in '(4096 1000) "vgg16-w16.txt" "vgg16-b16.txt")))
 
-(time (convert-vgg16-weights "/home/chunsj/Documents/Lisp/zoo/vgg16_weights.txt"))
+;; reading performance
+(with-open-file (in "/Users/Sungjin/Documents/Lisp/zoo/vgg16/k27" :direction :input)
+  (gcf)
+  ;;(time (mapcar #'parse-number:parse-number (cl-ppcre:split "\\s+" (read-line in nil))))
+  (time (read-line in nil))
+  (gcf))
+
+(let* ((f (file.disk "w16h.txt" "w"))
+       (tx (tensor 4096 1000)))
+  ($fwrite tx f)
+  ($fclose f))
+
+(let* ((f (file.disk "b16h.txt" "w"))
+       (tx (tensor 1 1000)))
+  ($fwrite tx f)
+  ($fclose f))
+
+(loop :for i :from 1 :to 13
+      :for kdim :in '((64 3 3 3)
+                      (64 64 3 3)
+                      (128 64 3 3)
+                      (128 128 3 3)
+                      (256 128 3 3)
+                      (256 256 3 3)
+                      (256 256 3 3)
+                      (512 256 3 3)
+                      (512 512 3 3)
+                      (512 512 3 3)
+                      (512 512 3 3)
+                      (512 512 3 3)
+                      (512 512 3 3))
+      :for bdim = (car kdim)
+      :do (progn
+            (let ((f (file.disk (format nil "k~Ah.txt" i) "w"))
+                  (tx (apply #'tensor kdim)))
+              ($fwrite tx f)
+              ($fclose f))
+            (let ((f (file.disk (format nil "b~Ah.txt" i) "w"))
+                  (tx (tensor bdim)))
+              ($fwrite tx f)
+              ($fclose f))))
+
+(gcf)
+
+(let* ((f (file.disk "vgg16-b16.txt" "r"))
+       (tx (tensor)))
+  ($fread tx f)
+  (prn tx)
+  ($fclose f))
