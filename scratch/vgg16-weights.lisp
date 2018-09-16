@@ -1,3 +1,6 @@
+(ql:quickload :cl-ppcre)
+(ql:quickload :parse-number)
+
 (defpackage :vgg16-weight-proc
   (:use #:common-lisp
         #:mu
@@ -73,3 +76,40 @@
   ($fread tx f)
   (prn tx)
   ($fclose f))
+
+(let* ((f (file.disk "cath.txt" "w"))
+       (tx (tensor 3 224 224)))
+  ($fwrite tx f)
+  ($fclose f))
+
+(let ((imgdata (opticl:make-8-bit-rgb-image 224 224)))
+  (with-open-file (in "/Users/Sungjin/Desktop/cat.txt" :direction :input)
+    (loop :for l :from 0 :below 224
+          :for vals = (coerce (mapcar #'parse-number:parse-number
+                                      (cl-ppcre:split "\\s+" (read-line in nil)))
+                              'vector)
+          :do (loop :for m :from 0 :below 224
+                    :for i = (+ (* 3 m) 2)
+                    :for j = (+ (* 3 m) 1)
+                    :for k = (+ (* 3 m))
+                    :do (progn
+                          (setf (aref imgdata l m 0) (aref vals i))
+                          (setf (aref imgdata l m 1) (aref vals j))
+                          (setf (aref imgdata l m 2) (aref vals k))))))
+  (prn imgdata)
+  (opticl:write-png-file "/Users/Sungjin/Desktop/cat.png" imgdata))
+
+(let ((rgb (th.image:tensor-from-png-file "/Users/Sungjin/Desktop/cat.png"))
+      (bgr (tensor 3 224 224)))
+  (setf ($ bgr 0) ($ rgb 2))
+  (setf ($ bgr 1) ($ rgb 1))
+  (setf ($ bgr 2) ($ rgb 0))
+  (prn rgb)
+  (prn bgr)
+  (th.m.vgg16:vgg16 bgr))
+
+(let ((f (file.disk "cat.txt" "r"))
+      (tx (tensor)))
+  ($fread tx f)
+  ($fclose f)
+  (th.image:write-tensor-png-file tx "/Users/Sungjin/Desktop/cat.png" :denormalize nil))
