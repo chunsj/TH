@@ -531,11 +531,6 @@
 (cffi:defcfun ("THShortTensor_prodall" th-short-tensor-prod-all) :long
   (tensor th-short-tensor-ptr))
 
-;; void THTensor_(neg)(THTensor *self, THTensor *src);
-(cffi:defcfun ("THShortTensor_neg" th-short-tensor-neg) :void
-  (tensor th-short-tensor-ptr)
-  (src th-short-tensor-ptr))
-
 ;; void THTensor_(add)(THTensor *r_, THTensor *t, real value);
 (cffi:defcfun ("THShortTensor_add" th-short-tensor-add) :void
   (result th-short-tensor-ptr)

@@ -536,11 +536,6 @@
 (cffi:defcfun ("THIntTensor_prodall" th-int-tensor-prod-all) :long
   (tensor th-int-tensor-ptr))
 
-;; void THTensor_(neg)(THTensor *self, THTensor *src);
-(cffi:defcfun ("THIntTensor_neg" th-int-tensor-neg) :void
-  (tensor th-int-tensor-ptr)
-  (src th-int-tensor-ptr))
-
 ;; void THTensor_(add)(THTensor *r_, THTensor *t, real value);
 (cffi:defcfun ("THIntTensor_add" th-int-tensor-add) :void
   (result th-int-tensor-ptr)
