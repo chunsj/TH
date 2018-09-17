@@ -2,7 +2,10 @@
   (:use #:common-lisp
         #:mu
         #:th)
-  (:export))
+  (:export #:read-vgg19-weights
+           #:convert-to-vgg19-input
+           #:vgg19
+           #:vgg19-categories))
 
 (in-package :th.m.vgg19)
 
@@ -61,7 +64,7 @@
           (t ($reshape x nbatch 25088)))))
 
 (defun vgg19 (&optional (flat :all) weights)
-  (let ((weights (or weights (read-vgg16-weights (not (eq flat :none))))))
+  (let ((weights (or weights (read-vgg19-weights (not (eq flat :none))))))
     (lambda (x)
       (when (and x (>= ($ndim x) 3) (equal (last ($size x) 3) (list 3 224 224)))
         (let ((x (if (eq ($ndim x) 3)
@@ -105,7 +108,7 @@
               ($conv2d (getf weights :k16) (getf weights :b16) 1 1 1 1)
               ($relu)
               ($maxpool2d 2 2 2 2)
-              (vgg16-flat weights flat)))))))
+              (vgg19-flat weights flat)))))))
 
 (defun vgg19-categories ()
   (with-open-file (in (format nil "~A/vgg19/categories.txt" +model-location+) :direction :input)

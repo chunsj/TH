@@ -27,6 +27,28 @@
     (write-affine-weights in '(4096 4096) "vgg16-w15.txt" "vgg16-b15.txt")
     (write-affine-weights in '(4096 1000) "vgg16-w16.txt" "vgg16-b16.txt")))
 
+(defun convert-vgg19-weights (filename)
+  (with-open-file (in filename :direction :input)
+    (write-conv-weights in '(64 3 3 3) "vgg16-k1.txt" "vgg16-b1.txt")
+    (write-conv-weights in '(64 64 3 3) "vgg16-k2.txt" "vgg16-b2.txt")
+    (write-conv-weights in '(128 64 3 3) "vgg16-k3.txt" "vgg16-b3.txt")
+    (write-conv-weights in '(128 128 3 3) "vgg16-k4.txt" "vgg16-b4.txt")
+    (write-conv-weights in '(256 128 3 3) "vgg16-k5.txt" "vgg16-b5.txt")
+    (write-conv-weights in '(256 256 3 3) "vgg16-k6.txt" "vgg16-b6.txt")
+    (write-conv-weights in '(256 256 3 3) "vgg16-k7.txt" "vgg16-b7.txt")
+    (write-conv-weights in '(256 256 3 3) "vgg16-k8.txt" "vgg16-b8.txt")
+    (write-conv-weights in '(512 256 3 3) "vgg16-k9.txt" "vgg16-b9.txt")
+    (write-conv-weights in '(512 512 3 3) "vgg16-k10.txt" "vgg16-b10.txt")
+    (write-conv-weights in '(512 512 3 3) "vgg16-k11.txt" "vgg16-b11.txt")
+    (write-conv-weights in '(512 512 3 3) "vgg16-k12.txt" "vgg16-b12.txt")
+    (write-conv-weights in '(512 512 3 3) "vgg16-k13.txt" "vgg16-b13.txt")
+    (write-conv-weights in '(512 512 3 3) "vgg16-k14.txt" "vgg16-b14.txt")
+    (write-conv-weights in '(512 512 3 3) "vgg16-k15.txt" "vgg16-b15.txt")
+    (write-conv-weights in '(512 512 3 3) "vgg16-k16.txt" "vgg16-b16.txt")
+    (write-affine-weights in '(25088 4096) "vgg16-w17.txt" "vgg16-b17.txt")
+    (write-affine-weights in '(4096 4096) "vgg16-w18.txt" "vgg16-b18.txt")
+    (write-affine-weights in '(4096 1000) "vgg16-w19.txt" "vgg16-b19.txt")))
+
 ;; reading performance
 (with-open-file (in "/Users/Sungjin/Documents/Lisp/zoo/vgg16/k27" :direction :input)
   (gcf)
@@ -44,7 +66,7 @@
   ($fwrite tx f)
   ($fclose f))
 
-(loop :for i :from 1 :to 13
+(loop :for i :from 1 :to 16
       :for kdim :in '((64 3 3 3)
                       (64 64 3 3)
                       (128 64 3 3)
@@ -52,7 +74,10 @@
                       (256 128 3 3)
                       (256 256 3 3)
                       (256 256 3 3)
+                      (256 256 3 3)
                       (512 256 3 3)
+                      (512 512 3 3)
+                      (512 512 3 3)
                       (512 512 3 3)
                       (512 512 3 3)
                       (512 512 3 3)
@@ -66,6 +91,21 @@
               ($fclose f))
             (let ((f (file.disk (format nil "b~Ah.txt" i) "w"))
                   (tx (tensor bdim)))
+              ($fwrite tx f)
+              ($fclose f))))
+
+(loop :for i :from 17 :to 19
+      :for kdim :in '((25088 4096)
+                      (4096 4096)
+                      (4096 1000))
+      :for bdim = (list 1 (cadr kdim))
+      :do (progn
+            (let ((f (file.disk (format nil "w~Ah.txt" i) "w"))
+                  (tx (apply #'tensor kdim)))
+              ($fwrite tx f)
+              ($fclose f))
+            (let ((f (file.disk (format nil "b~Ah.txt" i) "w"))
+                  (tx (apply #'tensor bdim)))
               ($fwrite tx f)
               ($fclose f))))
 

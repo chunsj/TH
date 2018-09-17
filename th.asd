@@ -50,4 +50,5 @@
                (:module db :components ((:file "mnist")
                                         (:file "fashion")
                                         (:file "imdb")))
-               (:module m :components ((:file "vgg16")))))
+               (:module m :components ((:file "vgg16")
+                                       (:file "vgg19")))))
