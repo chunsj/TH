@@ -56,7 +56,7 @@ for z in range(wlen):
       f.write(str(w.shape[1]) + "\n")
       f.write("1\n")
       f.write("0\n")
-      f.write(str(w.shape[0]) + "\n")
+      f.write(str((w.shape[0]*w.shape[1])) + "\n")
       for i in range(w.shape[0]):
         for j in range(w.shape[1]):
           f.write(str(w[i,j].astype(np.float64)) + " ")

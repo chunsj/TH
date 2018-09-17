@@ -3,6 +3,7 @@
         #:mu
         #:th
         #:th.m.vgg16
+        #:th.m.imagenet
         #:th.image))
 
 (in-package :vgg16-example)
@@ -22,7 +23,7 @@
     (prn "VGG16 RESULT:" vgg16-result)
     (prn "SOFTMAX:" category-val)
     (prn "CATEGORY INDEX:" category-idx)
-    (prn "CATEGORY DESCRIPTION:" ($ (vgg16-categories) category-idx))))
+    (prn "CATEGORY DESCRIPTION:" ($ (imagenet-categories) category-idx))))
 
 (let* ((rgb (tensor-from-jpeg-file "data/cat.vgg16.jpg" :resize-dimension '(224 224) :normalize nil))
        (bgr (convert-to-vgg16-input rgb)))
@@ -34,7 +35,7 @@
     (prn "VGG16 RESULT:" vgg16-result)
     (prn "SOFTMAX:" category-val)
     (prn "CATEGORY INDEX:" category-idx)
-    (prn "CATEGORY DESCRIPTION:" ($ (vgg16-categories) category-idx))))
+    (prn "CATEGORY DESCRIPTION:" ($ (imagenet-categories) category-idx))))
 
 (let* ((rgb (tensor-from-jpeg-file "data/dog.vgg16.jpg" :resize-dimension '(224 224) :normalize nil))
        (bgr (convert-to-vgg16-input rgb)))
@@ -46,4 +47,8 @@
     (prn "VGG16 RESULT:" vgg16-result)
     (prn "SOFTMAX:" category-val)
     (prn "CATEGORY INDEX:" category-idx)
-    (prn "CATEGORY DESCRIPTION:" ($ (vgg16-categories) category-idx))))
+    (prn "CATEGORY DESCRIPTION:" ($ (imagenet-categories) category-idx))))
+
+(setf *vgg16-weights* nil)
+(setf *vgg16-function* nil)
+(gcf)
