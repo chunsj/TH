@@ -34,7 +34,7 @@
         :k11 (read-weight-file "k11") :b11 (read-weight-file "b11")
         :k12 (read-weight-file "k12") :b12 (read-weight-file "b12")
         :k13 (read-weight-file "k13") :b13 (read-weight-file "b13")
-        :w14 (read-weight-file2 "w14" flatp) :b14 (read-weight-file "b14" flatp)
+        :w14 (read-weight-file "w14" flatp) :b14 (read-weight-file "b14" flatp)
         :w15 (read-weight-file "w15" flatp) :b15 (read-weight-file "b15" flatp)
         :w16 (read-weight-file "w16" flatp) :b16 (read-weight-file "b16" flatp)))
 
