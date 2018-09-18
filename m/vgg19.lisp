@@ -4,8 +4,7 @@
         #:th)
   (:export #:read-vgg19-weights
            #:convert-to-vgg19-input
-           #:vgg19
-           #:vgg19-categories))
+           #:vgg19))
 
 (in-package :th.m.vgg19)
 
@@ -109,12 +108,3 @@
               ($relu)
               ($maxpool2d 2 2 2 2)
               (vgg19-flat weights flat)))))))
-
-(defun vgg19-categories ()
-  (with-open-file (in (format nil "~A/vgg19/categories.txt" +model-location+) :direction :input)
-    (coerce (loop :for i :from 0 :below 1000
-                  :for line = (read-line in nil)
-                  :for catn = (subseq line 0 9)
-                  :for desc = (subseq line 10)
-                  :collect (list catn desc))
-            'vector)))

@@ -3,6 +3,7 @@
         #:mu
         #:th
         #:th.m.vgg19
+        #:th.m.imagenet
         #:th.image))
 
 (in-package :vgg19-example)
@@ -22,7 +23,7 @@
     (prn "VGG19 RESULT:" vgg19-result)
     (prn "SOFTMAX:" category-val)
     (prn "CATEGORY INDEX:" category-idx)
-    (prn "CATEGORY DESCRIPTION:" ($ (vgg19-categories) category-idx))))
+    (prn "CATEGORY DESCRIPTION:" ($ (imagenet-categories) category-idx))))
 
 (let* ((rgb (tensor-from-jpeg-file "data/cat.vgg16.jpg" :resize-dimension '(224 224) :normalize nil))
        (bgr (convert-to-vgg19-input rgb)))
@@ -34,7 +35,7 @@
     (prn "VGG19 RESULT:" vgg19-result)
     (prn "SOFTMAX:" category-val)
     (prn "CATEGORY INDEX:" category-idx)
-    (prn "CATEGORY DESCRIPTION:" ($ (vgg19-categories) category-idx))))
+    (prn "CATEGORY DESCRIPTION:" ($ (imagenet-categories) category-idx))))
 
 (let* ((rgb (tensor-from-jpeg-file "data/dog.vgg16.jpg" :resize-dimension '(224 224) :normalize nil))
        (bgr (convert-to-vgg19-input rgb)))
@@ -46,4 +47,8 @@
     (prn "VGG19 RESULT:" vgg19-result)
     (prn "SOFTMAX:" category-val)
     (prn "CATEGORY INDEX:" category-idx)
-    (prn "CATEGORY DESCRIPTION:" ($ (vgg19-categories) category-idx))))
+    (prn "CATEGORY DESCRIPTION:" ($ (imagenet-categories) category-idx))))
+
+(setf *vgg19-weights* nil)
+(setf *vgg19-function* nil)
+(gcf)
