@@ -8,6 +8,7 @@
 (defgeneric $selu (x))
 (defgeneric $softmax (x))
 (defgeneric $bnorm (x gamma beta mean sd &optional trainp momentum eps))
+(defgeneric $bn (x rmean rvar smean ssd &optional trainp momentum eps))
 (defgeneric $dropout (x &optional trainp p))
 
 (defgeneric $bce (a b))

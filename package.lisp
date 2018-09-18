@@ -355,6 +355,7 @@
            #:$softmax
            #:$logsoftmax
            #:$bnorm
+           #:$bn
            #:$dropout
            #:$conv2d
            #:$maxpool2d
