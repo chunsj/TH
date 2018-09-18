@@ -49,12 +49,14 @@
   12. Generative Adversarial Network: examples/{ls,c,info,w}gan[2].lisp (opticl is required)
   13. Deep Convolutional GAN: examples/dcgan.lisp
   14. Neural Arithmetic Logic Unit or NALU: examples/nalu.lisp
-  15. VGG16, pretrained model: examples/vgg16.lisp (https://bitbucket.org/chunsj/th-models/)
+  15. VGG16, pretrained model: examples/vgg16.lisp (refer keras-vgg16.py under scratch/weights)
+  16. VGG19, pretrained model: examples/vgg19.lisp (refer keras-vgg16.py under scratch/weights)
 
 ## Pretrained Models
-  Though there's currently only one model, VGG16 but I'll add more models if possible. Refer to
-  https://bitbucket.org/chunsj/th-models/ repository. You should copy or link the local model
-  repository under home directory as .th.models (for exact path, refer vgg16.lisp code).
+  Though there's currently only one model, VGG16 but I'll add more models if possible. Refer
+  corresponding weight file generation script written in python (keras). Generated weight files
+  should go under home directory as .th.models/[modelname] (for exact path, refer vgg16.lisp code).
+  Currently vgg16,vgg19 are supported.
 
 ## Selected Book Follow Ups
   1. Deep Learning from Scratch: dlfs
