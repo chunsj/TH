@@ -47,6 +47,7 @@
         :w15 (read-text-weight-file "w15" flatp) :b15 (read-text-weight-file "b15" flatp)
         :w16 (read-text-weight-file "w16" flatp) :b16 (read-text-weight-file "b16" flatp)))
 
+;; ~50 secs in the same machine
 (defun read-vgg16-weights (&optional (flatp t))
   (list :k1 (read-weight-file "k1") :b1 (read-weight-file "b1")
         :k2 (read-weight-file "k2") :b2 (read-weight-file "b2")
@@ -79,18 +80,6 @@
           :do (write-binary-weight-file w (format nil
                                                   "~A/vgg16/vgg16-~A.dat"
                                                   +model-location+ wn)))))
-
-(defun convert-to-vgg16-input (rgb-8bit-3channel-tensor)
-  (let ((x rgb-8bit-3channel-tensor)
-        (c 3)
-        (w 224)
-        (h 224))
-    (when (and x (eq 3 ($ndim x)) (eq c ($size x 0)) (eq h ($size x 1)) (eq w ($size x 2)))
-      (let ((input ($resize! ($empty x) (list c h w))))
-        (setf ($ input 0) ($- ($ x 2) 103.939))
-        (setf ($ input 1) ($- ($ x 1) 116.779))
-        (setf ($ input 2) ($- ($ x 0) 123.68))
-        input))))
 
 (defun vgg16-flat (x w flat)
   (let ((nbatch ($size x 0)))

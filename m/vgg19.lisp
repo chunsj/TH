@@ -84,18 +84,6 @@
                                                   "~A/vgg19/vgg19-~A.dat"
                                                   +model-location+ wn)))))
 
-(defun convert-to-vgg19-input (rgb-8bit-3channel-tensor)
-  (let ((x rgb-8bit-3channel-tensor)
-        (c 3)
-        (w 224)
-        (h 224))
-    (when (and x (eq 3 ($ndim x)) (eq c ($size x 0)) (eq h ($size x 1)) (eq w ($size x 2)))
-      (let ((input ($resize! ($empty x) (list c h w))))
-        (setf ($ input 0) ($- ($ x 2) 103.939))
-        (setf ($ input 1) ($- ($ x 1) 116.779))
-        (setf ($ input 2) ($- ($ x 0) 123.68))
-        input))))
-
 (defun vgg19-flat (x w flat)
   (let ((nbatch ($size x 0)))
     (cond ((eq flat :all) (-> ($reshape x nbatch 25088)

@@ -13,8 +13,8 @@
 (defparameter *vgg19-function* (vgg19 :all *vgg19-weights*))
 
 ;; cat categorizing - input should be 3x224x224 BGR image
-(let* ((rgb (tensor-from-png-file "data/cat.vgg16.png" :normalize nil))
-       (bgr (convert-to-vgg19-input rgb)))
+(let* ((rgb (tensor-from-png-file "data/cat.vgg16.png"))
+       (bgr (imagenet-input rgb)))
   (prn bgr)
   (let* ((vgg19-result (funcall *vgg19-function* bgr))
          (max-val-idx ($max vgg19-result 1))
@@ -25,8 +25,8 @@
     (prn "CATEGORY INDEX:" category-idx)
     (prn "CATEGORY DESCRIPTION:" ($ (imagenet-categories) category-idx))))
 
-(let* ((rgb (tensor-from-jpeg-file "data/cat.vgg16.jpg" :resize-dimension '(224 224) :normalize nil))
-       (bgr (convert-to-vgg19-input rgb)))
+(let* ((rgb (tensor-from-jpeg-file "data/cat.vgg16.jpg" :resize-dimension '(224 224)))
+       (bgr (imagenet-input rgb)))
   (prn bgr)
   (let* ((vgg19-result (funcall *vgg19-function* bgr))
          (max-val-idx ($max vgg19-result 1))
@@ -37,8 +37,8 @@
     (prn "CATEGORY INDEX:" category-idx)
     (prn "CATEGORY DESCRIPTION:" ($ (imagenet-categories) category-idx))))
 
-(let* ((rgb (tensor-from-jpeg-file "data/dog.vgg16.jpg" :resize-dimension '(224 224) :normalize nil))
-       (bgr (convert-to-vgg19-input rgb)))
+(let* ((rgb (tensor-from-jpeg-file "data/dog.vgg16.jpg" :resize-dimension '(224 224)))
+       (bgr (imagenet-input rgb)))
   (prn bgr)
   (let* ((vgg19-result (funcall *vgg19-function* bgr))
          (max-val-idx ($max vgg19-result 1))

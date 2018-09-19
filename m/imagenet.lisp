@@ -2,7 +2,8 @@
   (:use #:common-lisp
         #:mu
         #:th)
-  (:export #:imagenet-categories))
+  (:export #:imagenet-categories
+           #:imagenet-input))
 
 (in-package th.m.imagenet)
 
@@ -16,3 +17,22 @@
                   :for desc = (subseq line 10)
                   :collect (list catn desc))
             'vector)))
+
+;; to use torch vision weight
+;; All pre-trained models expect input images normalized in the same way,
+;; i.e. mini-batches of 3-channel RGB images of shape (3 x H x W),
+;; where H and W are expected to be at least 224.
+;; The images have to be loaded in to a range of [0, 1] and then normalized using
+;; normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+;;                                  std=[0.229, 0.224, 0.225])
+(defun imagenet-input (rgb-8bit-3channel-tensor)
+  (let ((x rgb-8bit-3channel-tensor)
+        (c 3)
+        (w 224)
+        (h 224))
+    (when (and x (eq 3 ($ndim x)) (eq c ($size x 0)) (eq h ($size x 1)) (eq w ($size x 2)))
+      (let ((input ($resize! ($empty x) (list c h w))))
+        (setf ($ input 0) ($/ ($- ($ x 0) 0.485) 0.229))
+        (setf ($ input 1) ($/ ($- ($ x 1) 0.456) 0.224))
+        (setf ($ input 2) ($/ ($- ($ x 2) 0.406) 0.225))
+        input))))
