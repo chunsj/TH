@@ -1,3 +1,6 @@
+#
+# XXX this file is for reference, th uses torch weight data not the keras one
+#
 import numpy as np
 from keras.applications.vgg19 import VGG19
 
