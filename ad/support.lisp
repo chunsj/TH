@@ -8,8 +8,31 @@
 (defgeneric $selu (x))
 (defgeneric $softmax (x))
 (defgeneric $bnorm (x gamma beta mean sd &optional trainp momentum eps))
-(defgeneric $bn (x rmean rvar smean ssd &optional trainp momentum eps))
+(defgeneric $bn (x gamma beta rm rv &optional sm sd momentum eps))
 (defgeneric $dropout (x &optional trainp p))
+
+;; rmean and rvar as zeros and ones with dimensionality of input
+;; if weight & bias given, they're traiable parameters (uniform/zero respectively)
+;; if sm and sd are given, it's in training mode, if not, it's in evaluation mode
+(defmethod $bn ((x tensor) (gamma tensor) (beta tensor) (rm tensor) (rv tensor)
+                &optional sm sd (momentum 0.1) (eps 1E-5))
+  (let ((output ($empty x)))
+    (if (and sm sd)
+        (nn-batch-normalization-update-output x output gamma beta rm rv sm sd t momentum eps)
+        (let ((sm (apply #'zeros ($size rm)))
+              (sd (apply #'ones ($size rv))))
+          (nn-batch-normalization-update-output x output gamma beta rm rv sm sd t momentum eps)))
+    output))
+
+(defmethod $bn ((x node) (gamma node) (beta node) (rm tensor) (rv tensor)
+                &optional sm sd (momentum 0.1) (eps 1E-5))
+  (let ((result (node ($bn ($data x) ($data gamma) ($data beta) rm rv sm sd momentum eps))))
+    (setf ($name result) "BN")
+    (if (and sm sd)
+        ($gp! result x gamma beta)
+        ($gp! result x))
+    (when x (error "backprop not implemented yet"))
+    result))
 
 (defgeneric $bce (a b))
 (defgeneric $mse (a b))
