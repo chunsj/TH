@@ -18,7 +18,7 @@ for z in range(wlen):
   dim = len(w.shape)
   if z < fcidx:
     if dim == 4:
-      fname = dbpath + "/resnet-p" + str(z) + ".txt"
+      fname = dbpath + "/resnet50-p" + str(z) + ".txt"
       f = open(fname, "w")
       f.write("4\n")
       f.write(str(w.shape[0]) + "\n")
@@ -38,7 +38,7 @@ for z in range(wlen):
               f.write(("%e" % w[i,j,k,l]) + " ") # conv, not xcorr
       f.close()
     elif dim == 1:
-      fname = dbpath + "/resnet-p" + str(z) + ".txt"
+      fname = dbpath + "/resnet50-p" + str(z) + ".txt"
       f = open(fname, "w")
       f.write("1\n")
       f.write(str(w.shape[0]) + "\n")
