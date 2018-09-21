@@ -49,14 +49,16 @@
   12. Generative Adversarial Network: examples/{ls,c,info,w}gan[2].lisp (opticl is required)
   13. Deep Convolutional GAN: examples/dcgan.lisp
   14. Neural Arithmetic Logic Unit or NALU: examples/nalu.lisp
-  15. VGG16, pretrained model: examples/vgg16.lisp (refer keras-vgg16.py under scratch/weights)
-  16. VGG19, pretrained model: examples/vgg19.lisp (refer keras-vgg16.py under scratch/weights)
+  15. VGG16, pretrained model: examples/vgg16.lisp (refer torch-vgg16.py under scratch/weights)
+  16. VGG19, pretrained model: examples/vgg19.lisp (refer torch-vgg16.py under scratch/weights)
+  17. ResNet50, pretrained model: examples/resnet50.lisp (refer torch-resnet50.py)
 
 ## Pretrained Models
-  Though there's currently only one model, VGG16 but I'll add more models if possible. Refer
-  corresponding weight file generation script written in python (keras). Generated weight files
-  should go under home directory as .th.models/[modelname] (for exact path, refer vgg16.lisp code).
-  Currently vgg16,vgg19 are supported.
+  Though there's currently three models, VGG16. VGG19 and ResNet50. But I'll add more models
+  if possible (if time permits). Refer corresponding weight file generation script written in
+  python (using pytorch). Generated weight files should go under home directory as
+  .th.models/[modelname] (for exact path, refer vgg16.lisp code). Currently vgg16,vgg19 and resnet50
+  are supported.
 
 ## Selected Book Follow Ups
   1. Deep Learning from Scratch: dlfs
