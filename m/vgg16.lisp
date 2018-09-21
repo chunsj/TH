@@ -3,8 +3,7 @@
         #:mu
         #:th)
   (:export #:read-vgg16-weights
-           #:vgg16
-           #:convert-to-vgg16-input))
+           #:vgg16))
 
 (in-package :th.m.vgg16)
 
