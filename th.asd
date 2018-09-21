@@ -52,4 +52,5 @@
                                         (:file "imdb")))
                (:module m :components ((:file "imagenet")
                                        (:file "vgg16")
-                                       (:file "vgg19")))))
+                                       (:file "vgg19")
+                                       (:file "resnet50")))))
