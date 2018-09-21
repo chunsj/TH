@@ -79,3 +79,35 @@ for z in range(wlen):
       for i in range(w.shape[0]):
         f.write(("%e" % w[i]) + " ")
       f.close()
+
+children = []
+for c in model.modules():
+    children.append(c)
+
+pidx = 1
+for z in range(len(children)):
+  c = children[z]
+  if c.__class__.__name__ == 'BatchNorm2d':
+    rm = c.running_mean
+    rv = c.running_var
+    fname = dbpath + "/resnet50-m" + str(pidx) + ".txt"
+    f = open(fname, "w")
+    f.write("1\n")
+    f.write(str(rm.shape[0]) + "\n")
+    f.write("1\n")
+    f.write("0\n")
+    f.write(str(rm.shape[0]) + "\n")
+    for i in range(rm.shape[0]):
+      f.write(("%e" % rm[i]) + " ")
+    f.close()
+    fname = dbpath + "/resnet50-v" + str(pidx) + ".txt"
+    f = open(fname, "w")
+    f.write("1\n")
+    f.write(str(rv.shape[0]) + "\n")
+    f.write("1\n")
+    f.write("0\n")
+    f.write(str(rv.shape[0]) + "\n")
+    for i in range(rv.shape[0]):
+      f.write(("%e" % rv[i]) + " ")
+    f.close()
+    pidx = pidx + 1
