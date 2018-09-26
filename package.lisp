@@ -360,6 +360,8 @@
            #:$conv2d
            #:$maxpool2d
            #:$avgpool2d
+           #:$dlconv2d
+           #:$dlmaxpool2d
            #:$dconv2d
            #:$affine
            #:$xwpb

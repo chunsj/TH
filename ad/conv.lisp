@@ -9,6 +9,11 @@
 (defgeneric $avgpool2d (x kw kh &optional dw dh pw ph ceilp count-pad-p)
   (:documentation "Performs average pooling over x."))
 
+(defgeneric $dlconv2d (x k &optional b dw dh pw ph dlw dlh)
+  (:documentation "Performs dilated convoution of x with kernel k and bias b which is optional."))
+(defgeneric $dlmaxpool2d (x kw kh &optional dw dh pw ph dlw dlh ceilp)
+  (:documentation "Performs dilated max pooling over x."))
+
 (defgeneric $dconv2d (x w &optional b dw dh pw ph aw ah)
   (:documentation "Performs deconvolution using w weight, b bias and others."))
 
@@ -150,6 +155,21 @@
                                                                  count-pad-p)
                    dx)))
       result)))
+
+(defmethod $dlconv2d ((x tensor) (k tensor) &optional b (dw 1) (dh 1) (pw 0) (ph 0) (dlw 0) (dlh 0))
+  (let ((out ($empty x))
+        (f ($empty x))
+        (df ($empty x)))
+    (nn-spatial-dilated-convolution-update-output x out k b f df ($size k 2) ($size k 3)
+                                                  dw dh pw ph dlw dlh)
+    out))
+
+(defmethod $dlmaxpool2d ((x tensor) kw kh &optional (dw 1) (dh 1) (pw 0) (ph 0) (dlw 0) (dlh 0)
+                                            ceilp)
+  (let ((out ($empty x))
+        (indices (tensor.long)))
+    (nn-spatial-dilated-max-pooling-update-output x out indices kw kh dw dh pw ph dlw dlh ceilp)
+    out))
 
 (defmethod $conv2 ((x node) (k node) &optional (type :valid))
   (let ((result (node ($conv2 ($data x) ($data k) type))))
