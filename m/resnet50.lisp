@@ -407,7 +407,8 @@
   (let ((nbatch ($size x 0)))
     (cond ((eq flat :all) (-> ($reshape x nbatch 2048)
                               ($affine (w w :w50) (w w :b50))
-                              ($softmax))))))
+                              ($softmax)))
+          (t x))))
 
 (defun resnet50 (&optional (flat :all) weights)
   (let ((w (or weights (read-resnet50-weights (not (eq flat :none))))))

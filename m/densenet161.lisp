@@ -1,14 +1,13 @@
 (defpackage :th.m.densenet161
   (:use #:common-lisp
         #:mu
-        #:th
-        #:th.image
-        #:th.m.imagenet))
+        #:th)
+  (:export #:read-densenet161-weights
+           #:densenet161))
 
 (in-package :th.m.densenet161)
 
-;;(defparameter +model-location+ ($concat (namestring (user-homedir-pathname)) ".th.models"))
-(defparameter +model-location+ ($concat (namestring (user-homedir-pathname)) "Desktop"))
+(defparameter +model-location+ ($concat (namestring (user-homedir-pathname)) ".th.models"))
 
 (defun read-text-weight-file (wn &optional (readp t))
   (when readp
@@ -28,8 +27,11 @@
       tx)))
 
 (defun kw (str) (values (intern (string-upcase str) "KEYWORD")))
+(defun w (w wn) (getf w wn))
 
-(defun read-densenet161-text-weights ()
+(defun kwn (k i) (kw (format nil "~A~A" k i)))
+
+(defun read-densenet161-text-weights (&optional (flatp t))
   (append (loop :for i :from 0 :to 481
                 :for nm = (format nil "p~A" i)
                 :for k = (kw nm)
@@ -42,12 +44,38 @@
                 :for nm = (format nil "m~A" i)
                 :for k = (kw nm)
                 :append (list k (read-text-weight-file nm)))
-          (list :fw1 (read-text-weight-file :f482)
-                :fb1 (read-text-weight-file :f483))))
+          (list :f482 (read-text-weight-file :f482 flatp)
+                :f483 (read-text-weight-file :f483 flatp))))
 
-(defun w (w wn) (getf w wn))
+(defun read-densenet161-weights (&optional (flatp t))
+  (append (loop :for i :from 0 :to 481
+                :for nm = (format nil "p~A" i)
+                :for k = (kw nm)
+                :append (list k (read-weight-file nm)))
+          (loop :for i :from 1 :to 161
+                :for nm = (format nil "v~A" i)
+                :for k = (kw nm)
+                :append (list k (read-weight-file nm)))
+          (loop :for i :from 1 :to 161
+                :for nm = (format nil "m~A" i)
+                :for k = (kw nm)
+                :append (list k (read-weight-file nm)))
+          (list :f482 (read-weight-file :f482 flatp)
+                :f483 (read-weight-file :f483 flatp))))
 
-(w (read-densenet161-text-weights) :p5)
+(defun write-binary-weight-file (w filename)
+  (let ((f (file.disk filename "w")))
+    (setf ($fbinaryp f) t)
+    ($fwrite w f)
+    ($fclose f)))
+
+(defun write-densenet161-binary-weights (&optional weights)
+  (let ((weights (or weights (read-densenet161-text-weights))))
+    (loop :for wk :in weights :by #'cddr
+          :for w = (getf weights wk)
+          :do (write-binary-weight-file w (format nil
+                                                  "~A/densenet161/densenet161-~A.dat"
+                                                  +model-location+ wk)))))
 
 (defun input-blk (x ws)
   (-> x
@@ -55,8 +83,6 @@
       ($bn (w ws :p1) (w ws :p2) (w ws :m1) (w ws :v1))
       ($relu)
       ($dlmaxpool2d 3 3 2 2 1 1 1 1)))
-
-(defun kwn (k i) (kw (format nil "~A~A" k i)))
 
 ;; p = p + 6, n = n + 2
 (defun dense-layer (x ws p n)
@@ -102,8 +128,6 @@
       (dense-layer ws 21 8)
       (dense-layer ws 27 10)
       (dense-layer ws 33 12)))
-
-(loop :for i :from 42 :below 120 :by 6 :collect i)
 
 ;; out p = 114, n = 39
 (defun dense-block2 (x ws)
@@ -161,12 +185,6 @@
       (dense-layer ws 321 108)
       (dense-layer ws 327 110)))
 
-(+ 117 (* 6 36))
-;; 336 113 - after block3 transition
-
-(+ 336 (* 6 24))
-(+ 113 (* 2 24))
-
 ;; out p = 480, n = 161
 (defun dense-block4 (x ws)
   (-> x
@@ -195,25 +213,29 @@
       (dense-layer ws 468 157)
       (dense-layer ws 474 159)))
 
-(defparameter *weights* (read-densenet161-text-weights))
+(defun densenet161-flat (x w flat)
+  (let ((nbatch ($size x 0)))
+    (cond ((eq flat :all) (-> ($reshape x nbatch 2208)
+                              ($affine (w w :f482) (w w :f483))
+                              ($softmax)))
+          (t x))))
 
-(let* ((rgb (tensor-from-png-file "data/cat.vgg16.png"))
-       (x (imagenet-input rgb))
-       (input (apply #'$reshape x (cons 1 ($size x))))
-       (ws *weights*))
-  (-> input
-      (input-blk ws)
-      (dense-block1 ws)
-      (transition ws 39 14)
-      (dense-block2 ws)
-      (transition ws 114 39)
-      (dense-block3 ws)
-      (transition ws 333 112)
-      (dense-block4 ws)
-      ($bn (w ws :p480) (w ws :p481) (w ws :m161) (w ws :v161))
-      ($avgpool2d 7 7 1 1)
-      ($reshape 1 2208)
-      ($affine (w ws :fw1) (w ws :fb1))
-      ($softmax)
-      ($max 1)
-      (prn)))
+(defun densenet161 (&optional (flat :all) weights)
+  (let ((ws (or weights (read-densenet161-weights (not (eq flat :none))))))
+    (lambda (x)
+      (when (and x (>= ($ndim x) 3) (equal (last ($size x) 3) (list 3 224 224)))
+        (let ((x (if (eq ($ndim x) 3)
+                     ($reshape x 1 3 224 224)
+                     x)))
+          (-> x
+              (input-blk ws)
+              (dense-block1 ws)
+              (transition ws 39 14)
+              (dense-block2 ws)
+              (transition ws 114 39)
+              (dense-block3 ws)
+              (transition ws 333 112)
+              (dense-block4 ws)
+              ($bn (w ws :p480) (w ws :p481) (w ws :m161) (w ws :v161))
+              ($avgpool2d 7 7 1 1)
+              (densenet161-flat ws flat)))))))
