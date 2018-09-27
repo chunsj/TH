@@ -3,7 +3,8 @@
         #:mu
         #:th)
   (:export #:imagenet-categories
-           #:imagenet-input))
+           #:imagenet-input
+           #:imagenet-top5-matches))
 
 (in-package th.m.imagenet)
 
@@ -36,3 +37,12 @@
         (setf ($ input 1) ($/ ($- ($ x 1) 0.456) 0.224))
         (setf ($ input 2) ($/ ($- ($ x 2) 0.406) 0.225))
         input))))
+
+(defun imagenet-top5-matches (result)
+  (let* ((sorted-val-idx ($sort result 1 t))
+         (vals ($subview (car sorted-val-idx) 0 1 0 5))
+         (indices ($subview (cadr sorted-val-idx) 0 1 0 5)))
+    (loop :for i :from 0 :below 5
+          :for val = ($ vals 0 i)
+          :for idx = ($ indices 0 i)
+          :collect (cons ($ (imagenet-categories) idx) val))))
