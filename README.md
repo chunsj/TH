@@ -52,13 +52,24 @@
   15. VGG16, pretrained model: examples/vgg16.lisp (refer torch-vgg16.py under scratch/weights)
   16. VGG19, pretrained model: examples/vgg19.lisp (refer torch-vgg16.py under scratch/weights)
   17. ResNet50, pretrained model: examples/resnet50.lisp (refer torch-resnet50.py)
+  18. DenseNet161, pretrained model: examples/densenet161.lisp (refer torch-densenet161.py)
 
 ## Pretrained Models
-  Though there's currently three models, VGG16. VGG19 and ResNet50. But I'll add more models
-  if possible (if time permits). Refer corresponding weight file generation script written in
-  python (using pytorch). Generated weight files should go under home directory as
-  .th.models/[modelname] (for exact path, refer vgg16.lisp code). Currently vgg16,vgg19 and resnet50
-  are supported.
+  Though there's currently four models, VGG16, VGG19, ResNet50 and DenseNet161 are supported.
+  But I'll add more models if possible (if time permits). Refer corresponding weight file
+  generation script written in python (using pytorch). Generated weight files should go under
+  home directory as .th.models/[modelname] (for exact path, refer vgg16.lisp code).
+
+## On API - Neural Network related
+  1. Variable creation: $variable
+  2. Value/Constant creation: $constant
+  3. State (recurrent) creation/accessing: $state, $prev
+  4. Operators: $+, $-, $*, $/ $@, ...
+  5. Functions: $sigmoid, $tanh, $softmax
+  6. Backpropagation: $bp!, $bptt!
+  7. Gradient descent or parameter update: $gd!, $mgd!, $agd!, $amgd!, $rmgd!, $adgd!
+  8. Weight initialization: $rn!, $ru!, $rnt!, $xavieru!, $xaviern!, $heu!, $hen!, $lecunu!, ...
+  9. Weight creation utilities: vrn, vru, vrnt, vxavier, vhe, vlecun
 
 ## Selected Book Follow Ups
   1. Deep Learning from Scratch: dlfs
@@ -73,14 +84,3 @@
 ## On Scratch
   1. Most of the code in this folder is just for testing, teasing, or random trashing.
   2. They may not work at all.
-
-## On API - Neural Network related
-  1. Variable creation: $variable
-  2. Value/Constant creation: $constant
-  3. State (recurrent) creation/accessing: $state, $prev
-  4. Operators: $+, $-, $*, $/ $@, ...
-  5. Functions: $sigmoid, $tanh, $softmax
-  6. Backpropagation: $bp!, $bptt!
-  7. Gradient descent or parameter update: $gd!, $mgd!, $agd!, $amgd!, $rmgd!, $adgd!
-  8. Weight initialization: $rn!, $ru!, $rnt!, $xavieru!, $xaviern!, $heu!, $hen!, $lecunu!, ...
-  9. Weight creation utilities: vrn, vru, vrnt, vxavier, vhe, vlecun
