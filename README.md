@@ -59,7 +59,7 @@
   Though there's currently 5 models, VGG16, VGG19, ResNet50, DenseNet161 and SqueezeNet1.1 are
   supported. However, I'll add more models if possible (if time permits). Refer corresponding
   weight file generation script written in python (using pytorch). Generated weight files should
-  go under home directory as .th.models/[modelname] (for exact path, refer vgg16.lisp code).
+  go under home directory as ~/.th/models/[modelname] (for exact path, refer vgg16.lisp code).
 
 ## On API - Neural Network related
   1. Variable creation: $variable
@@ -76,7 +76,7 @@
   1. Deep Learning from Scratch: dlfs
   2. Grokking Deep Learning: gdl
 
-## Test Data Support
+## Test Data Support - data should be copied under ~/.th/datasets/[datasetname]
   1. MNIST: db/mnist.lisp
   2. Fashion MNIST: db/fashion.lisp
   3. IMDB: db/imdb.lisp

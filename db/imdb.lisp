@@ -9,7 +9,7 @@
 
 (in-package :th.db.imdb)
 
-(defparameter +imdb-location+ ($concat (namestring (user-homedir-pathname)) "IMDB"))
+(defparameter +imdb-location+ ($concat (namestring (user-homedir-pathname)) ".th/datasets/imdb"))
 
 (defun imdb-reviews (path)
   (let ((filename ($concat path "/reviews-small.txt")))

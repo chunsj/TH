@@ -20,7 +20,8 @@
     (#x0D single-float 4)
     (#x0E double-float 8)))
 
-(defparameter +fmnist-location++ ($concat (namestring (user-homedir-pathname)) "FMNIST"))
+(defparameter +fmnist-location++ ($concat (namestring (user-homedir-pathname))
+                                          ".th/datasets/fmnist"))
 
 (defun read-nbyte (n str)
   (let ((ret 0))
