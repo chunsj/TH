@@ -8,7 +8,7 @@
 
 (in-package th.m.imagenet)
 
-(defparameter +model-location+ ($concat (namestring (user-homedir-pathname)) ".th.models"))
+(defparameter +model-location+ ($concat (namestring (user-homedir-pathname)) ".th/models"))
 
 (defun imagenet-categories ()
   (with-open-file (in (format nil "~A/imagenet/categories.txt" +model-location+) :direction :input)

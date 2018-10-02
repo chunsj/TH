@@ -7,7 +7,7 @@
 
 (in-package :th.m.squeezenet11)
 
-(defparameter +model-location+ ($concat (namestring (user-homedir-pathname)) ".th.models"))
+(defparameter +model-location+ ($concat (namestring (user-homedir-pathname)) ".th/models"))
 
 (defun read-text-weight-file (wn &optional (readp t))
   (when readp
