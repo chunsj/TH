@@ -31,3 +31,55 @@ When given a tensor, the content storage is shared - this is the same mechanism 
   (print "SAME CONTENT AS X")
   (print (tensor x)))
 ```
+
+## Tensor Storage
+
+Contents of tensors in storage are stored in flat memory area. What makes this ordinary memory
+work as something special like tensor is how the stored contents are dealt with. Tensors have
+their size and strides.
+
+You can directly specify size and stride information during creation; for example, you can create
+an uninitialized tensor of 2 rows and 2 columns whose strides are 2 and 1. Thinks of strides as
+how flat, 1-D memory space can be viewed as 2-D matrix.
+
+```lisp
+(tensor '(2 2) '(2 1))
+```
+
+You can create tensors of specific type; default type is 32-bit float or single-float.
+
+```lisp
+(tensor.byte '(1 2 3 4))
+(tensor.char '(1 2 3 4))
+(tensor.short '(1 2 3 4))
+(tensor.int '(1 2 3 4))
+(tensor.long '(1 2 3 4))
+(tensor.float '(1 2 3 4))
+(tensor.double '(1 2 3 4))
+```
+
+Tensor types are convertible.
+```lisp
+(tensor.byte (tensor.double '((1.234 2.345) (3.456 4.567))))
+(tensor.double (tensor.int '((1 2 3) (4 5 6))))
+```
+
+Cloning a tensor is creating a new tensor with independent storage with same contents.
+
+```lisp
+(let* ((x (tensor '((1 2) (3 4))))
+       (x2 ($clone x))))
+```
+
+Make storage memory as contiguously allocated one if it is not.
+
+```lisp
+($contiguous! atensor)
+```
+
+Check whether given data is tensor or not.
+
+```lisp
+($tensorp 0)
+($tensorp (tensor 2 3 4))
+```
