@@ -190,8 +190,8 @@
 (cffi:defcfun ("THSetNumThreads" th-set-num-threads) :void (n :int))
 (cffi:defcfun ("THGetNumThreads" th-get-num-threads) :int)
 
-(cffi:defcfun ("omp_get_num_threads" omp-get-num-threads) :int)
-(cffi:defcfun ("omp_set_num_threads" omp-set-num-threads) :void (n :int))
+;;(cffi:defcfun ("omp_get_num_threads" omp-get-num-threads) :int)
+;;(cffi:defcfun ("omp_set_num_threads" omp-set-num-threads) :void (n :int))
 
 (th-set-num-threads 4)
-(omp-set-num-threads 4)
+;;(omp-set-num-threads 4)

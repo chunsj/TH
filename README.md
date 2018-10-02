@@ -16,15 +16,17 @@
   Performance-wise, I think this library shows rather good performance, though I cannot find better,
   automated way of keeping memory usage low yet; so you have to insert full gc instruction properly.
 
-## About libTH/libTHNN
-  Refer http://torch.ch/docs/getting-started.html and build torch. After install, under lib directory,
-  you can find libTH and libTHNN (this file is under lua/5.1) which are required to use my library.
-  You may try to use ATen from pytorch, but this requires some patching some files and adding missing
-  files. (If you want to do this, refer https://bitbucket.org/chunsj/pytorch.personal/)
+## About libTHTensor/libTHNeural
+  At first, I've used libATen from pytorch but the project abandons all previous C interfaces in TH
+  and libTHNN. So I've reverted to torch. But this makes another problem of index. And to build lib
+  files I need to install cmake and other dependencies which TH does not use. So, I've forked the
+  code into https://bitbucket.org/chunsj/LibTH (Yet, there's no makefile for automated build, I'll
+  write one). After building, copy libTHTensor.0.dylib and libTHNeural.0.dylib and symlink each file
+  as libTHTensor.dylib and libTHNeural.dylib respectively.
   Though current version of th does not support CUDA, I have a plan to support them and for this, you
-  will need libTHC and libTHCUNN under torch installation directory.
-  For this recent changes in libraries, there might be still some problems due to the function signature
-  changes between aten and TH/THNN, these problems are under fixing if found.
+  will need libTHCTensor and libTHCNeual under torch installation directory.
+  For this recent changes in libraries, there might be still some problems due to the function
+  signature changes between aten and TH/THNN, these problems are under investigation and fixing.
 
 ## How to Load
   1. Build torch (to get libTH/libTHNN) or if possible build those library files.
