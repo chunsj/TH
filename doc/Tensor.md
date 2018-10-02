@@ -32,7 +32,7 @@ When given a tensor, the content storage is shared - this is the same mechanism 
   (print (tensor x)))
 ```
 
-## Tensor Storage
+## Tensor Storage, Types and Attributes
 
 Contents of tensors in storage are stored in flat memory area. What makes this ordinary memory
 work as something special like tensor is how the stored contents are dealt with. Tensors have
@@ -41,6 +41,9 @@ their size and strides.
 You can directly specify size and stride information during creation; for example, you can create
 an uninitialized tensor of 2 rows and 2 columns whose strides are 2 and 1. Thinks of strides as
 how flat, 1-D memory space can be viewed as 2-D matrix.
+
+In short, a tensor is a speicific view on the storage; you can have different tensors on the same
+storage.
 
 ```lisp
 (tensor '(2 2) '(2 1))
@@ -82,4 +85,14 @@ Check whether given data is tensor or not.
 ```lisp
 ($tensorp 0)
 ($tensorp (tensor 2 3 4))
+```
+
+Dimension or sizes of tensors.
+
+```lisp
+($ndim (tensor)) ;; empty dimension
+($ndim (tensor 2 3 4)) ;; 3-D
+($size (tensor 2 3 4)) ;; size of 3-D tensor
+($size (tensor 2 3 4) 2) ;; size along 3rd dimension
+($size 1) ;; scalar value has no size
 ```
