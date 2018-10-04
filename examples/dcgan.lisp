@@ -2,12 +2,11 @@
 ;; https://github.com/soumith/dcgan.torch
 ;; https://towardsdatascience.com.having-fun-with-deep-convolutional-gans-f4f8393686ed
 
-(ql:quickload :opticl)
-
 (defpackage :dcgan
   (:use #:common-lisp
         #:mu
         #:th
+        #:th.image
         #:th.db.mnist))
 
 (in-package :dcgan)
@@ -128,7 +127,7 @@
                            :collect k)
         :collect ($contiguous! ($- ($* 2 ($index ($ *mnist* :train-images) 0 range)) 1))))
 
-(defparameter *train-data-batches* (subseq *mnist-train-image-batches* 0 1))
+(defparameter *train-data-batches* (subseq *mnist-train-image-batches* 0))
 (defparameter *train-count* ($count *train-data-batches*))
 
 (gcf)
@@ -191,3 +190,9 @@
   (outpngs (loop :for i :from 0 :below 49
                  :collect ($index x 0 i))
            (format nil "~A/images.png" *output*)))
+
+(setf *mnist* nil
+      *mnist-train-image-batches* nil
+      *train-data-batches* nil)
+
+(gcf)
