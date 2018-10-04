@@ -1,12 +1,11 @@
 ;; from
 ;; https://wiseodd.github.io/techblog/2017/03/02/least-squares-gan/
 
-(ql:quickload :opticl)
-
 (defpackage :lsgan
   (:use #:common-lisp
         #:mu
         #:th
+        #:th.image
         #:th.db.mnist))
 
 (in-package :lsgan)
