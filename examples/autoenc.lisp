@@ -107,3 +107,6 @@
                           (prn "LOSS:" bidx "/" epoch ($data loss) ($data mse) ($data esparsity)))))
             (prn "[TEST]" epoch (validate))
             (gcf)))
+
+(setf *mnist* nil)
+(setf *mnist-train-image-batches* nil)
