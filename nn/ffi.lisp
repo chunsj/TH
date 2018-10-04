@@ -176,8 +176,7 @@
   (size-average :char)
   (weights th-float-tensor-ptr)
   (total-weight th-float-tensor-ptr)
-  (ignore-index :long)
-  (reduce :char))
+  (ignore-index :long))
 (cffi:defcfun ("THNN_DoubleClassNLLCriterion_updateOutput"
                thnn-double-class-nll-criterion-update-output) :void
   (state thnn-state-ptr)
@@ -187,8 +186,7 @@
   (size-average :char)
   (weights th-double-tensor-ptr)
   (total-weight th-double-tensor-ptr)
-  (ignore-index :long)
-  (reduce :char))
+  (ignore-index :long))
 
 ;; [OUT] grad-input
 ;; [OPTIONAL] weights
@@ -198,25 +196,21 @@
   (state thnn-state-ptr)
   (input th-float-tensor-ptr)
   (target th-long-tensor-ptr)
-  (grad-output th-float-tensor-ptr)
   (grad-input th-float-tensor-ptr)
   (size-average :char)
   (weights th-float-tensor-ptr)
   (total-weight th-float-tensor-ptr)
-  (ignore-index :long)
-  (reduce :char))
+  (ignore-index :long))
 (cffi:defcfun ("THNN_DoubleClassNLLCriterion_updateGradInput"
                thnn-double-class-nll-criterion-update-grad-input) :void
   (state thnn-state-ptr)
   (input th-double-tensor-ptr)
   (target th-long-tensor-ptr)
-  (grad-output th-double-tensor-ptr)
   (grad-input th-double-tensor-ptr)
   (size-average :char)
   (weights th-double-tensor-ptr)
   (total-weight th-double-tensor-ptr)
-  (ignore-index :long)
-  (reduce :char))
+  (ignore-index :long))
 
 ;; [OUT] output
 (cffi:defcfun ("THNN_FloatDistKLDivCriterion_updateOutput"

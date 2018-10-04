@@ -210,8 +210,7 @@
                                                 (if size-average 1 0)
                                                 (if weights ($handle weights) (nilptr))
                                                 ($handle total-weight)
-                                                ignore-index
-                                                1))
+                                                ignore-index))
 (defmethod nn-class-nll-criterion-update-output ((input tensor.double) (target tensor.long)
                                                  (output tensor.double) size-average weights
                                                  (total-weight tensor.double)
@@ -223,14 +222,12 @@
                                                  (if size-average 1 0)
                                                  (if weights ($handle weights) (nilptr))
                                                  ($handle total-weight)
-                                                 ignore-index
-                                                 1))
+                                                 ignore-index))
 
-(defgeneric nn-class-nll-criterion-update-grad-input (input target grad-output grad-input
+(defgeneric nn-class-nll-criterion-update-grad-input (input target grad-input
                                                       size-average
                                                       weights total-weight ignore-index))
 (defmethod nn-class-nll-criterion-update-grad-input ((input tensor.float) (target tensor.long)
-                                                     (grad-output tensor.float)
                                                      (grad-input tensor.float)
                                                      size-average weights
                                                      (total-weight tensor.float)
@@ -238,15 +235,12 @@
   (thnn-float-class-nll-criterion-update-grad-input (defstate)
                                                     ($handle input)
                                                     ($handle target)
-                                                    ($handle grad-output)
                                                     ($handle grad-input)
                                                     (if size-average 1 0)
                                                     (if weights ($handle weights) (nilptr))
                                                     ($handle total-weight)
-                                                    ignore-index
-                                                    1))
+                                                    ignore-index))
 (defmethod nn-class-nll-criterion-update-grad-input ((input tensor.double) (target tensor.long)
-                                                     (grad-output tensor.double)
                                                      (grad-input tensor.double)
                                                      size-average weights
                                                      (total-weight tensor.double)
@@ -254,13 +248,11 @@
   (thnn-double-class-nll-criterion-update-grad-input (defstate)
                                                      ($handle input)
                                                      ($handle target)
-                                                     ($handle grad-output)
                                                      ($handle grad-input)
                                                      (if size-average 1 0)
                                                      (if weights ($handle weights) (nilptr))
                                                      ($handle total-weight)
-                                                     ignore-index
-                                                     1))
+                                                     ignore-index))
 
 (defgeneric nn-dist-kl-div-criterion-update-output (input target output size-average))
 (defmethod nn-dist-kl-div-criterion-update-output ((input tensor.float) (target tensor.float)
