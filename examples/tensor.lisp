@@ -1096,7 +1096,7 @@
   (prn ($@ v ($diag e) ($transpose v)))
   (prn ($dist a ($triu ($@ v ($diag e) ($transpose v))))))
 
-;; ev - ERROR, overflow with float32
+;; ev - XXX ERROR, overflow with float32
 (let ((a (-> (tensor '((1.96  0.00  0.00  0.00  0.00)
                        (-6.49  3.80  0.00  0.00  0.00)
                        (-0.47 -6.39  4.17  0.00  0.00)
