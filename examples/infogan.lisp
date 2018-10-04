@@ -2,12 +2,11 @@
 ;; https://wiseodd.github.io/techblog/2017/01/29/infogan/
 ;; https://github.com/wiseodd/generative-models/blob/master/GAN/infogan/infogan_pytorch.py
 
-(ql:quickload :opticl)
-
 (defpackage :infogan
   (:use #:common-lisp
         #:mu
         #:th
+        #:th.image
         #:th.db.mnist))
 
 (in-package :infogan)
