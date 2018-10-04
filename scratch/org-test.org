@@ -2,7 +2,12 @@
 #+AUTHOR: Sungjin Chun
 #+EMAIL: chunsj@gmail.com
 
-* Package definition
+* Literate programming
+I love the concept of literate programming or write down your thought and make it happen at the same time style approach. I've learned from Smalltalk or Squeak exactly that dynamic and active environment is the most important part of human creativity and that org-babel can realize similar environment for common lisp in emacs.
+I'd like to create a kind of template so that future-myself can refer how to write some dynamic documents in emacs.
+
+* Package definition - defpackage
+Every source code should be in the src block and you'd better create a package before writing down your own code. Executing code block is C-c C-c.
 #+BEGIN_SRC lisp :results silent
 (defpackage :my-org-playground
   (:use #:common-lisp
@@ -10,7 +15,7 @@
         #:th))
 #+END_SRC
 
-* Using predefined package
+* Writing code inside the defined package - in-package
 Note that the *in-package* part in the code block; you need to specify package or default namespace will be used.
 ** Function definition
 #+BEGIN_SRC lisp :results silent
