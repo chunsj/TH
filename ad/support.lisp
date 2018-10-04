@@ -273,7 +273,7 @@
     ($ result 0)))
 
 (defun dcnll (input target)
-  (let ((dinput ($empty input)))
+  (let ((dinput ($zero input)))
     (nn-class-nll-criterion-update-grad-input input (tensor.long ($reshape target ($count target)))
                                               dinput t nil
                                               (ones 1) -100)
