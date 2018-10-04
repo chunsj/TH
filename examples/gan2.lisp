@@ -2,8 +2,6 @@
 ;; https://wiseodd.github.io/techblog/2017/01/20/gan-pytorch/
 ;; with tanh generator
 
-(ql:quickload :opticl)
-
 (defpackage :gan2
   (:use #:common-lisp
         #:mu

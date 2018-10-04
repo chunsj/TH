@@ -1,12 +1,11 @@
 ;; from
 ;; https://wiseodd.github.io/techblog/2017/01/20/gan-pytorch/
 
-(ql:quickload :opticl)
-
 (defpackage :gan
   (:use #:common-lisp
         #:mu
         #:th
+        #:th.image
         #:th.db.mnist))
 
 (in-package :gan)
@@ -29,14 +28,7 @@
 ;; XXX cannot figure out why adam works best (adadelta does not work well)
 (defun optm (params) ($amgd! params 1E-3))
 
-(defun outpng (data fname &optional (w 28) (h 28))
-  (let ((img (opticl:make-8-bit-gray-image w h))
-        (d ($reshape data w h)))
-    (loop :for i :from 0 :below h
-          :do (loop :for j :from 0 :below w
-                    :do (progn
-                          (setf (aref img i j) (round (* 255 ($ d i j)))))))
-    (opticl:write-png-file fname img)))
+(defun outpng (data fname) (write-tensor-png-file ($reshape data 28 28) fname))
 
 ;; training data - uses batches for performance, 30, 60 works well
 (defparameter *batch-size* 60)
@@ -164,3 +156,9 @@
              (format nil "~A/49.png" *output*))
   ($cg! *discriminator*)
   ($cg! *generator*))
+
+(setf *mnist* nil
+      *mnist-train-image-batches* nil
+      *train-data-batches* nil)
+
+(gcf)
