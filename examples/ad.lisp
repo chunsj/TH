@@ -231,6 +231,7 @@
   ($gs! y)
   (prn "DY/DX" ($gradient x)))
 
+;; supports function
 (defun muladd (x y z) ($+ ($* x y) z))
 
 (let* ((x ($variable ($- ($* 2 (rnd 3 2)) 1)))
@@ -363,16 +364,16 @@
 
 (let* ((X ($constant (tensor '((5 2) (-1 0) (5 2)))))
        (Y ($constant (tensor '(1 0 1))))
-       (c ($variable 0))
+       (c ($variable (tensor '(0 0 0))))
        (b ($variable (tensor '(0 0))))
        (a 0.1))
   (loop :for i :from 0 :below 1000
-        :do (let* ((Y* ($sigmoid ($add ($mv X b) ($broadcast c Y))))
+        :do (let* ((Y* ($sigmoid ($add ($mv X b) c)))
                    (out ($bce Y* Y)))
               (when (zerop (mod i 100)) (prn ($data out)))
               ($gd! c a)
               ($gd! b a)))
-  (prn ($sigmoid ($add ($mv X b) ($broadcast c Y)))))
+  (prn ($sigmoid ($add ($mv X b) c))))
 
 ;; xor
 (let* ((w1 ($variable (rndn 2 3)))
@@ -391,8 +392,8 @@
   (prn w1)
   (prn w2)
   (prn (let* ((l1 ($sigmoid ($mm X w1)))
-                (l2 ($sigmoid ($mm l1 w2))))
-           l2)))
+              (l2 ($sigmoid ($mm l1 w2))))
+         l2)))
 
 (let* ((w1 ($variable (rndn 2 3)))
        (w2 ($variable (rndn 3 1)))
