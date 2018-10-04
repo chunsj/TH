@@ -5,7 +5,7 @@
 
 (in-package :xor-example)
 
-;; because there's no such neural network library without xor example
+;; because there's no complete neural network library without xor example
 
 ;; direct, without using ad.
 (defun fwd (input weight) ($sigmoid! ($@ input weight)))
