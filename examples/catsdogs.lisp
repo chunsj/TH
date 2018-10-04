@@ -10,7 +10,8 @@
 
 (in-package :cats-and-dogs)
 
-(defparameter *data-directory* "/Users/Sungjin/CatsDogs")
+(defparameter *data-directory* ($concat (namestring (user-homedir-pathname))
+                                        ".th/datasets/cats-and-dogs"))
 
 (defun read-train-cat-file (number &optional (h 64) (w 64))
   (when (and (>= number 0) (<= number 10000))
@@ -22,7 +23,8 @@
     (let ((filename (format nil "~A/train/dog.~A.jpg" *data-directory* number)))
       (tensor-from-jpeg-file filename :resize-dimension (list h w)))))
 
-(defparameter *output-directory* "/Users/Sungjin/Desktop")
+(defparameter *output-directory* ($concat (namestring (user-homedir-pathname))
+                                          "Desktop"))
 
 (defun write-rgb-png-file (tensor filename)
   (write-tensor-png-file tensor (format nil "~A/~A" *output-directory* filename)))
@@ -166,10 +168,12 @@
 (let* ((idx (random *train-size*))
        (data (nth idx *train-data*))
        (lbl (car *train-labels*))
-       (res (tensor.float ($ge ($data (network ($constant data) nil)) 0.5)))
+       (y (network ($constant data) nil))
+       (res (tensor.float ($ge ($data y) 0.5)))
        (d ($- ($reshape res (* 2 *batch-size*)) lbl)))
   (prn "TRAIN IDX:" idx "ERROR:" (/ ($dot d d) (* 2 *batch-size*)))
-  ($cg! *cnd*))
+  ($cg! *cnd*)
+  (gcf))
 
 ;; test check
 (let* ((idx (random *test-count*))
@@ -179,4 +183,11 @@
        (fres (tensor.float ($ge res 0.5)))
        (d ($- ($reshape fres (* 2 *batch-size*)) tlbl)))
   (prn "TEST IDX:" idx "ERROR:" (/ ($dot d d) (* 2 *batch-size*)))
-  ($cg! *cnd*))
+  ($cg! *cnd*)
+  (gcf))
+
+(setf *train-data* nil
+      *train-labels* nil
+      *test-data* nil
+      *test-labels* nil)
+(gcf)
