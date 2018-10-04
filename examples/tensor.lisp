@@ -378,6 +378,7 @@
 
 ;; repeat - repeat content as given times
 (prn ($repeat (tensor '(1 2)) 3 2))
+(prn ($repeat (tensor '((1 2) (3 4) (5 6))) 2 3))
 
 ;; squeeze - removes singletone dimensions
 (let ((x (tensor 2 1 2 1 2)))
@@ -852,10 +853,6 @@
   (prn ($@ m n)))
 (prn ($/ (ones 2 2) 3))
 
-(let ((x (tensor '(1 2 3)))
-      (y (tensor '(3 2 1))))
-  (prn (th::tensor-cross (tensor) x y 0)))
-
 ;; cross
 (let ((x (rndn 4 3))
       (y (rndn 4 3))
@@ -1099,7 +1096,7 @@
   (prn ($@ v ($diag e) ($transpose v)))
   (prn ($dist a ($triu ($@ v ($diag e) ($transpose v))))))
 
-;; ev
+;; ev - ERROR, overflow with float32
 (let ((a (-> (tensor '((1.96  0.00  0.00  0.00  0.00)
                        (-6.49  3.80  0.00  0.00  0.00)
                        (-0.47 -6.39  4.17  0.00  0.00)
