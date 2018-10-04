@@ -1,12 +1,11 @@
 ;; from
 ;; https://github.com/odie2630463/Restricted-Boltzmann-Machines-in-pytorch
 
-(ql:quickload :opticl)
-
 (defpackage :rbm
   (:use #:common-lisp
         #:mu
         #:th
+        #:th.image
         #:th.db.mnist))
 
 (in-package :rbm)
