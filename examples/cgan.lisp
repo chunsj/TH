@@ -2,12 +2,11 @@
 ;; https://wiseodd.github.io/techblog/2016/12/24/conditional-gan-tensorflow/
 ;; https://github.com/wiseodd/generative-models/blob/master/GAN/conditional_gan/cgan_pytorch.py
 
-(ql:quickload :opticl)
-
 (defpackage :cgan
   (:use #:common-lisp
         #:mu
         #:th
+        #:th.image
         #:th.db.mnist))
 
 (in-package :cgan)
@@ -30,14 +29,7 @@
 ;; XXX cannot figure out why adam works best (adadelta does not work well)
 (defun optm (params) ($amgd! params 1E-3))
 
-(defun outpng (data fname &optional (w 28) (h 28))
-  (let ((img (opticl:make-8-bit-gray-image w h))
-        (d ($reshape data w h)))
-    (loop :for i :from 0 :below h
-          :do (loop :for j :from 0 :below w
-                    :do (progn
-                          (setf (aref img i j) (round (* 255 ($ d i j)))))))
-    (opticl:write-png-file fname img)))
+(defun outpng (data fname) (write-tensor-png-file ($reshape data 28 28) fname))
 
 ;; training data - uses batches for performance, 30, 60 works well
 (defparameter *batch-size* 60)
@@ -95,7 +87,7 @@
 
 (defun samplez () ($constant (rndn *batch-size* *gen-size*)))
 
-(defparameter *epoch* 100)
+(defparameter *epoch* 1)
 (defparameter *k* 1)
 
 ($cg! *discriminator*)
@@ -183,3 +175,10 @@
              (format nil "~A/D49.png" *output*))
   ($cg! *discriminator*)
   ($cg! *generator*))
+
+(setf *mnist* nil
+      *mnist-train-image-batches* nil
+      *mnist-train-image-labels* nil
+      *train-data-batches* nil
+      *train-data-labels* nil)
+(gcf)
