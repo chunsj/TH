@@ -163,16 +163,20 @@
 
 (cffi:defcallback error-handler :void ((msg :string) (data :pointer))
   (declare (ignore data))
-  (handler-case
-      (progn (error "error: ~A" msg))
-    (error () (format t "OOPS IN GENERIC ERROR HANDLER~%"))))
+  (error "THERR: ~A" msg)
+  ;; (handler-case
+  ;;     (progn (error "error: ~A" msg))
+  ;;   (error () (format t "OOPS IN GENERIC ERROR HANDLER~%")))
+  )
 
 ;; static void defaultArgErrorHandlerFunction(int argNumber, const char *msg, void *data)
 (cffi:defcallback arg-error-handler :void ((arg-number :int) (msg :string) (data :pointer))
   (declare (ignore data))
-  (handler-case
-      (progn (error "argerr[~A]: ~A" arg-number msg))
-    (error () (format t "OOPS IN ARGUMENT ERROR HANDLER~%"))))
+  (error "THARGERR[~A]: ~A" arg-number msg)
+  ;; (handler-case
+  ;;     (progn (error "argerr[~A]: ~A" arg-number msg))
+  ;;   (error () (format t "OOPS IN ARGUMENT ERROR HANDLER~%")))
+  )
 
 (cffi:defcfun ("THSetDefaultArgErrorHandler" th-set-default-arg-error-handler) :void
   (fn :pointer)
