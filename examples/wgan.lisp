@@ -1,12 +1,11 @@
 ;; from
 ;; https://wiseodd.github.io/techblog/2017/02/04/wasserstein-gan/
 
-(ql:quickload :opticl)
-
 (defpackage :wgan
   (:use #:common-lisp
         #:mu
         #:th
+        #:th.image
         #:th.db.mnist))
 
 (in-package :wgan)
