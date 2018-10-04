@@ -272,10 +272,10 @@
                                           result t nil tw -100)
     ($ result 0)))
 
-(defun dcnll (input target gradient)
+(defun dcnll (input target)
   (let ((dinput ($empty input)))
     (nn-class-nll-criterion-update-grad-input input (tensor.long ($reshape target ($count target)))
-                                              (tensor (list gradient)) dinput t nil
+                                              dinput t nil
                                               (ones 1) -100)
     dinput))
 
@@ -283,7 +283,7 @@
   (let ((result (node ($cnll ($data a) ($data b)))))
     (setf ($name result) "CNLL")
     ($gp! result a)
-    ($pfn! a (lambda () (dcnll ($data a) ($data b) ($gradient result))))
+    ($pfn! a (lambda () (dcnll ($data a) ($data b))))
     result))
 
 (defmethod $cec ((a tensor) (b tensor)) ($cnll ($logsoftmax a) b))
