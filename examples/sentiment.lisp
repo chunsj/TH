@@ -87,13 +87,15 @@
                   (incf correct))))
     (prn "=>" total correct)))
 
+(gcf)
+
 ;; train using autograd, however, this is very slow compared to direct implementation
 (reset-weights)
 (loop :for iter :from 1 :to *iterations*
       :do (let ((total 0)
                 (correct 0))
             (loop :for i :from 0 :below ($count *train-dataset*)
-                  :for x = ($ *train-dataset* i)
+                  :for x :in *train-dataset*
                   :for y = ($ *train-targets* i)
                   :for y* = (predict-sentiment x)
                   :for d = ($sub y* ($constant y))
@@ -105,7 +107,8 @@
                         (when (< (abs ($data d)) 0.5)
                           (incf correct))
                         (when (zerop (rem i 100))
-                          (prn iter total correct)
+                          (prn iter total correct))
+                        (when (zerop (rem i 10))
                           (gcf))))
             (when (zerop (rem iter 1))
               (print-test-perf)
@@ -147,7 +150,7 @@
         :do (let ((total 0)
                   (correct 0))
               (loop :for i :from 0 :below ($count *train-dataset*)
-                    :for x = ($ *train-dataset* i)
+                    :for x :in *train-dataset*
                     :for y = ($ *train-targets* i)
                     :for w01 = ($index *w01* 0 x)
                     :for l1 = (-> ($sum w01 0)
