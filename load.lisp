@@ -10,7 +10,7 @@
              (cffi:load-foreign-library "libTHNeural.dylib")))
           ((string-equal "Linux" stype)
            (progn
-             (cffi:load-foreign-library "/usr/local/lib/libTH.so")
-             (cffi:load-foreign-library "/usr/local/lib/libTHNN.so"))))))
+             (cffi:load-foreign-library "/usr/local/lib/libTHTensor.so")
+             (cffi:load-foreign-library "/usr/local/lib/libTHNNeural.so"))))))
 
 (load-native-library)
