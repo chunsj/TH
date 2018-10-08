@@ -4,6 +4,9 @@
         #:th
         #:th.image))
 
+;; XXX can i make fully connected weight as convolution kernel?
+;; need to check computation index and reference between them
+
 (in-package :convolution-sliding)
 
 (defparameter *bn* 2)
@@ -35,25 +38,7 @@
 
 ;; for larger image case - result from this should be the same one as later code
 (prn (-> *vinput*
-         ($subview 0 2 0 3 0 16 0 16)
-         ($conv2d *k1*)
-         ($relu)
-         ($maxpool2d 2 2 2 2)
-         ($conv2d *k2*)
-         ($relu)
-         ($conv2d *k3*)
-         ($relu)
-         ($conv2d *k4*)
-         ($permute 0 2 3 1)
-         ($reshape 8 4)
-         ;;($reshape 1 4)
-         ;;($reshape 64 4)
-         ;;($softmax)
-         ))
-
-;; for original size - this should match above results
-(prn (-> *vinput*
-         ($subview 0 2 0 3 0 14 0 14)
+         ($subview 0 1 0 3 0 16 0 14)
          ($conv2d *k1*)
          ($relu)
          ($maxpool2d 2 2 2 2)
@@ -64,6 +49,42 @@
          ($conv2d *k4*)
          ($permute 0 2 3 1)
          ($reshape 2 4)
+         ;;($reshape 1 4)
+         ;;($reshape 64 4)
+         ;;($softmax)
+         ))
+
+;; for original size - this should match above results
+(prn (-> *vinput*
+         ($subview 0 1 0 3 0 14 0 14)
+         ($conv2d *k1*)
+         ($relu)
+         ($maxpool2d 2 2 2 2)
+         ($conv2d *k2*)
+         ($relu)
+         ($conv2d *k3*)
+         ($relu)
+         ($conv2d *k4*)
+         ($permute 0 2 3 1)
+         ($reshape 1 4)
+         ;;($reshape 1 4)
+         ;;($reshape 64 4)
+         ;;($softmax)
+         ))
+
+;; vertically one-stride(2) lower (from maxpooling
+(prn (-> *vinput*
+         ($subview 0 1 0 3 2 14 0 14)
+         ($conv2d *k1*)
+         ($relu)
+         ($maxpool2d 2 2 2 2)
+         ($conv2d *k2*)
+         ($relu)
+         ($conv2d *k3*)
+         ($relu)
+         ($conv2d *k4*)
+         ($permute 0 2 3 1)
+         ($reshape 1 4)
          ;;($reshape 1 4)
          ;;($reshape 64 4)
          ;;($softmax)
