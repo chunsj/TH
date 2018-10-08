@@ -9,9 +9,19 @@
 
 (defparameter +model-location+ ($concat (namestring (user-homedir-pathname)) ".th/models"))
 
+(defun wfname-txt (wn)
+  (format nil "~A/squeezenet11/squeezenet11-~A.txt"
+          +model-location+
+          (string-downcase wn)))
+
+(defun wfname-bin (wn)
+  (format nil "~A/squeezenet11/squeezenet11-~A.dat"
+          +model-location+
+          (string-downcase wn)))
+
 (defun read-text-weight-file (wn &optional (readp t))
   (when readp
-    (let ((f (file.disk (format nil "~A/squeezenet11/squeezenet11-~A.txt" +model-location+ wn) "r"))
+    (let ((f (file.disk (wfname wn) "r"))
           (tx (tensor)))
       ($fread tx f)
       ($fclose f)
@@ -19,7 +29,7 @@
 
 (defun read-weight-file (wn &optional (readp t))
   (when readp
-    (let ((f (file.disk (format nil "~A/squeezenet11/squeezenet11-~A.dat" +model-location+ wn) "r"))
+    (let ((f (file.disk (wfname-bin wn) "r"))
           (tx (tensor)))
       (setf ($fbinaryp f) t)
       ($fread tx f)
@@ -53,9 +63,7 @@
   (let ((weights (or weights (read-squeezenet11-text-weights))))
     (loop :for wk :in weights :by #'cddr
           :for w = (getf weights wk)
-          :do (write-binary-weight-file w (format nil
-                                                  "~A/squeezenet11/squeezenet11-~A.dat"
-                                                  +model-location+ wk)))))
+          :do (write-binary-weight-file w (wfname-bin wk)))))
 
 (defun fire (x ws k1 b1 k2 b2 k3 b3)
   (let* ((x (-> ($conv2d x (w ws k1) (w ws b1) 1 1)

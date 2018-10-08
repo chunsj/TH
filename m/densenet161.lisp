@@ -9,9 +9,19 @@
 
 (defparameter +model-location+ ($concat (namestring (user-homedir-pathname)) ".th/models"))
 
+(defun wfname-txt (wn)
+  (format nil "~A/densenet161/densenet161-~A.txt"
+          +model-location+
+          (string-downcase wn)))
+
+(defun wfname-bin (wn)
+  (format nil "~A/densenet161/densenet161-~A.dat"
+          +model-location+
+          (string-downcase wn)))
+
 (defun read-text-weight-file (wn &optional (readp t))
   (when readp
-    (let ((f (file.disk (format nil "~A/densenet161/densenet161-~A.txt" +model-location+ wn) "r"))
+    (let ((f (file.disk (wfname-txt wn) "r"))
           (tx (tensor)))
       ($fread tx f)
       ($fclose f)
@@ -19,7 +29,7 @@
 
 (defun read-weight-file (wn &optional (readp t))
   (when readp
-    (let ((f (file.disk (format nil "~A/densenet161/densenet161-~A.dat" +model-location+ wn) "r"))
+    (let ((f (file.disk (wfname-bin wn) "r"))
           (tx (tensor)))
       (setf ($fbinaryp f) t)
       ($fread tx f)
@@ -73,9 +83,7 @@
   (let ((weights (or weights (read-densenet161-text-weights))))
     (loop :for wk :in weights :by #'cddr
           :for w = (getf weights wk)
-          :do (write-binary-weight-file w (format nil
-                                                  "~A/densenet161/densenet161-~A.dat"
-                                                  +model-location+ wk)))))
+          :do (write-binary-weight-file w (wfname-bin wk)))))
 
 (defun input-blk (x ws)
   (-> x

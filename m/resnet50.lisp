@@ -9,9 +9,19 @@
 
 (defparameter +model-location+ ($concat (namestring (user-homedir-pathname)) ".th/models"))
 
+(defun wfname-txt (wn)
+  (format nil "~A/resnet50/resnet50-~A.txt"
+          +model-location+
+          (string-downcase wn)))
+
+(defun wfname-bin (wn)
+  (format nil "~A/resnet50/resnet50-~A.dat"
+          +model-location+
+          (string-downcase wn)))
+
 (defun read-text-weight-file (wn &optional (readp t))
   (when readp
-    (let ((f (file.disk (format nil "~A/resnet50/resnet50-~A.txt" +model-location+ wn) "r"))
+    (let ((f (file.disk (wfname-txt wn) "r"))
           (tx (tensor)))
       ($fread tx f)
       ($fclose f)
@@ -19,7 +29,7 @@
 
 (defun read-weight-file (wn &optional (readp t))
   (when readp
-    (let ((f (file.disk (format nil "~A/resnet50/resnet50-~A.dat" +model-location+ wn) "r"))
+    (let ((f (file.disk (wfname-bin wn) "r"))
           (tx (tensor)))
       (setf ($fbinaryp f) t)
       ($fread tx f)
@@ -325,9 +335,7 @@
     (loop :for wk :in *wparams* :by #'cddr
           :for wn = (getf *wparams* wk)
           :for w = (getf weights wk)
-          :do (write-binary-weight-file w (format nil
-                                                  "~A/resnet50/resnet50-~A.dat"
-                                                  +model-location+ wn)))))
+          :do (write-binary-weight-file w (wfname-bin wk)))))
 
 (defun w (w wn) (getf w wn))
 
