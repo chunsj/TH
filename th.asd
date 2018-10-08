@@ -1,11 +1,11 @@
 (defsystem th
   :name "th"
   :author "Sungjin Chun <chunsj@gmail.com>"
-  :version "0.99"
+  :version "1.00"
   :maintainer "Sungjin Chun <chunsj@gmail.com>"
   :license "GPL3"
-  :description "common lisp binding for TH library"
-  :long-description "common lisp binding for TH library"
+  :description "common lisp tensor and deep learning library"
+  :long-description "common lisp tensor and deep learning library built on TH and THNN from torch"
   :depends-on ("cffi"
                "mu")
   :components ((:file "package")
