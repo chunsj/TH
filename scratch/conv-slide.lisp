@@ -9,6 +9,11 @@
 
 (in-package :convolution-sliding)
 
+($softmax ($permute (tensor '((((0 1 3 5)
+                                (1 2 2 3)
+                                (2 3 1 2)))))
+                    1 2 3 0))
+
 (defparameter *bn* 2)
 (defparameter *vinput* ($* 0.01 (rndn *bn* 3 28 28)))
 
@@ -87,8 +92,39 @@
          ($reshape 1 4)
          ;;($reshape 1 4)
          ;;($reshape 64 4)
-         ;;($softmax)
+         ($softmax)
          ))
 
 ($index *vinput* 0 1)
 ($subview *vinput* 0 2 0 3 0 14 0 14)
+
+;; when input is 4-D 2nd dimension is used for softmax
+(prn (-> *vinput*
+         ($subview 0 1 0 3 2 14 0 14)
+         ($conv2d *k1*)
+         ($relu)
+         ($maxpool2d 2 2 2 2)
+         ($conv2d *k2*)
+         ($relu)
+         ($conv2d *k3*)
+         ($relu)
+         ($conv2d *k4*)
+         ($softmax)
+         ($max 1)
+         (cadr)
+         ($squeeze)))
+
+(prn (-> *vinput*
+         ($subview 0 2 0 3 0 16 0 16)
+         ($conv2d *k1*)
+         ($relu)
+         ($maxpool2d 2 2 2 2)
+         ($conv2d *k2*)
+         ($relu)
+         ($conv2d *k3*)
+         ($relu)
+         ($conv2d *k4*)
+         ($softmax)
+         ($max 1)
+         (cadr)
+         ($squeeze)))
