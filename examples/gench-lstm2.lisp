@@ -38,6 +38,8 @@
 
 (defparameter *max-epochs* 50)
 
+(defparameter *learning-rate* 0.001)
+
 (defparameter *input* (let* ((sz *data-size*)
                              (nbatch *batch-size*)
                              (nseq *sequence-length*)
@@ -193,7 +195,7 @@
                                     (setf ph2 ht2)
                                     (setf pc2 ht2)
                                     (incf loss ($data l))))
-                        ($adgd! *lstm2*)
+                        ($amgd! *lstm2* *learning-rate*)
                         (when (and (> bidx 0) (zerop (rem bidx 5))) (gcf))
                         (when (zerop (rem bidx 10))
                           (prn "")
