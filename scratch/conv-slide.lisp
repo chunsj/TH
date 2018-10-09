@@ -9,11 +9,6 @@
 
 (in-package :convolution-sliding)
 
-($softmax ($permute (tensor '((((0 1 3 5)
-                                (1 2 2 3)
-                                (2 3 1 2)))))
-                    1 2 3 0))
-
 (defparameter *bn* 2)
 (defparameter *vinput* ($* 0.01 (rndn *bn* 3 28 28)))
 
@@ -115,7 +110,8 @@
          ($squeeze)))
 
 (prn (-> *vinput*
-         ($subview 0 2 0 3 0 16 0 16)
+         ;;($subview 0 2 0 3 0 16 0 16)
+         ;; without above subviewing 8x8 slide-windows emit each results
          ($conv2d *k1*)
          ($relu)
          ($maxpool2d 2 2 2 2)
