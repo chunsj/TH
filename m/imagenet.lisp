@@ -43,7 +43,18 @@
   (let* ((sorted-val-idx ($sort result 1 t))
          (vals ($subview (car sorted-val-idx) 0 1 0 5))
          (indices ($subview (cadr sorted-val-idx) 0 1 0 5)))
-    (loop :for i :from 0 :below 5
-          :for val = ($ vals 0 i)
-          :for idx = ($ indices 0 i)
-          :collect (cons ($ (imagenet-categories) idx) val))))
+    (cond ((= 2 ($ndim result))
+           (list :top5 (loop :for i :from 0 :below 5
+                             :for val = ($ vals 0 i)
+                             :for idx = ($ indices 0 i)
+                             :collect (list ($ (imagenet-categories) idx) val))
+                 :pos (cons 0 0)))
+          ((= 4 ($ndim result))
+           (loop :for k :from 0 :below ($size result 2)
+                 :append (loop :for l :from 0 :below ($size result 3)
+                               :collect (list :top5 (loop :for i :from 0 :below 5
+                                                          :for val = ($ vals 0 i k l)
+                                                          :for idx = ($ indices 0 i k l)
+                                                          :collect (list ($ (imagenet-categories) idx)
+                                                                         val))
+                                              :pos (cons k l))))))))
