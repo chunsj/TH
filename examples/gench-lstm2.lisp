@@ -36,9 +36,9 @@
 
 (defparameter *batch-size* 100)
 
-(defparameter *max-epochs* 100)
+(defparameter *max-epochs* 50)
 
-(defparameter *learning-rate* 0.001)
+(defparameter *learning-rate* 0.002)
 
 (defparameter *input* (let* ((sz *data-size*)
                              (nbatch *batch-size*)
@@ -209,4 +209,4 @@
 
 (prn (sample (zeros 1 *hidden-size*) (zeros 1 *hidden-size*)
              (zeros 1 *hidden-size*) (zeros 1 *hidden-size*)
-             (random *vocab-size*) 800 1))
+             (random *vocab-size*) 800 0.5))
