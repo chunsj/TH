@@ -3,7 +3,8 @@
         #:mu
         #:th)
   (:export #:read-resnet50-weights
-           #:resnet50))
+           #:resnet50
+           #:resnet50fcn))
 
 (in-package :th.m.resnet50)
 
@@ -445,3 +446,36 @@
               (blk w 47 48 49)
               ($avgpool2d 7 7 1 1)
               (resnet50-flat w flat)))))))
+
+(defun resnet50fcn (&optional weights)
+  (let* ((w (or weights (read-resnet50-weights t)))
+         (w50 (w w :w50))
+         (b50 (w w :b50))
+         (k50 ($reshape ($transpose w50) 1000 2048 1 1))
+         (b50 ($squeeze b50)))
+    (lambda (x)
+      (when (and x (>= ($ndim x) 3))
+        (let ((x (if (eq ($ndim x) 3)
+                     ($unsqueeze x 0)
+                     x)))
+          (-> x
+              (blki w)
+              (blkd w 2 3 4 1)
+              (blk w 5 6 7)
+              (blk w 8 9 10)
+              (blkd w 11 12 13 2 2)
+              (blk w 14 15 16)
+              (blk w 17 18 19)
+              (blk w 20 21 22)
+              (blkd w 23 24 25 3 2)
+              (blk w 26 27 28)
+              (blk w 29 30 31)
+              (blk w 32 33 34)
+              (blk w 35 36 37)
+              (blk w 38 39 40)
+              (blkd w 41 42 43 4 2)
+              (blk w 44 45 46)
+              (blk w 47 48 49)
+              ($avgpool2d 7 7 1 1)
+              ($conv2d k50 b50)
+              ($softmax)))))))

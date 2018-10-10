@@ -144,7 +144,7 @@
               (vgg19-flat weights flat)))))))
 
 (defun vgg19fcn (&optional weights)
-  (let* ((weights (or weights (read-vgg19-weights (not (eq flat :none)))))
+  (let* ((weights (or weights (read-vgg19-weights t)))
          (w17 (getf weights :w17))
          (b17 (getf weights :b17))
          (w18 (getf weights :w18))

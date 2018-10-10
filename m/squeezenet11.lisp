@@ -4,7 +4,7 @@
         #:th)
   (:export #:read-squeezenet11-weights
            #:squeezenet11
-           #:squuezenet11fcn))
+           #:squeezenet11fcn))
 
 (in-package :th.m.squeezenet11)
 

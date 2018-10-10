@@ -3,7 +3,8 @@
         #:mu
         #:th)
   (:export #:read-densenet161-weights
-           #:densenet161))
+           #:densenet161
+           #:densenet161fcn))
 
 (in-package :th.m.densenet161)
 
@@ -247,3 +248,28 @@
               ($bn (w ws :p480) (w ws :p481) (w ws :m161) (w ws :v161))
               ($avgpool2d 7 7 1 1)
               (densenet161-flat ws flat)))))))
+
+(defun densenet161fcn (&optional weights)
+  (let* ((ws (or weights (read-densenet161-weights t)))
+         (wf (w ws :f482))
+         (bf (w ws :f483))
+         (kf ($reshape ($transpose wf) 1000 2208 1 1))
+         (bf ($squeeze bf)))
+    (lambda (x)
+      (when (and x (>= ($ndim x) 3))
+        (let ((x (if (eq ($ndim x) 3)
+                     ($unsqueeze x 0)
+                     x)))
+          (-> x
+              (input-blk ws)
+              (dense-block1 ws)
+              (transition ws 39 14)
+              (dense-block2 ws)
+              (transition ws 114 39)
+              (dense-block3 ws)
+              (transition ws 333 112)
+              (dense-block4 ws)
+              ($bn (w ws :p480) (w ws :p481) (w ws :m161) (w ws :v161))
+              ($avgpool2d 7 7 1 1)
+              ($conv2d kf bf)
+              ($softmax)))))))
