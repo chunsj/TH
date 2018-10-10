@@ -3,7 +3,8 @@
         #:mu
         #:th)
   (:export #:read-squeezenet11-weights
-           #:squeezenet11))
+           #:squeezenet11
+           #:squuezenet11fcn))
 
 (in-package :th.m.squeezenet11)
 
@@ -74,7 +75,7 @@
                    ($relu))))
     ($cat e1x1 e3x3 1)))
 
-(defun squeezenet11 (x &optional weights)
+(defun squeezenet11 (&optional weights)
   (let ((ws (or weights (read-squeezenet11-weights))))
     (lambda (x)
       (when (and x (>= ($ndim x) 3) (equal (last ($size x) 3) (list 3 224 224)))
@@ -99,4 +100,30 @@
               ($relu)
               ($avgpool2d 13 13 1 1)
               ($reshape ($size x 0) 1000)
+              ($softmax)))))))
+
+(defun squeezenet11fcn (&optional weights)
+  (let ((ws (or weights (read-squeezenet11-weights))))
+    (lambda (x)
+      (when (and x (>= ($ndim x) 3))
+        (let ((x (if (eq ($ndim x) 3)
+                     ($unsqueeze x 0)
+                     x)))
+          (-> x
+              ($conv2d (w ws :p0) (w ws :p1) 2 2)
+              ($relu)
+              ($maxpool2d 3 3 2 2)
+              (fire ws :p2 :p3 :p4 :p5 :p6 :p7)
+              (fire ws :p8 :p9 :p10 :p11 :p12 :p13)
+              ($maxpool2d 3 3 2 2)
+              (fire ws :p14 :p15 :p16 :p17 :p18 :p19)
+              (fire ws :p20 :p21 :p22 :p23 :p24 :p25)
+              ($maxpool2d 3 3 2 2)
+              (fire ws :p26 :p27 :p28 :p29 :p30 :p31)
+              (fire ws :p32 :p33 :p34 :p35 :p36 :p37)
+              (fire ws :p38 :p39 :p40 :p41 :p42 :p43)
+              (fire ws :p44 :p45 :p46 :p47 :p48 :p49)
+              ($conv2d (w ws :p50) (w ws :p51))
+              ($relu)
+              ($avgpool2d 13 13 1 1)
               ($softmax)))))))
