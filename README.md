@@ -56,6 +56,7 @@
   17. ResNet50, pretrained model: examples/resnet50.lisp (refer torch-resnet50.py)
   18. DenseNet161, pretrained model: examples/densenet161.lisp (refer torch-densenet161.py)
   19. SqueezeNet1.1, pretrained model: examples/squeezenet11.lisp (refer torch-squeezenet11.py)
+  20. Fully convolutional network: examples/fcn.lisp
 
 ## Pretrained Models
   Though there's currently 5 models, VGG16, VGG19, ResNet50, DenseNet161 and SqueezeNet1.1 are
