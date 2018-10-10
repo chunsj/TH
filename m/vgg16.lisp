@@ -148,9 +148,9 @@
          (k16 ($reshape ($transpose w16) 1000 4096 1 1))
          (b16 ($squeeze b16)))
     (lambda (x)
-      (when (and x (>= ($ndim x) 3) (equal (last ($size x) 3) (list 3 224 224)))
+      (when (and x (>= ($ndim x) 3))
         (let ((x (if (eq ($ndim x) 3)
-                     ($reshape x 1 3 224 224)
+                     ($unsqueeze x 0)
                      x)))
           (-> x
               ($conv2d (getf weights :k1) (getf weights :b1) 1 1 1 1)

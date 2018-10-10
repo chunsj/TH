@@ -155,7 +155,9 @@
        (f (vgg16 :all *vgg16-weights*)))
   (prn (funcall f x)))
 
-(let* ((rgb (tensor-from-png-file "data/cat.vgg16.png"))
-       (x (imagenet-input rgb))
+(let* (;;(rgb (tensor-from-png-file "data/cat.vgg16.png"))
+       ;;(rgb (tensor-from-jpeg-file "data/cat.vgg16.jpg"))
+       (rgb (tensor-from-jpeg-file "data/cat.vgg16.jpg" :resize-dimension '(224 224)))
+       (x (imagenet-input rgb t))
        (f (vgg16fcn *vgg16-weights*)))
   (prn (funcall f x)))
