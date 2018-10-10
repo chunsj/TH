@@ -36,7 +36,7 @@
 
 (defparameter *batch-size* 100)
 
-(defparameter *max-epochs* 50)
+(defparameter *max-epochs* 100)
 
 (defparameter *learning-rate* 0.001)
 
