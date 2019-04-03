@@ -1,7 +1,7 @@
 (in-package :th)
 
 (defvar *mhack-foreign-memory-size* nil)
-(defvar *mhack-threshold* 512)
+(defvar *mhack-threshold* (round (/ (sb-ext:dynamic-space-size) (* 1024 1024) 2)))
 
 (defun hack-gc ()
   (when (and *mhack-foreign-memory-size*
@@ -44,5 +44,4 @@
 (defmacro with-foreign-memory-hack (size-mb &body body)
   `(let ((*mhack-foreign-memory-size* 0)
          (*mhack-threshold* (max *mhack-threshold* ,size-mb)))
-     (gcf)
      ,@body))
