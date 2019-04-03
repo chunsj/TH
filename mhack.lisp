@@ -1,19 +1,12 @@
 (in-package :th)
 
-(cffi:defcstruct th-allocator
-  (malloc :pointer)
-  (realloc :pointer)
-  (free :pointer))
-
-(cffi:defcvar (*th-default-allocator* "THDefaultAllocator") (:struct th-allocator))
-
 (defvar *mhack-foreign-memory-size* nil)
-(defvar *mhack-threshold* 16)
+(defvar *mhack-threshold* 512)
 
 (defun hack-gc ()
   (when (and *mhack-foreign-memory-size*
              (>= *mhack-foreign-memory-size* (* *mhack-threshold* 1024 1024)))
-    (format t "***** HACK GC! ~A *****~%" *mhack-foreign-memory-size*)
+    ;;(format t "***** HACK GC! ~A *****~%" *mhack-foreign-memory-size*)
     (setf *mhack-foreign-memory-size* 0)
     (gc)))
 
@@ -31,6 +24,13 @@
   (declare (ignore ctx))
   (cffi:foreign-free ptr))
 
+(cffi:defcstruct th-allocator
+  (malloc :pointer)
+  (realloc :pointer)
+  (free :pointer))
+
+(cffi:defcvar (*th-default-allocator* "THDefaultAllocator") (:struct th-allocator))
+
 (setf (cffi:foreign-slot-value (cffi:get-var-pointer '*th-default-allocator*)
                                '(:struct th-allocator) 'malloc)
       (cffi:callback malloc))
@@ -43,6 +43,6 @@
 
 (defmacro with-foreign-memory-hack (size-mb &body body)
   `(let ((*mhack-foreign-memory-size* 0)
-         (*mhack-threshold* ,size-mb))
+         (*mhack-threshold* (max *mhack-threshold* ,size-mb)))
      (gcf)
      ,@body))
