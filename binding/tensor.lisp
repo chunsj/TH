@@ -2,47 +2,79 @@
 
 (in-package :th)
 
+(defvar *mhack* nil)
+(defvar *mhacksz* (* 1024 1024 256))
+
+(defun hack-gc ()
+  (when (and *mhack* (>= *mhack* *mhacksz*))
+    (format t "***** HACK GC! ~A *****~%" *mhack*)
+    (setf *mhack* 0)
+    (gcf)))
+
+(defun mhack (sz)
+  (when *mhack*
+    (incf *mhack* sz)
+    (hack-gc)))
+
+(defun dimsz (dimensions)
+  (if dimensions
+      (reduce #'* dimensions)
+      0))
+
+(defmacro with-mhack (size &body body)
+  `(let ((*mhack* 0)
+         (*mhacksz* ,size))
+     (gcf)
+     ,@body))
+
 (defmethod allocate-tensor ((tensor tensor.byte) &optional dimensions)
   (let ((handle (if dimensions
                     (th-byte-tensor-new-with-size ($handle (storage.long dimensions)) +nil+)
                     (th-byte-tensor-new))))
     (setf ($handle tensor) handle)
+    (mhack (* 1 (dimsz dimensions)))
     (sb-ext:finalize tensor (lambda () (th-byte-tensor-free handle)))))
 (defmethod allocate-tensor ((tensor tensor.char) &optional dimensions)
   (let ((handle (if dimensions
                     (th-char-tensor-new-with-size ($handle (storage.long dimensions)) +nil+)
                     (th-char-tensor-new))))
     (setf ($handle tensor) handle)
+    (mhack (* 1 (dimsz dimensions)))
     (sb-ext:finalize tensor (lambda () (th-char-tensor-free handle)))))
 (defmethod allocate-tensor ((tensor tensor.short) &optional dimensions)
   (let ((handle (if dimensions
                     (th-short-tensor-new-with-size ($handle (storage.long dimensions)) +nil+)
                     (th-short-tensor-new))))
     (setf ($handle tensor) handle)
+    (mhack (* 2 (dimsz dimensions)))
     (sb-ext:finalize tensor (lambda () (th-short-tensor-free handle)))))
 (defmethod allocate-tensor ((tensor tensor.int) &optional dimensions)
   (let ((handle (if dimensions
                     (th-int-tensor-new-with-size ($handle (storage.long dimensions)) +nil+)
                     (th-int-tensor-new))))
     (setf ($handle tensor) handle)
+    (mhack (* 4 (dimsz dimensions)))
     (sb-ext:finalize tensor (lambda () (th-int-tensor-free handle)))))
 (defmethod allocate-tensor ((tensor tensor.long) &optional dimensions)
   (let ((handle (if dimensions
                     (th-long-tensor-new-with-size ($handle (storage.long dimensions)) +nil+)
                     (th-long-tensor-new))))
     (setf ($handle tensor) handle)
+    (mhack (* 8 (dimsz dimensions)))
     (sb-ext:finalize tensor (lambda () (th-long-tensor-free handle)))))
 (defmethod allocate-tensor ((tensor tensor.float) &optional dimensions)
   (let ((handle (if dimensions
                     (th-float-tensor-new-with-size ($handle (storage.long dimensions)) +nil+)
                     (th-float-tensor-new))))
     (setf ($handle tensor) handle)
+    (mhack (* 4 (dimsz dimensions)))
     (sb-ext:finalize tensor (lambda () (th-float-tensor-free handle)))))
 (defmethod allocate-tensor ((tensor tensor.double) &optional dimensions)
   (let ((handle (if dimensions
                     (th-double-tensor-new-with-size ($handle (storage.long dimensions)) +nil+)
                     (th-double-tensor-new))))
     (setf ($handle tensor) handle)
+    (mhack (* 8 (dimsz dimensions)))
     (sb-ext:finalize tensor (lambda () (th-double-tensor-free handle)))))
 
 (defmethod $empty ((tensor tensor)) (make-tensor (type-of tensor)))
