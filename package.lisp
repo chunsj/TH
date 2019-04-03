@@ -382,4 +382,4 @@
            #:vhe
            #:vlecun
            #:vselu
-           #:with-foreign-hack))
+           #:with-foreign-memory-hack))

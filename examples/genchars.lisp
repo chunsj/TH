@@ -59,7 +59,7 @@
     (coerce (mapcar (lambda (i) ($ *idx-to-char* i)) (reverse indices)) 'string)))
 
 (time
- (with-foreign-hack 16
+ (with-foreign-memory-hack 768
    (loop :for iter :from 1 :to 1
          :for n = 0
          :for upto = (max 1 (- *data-size* *sequence-length* 1))
@@ -95,9 +95,7 @@
                            (prn "")
                            (prn "[ITER]" n (/ tloss (* 1.0 *sequence-length*)))
                            (prn (sample ($data ph) ($ *char-to-idx* ($ input-str 0)) 72))
-                           (prn "")
-                           ;;(gc)
-                           )
+                           (prn ""))
                          (incf n))))))
 
 (time
