@@ -12,6 +12,7 @@
                (:file "th")
                (:file "load")
                (:file "typedefs")
+               (:file "mhack")
                (:module generator :components ((:file "generator")))
                (:module storage :components ((:file "byte")
                                              (:file "char")
