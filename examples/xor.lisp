@@ -13,21 +13,21 @@
 
 (time
  (with-foreign-memory-limit
-     (let* ((X (tensor '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
-            (Y (tensor '((0) (1) (1) (0))))
-            (w1 (rndn 3 3))
-            (w2 (rndn 3 1))
-            (lr 1))
-       (loop :for i :from 0 :below 1000
-             :do (let* ((l1 (fwd X w1))
-                        (l2 (fwd l1 w2))
-                        (l2d (dwb ($- l2 y) l2))
-                        (l1d (dwb ($@ l2d ($transpose w2)) l1))
-                        (dw2 ($@ ($transpose l1) l2d))
-                        (dw1 ($@ ($transpose X) l1d)))
-                   ($sub! w1 ($* lr dw1))
-                   ($sub! w2 ($* lr dw2))))
-       (prn (fwd (fwd X w1) w2)))))
+   (let* ((X (tensor '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
+          (Y (tensor '((0) (1) (1) (0))))
+          (w1 (rndn 3 3))
+          (w2 (rndn 3 1))
+          (lr 1))
+     (loop :for i :from 0 :below 1000
+           :do (let* ((l1 (fwd X w1))
+                      (l2 (fwd l1 w2))
+                      (l2d (dwb ($- l2 y) l2))
+                      (l1d (dwb ($@ l2d ($transpose w2)) l1))
+                      (dw2 ($@ ($transpose l1) l2d))
+                      (dw1 ($@ ($transpose X) l1d)))
+                 ($sub! w1 ($* lr dw1))
+                 ($sub! w2 ($* lr dw2))))
+     (prn (fwd (fwd X w1) w2)))))
 
 ;; using ad or autograd
 (time
