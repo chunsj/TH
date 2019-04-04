@@ -2,7 +2,7 @@
 
 (defvar *mhack-foreign-memory-allocated* nil)
 (defvar *mhack-foreign-memory-threshold* (round (/ (sb-ext:dynamic-space-size) 8)))
-(defvar *mhack-foreign-allocation-count* nil)
+(defvar *mhack-foreign-allocation-count* 0)
 
 (defun manage-foreign-memory (size)
   (when (and *mhack-foreign-memory-allocated* (> size 0))
@@ -19,15 +19,24 @@
   (when *mhack-foreign-allocation-count*
     (sb-ext:atomic-update *mhack-foreign-allocation-count* (lambda (x) (decf x)))))
 
-(cffi:defcallback malloc (:pointer :void) ((ctx :pointer) (size :long-long))
+(cffi:defcallback counting-malloc (:pointer :void) ((ctx :pointer) (size :long-long))
   (declare (ignore ctx))
   (increase-allocation-count)
   (manage-foreign-memory size)
   (cffi:foreign-alloc :char :count size))
 
-(cffi:defcallback free :void ((ctx :pointer) (ptr :pointer))
+(cffi:defcallback counting-free :void ((ctx :pointer) (ptr :pointer))
   (declare (ignore ctx))
   (decrease-allocation-count)
+  (cffi:foreign-free ptr))
+
+(cffi:defcallback malloc (:pointer :void) ((ctx :pointer) (size :long-long))
+  (declare (ignore ctx))
+  (manage-foreign-memory size)
+  (cffi:foreign-alloc :char :count size))
+
+(cffi:defcallback free :void ((ctx :pointer) (ptr :pointer))
+  (declare (ignore ctx))
   (cffi:foreign-free ptr))
 
 (cffi:defcstruct th-allocator
@@ -55,6 +64,17 @@
                                  '(:struct th-allocator) 'realloc)
         *original-realloc*))
 
+(defun set-mhack-counting-allocator ()
+  (setf (cffi:foreign-slot-value (cffi:get-var-pointer '*th-default-allocator*)
+                                 '(:struct th-allocator) 'malloc)
+        (cffi:callback counting-malloc))
+  (setf (cffi:foreign-slot-value (cffi:get-var-pointer '*th-default-allocator*)
+                                 '(:struct th-allocator) 'free)
+        (cffi:callback counting-free))
+  (setf (cffi:foreign-slot-value (cffi:get-var-pointer '*th-default-allocator*)
+                                 '(:struct th-allocator) 'realloc)
+        +nil+))
+
 (defun set-mhack-allocator ()
   (setf (cffi:foreign-slot-value (cffi:get-var-pointer '*th-default-allocator*)
                                  '(:struct th-allocator) 'malloc)
@@ -66,15 +86,14 @@
                                  '(:struct th-allocator) 'realloc)
         +nil+))
 
+(set-mhack-allocator)
+
 (defmacro with-foreign-memory-limit* (size-mb &body body)
   `(let ((*mhack-foreign-memory-allocated* 0)
-         (*mhack-foreign-allocation-count* 0)
-         (*mhack-foreign-memory-threshold* (max *mhack-foreign-memory-threshold*
+         (*mhack-foreign-memory-threshold* (min *mhack-foreign-memory-threshold*
                                                 (* ,size-mb 1024 1024))))
-     (set-mhack-allocator)
-     (unwind-protect (progn ,@body)
-       (set-original-allocator))))
+     ,@body))
 
 (defmacro with-foreign-memory-limit (&body body)
-  `(with-foreign-memory-limit* 0
+  `(with-foreign-memory-limit* 4096
      ,@body))
