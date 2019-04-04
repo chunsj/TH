@@ -41,7 +41,11 @@
                                '(:struct th-allocator) 'realloc)
       +nil+)
 
-(defmacro with-foreign-memory-hack (size-mb &body body)
+(defmacro with-foreign-memory-hack* (size-mb &body body)
   `(let ((*mhack-foreign-memory-size* 0)
          (*mhack-threshold* (max *mhack-threshold* ,size-mb)))
+     ,@body))
+
+(defmacro with-foreign-memory-hack (&body body)
+  `(with-foreign-memory-hack* *mhack-threshold*
      ,@body))
