@@ -1,7 +1,7 @@
 (in-package :th)
 
 (defvar *mhack-foreign-memory-size* nil)
-(defvar *mhack-threshold* (round (/ (sb-ext:dynamic-space-size) (* 1024 1024) 4)))
+(defvar *mhack-threshold* (round (/ (sb-ext:dynamic-space-size) (* 1024 1024) 8)))
 
 (defun hack-gc ()
   (when (and *mhack-foreign-memory-size*
