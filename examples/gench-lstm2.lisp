@@ -160,52 +160,52 @@
 (setf *max-epochs* 1)
 
 (time
- (with-foreign-memory-hack
-   (loop :for epoch :from 1 :to *max-epochs*
-         :do (progn
-               (loop :for bidx :from 0
-                     :for input :in *input-batches*
-                     :for target :in *target-batches*
-                     :do (let ((ph1 ($constant (zeros ($size input 0) *hidden-size*)))
-                               (pc1 ($constant (zeros ($size input 0) *hidden-size*)))
-                               (ph2 ($constant (zeros ($size input 0) *hidden-size*)))
-                               (pc2 ($constant (zeros ($size input 0) *hidden-size*)))
-                               (loss 0))
-                           (loop :for time :from 0 :below ($size input 1)
-                                 :for xt = (let ((m (zeros *batch-size* *vocab-size*)))
-                                             (loop :for i :from 0 :below *batch-size*
-                                                   :do (setf ($ m i ($ input i time)) 1))
-                                             ($constant m))
-                                 :for it1 = (sigmoid-gate xt ph1 *wi1* *ui1* *bi1*)
-                                 :for ft1 = (sigmoid-gate xt ph1 *wf1* *uf1* *bf1*)
-                                 :for ot1 = (sigmoid-gate xt ph1 *wo1* *uo1* *bo1*)
-                                 :for at1 = (tanh-gate xt ph1 *wa1* *ua1* *ba1*)
-                                 :for ct1 = ($+ ($* at1 it1) ($* ft1 pc1))
-                                 :for ht1 = ($* ($tanh ct1) ot1)
-                                 :for it2 = (sigmoid-gate ht1 ph2 *wi2* *ui2* *bi2*)
-                                 :for ft2 = (sigmoid-gate ht1 ph2 *wf2* *uf2* *bf2*)
-                                 :for ot2 = (sigmoid-gate ht1 ph2 *wo2* *uo2* *bo2*)
-                                 :for at2 = (tanh-gate ht1 ph2 *wa2* *ua2* *ba2*)
-                                 :for ct2 = ($+ ($* at2 it2) ($* ft2 pc2))
-                                 :for ht2 = ($* ($tanh ct2) ot2)
-                                 :for yt = ($logsoftmax (affine ht2 *wy* *by*))
-                                 :for y = (let ((m ($index target 1 time)))
-                                            ($constant ($reshape m *batch-size*)))
-                                 :for l = ($cnll yt y)
-                                 :do (progn
-                                       (setf ph1 ht1)
-                                       (setf pc1 ct1)
-                                       (setf ph2 ht2)
-                                       (setf pc2 ht2)
-                                       (incf loss ($data l))))
-                           ($amgd! *lstm2* *learning-rate*)
-                           (when (zerop (rem bidx 10))
-                             (prn "")
-                             (prn "[BTCH/ITER]" bidx "/" epoch (* loss (/ 1.0 *sequence-length*)))
-                             (prn (sample ($index ($data ph1) 0 0) ($index ($data pc1) 0 0)
-                                          ($index ($data ph2) 0 0) ($index ($data pc2) 0 0)
-                                          (random *vocab-size*) 72))
-                             (prn ""))))))))
+ (with-foreign-memory-limit
+     (loop :for epoch :from 1 :to *max-epochs*
+           :do (progn
+                 (loop :for bidx :from 0
+                       :for input :in *input-batches*
+                       :for target :in *target-batches*
+                       :do (let ((ph1 ($constant (zeros ($size input 0) *hidden-size*)))
+                                 (pc1 ($constant (zeros ($size input 0) *hidden-size*)))
+                                 (ph2 ($constant (zeros ($size input 0) *hidden-size*)))
+                                 (pc2 ($constant (zeros ($size input 0) *hidden-size*)))
+                                 (loss 0))
+                             (loop :for time :from 0 :below ($size input 1)
+                                   :for xt = (let ((m (zeros *batch-size* *vocab-size*)))
+                                               (loop :for i :from 0 :below *batch-size*
+                                                     :do (setf ($ m i ($ input i time)) 1))
+                                               ($constant m))
+                                   :for it1 = (sigmoid-gate xt ph1 *wi1* *ui1* *bi1*)
+                                   :for ft1 = (sigmoid-gate xt ph1 *wf1* *uf1* *bf1*)
+                                   :for ot1 = (sigmoid-gate xt ph1 *wo1* *uo1* *bo1*)
+                                   :for at1 = (tanh-gate xt ph1 *wa1* *ua1* *ba1*)
+                                   :for ct1 = ($+ ($* at1 it1) ($* ft1 pc1))
+                                   :for ht1 = ($* ($tanh ct1) ot1)
+                                   :for it2 = (sigmoid-gate ht1 ph2 *wi2* *ui2* *bi2*)
+                                   :for ft2 = (sigmoid-gate ht1 ph2 *wf2* *uf2* *bf2*)
+                                   :for ot2 = (sigmoid-gate ht1 ph2 *wo2* *uo2* *bo2*)
+                                   :for at2 = (tanh-gate ht1 ph2 *wa2* *ua2* *ba2*)
+                                   :for ct2 = ($+ ($* at2 it2) ($* ft2 pc2))
+                                   :for ht2 = ($* ($tanh ct2) ot2)
+                                   :for yt = ($logsoftmax (affine ht2 *wy* *by*))
+                                   :for y = (let ((m ($index target 1 time)))
+                                              ($constant ($reshape m *batch-size*)))
+                                   :for l = ($cnll yt y)
+                                   :do (progn
+                                         (setf ph1 ht1)
+                                         (setf pc1 ct1)
+                                         (setf ph2 ht2)
+                                         (setf pc2 ht2)
+                                         (incf loss ($data l))))
+                             ($amgd! *lstm2* *learning-rate*)
+                             (when (zerop (rem bidx 10))
+                               (prn "")
+                               (prn "[BTCH/ITER]" bidx "/" epoch (* loss (/ 1.0 *sequence-length*)))
+                               (prn (sample ($index ($data ph1) 0 0) ($index ($data pc1) 0 0)
+                                            ($index ($data ph2) 0 0) ($index ($data pc2) 0 0)
+                                            (random *vocab-size*) 72))
+                               (prn ""))))))))
 
 (time
  (loop :for epoch :from 1 :to *max-epochs*

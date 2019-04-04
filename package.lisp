@@ -382,5 +382,5 @@
            #:vhe
            #:vlecun
            #:vselu
-           #:with-foreign-memory-hack*
-           #:with-foreign-memory-hack))
+           #:with-foreign-memory-limit*
+           #:with-foreign-memory-limit))
