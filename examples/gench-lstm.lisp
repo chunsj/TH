@@ -126,6 +126,8 @@
 
 ($cg! *lstm*)
 
+(setf *max-epochs* 1)
+
 (time
  (with-foreign-memory-hack
    (loop :for epoch :from 1 :to *max-epochs*
