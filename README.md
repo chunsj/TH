@@ -96,3 +96,6 @@
   Refer mhack.lisp for detailed implementation. The idea is simple; try run gc if externally
   allocated memory hits some threshold. To do this, I've overrided allocator and to use
   foreign-alloc and foreign-free.
+  By using with-foreign-memory-hack block, at least to my example codes, the system can keep
+  the memory usage under limit. And with 512MB of threshold, for me, this makes code runs faster
+  than the one using periodic gc.
