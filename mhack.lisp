@@ -22,7 +22,6 @@
 (cffi:defcallback malloc (:pointer :void) ((ctx :pointer) (size :long-long))
   (declare (ignore ctx))
   (increase-allocation-count)
-  (sb-ext:atomic-update *mhack-foreign-allocation-count* (lambda (x) (incf x)))
   (manage-foreign-memory size)
   (cffi:foreign-alloc :char :count size))
 
