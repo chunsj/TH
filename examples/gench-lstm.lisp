@@ -126,41 +126,79 @@
 
 ($cg! *lstm*)
 
-(loop :for epoch :from 1 :to *max-epochs*
-      :do (progn
-            (loop :for bidx :from 0
-                  :for input :in *input-batches*
-                  :for target :in *target-batches*
-                  :do (let ((ph ($constant (zeros ($size input 0) *hidden-size*)))
-                            (pc ($constant (zeros ($size input 0) *hidden-size*)))
-                            (loss 0))
-                        (loop :for time :from 0 :below ($size input 1)
-                              :for xt = (let ((m (zeros *batch-size* *vocab-size*)))
-                                          (loop :for i :from 0 :below *batch-size*
-                                                :do (setf ($ m i ($ input i time)) 1))
-                                          ($constant m))
-                              :for it = (sigmoid-gate xt ph *wi* *ui* *bi*)
-                              :for ft = (sigmoid-gate xt ph *wf* *uf* *bf*)
-                              :for ot = (sigmoid-gate xt ph *wo* *uo* *bo*)
-                              :for at = (tanh-gate xt ph *wa* *ua* *ba*)
-                              :for ct = ($+ ($* at it) ($* ft pc))
-                              :for ht = ($* ($tanh ct) ot)
-                              :for yt = ($logsoftmax (affine ht *wy* *by*))
-                              :for y = (let ((m ($index target 1 time)))
-                                         ($constant ($reshape m *batch-size*)))
-                              :for l = ($cnll yt y)
-                              :do (progn
-                                    (setf ph ht)
-                                    (setf pc ct)
-                                    (incf loss ($data l))))
-                        ($adgd! *lstm*)
-                        (when (and (> bidx 0) (rem bidx 5)) (gcf))
-                        (when (zerop (rem bidx 10))
-                          (prn "")
-                          (prn "[BTCH/ITER]" bidx "/" epoch (* loss (/ 1.0 *sequence-length*)))
-                          (prn (sample ($index ($data ph) 0 0) ($index ($data pc) 0 0)
-                                       (random *vocab-size*) 72))
-                          (prn ""))))))
+(time
+ (with-foreign-memory-hack
+   (loop :for epoch :from 1 :to *max-epochs*
+         :do (progn
+               (loop :for bidx :from 0
+                     :for input :in *input-batches*
+                     :for target :in *target-batches*
+                     :do (let ((ph ($constant (zeros ($size input 0) *hidden-size*)))
+                               (pc ($constant (zeros ($size input 0) *hidden-size*)))
+                               (loss 0))
+                           (loop :for time :from 0 :below ($size input 1)
+                                 :for xt = (let ((m (zeros *batch-size* *vocab-size*)))
+                                             (loop :for i :from 0 :below *batch-size*
+                                                   :do (setf ($ m i ($ input i time)) 1))
+                                             ($constant m))
+                                 :for it = (sigmoid-gate xt ph *wi* *ui* *bi*)
+                                 :for ft = (sigmoid-gate xt ph *wf* *uf* *bf*)
+                                 :for ot = (sigmoid-gate xt ph *wo* *uo* *bo*)
+                                 :for at = (tanh-gate xt ph *wa* *ua* *ba*)
+                                 :for ct = ($+ ($* at it) ($* ft pc))
+                                 :for ht = ($* ($tanh ct) ot)
+                                 :for yt = ($logsoftmax (affine ht *wy* *by*))
+                                 :for y = (let ((m ($index target 1 time)))
+                                            ($constant ($reshape m *batch-size*)))
+                                 :for l = ($cnll yt y)
+                                 :do (progn
+                                       (setf ph ht)
+                                       (setf pc ct)
+                                       (incf loss ($data l))))
+                           ($adgd! *lstm*)
+                           (when (zerop (rem bidx 10))
+                             (prn "")
+                             (prn "[BTCH/ITER]" bidx "/" epoch (* loss (/ 1.0 *sequence-length*)))
+                             (prn (sample ($index ($data ph) 0 0) ($index ($data pc) 0 0)
+                                          (random *vocab-size*) 72))
+                             (prn ""))))))))
+
+(time
+ (loop :for epoch :from 1 :to *max-epochs*
+       :do (progn
+             (loop :for bidx :from 0
+                   :for input :in *input-batches*
+                   :for target :in *target-batches*
+                   :do (let ((ph ($constant (zeros ($size input 0) *hidden-size*)))
+                             (pc ($constant (zeros ($size input 0) *hidden-size*)))
+                             (loss 0))
+                         (loop :for time :from 0 :below ($size input 1)
+                               :for xt = (let ((m (zeros *batch-size* *vocab-size*)))
+                                           (loop :for i :from 0 :below *batch-size*
+                                                 :do (setf ($ m i ($ input i time)) 1))
+                                           ($constant m))
+                               :for it = (sigmoid-gate xt ph *wi* *ui* *bi*)
+                               :for ft = (sigmoid-gate xt ph *wf* *uf* *bf*)
+                               :for ot = (sigmoid-gate xt ph *wo* *uo* *bo*)
+                               :for at = (tanh-gate xt ph *wa* *ua* *ba*)
+                               :for ct = ($+ ($* at it) ($* ft pc))
+                               :for ht = ($* ($tanh ct) ot)
+                               :for yt = ($logsoftmax (affine ht *wy* *by*))
+                               :for y = (let ((m ($index target 1 time)))
+                                          ($constant ($reshape m *batch-size*)))
+                               :for l = ($cnll yt y)
+                               :do (progn
+                                     (setf ph ht)
+                                     (setf pc ct)
+                                     (incf loss ($data l))))
+                         ($adgd! *lstm*)
+                         (when (and (> bidx 0) (rem bidx 5)) (gcf))
+                         (when (zerop (rem bidx 10))
+                           (prn "")
+                           (prn "[BTCH/ITER]" bidx "/" epoch (* loss (/ 1.0 *sequence-length*)))
+                           (prn (sample ($index ($data ph) 0 0) ($index ($data pc) 0 0)
+                                        (random *vocab-size*) 72))
+                           (prn "")))))))
 
 (gcf)
 
