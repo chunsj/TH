@@ -88,3 +88,11 @@
 ## On Scratch
   1. Most of the code in this folder is just for testing, teasing, or random trashing.
   2. They may not work at all.
+
+## On Memory Hack
+  To avoid work around thrashing of system due to foreign allocated memory - it is freed when
+  referencing CLOS object is garbage collected, but the gc does not know how much external
+  memory is used - I've implemented a hack of trying gc if some predefined threshold met.
+  Refer mhack.lisp for detailed implementation. The idea is simple; try run gc if externally
+  allocated memory hits some threshold. To do this, I've overrided allocator and to use
+  foreign-alloc and foreign-free.
