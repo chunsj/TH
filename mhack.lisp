@@ -2,25 +2,25 @@
 
 (defvar *mhack-foreign-memory-allocated* nil)
 (defvar *mhack-foreign-memory-threshold* (round (/ (sb-ext:dynamic-space-size) 8)))
-(defvar *mhack-foreign-allocation-count* 0)
+(defvar *mhack-foreign-allocation-count* (cons 0 nil))
 
 (defun manage-foreign-memory (size)
   (when (and *mhack-foreign-memory-allocated* (> size 0))
-    (incf *mhack-foreign-memory-allocated* size)
-    (when (>= *mhack-foreign-memory-allocated* *mhack-foreign-memory-threshold*)
-      (setf *mhack-foreign-memory-allocated* 0)
+    (sb-ext:atomic-incf (car *mhack-foreign-memory-allocated*) size)
+    (when (>= (car *mhack-foreign-memory-allocated*) *mhack-foreign-memory-threshold*)
+      (let ((x *mhack-foreign-memory-allocated*))
+        (sb-ext:atomic-decf (car *mhack-foreign-memory-allocated*) x))
       (gc))))
 
 (cffi:defcallback malloc (:pointer :void) ((ctx :pointer) (size :long-long))
   (declare (ignore ctx))
-  (let ((ptr (cffi:foreign-alloc :char :count size)))
-    (incf *mhack-foreign-allocation-count*)
-    (manage-foreign-memory size)
-    ptr))
+  (sb-ext:atomic-incf (car *mhack-foreign-allocation-count*) 1)
+  (manage-foreign-memory size)
+  (cffi:foreign-alloc :char :count size))
 
 (cffi:defcallback free :void ((ctx :pointer) (ptr :pointer))
   (declare (ignore ctx))
-  (decf *mhack-foreign-allocation-count*)
+  (sb-ext:atomic-decf (car *mhack-foreign-allocation-count*) 1)
   (cffi:foreign-free ptr))
 
 (cffi:defcstruct th-allocator
@@ -41,7 +41,7 @@
       +nil+)
 
 (defmacro with-foreign-memory-limit* (size-mb &body body)
-  `(let ((*mhack-foreign-memory-allocated* 0)
+  `(let ((*mhack-foreign-memory-allocated* (cons 0 nil))
          (*mhack-foreign-memory-threshold* (max *mhack-foreign-memory-threshold*
                                                 (* ,size-mb 1024 1024))))
      ,@body))
