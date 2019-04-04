@@ -58,11 +58,15 @@
                 (setf ($ x 0 nidx) 1)))
     (coerce (mapcar (lambda (i) ($ *idx-to-char* i)) (reverse indices)) 'string)))
 
+(defparameter *upto* (- *data-size* *sequence-length* 1))
+
+(setf *upto* 80000)
+
 (time
  (with-foreign-memory-limit
    (loop :for iter :from 1 :to 1
          :for n = 0
-         :for upto = (max 1 (- *data-size* *sequence-length* 1))
+         :for upto = *upto*
          :do (loop :for p :from 0 :below upto :by *sequence-length*
                    :for input-str = (subseq *data* p (+ p *sequence-length*))
                    :for target-str = (subseq *data* (1+ p) (+ p *sequence-length* 1))
@@ -101,7 +105,7 @@
 (time
  (loop :for iter :from 1 :to 1
        :for n = 0
-       :for upto = (max 1 (- *data-size* *sequence-length* 1))
+       :for upto = *upto*
        :do (loop :for p :from 0 :below upto :by *sequence-length*
                  :for input-str = (subseq *data* p (+ p *sequence-length*))
                  :for target-str = (subseq *data* (1+ p) (+ p *sequence-length* 1))
