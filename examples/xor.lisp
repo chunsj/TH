@@ -12,7 +12,7 @@
 (defun dwb (delta output) ($* delta output ($- 1 output)))
 
 (time
- (with-foreign-memory-hack 512
+ (with-foreign-memory-hack
    (let* ((X (tensor '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
           (Y (tensor '((0) (1) (1) (0))))
           (w1 (rndn 3 3))
@@ -31,7 +31,7 @@
 
 ;; using ad or autograd
 (time
- (with-foreign-memory-hack 512
+ (with-foreign-memory-hack
    (let* ((w1 ($variable (rndn 3 3)))
           (w2 ($variable (rndn 3 1)))
           (X ($constant '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))

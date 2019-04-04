@@ -59,7 +59,7 @@
     (coerce (mapcar (lambda (i) ($ *idx-to-char* i)) (reverse indices)) 'string)))
 
 (time
- (with-foreign-memory-hack 512
+ (with-foreign-memory-hack
    (loop :for iter :from 1 :to 1
          :for n = 0
          :for upto = (max 1 (- *data-size* *sequence-length* 1))
