@@ -81,7 +81,7 @@
         (cffi:callback malloc))
   (setf (cffi:foreign-slot-value (cffi:get-var-pointer '*th-default-allocator*)
                                  '(:struct th-allocator) 'free)
-        (cffi:callback free))
+        *original-free*)
   (setf (cffi:foreign-slot-value (cffi:get-var-pointer '*th-default-allocator*)
                                  '(:struct th-allocator) 'realloc)
         +nil+))
