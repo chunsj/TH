@@ -4,6 +4,11 @@
 
 (defvar +nil+ (cffi:null-pointer))
 
+(cffi:defcstruct th-allocator
+  (malloc :pointer)
+  (realloc :pointer)
+  (free :pointer))
+
 (cffi:defcstruct th-byte-storage
   (data (:pointer :unsigned-char))
   (size :long-long)
