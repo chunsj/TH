@@ -1,7 +1,7 @@
 (defsystem th
   :name "th"
   :author "Sungjin Chun <chunsj@gmail.com>"
-  :version "1.10"
+  :version "1.11"
   :maintainer "Sungjin Chun <chunsj@gmail.com>"
   :license "GPL3"
   :description "common lisp tensor and deep learning library"
@@ -21,8 +21,8 @@
                                             (:file "storage")
                                             (:file "tensor")
                                             (:file "file")))
-               (:module priv :components ((:file "interface")
-                                          (:file "implementation")))
+               (:module private :components ((:file "interface")
+                                             (:file "implementation")))
                (:module binding :components ((:file "th")
                                              (:file "generator")
                                              (:file "storage")

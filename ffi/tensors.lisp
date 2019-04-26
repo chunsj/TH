@@ -336,6 +336,25 @@
   (tensor th-byte-tensor-ptr))
 ;; #endif /* TH_REAL_IS_BYTE */
 
+(defun th-byte-tensor-neg (tensor src) (declare (ignore tensor src)))
+(defun th-char-tensor-neg (tensor src) (declare (ignore tensor src)))
+
+(cffi:defcfun ("THShortTensor_neg" th-short-tensor-neg) :void
+  (tensor th-short-tensor-ptr)
+  (src th-short-tensor-ptr))
+(cffi:defcfun ("THIntTensor_neg" th-int-tensor-neg) :void
+  (tensor th-int-tensor-ptr)
+  (src th-int-tensor-ptr))
+(cffi:defcfun ("THLongTensor_neg" th-long-tensor-neg) :void
+  (tensor th-long-tensor-ptr)
+  (src th-long-tensor-ptr))
+(cffi:defcfun ("THFloatTensor_neg" th-float-tensor-neg) :void
+  (tensor th-float-tensor-ptr)
+  (src th-float-tensor-ptr))
+(cffi:defcfun ("THDoubleTensor_neg" th-double-tensor-neg) :void
+  (tensor th-double-tensor-ptr)
+  (src th-double-tensor-ptr))
+
 (defparameter *th-float-tensor-functions*
   '(("uniform" uniform :void (tensor tensorptr) (generator th-generator-ptr)
      (a :double) (b :double))
