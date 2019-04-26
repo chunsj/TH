@@ -37,7 +37,7 @@
     ("newSelect" new-select tensorptr (tensor tensorptr) (dimension :int) (slice-index :long))
     ("newNarrow" new-narrow tensorptr (tensor tensorptr) (dimension :int) (first-idnex :long)
      (size :long))
-    ("newTransponse" new-transpose tensorptr (tensor tensorptr) (dimension1 :int) (dimension2 :int))
+    ("newTranspose" new-transpose tensorptr (tensor tensorptr) (dimension1 :int) (dimension2 :int))
     ("newUnfold" new-unfold tensorptr (tensor tensorptr) (dim :int) (size :long) (step :long))
     ("newView" new-view tensorptr (tensor tensorptr) (size th-long-storage-ptr))
     ("newExpand" new-expand tensorptr (tensor tensorptr) (size th-long-storage-ptr))
