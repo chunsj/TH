@@ -524,6 +524,10 @@
     (tensor-zero nt)
     nt))
 
+(defmethod $zero ((x number))
+  (declare (ignore x))
+  0D0)
+
 (defmethod $zero! ((tensor tensor))
   (tensor-zero tensor)
   tensor)
