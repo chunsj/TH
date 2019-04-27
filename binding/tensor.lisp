@@ -534,6 +534,10 @@
     (tensor-fill nt 1)
     nt))
 
+(defmethod $one ((x number))
+  (declare (ignore x))
+  1D0)
+
 (defmethod $one! ((tensor tensor))
   (tensor-fill tensor 1)
   tensor)
