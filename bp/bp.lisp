@@ -2,6 +2,9 @@
 
 (in-package :th)
 
+;; XXX gradient should be plain tensor or number, not parameter
+;; XXX FIX THIS/CHECK THIS
+
 (defclass parameter ()
   ((id :initform (gensym) :accessor $id)
    (data :initform nil :initarg :data :accessor $data)
