@@ -2,9 +2,6 @@
 
 (in-package :th)
 
-;; XXX gradient should be plain tensor or number, not parameter
-;; XXX FIX THIS/CHECK THIS
-
 (defclass parameter ()
   ((id :initform (gensym) :accessor $id)
    (data :initform nil :initarg :data :accessor $data)
@@ -65,7 +62,7 @@
   (let ((gradient (or gradient ($one ($data o)))))
     (set-gradient! o gradient origin)
     (when (and ($creators o) (or (null origin) (all-references-visited-p o)))
-      (funcall ($bfn o) o ($gradient o)))
+      (apply ($bfn o) (append (list o ($gradient o)) (mapcar #'$data ($creators o)))))
     o))
 
 (defmethod $ndim ((p parameter)) ($ndim ($data p)))

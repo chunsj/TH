@@ -4,12 +4,6 @@
 
 (cffi:defctype thnn-state-ptr (:pointer :void))
 
-(cffi:defctype th-generator-ptr (:pointer :void))
-(cffi:defctype th-int-tensor-ptr (:pointer :void))
-(cffi:defctype th-long-tensor-ptr (:pointer :void))
-(cffi:defctype th-float-tensor-ptr (:pointer :void))
-(cffi:defctype th-double-tensor-ptr (:pointer :void))
-
 ;; [OUT] output
 (cffi:defcfun ("THNN_FloatAbs_updateOutput" thnn-float-abs-update-output) :void
   (state thnn-state-ptr)
