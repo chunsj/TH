@@ -148,3 +148,121 @@
         (let ((dimension 0)
               (xs (cons x (cons xs others))))
           (reduce (lambda (r n) ($cat r n dimension)) xs)))))
+
+(defgeneric $conv2d (x k &optional b dw dh pw ph)
+  (:documentation "Performs convolution of x with kernel k and bias b which is optional."))
+(defgeneric $maxpool2d (x kw kh &optional dw dh pw ph ceilp)
+  (:documentation "Performs max pooling over x."))
+(defgeneric $avgpool2d (x kw kh &optional dw dh pw ph ceilp count-pad-p)
+  (:documentation "Performs average pooling over x."))
+
+(defgeneric $dlconv2d (x k &optional b dw dh pw ph dlw dlh)
+  (:documentation "Performs dilated convoution of x with kernel k and bias b which is optional."))
+(defgeneric $dlmaxpool2d (x kw kh &optional dw dh pw ph dlw dlh ceilp)
+  (:documentation "Performs dilated max pooling over x."))
+
+(defgeneric $dconv2d (x w &optional b dw dh pw ph aw ah)
+  (:documentation "Performs deconvolution using w weight, b bias and others."))
+
+(defmethod $conv2d ((x tensor) (k tensor) &optional b (dw 1) (dh 1) (pw 0) (ph 0))
+  (let ((out ($empty x))
+        (f ($empty x))
+        (df ($empty x)))
+    (if b
+        (nn-spatial-convolution-mm-update-output x out k b f df ($size k 2) ($size k 3)
+                                                 dw dh pw ph)
+        (nn-spatial-convolution-mm-update-output x out k nil f df ($size k 2) ($size k 3)
+                                                 dw dh pw ph))
+    out))
+(defun conv2d-with-b (x xp k kp b bp dw dh pw ph)
+  (let* ((xd (if xp ($data x) x))
+         (kd (if kp ($data k) k))
+         (bd (if bp ($data b) b))
+         (out ($empty xd))
+         (f ($empty xd))
+         (df ($empty xd)))
+    (nn-spatial-convolution-mm-update-output xd out kd bd f df ($size k 2) ($size k 3)
+                                             dw dh pw ph)
+    ($operation out
+                :creators (append '()
+                                  (when xp (list x))
+                                  (when kp (list k))
+                                  (when bp (list b)))
+                :name :conv2d
+                :bfn (lambda (self gradient &rest ignored)
+                       (declare (ignore ignored))
+                       (let ((dx ($empty xd))
+                             (dk ($zero kd))
+                             (db ($zero bd)))
+                         (nn-spatial-convolution-mm-update-grad-input xd gradient
+                                                                      dx kd f df
+                                                                      ($size k 2) ($size k 3)
+                                                                      dw dh pw ph)
+                         (nn-spatial-convolution-mm-acc-grad-parameters xd gradient
+                                                                        dk db f df
+                                                                        ($size k 2) ($size k 3)
+                                                                        dw dh pw ph 1D0)
+                         (when xp ($bp! x dx self))
+                         (when kp ($bp! k dk self))
+                         (when bp ($bp! b db self)))))))
+(defun conv2d-without-b (x xp k kp dw dh pw ph)
+  (let* ((xd (if xp ($data x) x))
+         (kd (if kp ($data k) k))
+         (out ($empty xd))
+         (f ($empty xd))
+         (df ($empty xd)))
+    (nn-spatial-convolution-mm-update-output xd out kd nil f df ($size k 2) ($size k 3)
+                                             dw dh pw ph)
+    ($operation out
+                :creators (append '()
+                                  (when xp (list x))
+                                  (when kp (list k)))
+                :name :conv2d
+                :bfn (lambda (self gradient &rest ignored)
+                       (declare (ignore ignored))
+                       (let ((dx ($empty xd))
+                             (dk ($zero kd)))
+                         (nn-spatial-convolution-mm-update-grad-input xd gradient
+                                                                      dx kd f df
+                                                                      ($size k 2) ($size k 3)
+                                                                      dw dh pw ph)
+                         (nn-spatial-convolution-mm-acc-grad-parameters xd gradient
+                                                                        dk nil f df
+                                                                        ($size k 2) ($size k 3)
+                                                                        dw dh pw ph 1D0)
+                         (when xp ($bp! x dx self))
+                         (when kp ($bp! k dk self)))))))
+(defmethod $conv2d ((x parameter) (k parameter) &optional b (dw 1) (dh 1) (pw 0) (ph 0))
+  (if b
+      (conv2d-with-b x T k T b (typep b 'parameter) dw dh pw ph)
+      (conv2d-without-b x T k T dw dh pw ph)))
+(defmethod $conv2d ((x tensor) (k parameter) &optional b (dw 1) (dh 1) (pw 0) (ph 0))
+  (if b
+      (conv2d-with-b x nil k T b (typep b 'parameter) dw dh pw ph)
+      (conv2d-without-b x nil k T dw dh pw ph)))
+(defmethod $conv2d ((x parameter) (k tensor) &optional b (dw 1) (dh 1) (pw 0) (ph 0))
+  (if b
+      (conv2d-with-b x T k nil b (typep b 'parameter) dw dh pw ph)
+      (conv2d-without-b x T k nil dw dh pw ph)))
+
+(defmethod $maxpool2d ((x tensor) kw kh &optional (dw 1) (dh 1) (pw 0) (ph 0) ceilp)
+  (let ((out ($empty x))
+        (indices (tensor.long)))
+    (nn-spatial-max-pooling-update-output x out indices kw kh dw dh pw ph ceilp)
+    out))
+(defmethod $maxpool2d ((x parameter) kw kh &optional (dw 1) (dh 1) (pw 0) (ph 0) ceilp)
+  (let ((out ($empty ($data x)))
+        (indices (tensor.long)))
+    (nn-spatial-max-pooling-update-output ($data x) out indices kw kh dw dh pw ph ceilp)
+    ($operation out
+                :creators (list x)
+                :name :maxpool2d
+                :bfn (lambda (self gradient xd)
+                       ($bp! x
+                             (let ((dx ($empty xd)))
+                               (nn-spatial-max-pooling-update-grad-input xd gradient dx
+                                                                         indices
+                                                                         kw kh dw dh pw ph
+                                                                         ceilp)
+                               dx)
+                             self)))))
