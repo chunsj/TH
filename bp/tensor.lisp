@@ -266,3 +266,23 @@
                                                                          ceilp)
                                dx)
                              self)))))
+
+(defmethod $avgpool2d ((x tensor) kw kh &optional (dw 1) (dh 1) (pw 0) (ph 0) ceilp (count-pad-p t))
+  (let ((out ($empty x)))
+    (nn-spatial-average-pooling-update-output x out kw kh dw dh pw ph ceilp count-pad-p)
+    out))
+(defmethod $avgpool2d ((x parameter) kw kh &optional (dw 1) (dh 1) (pw 0) (ph 0) ceilp
+                                             (count-pad-p t))
+  (let ((out ($empty ($data x))))
+    (nn-spatial-average-pooling-update-output x out kw kh dw dh pw ph ceilp count-pad-p)
+    ($operation out
+                :creators (list x)
+                :name :avgpool2d
+                :bfn (lambda (self gradient xd)
+                       ($bp! x
+                             (let ((dx ($empty xd)))
+                               (nn-spatial-average-pooling-update-grad-input xd gradient dx
+                                                                             kw kh dw dh pw ph
+                                                                             ceilp count-pad-p)
+                               dx)
+                             self)))))
