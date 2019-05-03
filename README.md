@@ -64,16 +64,15 @@
   weight file generation script written in python (using pytorch). Generated weight files should
   go under home directory as ~/.th/models/[modelname] (for exact path, refer vgg16.lisp code).
 
-## On API - Neural Network related
-  1. Variable creation: $variable
-  2. Value/Constant creation: $constant
-  3. State (recurrent) creation/accessing: $state, $prev
-  4. Operators: $+, $-, $*, $/ $@, ...
-  5. Functions: $sigmoid, $tanh, $softmax
-  6. Backpropagation: $bp!, $bptt!
-  7. Gradient descent or parameter update: $gd!, $mgd!, $agd!, $amgd!, $rmgd!, $adgd!
-  8. Weight initialization: $rn!, $ru!, $rnt!, $xavieru!, $xaviern!, $heu!, $hen!, $lecunu!, ...
-  9. Weight creation utilities: vrn, vru, vrnt, vxavier, vhe, vlecun
+## On API - Neural Network related (Currently under changing)
+  1. Variable creation: $parameter
+  2. State (recurrent) creation/accessing: $state, $prev
+  3. Operators: $+, $-, $*, $/ $@, ...
+  4. Functions: $sigmoid, $tanh, $softmax
+  5. Backpropagation: $bp!, $bptt!
+  6. Gradient descent or parameter update: $gd!, $mgd!, $agd!, $amgd!, $rmgd!, $adgd!
+  7. Weight initialization: $rn!, $ru!, $rnt!, $xavieru!, $xaviern!, $heu!, $hen!, $lecunu!, ...
+  8. Weight creation utilities: vrn, vru, vrnt, vxavier, vhe, vlecun
 
 ## Selected Book Follow Ups
   1. Deep Learning from Scratch: dlfs
