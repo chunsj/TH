@@ -29,7 +29,7 @@
   signature changes between aten and TH/THNN, these problems are under investigation and fixing.
 
 ## How to Load
-  1. Build torch (to get libTH/libTHNN) or if possible build those library files.
+  1. Build https://bitbucket.org/chunsj/libth/src/master/ and install two libraries.
   2. You'll need my utility library mu.
   3. Link or clone this repository and mu into quicklisp's local-projects
   4. Check location of library path in the load.lisp file.
@@ -38,7 +38,7 @@
 
 ## Examples using TH
   1. Basic tensor operations: examples/tensor.lisp
-  2. Some auto-gradient/auto-backpropagation: examples/ad.lisp
+  2. Some examples on auto-backpropagation: examples/ad.lisp
   3. XOR neural network: examples/xor.lisp
   4. MNIST convolutional neural network: examples/mnist.lisp
   5. Cats and Dogs CNN: examples/catsdogs.lisp
