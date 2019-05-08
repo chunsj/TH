@@ -75,3 +75,12 @@
   ($bp! out)
   (prn "[0.111...]")
   (prn ($gradient x)))
+
+;; sum
+(let* ((x ($parameter '((1 2 3) (4 5 6) (7 8 9))))
+       (y 40)
+       (out ($sum x))
+       (delta ($sub out y))
+       (loss ($dot delta delta)))
+  (prn "OUT:" out "LOSS:" loss)
+  ($bp! loss))
