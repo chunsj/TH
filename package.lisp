@@ -335,7 +335,6 @@
            #:$broadcast
            #:$krows
            #:$kcols
-           #:$bp!
            #:$gs!
            #:$cg!
            #:$gd!

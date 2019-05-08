@@ -69,10 +69,9 @@
   2. State (recurrent) creation/accessing: $state, $prev
   3. Operators: $+, $-, $*, $/ $@, ...
   4. Functions: $sigmoid, $tanh, $softmax
-  5. Backpropagation: $bp!, $bptt!
-  6. Gradient descent or parameter update: $gd!, $mgd!, $agd!, $amgd!, $rmgd!, $adgd!
-  7. Weight initialization: $rn!, $ru!, $rnt!, $xavieru!, $xaviern!, $heu!, $hen!, $lecunu!, ...
-  8. Weight creation utilities: vrn, vru, vrnt, vxavier, vhe, vlecun
+  5. Gradient descent or parameter update: $gd!, $mgd!, $agd!, $amgd!, $rmgd!, $adgd!
+  6. Weight initialization: $rn!, $ru!, $rnt!, $xavieru!, $xaviern!, $heu!, $hen!, $lecunu!, ...
+  7. Weight creation utilities: vrn, vru, vrnt, vxavier, vhe, vlecun
 
 ## Selected Book Follow Ups
   1. Deep Learning from Scratch: dlfs
