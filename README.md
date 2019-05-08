@@ -64,8 +64,8 @@
   weight file generation script written in python (using pytorch). Generated weight files should
   go under home directory as ~/.th/models/[modelname] (for exact path, refer vgg16.lisp code).
 
-## On API - Neural Network related (Currently under changing)
-  1. Variable creation: $parameter
+## On API - Neural Network related
+  1. Variable creation: $varaible, for constant use $constant
   2. State (recurrent) creation/accessing: $state, $prev
   3. Operators: $+, $-, $*, $/ $@, ...
   4. Functions: $sigmoid, $tanh, $softmax
