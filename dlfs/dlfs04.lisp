@@ -8,7 +8,7 @@
 
 ;; mnist data loading - takes time, so load and set
 (defparameter *mnist* (read-mnist-data))
-(print *mnist*)
+(prn *mnist*)
 
 ;; network parameters
 (defparameter *w1* ($variable (rndn 784 50)))
@@ -70,21 +70,22 @@
   ($fclose f))
 
 ;; backprop testing
-(let* ((sels '(0 1 2 3 4))
-       (x (-> *mnist*
-              ($ :train-images)
-              ($index 0 sels)
-              ($constant)))
-       (y (-> *mnist*
-              ($ :train-labels)
-              ($index 0 sels)
-              ($constant)))
-       (lr 0.01))
-  (loop :for i :from 1 :below 100
-        :do (let* ((y* (mnist-predict x))
-                   (loss (mnist-loss y* y)))
-              (print loss)
-              ($bp! loss)
-              ($gd! loss lr)))
-  (print y)
-  (print ($round ($data (mnist-predict x)))))
+(with-foreign-memory-limit
+    (let* ((sels '(0 1 2 3 4))
+           (x (-> *mnist*
+                  ($ :train-images)
+                  ($index 0 sels)
+                  ($constant)))
+           (y (-> *mnist*
+                  ($ :train-labels)
+                  ($index 0 sels)
+                  ($constant)))
+           (lr 0.01))
+      (loop :for i :from 1 :below 100
+            :do (let* ((y* (mnist-predict x))
+                       (loss (mnist-loss y* y)))
+                  (prn loss)
+                  ($gs! loss)
+                  ($gd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr)))
+      (prn y)
+      (prn ($round ($data (mnist-predict x))))))

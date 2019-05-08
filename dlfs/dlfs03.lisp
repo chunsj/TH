@@ -7,7 +7,7 @@
 (in-package :dlfs-03)
 
 ;; sigmoid function
-(print ($sigmoid 0))
+(prn ($sigmoid 0))
 
 ;; step function
 (defun step-function (x)
@@ -17,87 +17,87 @@
 
 ;; testing step-function
 (let ((x (tensor '(-1 1 2))))
-  (print x)
-  (print ($gt x 0))
-  (print (step-function x)))
+  (prn x)
+  (prn ($gt x 0))
+  (prn (step-function x)))
 
 ;; testing sigmoid
 (let ((x (tensor '(-1 1 2))))
-  (print ($sigmoid x)))
+  (prn ($sigmoid x)))
 
 ;; relu function
-(print ($relu 1))
-(print ($relu (tensor '(-2 1 2))))
+(prn ($relu 1))
+(prn ($relu (tensor '(-2 1 2))))
 
 ;; multidimensional array
 (let ((a (tensor '(1 2 3 4))))
-  (print a)
-  (print ($size a))
-  (print ($size a 0)))
+  (prn a)
+  (prn ($size a))
+  (prn ($size a 0)))
 
 (let ((b (tensor '((1 2) (3 4) (5 6)))))
-  (print b)
-  (print ($ndim b))
-  (print ($size b)))
+  (prn b)
+  (prn ($ndim b))
+  (prn ($size b)))
 
 ;; matrix product
 (let ((a (tensor '((1 2) (3 4))))
       (b (tensor '((5 6) (7 8)))))
-  (print ($size a))
-  (print ($size b))
-  (print ($@ a b)))
+  (prn ($size a))
+  (prn ($size b))
+  (prn ($@ a b)))
 
 (let ((a (tensor '((1 2 3) (4 5 6))))
       (b (tensor '((1 2) (3 4) (5 6)))))
-  (print ($size a))
-  (print ($size b))
-  (print ($@ a b)))
+  (prn ($size a))
+  (prn ($size b))
+  (prn ($@ a b)))
 
 ;; mv
 (let ((a (tensor '((1 2) (3 4) (5 6))))
       (b (tensor '(7 8))))
-  (print ($mv a b))
-  (print ($@ a b)))
+  (prn ($mv a b))
+  (prn ($@ a b)))
 
 ;; neural network - note that size of x is different from the book
 (let ((x (tensor '((1 2))))
       (w (tensor '((1 3 5) (2 4 6)))))
-  (print w)
-  (print ($size w))
-  (print ($@ x w)))
+  (prn w)
+  (prn ($size w))
+  (prn ($@ x w)))
 
 (let ((x (tensor '((1.0 0.5))))
       (w1 (tensor '((0.1 0.3 0.5) (0.2 0.4 0.6))))
       (b1 (tensor '((0.1 0.2 0.3)))))
-  (print ($size w1))
-  (print ($size x))
-  (print ($size b1))
+  (prn ($size w1))
+  (prn ($size x))
+  (prn ($size b1))
   (let* ((a1 ($+ ($@ x w1) b1))
          (z1 ($sigmoid a1)))
-    (print a1)
-    (print z1)
+    (prn a1)
+    (prn z1)
     (let ((w2 (tensor '((0.1 0.4) (0.2 0.5) (0.3 0.6))))
           (b2 (tensor '((0.1 0.2)))))
-      (print ($size z1))
-      (print ($size w2))
-      (print ($size b2))
+      (prn ($size z1))
+      (prn ($size w2))
+      (prn ($size b2))
       (let* ((a2 ($+ ($@ z1 w2) b2))
              (z2 ($sigmoid a2)))
-        (print a2)
-        (print z2)))))
+        (prn a2)
+        (prn z2)))))
 
 ;; softmax
 (let* ((a (tensor '(0.3 2.9 4.0)))
        (y ($softmax a)))
-  (print y)
-  (print ($sum y)))
+  (prn y)
+  (prn ($sum y)))
 
 (let ((a (tensor '(1010 1000 990))))
-  (print ($softmax a)))
+  (prn ($softmax a)))
 
 ;; mnist data loading - takes time, so load and set
 (defparameter *mnist* (read-mnist-data))
-(print *mnist*)
+(prn *mnist*)
 
 ;; network parameters
 (defparameter *w1* ($variable (rndn 784 50)))
@@ -159,14 +159,14 @@
   ($fclose f))
 
 ;; train data
-(print ($ *mnist* :train-images))
+(prn ($ *mnist* :train-images))
 
 ;; run prediction - test
-(print (-> *mnist*
-           ($ :train-images)
-           ($index 0 '(0 1 2 3 4))
-           ($constant)
-           (mnist-predict)))
+(prn (-> *mnist*
+         ($ :train-images)
+         ($index 0 '(0 1 2 3 4))
+         ($constant)
+         (mnist-predict)))
 
 (let ((y (-> *mnist*
              ($ :train-images)
@@ -177,6 +177,6 @@
              ($ :train-labels)
              ($index 0 '(0 1 2 3 4))
              ($constant))))
-  (print y)
-  (print r)
-  (print ($cee y r)))
+  (prn y)
+  (prn r)
+  (prn ($cee y r)))
