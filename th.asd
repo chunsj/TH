@@ -5,7 +5,7 @@
   :maintainer "Sungjin Chun <chunsj@gmail.com>"
   :license "GPL3"
   :description "common lisp tensor and deep learning library"
-  :long-description "common lisp tensor and deep learning library built on TH and THNN from torch"
+  :long-description "common lisp tensor and deep learning library built on TH and THNN"
   :depends-on ("cffi"
                "mu")
   :components ((:file "package")
