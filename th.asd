@@ -30,7 +30,7 @@
                                              (:file "file")))
                (:module nn :components ((:file "ffi")
                                         (:file "nn")))
-               (:module ad :components ((:file "autograd")
+               (:module bp :components ((:file "backprop")
                                         (:file "gd")
                                         (:file "operator")
                                         (:file "function")
