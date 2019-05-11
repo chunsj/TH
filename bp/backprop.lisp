@@ -2,6 +2,13 @@
 
 (in-package :th)
 
+;; XXX
+;; the wrapper class should be two kind; one for variable and the other for operator
+;; only operators will have functions for backpropagation and the variable will not.
+;; constant node is not needed and redundant, so it should be removed.
+;; with this design, need-gradient-p like flags are not required.
+;; XXX
+
 (defgeneric $variable (object) (:documentation "Returns variable node."))
 (defgeneric $constant (object) (:documentation "Returns constant node."))
 

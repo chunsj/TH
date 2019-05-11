@@ -329,7 +329,6 @@
            #:parameters
            #:$variable
            #:$constant
-           #:$parameter
            #:$data
            #:$gradient
            #:$broadcast
