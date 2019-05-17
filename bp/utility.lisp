@@ -2,34 +2,10 @@
 
 (in-package :th)
 
-(defgeneric $xwpb (x w b &optional ones))
-(defgeneric $affine (x w b &optional ones))
+(defgeneric $xwpb (x w b &optional ones) (:documentation "Returns x@w + b."))
+(defgeneric $affine (x w b &optional ones) (:documentation "Affine transformation."))
 
-(defmethod $xwpb ((x tensor) (w tensor) (b tensor) &optional ones)
-  (let ((o (or ones (ones (if (eq 1 ($ndim x)) 1 ($size x 0))))))
-    ($add! ($mm x w) ($vv o b))))
-
-(defmethod $xwpb ((x node) (w node) (b node) &optional ones)
-  (let ((o (or ones ($constant (ones (if (eq 1 ($ndim x)) 1 ($size x 0)))))))
-    ($add ($mm x w) ($vv o b))))
-
-(defmethod $affine ((x tensor) (w tensor) (b tensor) &optional ones)
-  (let ((o (or ones (ones ($size x 0) 1))))
-    ($add! ($mm x w) ($mm o b))))
-
-(defmethod $affine ((x node) (w node) (b node) &optional ones)
-  (let ((o (or ones ($constant (ones ($size x 0) 1)))))
-    ($add ($mm x w) ($mm o b))))
-
-(defgeneric $wimb (xwi w))
-
-(defmethod $wimb ((xwi list) (w tensor)) ($sum ($index w 0 xwi) 0))
-(defmethod $wimb ((xwi tensor.int) (w tensor)) ($sum ($index w 0 xwi) 0))
-(defmethod $wimb ((xwi tensor.long) (w tensor)) ($sum ($index w 0 xwi) 0))
-
-(defmethod $wimb ((xwi list) (w node)) ($sum ($index w 0 xwi) 0))
-(defmethod $wimb ((xwi tensor.int) (w node)) ($sum ($index w 0 xwi) 0))
-(defmethod $wimb ((xwi tensor.long) (w node)) ($sum ($index w 0 xwi) 0))
+(defgeneric $wimb (xwi w) (:documentation "Computes word embedding."))
 
 (defgeneric $rn! (tensor &optional µ σ) (:documentation "Fills with random normal."))
 (defgeneric $rnt! (tensor &optional µ σ) (:documentation "Fills with truncated random normal."))
@@ -40,6 +16,30 @@
 (defgeneric $hen! (tensor) (:documentation "Fills with He normal."))
 (defgeneric $lecunu! (tensor) (:documentation "Fills with Lecun uniform."))
 (defgeneric $lecunn! (tensor) (:documentation "Fills with Lecun normal."))
+
+(defmethod $xwpb ((x tensor) (w tensor) (b tensor) &optional ones)
+  (let ((o (or ones (ones (if (eq 1 ($ndim x)) 1 ($size x 0))))))
+    ($add! ($mm x w) ($vv o b))))
+
+(defmethod $xwpb ((x node) (w node) (b node) &optional ones)
+  (let ((o (or ones (ones (if (eq 1 ($ndim x)) 1 ($size x 0))))))
+    ($add ($mm x w) ($vv o b))))
+
+(defmethod $affine ((x tensor) (w tensor) (b tensor) &optional ones)
+  (let ((o (or ones (ones ($size x 0) 1))))
+    ($add! ($mm x w) ($mm o b))))
+
+(defmethod $affine ((x node) (w node) (b node) &optional ones)
+  (let ((o (or ones (ones ($size x 0) 1))))
+    ($add ($mm x w) ($mm o b))))
+
+(defmethod $wimb ((xwi list) (w tensor)) ($sum ($index w 0 xwi) 0))
+(defmethod $wimb ((xwi tensor.int) (w tensor)) ($sum ($index w 0 xwi) 0))
+(defmethod $wimb ((xwi tensor.long) (w tensor)) ($sum ($index w 0 xwi) 0))
+
+(defmethod $wimb ((xwi list) (w node)) ($sum ($index w 0 xwi) 0))
+(defmethod $wimb ((xwi tensor.int) (w node)) ($sum ($index w 0 xwi) 0))
+(defmethod $wimb ((xwi tensor.long) (w node)) ($sum ($index w 0 xwi) 0))
 
 (defmethod $rn! ((tensor tensor) &optional (mean 0) (sd 0.05))
   ($add! ($mul! (tensor-randn tensor ($size tensor)) sd) mean)

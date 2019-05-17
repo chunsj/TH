@@ -2014,3 +2014,26 @@
                                   n
                                   1)
     result))
+
+(defgeneric $broadcast (constant matrix))
+
+(defgeneric $krows (vector n))
+(defgeneric $kcols (vector n))
+
+(defmethod $krows ((vector tensor) n) ($vv (ones n) vector))
+(defmethod $kcols ((vector tensor) n) ($vv vector (ones n)))
+
+(defmethod $broadcast ((vector tensor) (matrix tensor))
+  (cond ((eq 1 ($ndim vector)) (let ((nv ($count vector))
+                                     (sz ($size matrix)))
+                                 (cond ((eq nv ($ sz 1)) ($krows vector ($ sz 0)))
+                                       ((eq nv ($ sz 0)) ($kcols vector ($ sz 1)))
+                                       (t (error "cannot broadcast automatically")))))
+        ((and (eq 2 ($ndim vector)) (or (eq 1 ($size vector 0)) (eq 1 ($size vector 1))))
+         (let ((nv ($count vector))
+               (sz ($size matrix)))
+           (cond ((eq nv ($ sz 1)) ($krows ($reshape vector nv) ($ sz 0)))
+                 ((eq nv ($ sz 0)) ($kcols ($reshape vector nv) ($ sz 1)))
+                 (t (error "cannot broadcast automatically")))))))
+
+(defmethod $broadcast ((c number) (m tensor)) ($mul! ($one m) c))

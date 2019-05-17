@@ -327,10 +327,11 @@
            #:$fclose
            #:$fname
            #:parameters
-           #:$variable
-           #:$constant
+           #:$parameter
            #:$data
            #:$gradient
+           #:$parameterp
+           #:$append
            #:$broadcast
            #:$krows
            #:$kcols

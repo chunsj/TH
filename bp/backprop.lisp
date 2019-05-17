@@ -2,101 +2,71 @@
 
 (in-package :th)
 
-;; XXX
-;; the wrapper class should be two kind; one for variable and the other for operator
-;; only operators will have functions for backpropagation and the variable will not.
-;; constant node is not needed and redundant, so it should be removed.
-;; with this design, need-gradient-p like flags are not required.
-;; XXX
+(defgeneric $parameter (object) (:documentation "Returns a wrapped, differentiable  object."))
+(defgeneric $parameterp (object) (:documentation "Returns whether object is a parameter or not."))
+(defgeneric $gradient (node) (:documentation "Returns gradient value."))
+(defgeneric $attr (node key &optional default) (:documentation "An attribute for key in node."))
 
-(defgeneric $variable (object) (:documentation "Returns variable node."))
-(defgeneric $constant (object) (:documentation "Returns constant node."))
-
-(defgeneric $broadcast (constant matrix))
+(defgeneric $cg! (node) (:documentation "Clear gradient value."))
 
 (defclass node ()
-  ((nm :initform nil :accessor $name)
+  ((nm :initform :parameter :accessor $name)
    (data :initform nil :accessor $data)
    (fns :initform nil :accessor $fns)
    (gradientv :initform nil :accessor $gradientv)
-   (need-gradient-p :initform nil :accessor $gradientp)
-   (attrs :initform #{} :accessor $attrs)))
+   (attrs :initform #{} :accessor $attrs))
+  (:documentation "Represents a computational node for differentiable parameter."))
 
 (defmethod print-object ((node node) stream)
-  (format stream "[~A] " (if (null ($name node))
-                             (cond (($gradientp node) "VARIABLE")
-                                   (t "CONSTANT"))
-                             ($name node)))
+  (format stream "[~A] " ($name node))
   (format stream "~A" ($data node)))
 
-(defclass parameters ()
-  ((variables :initform nil :accessor $variables)))
+(defun $pfn! (node f) (push f ($fns node)))
 
-(defun parameters () (make-instance 'parameters))
+(defun node (data &key (name :parameter) bps)
+  (let ((n (make-instance 'node)))
+    (setf ($data n) data)
+    (setf ($name n) name)
+    (when bps (loop :for (v f) :in bps :do (when (and v f) ($pfn! v f))))
+    n))
+
+(defun $gs! (node &optional gradientv)
+  "Set gradient seed value."
+  (when ($fns node) (setf ($fns node) nil))
+  (let ((gradient (or gradientv (if ($tensorp ($data node))
+                                    ($one ($data node))
+                                    1))))
+    (setf ($gradientv node) gradient)))
+
+(defun compute-gradient (node)
+  (if ($fns node)
+      (let ((gv (reduce #'$+
+                        (mapcar (lambda (f) (funcall f ($data node) ($gradient node)))
+                                (reverse ($fns node))))))
+        (setf ($fns node) nil)
+        (setf ($gradientv node) gv))
+      ($gs! node))
+  ($gradientv node))
+
+(defmethod $gradient ((node node)) (or ($gradientv node) (compute-gradient node)))
+(defmethod $gradient ((object T)) nil)
+
+(defmethod $cg! ((node node))
+  (setf ($fns node) nil
+        ($gradientv node) nil))
+
+(defmethod $parameter ((node node)) (node ($data node)))
+(defmethod $parameter ((data list)) (node (tensor data)))
+(defmethod $parameter ((data t)) (node data))
+
+(defmethod $parameterp ((node node)) T)
+(defmethod $parameterp ((object T)) nil)
 
 (defmethod $tensorp ((node node)) ($tensorp ($data node)))
 
-(defgeneric $gradient (node))
-
-(defmethod $gradient ((node node))
-  (if ($gradientp node)
-      (progn
-        (unless ($gradientv node)
-          (if ($fns node)
-              (let ((gv (reduce #'$+ (mapcar (lambda (fn) (funcall fn)) (reverse ($fns node))))))
-                (setf ($fns node) nil)
-                (setf ($gradientv node) gv))
-              (setf ($gradientv node) (if ($tensorp ($data node))
-                                          ($one ($data node))
-                                          1))))
-        ($gradientv node))
-      (let ((o (if ($tensorp ($data node))
-                   (apply #'zeros ($size ($data node)))
-                   0)))
-        (setf ($gradientv node) o)
-        (setf ($fns node) nil)
-        ($gradientv node))))
-
-(defun $pfn! (node fn) (when ($gradientp node) (push fn ($fns node))))
-
-(defgeneric $gs! (node &optional gradient)
-  (:documentation "Set the gradient value, mostly for backpropagation."))
-
-(defmethod $gs! ((node node) &optional gradient)
-  (setf ($fns node) nil)
-  (let ((gradient (or gradient (if ($tensorp ($data node))
-                                   ($one ($data node))
-                                   1))))
-    (setf ($gradientv node) gradient)))
-
-(defun $gp! (node input &rest inputs)
-  (setf ($gradientp node) (reduce (lambda (r i) (or r ($gradientp i))) inputs
-                                  :initial-value ($gradientp input))))
-
-(defgeneric $cg! (node))
-
-(defmethod $cg! ((node node))
-  (setf ($fns node) nil)
-  (setf ($gradientv node) nil))
-
-(defun node (data &optional need-gradient-p)
-  (let ((n (make-instance 'node)))
-    (setf ($data n) data)
-    (setf ($gradientp n) need-gradient-p)
-    n))
-
-(defmethod $variable ((node node)) (setf ($gradientp node) t) node)
-(defmethod $constant ((node node)) (setf ($gradientp node) nil) node)
-
-(defmethod $variable ((data list)) (node (tensor data) t))
-(defmethod $constant ((data list)) (node (tensor data) nil))
-
-(defmethod $variable ((data t)) (node data t))
-(defmethod $constant ((data t)) (node data nil))
-
-(defmethod $zero ((x node)) (node ($zero ($data x)) ($gradientp x)))
-(defmethod $one ((x node)) (node ($one ($data x)) ($gradientp x)))
-(defmethod $fill ((x node) value) (node ($fill ($data x) value) ($gradientp x)))
+(defmethod $zero ((x node)) (node ($zero ($data x))))
+(defmethod $one ((x node)) (node ($one ($data x))))
+(defmethod $fill ((x node) value) (node ($fill ($data x) value)))
 (defmethod $ndim ((x node)) ($ndim ($data x)))
 (defmethod $count ((x node)) ($count ($data x)))
 
@@ -111,17 +81,13 @@
   ($fill! ($data x) value)
   x)
 
-(defmethod $empty ((node node))
-  (let ((data ($data node)))
-    (cond (($gradientp node) ($variable ($empty data)))
-          (t ($constant ($empty data))))))
+(defmethod $empty ((node node)) ($parameter ($empty ($data node))))
 
 (defmethod $storage ((node node)) ($storage ($data node)))
 (defmethod $offset ((node node)) ($offset ($data node)))
 (defmethod $size ((node node) &optional dimension) ($size ($data node) dimension))
 (defmethod $stride ((node node) &optional dimension) ($stride ($data node) dimension))
 
-(defgeneric $attr (node key &optional default))
 (defmethod $attr ((node node) key &optional default)
   (let ((v ($ ($attrs node) key nil)))
     (when (and (null v) default)
@@ -133,22 +99,22 @@
   (setf ($ ($attrs node) key) value)
   value)
 
-(defgeneric $parameter (parameters object) (:documentation "Group the object into parameters."))
+(defclass parameters () ((parameters :initform nil :accessor $parameters)))
 
-(defmethod $parameter ((parameters parameters) (node node))
-  (let ((v ($variable node)))
-    (push v ($variables parameters))
-    v))
+(defun parameters () (make-instance 'parameters))
 
-(defmethod $parameter ((parameters parameters) (data list))
-  (let ((v ($variable data)))
-    (push v ($variables parameters))
-    v))
+(defgeneric $push (parameters parameter) (:documentation "Group the parameter."))
 
-(defmethod $parameter ((parameters parameters) (data t))
-  (let ((v ($variable data)))
-    (push v ($variables parameters))
+(defmethod $push ((parameters parameters) (node node))
+  (push node ($parameters parameters))
+  node)
+
+(defmethod $push ((parameters parameters) (data t))
+  (let ((v ($parameter data)))
+    (push v ($parameters parameters))
     v))
 
 (defmethod $cg! ((parameters parameters))
-  (loop :for p :in ($variables parameters) :do ($cg! p)))
+  (loop :for p :in ($parameters parameters) :do ($cg! p)))
+
+(defun bps (&rest args) (loop :for (v f) :on args :by #'cddr :collect (list v f)))
