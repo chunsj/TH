@@ -100,12 +100,12 @@
 (prn *mnist*)
 
 ;; network parameters
-(defparameter *w1* ($variable (rndn 784 50)))
-(defparameter *b1* ($variable (zeros 50)))
-(defparameter *w2* ($variable (rndn 50 100)))
-(defparameter *b2* ($variable (zeros 100)))
-(defparameter *w3* ($variable (rndn 100 10)))
-(defparameter *b3* ($variable (zeros 10)))
+(defparameter *w1* ($parameter (rndn 784 50)))
+(defparameter *b1* ($parameter (zeros 50)))
+(defparameter *w2* ($parameter (rndn 50 100)))
+(defparameter *b2* ($parameter (zeros 100)))
+(defparameter *w3* ($parameter (rndn 100 10)))
+(defparameter *b3* ($parameter (zeros 10)))
 
 (defun mnist-predict (x)
   (-> x
@@ -165,18 +165,15 @@
 (prn (-> *mnist*
          ($ :train-images)
          ($index 0 '(0 1 2 3 4))
-         ($constant)
          (mnist-predict)))
 
 (let ((y (-> *mnist*
              ($ :train-images)
              ($index 0 '(0 1 2 3 4))
-             ($constant)
              (mnist-predict)) )
       (r (-> *mnist*
              ($ :train-labels)
-             ($index 0 '(0 1 2 3 4))
-             ($constant))))
+             ($index 0 '(0 1 2 3 4)))))
   (prn y)
   (prn r)
   (prn ($cee y r)))

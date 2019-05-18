@@ -11,12 +11,12 @@
 (prn *mnist*)
 
 ;; network parameters
-(defparameter *w1* ($variable (rndn 784 50)))
-(defparameter *b1* ($variable (zeros 50)))
-(defparameter *w2* ($variable (rndn 50 100)))
-(defparameter *b2* ($variable (zeros 100)))
-(defparameter *w3* ($variable (rndn 100 10)))
-(defparameter *b3* ($variable (zeros 10)))
+(defparameter *w1* ($parameter (rndn 784 50)))
+(defparameter *b1* ($parameter (zeros 50)))
+(defparameter *w2* ($parameter (rndn 50 100)))
+(defparameter *b2* ($parameter (zeros 100)))
+(defparameter *w3* ($parameter (rndn 100 10)))
+(defparameter *b3* ($parameter (zeros 10)))
 
 (defun mnist-predict (x)
   (-> x
@@ -74,12 +74,10 @@
     (let* ((sels '(0 1 2 3 4))
            (x (-> *mnist*
                   ($ :train-images)
-                  ($index 0 sels)
-                  ($constant)))
+                  ($index 0 sels)))
            (y (-> *mnist*
                   ($ :train-labels)
-                  ($index 0 sels)
-                  ($constant)))
+                  ($index 0 sels)))
            (lr 0.01))
       (loop :for i :from 1 :below 100
             :do (let* ((y* (mnist-predict x))
@@ -89,3 +87,18 @@
                   ($gd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr)))
       (prn y)
       (prn ($round ($data (mnist-predict x))))))
+
+(let* ((sels '(0 1 2 3 4))
+       (x (-> *mnist*
+              ($ :train-images)
+              ($index 0 sels)))
+       (y (-> *mnist*
+              ($ :train-labels)
+              ($index 0 sels)))
+       (lr 0.01))
+  (let* ((y* (mnist-predict x))
+         (loss (mnist-loss y* y)))
+    ($gs! loss)
+    (prn loss)
+    (prn (th::$fns *w1*))
+    ($gd! *w1* lr)))
