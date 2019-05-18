@@ -260,17 +260,18 @@
 (defmethod $sum ((x node) &optional (dimension -1))
   (node ($sum ($data x) dimension)
         :name :sum
-        :link (link (to x (if (< dimension 0)
-                                      ($broadcast gv ($data x))
-                                      ($expand gv ($size x)))))))
+        :link (link (to x (let ((xd ($data x)))
+                            (if (< dimension 0)
+                                ($broadcast gv xd)
+                                ($expand gv ($size xd))))))))
 
 (defmethod $mean ((x node) &optional (dimension -1))
   (node ($mean ($data x) dimension)
         :name :mean
         :link (link (to x (let ((xd ($data x)))
-                                    (if (< dimension 0)
-                                        ($broadcast (/ gv ($count xd)) xd)
-                                        ($div! ($expand gv ($size x)) ($size xd dimension))))))))
+                            (if (< dimension 0)
+                                ($broadcast (/ gv ($count xd)) xd)
+                                ($div! ($expand gv ($size x)) ($size xd dimension))))))))
 
 (defun seteq! (a b v)
   (let ((m ($eq a b)))

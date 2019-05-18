@@ -44,7 +44,7 @@
                              (gfn (lambda (dv gv)
                                     (declare (ignore dv))
                                     (unless (and dx dk db)
-                                      (setf dx ($empty ($data xd)))
+                                      (setf dx ($empty xd))
                                       (setf dk (apply #'zeros ($size kd)))
                                       (setf db (apply #'zeros ($size bd)))
                                       (nn-spatial-convolution-mm-update-grad-input xd
@@ -85,7 +85,7 @@
                              (gfn (lambda (dv gv)
                                     (declare (ignore dv))
                                     (unless (and dx dk)
-                                      (setf dx ($empty ($data xd)))
+                                      (setf dx ($empty xd))
                                       (setf dk (apply #'zeros ($size kd)))
                                       (nn-spatial-convolution-mm-update-grad-input xd
                                                                                    gv

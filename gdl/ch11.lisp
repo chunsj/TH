@@ -24,17 +24,17 @@
 ;; to implement efficient embedding layer, we need row/column selection
 ;; which is possible by using $index function
 (let ((w (tensor '((1 2 3) (2 3 4) (3 4 5) (4 5 6) (5 6 7) (6 7 8) (7 8 9)))))
-  (print ($index w 0 (tensor.long '(0 1 4))))
-  (print ($sum ($index w 0 (tensor.long '(0 1 4))) 0))
-  (print w))
+  (prn ($index w 0 (tensor.long '(0 1 4))))
+  (prn ($sum ($index w 0 (tensor.long '(0 1 4))) 0))
+  (prn w))
 
 ;; compare multiplication and embedding layer shortcut (conceptually)
 (let ((x (tensor '((1 1 0 1))))
       (w (tensor '((1 2 3) (2 3 4) (3 4 5) (4 5 6)))))
-  (print (time ($mm x w)))
-  (print (time ($sum ($index w 0 '(0 1 3)) 0)))
-  (print ($index ($nonzero x) 1 '(1)))
-  (print (time ($sum ($index w 0 ($reshape ($index ($nonzero x) 1 '(1)) 3)) 0))))
+  (prn (time ($mm x w)))
+  (prn (time ($sum ($index w 0 '(0 1 3)) 0)))
+  (prn ($index ($nonzero x) 1 '(1)))
+  (prn (time ($sum ($index w 0 ($reshape ($index ($nonzero x) 1 '(1)) 3)) 0))))
 
 (defun process-review (review)
   (remove-duplicates (->> (remove-duplicates (split #\space review) :test #'equal)
@@ -72,18 +72,18 @@
 (defparameter *target-dataset* (tensor (mapcar (lambda (s) (if (equal s "pos") 1 0))
                                                ($ *imdb* :train-labels))))
 
-(print ($index *target-dataset* 0 '(0 1 2 3 4)))
+(prn ($index *target-dataset* 0 '(0 1 2 3 4)))
 
 ;; now we have indices of words as input
-(print ($count *words*)) ;; this is conceptually real input size
+(prn ($count *words*)) ;; this is conceptually real input size
 
 ;; instead of large matrix multiplication, we can use selection+sum
 (let ((w (rnd ($count *words*) 100)))
-  (print (time ($sum ($index w 0 ($0 *input-dataset*)) 0))))
+  (prn (time ($sum ($index w 0 ($0 *input-dataset*)) 0))))
 
 ;; for auto backpropagation support
-(let ((w ($variable (rnd ($count *words*) 100))))
-  (print (time ($sum ($index w 0 ($0 *input-dataset*)) 0))))
+(let ((w ($parameter (rnd ($count *words*) 100))))
+  (prn (time ($sum ($index w 0 ($0 *input-dataset*)) 0))))
 
 (defparameter *alpha* 0.01)
 (defparameter *iterations* 180)
@@ -104,7 +104,7 @@
 (defparameter *test-target* (tensor (mapcar (lambda (s) (if (equal s "pos") 1 0))
                                             ($ *imdb* :test-labels))))
 
-(defun print-test-perf ()
+(defun prn-test-perf ()
   (let ((total 0)
         (correct 0))
     (loop :for i :from 0 :below (min 1000 ($count *test-dataset*))
@@ -140,10 +140,10 @@
                               (incf correct))))
                 (when (zerop (rem iter 1))
                   (prn iter total correct)
-                  (print-test-perf)))))
+                  (prn-test-perf)))))
 
-(print (predict-sentiment ($ *input-dataset* 10)))
-(print (predict-sentiment ($ *input-dataset* 2345)))
+(prn (predict-sentiment ($ *input-dataset* 10)))
+(prn (predict-sentiment ($ *input-dataset* 2345)))
 
 (let* ((review ($0 *test-reviews*))
        (sentiment ($0 ($ *imdb* :test-labels)))
@@ -153,20 +153,20 @@
   (prn input)
   (prn (predict-sentiment input)))
 
-(print-test-perf)
+(prn-test-perf)
 
 ;; wow, this really works
 (let* ((my-review "this so called franchise movie of avengers is great master piece. i've enjoyed it very much and my kids love this one as well. though my wife generally does not like this kind of genre, she said this one is better than others.")
        (review (process-review my-review))
        (x (review-to-indices review)))
-  (print x)
-  (print (predict-sentiment x)))
+  (prn x)
+  (prn (predict-sentiment x)))
 
 (let* ((my-review "this movie is just a political propaganda, it has neither entertainment or message. i just regret my spending of precious time on this one.")
        (review (process-review my-review))
        (x (review-to-indices review)))
-  (print x)
-  (print (predict-sentiment x)))
+  (prn x)
+  (prn (predict-sentiment x)))
 
 ;; What hidden layer learns
 (defun similar (word)
@@ -182,5 +182,5 @@
                     (push (cons w score) scores)))
         (subseq (sort scores (lambda (a b) (< (cdr a) (cdr b)))) 0 (min 10 ($count scores)))))))
 
-(print (similar "beautiful"))
-(print (similar "terrible"))
+(prn (similar "beautiful"))
+(prn (similar "terrible"))

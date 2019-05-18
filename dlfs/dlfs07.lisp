@@ -8,7 +8,7 @@
 
 ;; prepare data for later use, it takes some time to load
 (defparameter *mnist* (read-mnist-data))
-(print *mnist*)
+(prn *mnist*)
 
 (defparameter *mnist-train-image-batches*
   (loop :for i :from 0 :below 60
@@ -30,9 +30,9 @@
        (x ($reshape x nbatch nch 28 28))
        (k (tensor '((((1 1 1) (1 1 1) (1 1 1))))))
        (b (tensor '(1))))
-  (print x)
-  (print k)
-  (print ($conv2d x k b)))
+  (prn x)
+  (prn k)
+  (prn ($conv2d x k b)))
 
 ;; more systematic
 (defun mkfilter (fn nc kw kh) (tensor fn nc kw kh))
@@ -47,9 +47,9 @@
        (x ($reshape x nbatch nch 28 28))
        (k (-> (mkfilter nfilter nch 3 3) ($fill! 1)))
        (b (-> (mkfbias nfilter) ($fill! 1))))
-  (print x)
-  (print k)
-  (print ($conv2d x k b)))
+  (prn x)
+  (prn k)
+  (prn ($conv2d x k b)))
 
 ;; with max pooling
 (let* ((indices '(0 1 2 3 4))
@@ -62,8 +62,8 @@
        (b (-> (mkfbias nfilter) ($fill! 1)))
        (c ($conv2d x k b))
        (p ($maxpool2d c 2 2)))
-  (print c)
-  (print p))
+  (prn c)
+  (prn p))
 
 ;; constructing network - smaller samples and single step only
 (let* ((indices '(0 1 2 3 4 5 6 7 8 9))
@@ -81,16 +81,16 @@
        (k (-> (mkfilter nfilter nch kw kh)
               ($uniform! 0 1)
               ($div (sqrt (/ 2.0 (* imgw imgh))))
-              ($variable)))
+              ($parameter)))
        (bk (-> (mkfbias nfilter)
                ($fill! 0)
-               ($variable)))
-       (w2 ($variable (rndn (* nfilter 12 12) nl2)))
-       (b2 ($variable (zeros nl2)))
-       (w3 ($variable (rndn nl2 nl3)))
-       (b3 ($variable (rndn nl3)))
-       (x ($constant ($index ($ *mnist* :train-images) 0 indices)))
-       (y ($constant ($index ($ *mnist* :train-labels) 0 indices)))
+               ($parameter)))
+       (w2 ($parameter (rndn (* nfilter 12 12) nl2)))
+       (b2 ($parameter (zeros nl2)))
+       (w3 ($parameter (rndn nl2 nl3)))
+       (b3 ($parameter (rndn nl3)))
+       (x ($index ($ *mnist* :train-images) 0 indices))
+       (y ($index ($ *mnist* :train-labels) 0 indices))
        (c ($conv2d ($reshape x nbatch nch imgw imgh) k bk))
        (l1 ($relu c))
        (p1 ($maxpool2d l1 pw ph 2 2))
@@ -100,7 +100,7 @@
        (z3 ($xwpb l2 w3 b3))
        (l3 ($softmax z3))
        (er ($cee l3 y)))
-  (print er))
+  (prn er))
 
 ;; with full data
 (let* ((indices (loop :for i :from 0 :below 1000 :collect i))
@@ -118,16 +118,16 @@
        (k (-> (mkfilter nfilter nch kw kh)
               ($uniform! 0 1)
               ($div (sqrt (/ 2.0 (* imgw imgh))))
-              ($variable)))
+              ($parameter)))
        (bk (-> (mkfbias nfilter)
                ($fill! 0)
-               ($variable)))
-       (w2 ($variable (rndn (* nfilter 12 12) nl2)))
-       (b2 ($variable (zeros nl2)))
-       (w3 ($variable (rndn nl2 nl3)))
-       (b3 ($variable (rndn nl3)))
-       (x ($constant ($index ($ *mnist* :train-images) 0 indices)))
-       (y ($constant ($index ($ *mnist* :train-labels) 0 indices)))
+               ($parameter)))
+       (w2 ($parameter (rndn (* nfilter 12 12) nl2)))
+       (b2 ($parameter (zeros nl2)))
+       (w3 ($parameter (rndn nl2 nl3)))
+       (b3 ($parameter (rndn nl3)))
+       (x ($index ($ *mnist* :train-images) 0 indices))
+       (y ($index ($ *mnist* :train-labels) 0 indices))
        (c (time ($conv2d ($reshape x nbatch nch imgw imgh) k bk)))
        (l1 ($relu c))
        (p1 (time ($maxpool2d l1 pw ph 2 2)))
@@ -137,7 +137,7 @@
        (z3 (time ($xwpb l2 w3 b3)))
        (l3 ($softmax z3))
        (er ($cee l3 y)))
-  (print er))
+  (prn er))
 
 ;; checking convolution speed
 (let* ((indices (loop :for i :from 0 :below 10000 :collect i))
@@ -148,7 +148,7 @@
        (x ($reshape x nbatch nch 28 28))
        (k (-> (mkfilter nfilter nch 3 3) ($fill! 1)))
        (b (-> (mkfbias nfilter) ($fill! 1))))
-  (print (time ($conv2d x k b))))
+  (prn (time ($conv2d x k b))))
 
 (defparameter *filter-number* 30)
 (defparameter *channel-number* 1)
@@ -165,21 +165,21 @@
 (defparameter *k* (-> (mkfilter *filter-number* *channel-number*
                                 *filter-width* *filter-height*)
                       ($uniform! 0 0.01)
-                      ($variable)))
+                      ($parameter)))
 (defparameter *kb* (-> (mkfbias *filter-number*)
                        ($zero!)
-                       ($variable)))
+                       ($parameter)))
 (defparameter *w2* (-> (rnd (* *filter-number* *pool-out-width* *pool-out-height*)
                             *l2-output*)
                        ($mul! 0.01)
-                       ($variable)))
+                       ($parameter)))
 (defparameter *b2* (-> (zeros *l2-output*)
-                       ($variable)))
+                       ($parameter)))
 (defparameter *w3* (-> (rnd *l2-output* *l3-output*)
                        ($mul! 0.01)
-                       ($variable)))
+                       ($parameter)))
 (defparameter *b3* (-> (zeros *l3-output*)
-                       ($variable)))
+                       ($parameter)))
 
 (defun mnist-write-weight-to (w fname)
   (let ((f (file.disk fname "w")))
@@ -221,30 +221,27 @@
       ($softmax)))
 
 ;; use batches for performance
-(loop :for epoch :from 1 :to 50
-      :do (loop :for i :from 0 :below 100
-                :for xi = ($ *mnist-train-image-batches* i)
-                :for x = (-> xi
-                             ($reshape ($size xi 0) *channel-number* 28 28)
-                             ($constant))
-                :for y = (-> ($ *mnist-train-label-batches* i)
-                             ($constant))
-                :for y* = (mnist-predict x)
-                :for loss = ($cee y* y)
-                :do (progn
-                      (format t "[~A|~A]: ~A~%" (1+ i) epoch ($data loss))
-                      (finish-output)
-                      ($bp! loss)
-                      ($agd! loss 0.01)
-                      (gcf))))
+(with-foreign-memory-limit
+    (loop :for epoch :from 1 :to 5
+          :do (loop :for i :from 0 :below 10
+                    :for xi = ($ *mnist-train-image-batches* i)
+                    :for x = (-> xi
+                                 ($reshape ($size xi 0) *channel-number* 28 28))
+                    :for y = (-> ($ *mnist-train-label-batches* i))
+                    :for y* = (mnist-predict x)
+                    :for loss = ($cee y* y)
+                    :do (progn
+                          (format t "[~A|~A]: ~A~%" (1+ i) epoch loss)
+                          (finish-output)
+                          ($gs! loss)
+                          ($agd! (list *k* *kb* *w2* *b2* *w3* *b3*) 0.01)))))
 
 ;; test
 (let* ((xtest ($ *mnist* :test-images))
        (ytest ($ *mnist* :test-labels)))
-  (print ($data ($cee (mnist-predict (-> xtest
-                                         ($reshape ($size xtest 0) 1 28 28)
-                                         ($constant)))
-                      ($constant ytest)))))
+  (prn ($cee (mnist-predict (-> xtest
+                                ($reshape ($size xtest 0) 1 28 28)))
+             ytest)))
 
 ;; write weights
 (mnist-cnn-write-weights)
@@ -259,7 +256,7 @@
     ($count (loop :for i :from 0 :below ($size xt 0)
                   :for xi = ($index xt 0 (list i))
                   :for yi = ($index yt 0 (list i))
-                  :for yi* = ($data (mnist-predict ($constant ($reshape xi ($size xi 0) 1 28 28))))
+                  :for yi* = ($data (mnist-predict ($reshape xi ($size xi 0) 1 28 28)))
                   :for err = (let ((e ($sum ($abs ($sub ($round yi*) yi)))))
                                (when (> e 0) (prn (list i e)))
                                e)

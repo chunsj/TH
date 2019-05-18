@@ -46,7 +46,6 @@
   ($gradientv node))
 
 (defmethod $gradient ((node node)) (or ($gradientv node) (compute-gradient node)))
-(defmethod $gradient ((object T)) nil)
 
 (defmethod $cg! ((node node))
   (setf ($fns node) nil

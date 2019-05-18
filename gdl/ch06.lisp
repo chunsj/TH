@@ -25,7 +25,7 @@
         :for delta = (- prediction goal-prediction)
         :do (let ((nw ($- *weights* ($* *alpha* ($* input delta)))))
               (setf *weights* nw)
-              (print (list err prediction goal-prediction)))))
+              (prn (list err prediction goal-prediction)))))
 
 ;; learning for every data - reset *weights*
 (defparameter *weights* (tensor '(0.5 0.48 -0.7)))
@@ -43,10 +43,10 @@
                   :do (progn
                         (setf all-err (+ all-err err))
                         (setf *weights* ($- *weights* ($* *alpha* ($* input delta))))))
-            (print (list n all-err))))
+            (prn (list n all-err))))
 
 ;; test learned weights
-(print ($mv *streetlights* *weights*))
+(prn ($mv *streetlights* *weights*))
 
 ;; first deep neural network
 (setf ($seed th::*generator*) 101)
@@ -85,9 +85,9 @@
                         (setf layer-2-error (+ layer-2-error err))
                         (setf *weights-1-2* ($- *weights-1-2* dweights-1-2))
                         (setf *weights-0-1* ($- *weights-0-1* dweights-0-1))))
-            (print layer-2-error)))
+            (prn layer-2-error)))
 
 ;; result
-(print (-> ($@ *streetlights* *weights-0-1*)
-           (relu)
-           ($@ *weights-1-2*)))
+(prn (-> ($@ *streetlights* *weights-0-1*)
+         (relu)
+         ($@ *weights-1-2*)))

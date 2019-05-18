@@ -31,7 +31,7 @@
     (sb-ext:atomic-update *mhack-foreign-memory-allocated* (lambda (x) (incf x size)))
     (when (>= *mhack-foreign-memory-allocated* *mhack-foreign-memory-threshold*)
       (sb-ext:atomic-update *mhack-foreign-memory-allocated* (lambda (x) (setf x 0)))
-      (gc))))
+      (gcf))))
 
 (cffi:defcallback malloc (:pointer :void) ((ctx :pointer) (size :long-long))
   (declare (ignore ctx))

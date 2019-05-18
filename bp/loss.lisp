@@ -69,12 +69,12 @@
 
 (defmethod $cee ((a node) (b node))
   (let ((tiny 1D-7)
-        (nbatch (if (eq 1 ($ndim a)) 1 ($size a 0))))
+        (nbatch (if (eq 1 ($ndim ($data a))) 1 ($size ($data a) 0))))
     ($div ($neg ($sum ($mul ($log ($add a tiny)) b))) nbatch)))
 
 (defmethod $cee ((a node) (b tensor))
   (let ((tiny 1D-7)
-        (nbatch (if (eq 1 ($ndim a)) 1 ($size a 0))))
+        (nbatch (if (eq 1 ($ndim ($data a))) 1 ($size ($data a) 0))))
     ($div ($neg ($sum ($mul ($log ($add a tiny)) b))) nbatch)))
 
 (defmethod $cee ((a tensor) (b node))

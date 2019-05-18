@@ -69,8 +69,8 @@
                  ($sigmoid!))))
     l2))
 
-;; print test stats
-(defun print-test-perf ()
+;; prn test stats
+(defun prn-test-perf ()
   (let ((total 0)
         (correct 0))
     (loop :for i :from 0 :below (min 1000 ($count *test-dataset*))
@@ -106,7 +106,7 @@
                             (incf correct))))
               (when (zerop (rem iter 1))
                 (prn iter total correct)
-                (print-test-perf)
+                (prn-test-perf)
                 (gcf)))))
 
 ;; execute training
@@ -117,14 +117,14 @@
 (let* ((my-review "this so called franchise movie of avengers is great master piece. i've enjoyed it very much and my kids love this one as well. though my wife generally does not like this kind of genre, she said this one is better than others.")
        (review (process-review my-review))
        (x (review-to-indices review)))
-  (print x)
-  (print (predict-sentiment x)))
+  (prn x)
+  (prn (predict-sentiment x)))
 
 (let* ((my-review "this movie is just a political propaganda, it has neither entertainment or message. i just regret my spending of precious time on this one.")
        (review (process-review my-review))
        (x (review-to-indices review)))
-  (print x)
-  (print (predict-sentiment x)))
+  (prn x)
+  (prn (predict-sentiment x)))
 
 ;; what hidden layer learns
 (defun similar (word)
@@ -140,8 +140,8 @@
                     (push (cons w score) scores)))
         (subseq (sort scores (lambda (a b) (< (cdr a) (cdr b)))) 0 (min 10 ($count scores)))))))
 
-(print (similar "beautiful"))
-(print (similar "terrible"))
+(prn (similar "beautiful"))
+(prn (similar "terrible"))
 
 (defun tokenize-review (review)
   (->> (split #\space review)
@@ -280,6 +280,6 @@
     (-> (sort scores (lambda (a b) (< (cdr a) (cdr b))))
         (subseq  1 (min 10 ($count scores))))))
 
-(print (analogy '("terrible" "good") '("bad")))
-(print (analogy '("elizabeth" "he") '("she")))
-(print (analogy '("king" "woman") '("man")))
+(prn (analogy '("terrible" "good") '("bad")))
+(prn (analogy '("elizabeth" "he") '("she")))
+(prn (analogy '("king" "woman") '("man")))

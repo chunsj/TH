@@ -32,7 +32,7 @@
             (if (< e-dn e-up)
                 (setf weight (- weight lr))
                 (setf weight (+ weight lr))))
-        (print weight)))))
+        (prn weight)))))
 
 ;; hot and cold learning
 (defparameter *weight* 0.5)
@@ -48,7 +48,7 @@
                  (dn-prediction (* *input* (- *weight* *step-amount*)))
                  (up-error (expt (- up-prediction *goal-prediction*) 2))
                  (dn-error (expt (- dn-prediction *goal-prediction*) 2)))
-            (print (list err prediction))
+            (prn (list err prediction))
             (when (< dn-error err)
               (setf *weight* (- *weight* *step-amount*)))
             (when (< up-error err)
@@ -66,6 +66,6 @@
       :for weight-delta = (* delta *input*)
       :do (let ((new-weight (- *weight* weight-delta)))
             (setf *weight* new-weight)
-            (print (list err pred))))
+            (prn (list err pred))))
 
 ;; chapter 05 is so tedious...
