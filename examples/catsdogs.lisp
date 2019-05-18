@@ -111,14 +111,14 @@
 
 (defparameter *cnd* (parameters))
 
-(defparameter *k1* ($parameter *cnd* ($* 0.01 (rndn 32 3 3 3))))
-(defparameter *b1* ($parameter *cnd* (zeros 32)))
-(defparameter *k2* ($parameter *cnd* ($* 0.01 (rndn 32 32 3 3))))
-(defparameter *b2* ($parameter *cnd* (zeros 32)))
-(defparameter *w3* ($parameter *cnd* (vxavier (list *fdim* 128))))
-(defparameter *b3* ($parameter *cnd* (zeros 1 128)))
-(defparameter *w4* ($parameter *cnd* (vxavier '(128 1))))
-(defparameter *b4* ($parameter *cnd* (zeros 1 1)))
+(defparameter *k1* ($push *cnd* ($* 0.01 (rndn 32 3 3 3))))
+(defparameter *b1* ($push *cnd* (zeros 32)))
+(defparameter *k2* ($push *cnd* ($* 0.01 (rndn 32 32 3 3))))
+(defparameter *b2* ($push *cnd* (zeros 32)))
+(defparameter *w3* ($push *cnd* (vxavier (list *fdim* 128))))
+(defparameter *b3* ($push *cnd* (zeros 1 128)))
+(defparameter *w4* ($push *cnd* (vxavier '(128 1))))
+(defparameter *b4* ($push *cnd* (zeros 1 1)))
 
 (defun network (x &optional (trainp t))
   (-> x
@@ -143,32 +143,31 @@
 (defparameter *epoch* 60)
 (defparameter *train-size* ($count *train-data*))
 
-(loop :for epoch :from 1 :to *epoch*
-      :do (progn
-            (loop :for data :in (subseq *train-data* 0 *train-size*)
-                  :for labels :in (subseq *train-labels* 0 *train-size*)
-                  :for bidx :from 1
-                  :do (let* ((y* (network ($constant data)))
-                             (loss ($bce y* ($constant labels))))
-                        (prn epoch "|" bidx ($data loss))
-                        (opt! *cnd*)
-                        (when (zerop (rem bidx 2))
-                          (gcf))))
-            (when (zerop (rem epoch 5))
-              (let* ((idx (random *test-count*))
-                     (tdata (nth idx *test-data*))
-                     (tlbl (nth idx *test-labels*))
-                     (res ($data (network ($constant tdata) nil)))
-                     (fres (tensor.float ($ge res 0.5)))
-                     (d ($- ($reshape fres (* 2 *batch-size*)) tlbl)))
-                (prn "IDX:" idx "ERROR:" (/ ($dot d d) (* 2 *batch-size*)))
-                ($cg! *cnd*)))))
+(with-foreign-memory-limit
+    (loop :for epoch :from 1 :to *epoch*
+          :do (progn
+                (loop :for data :in (subseq *train-data* 0 *train-size*)
+                      :for labels :in (subseq *train-labels* 0 *train-size*)
+                      :for bidx :from 1
+                      :do (let* ((y* (network data))
+                                 (loss ($bce y* labels)))
+                            (prn epoch "|" bidx ($data loss))
+                            (opt! *cnd*)))
+                (when (zerop (rem epoch 5))
+                  (let* ((idx (random *test-count*))
+                         (tdata (nth idx *test-data*))
+                         (tlbl (nth idx *test-labels*))
+                         (res ($data (network tdata nil)))
+                         (fres (tensor.float ($ge res 0.5)))
+                         (d ($- ($reshape fres (* 2 *batch-size*)) tlbl)))
+                    (prn "IDX:" idx "ERROR:" (/ ($dot d d) (* 2 *batch-size*)))
+                    ($cg! *cnd*))))))
 
 ;; train check
 (let* ((idx (random *train-size*))
        (data (nth idx *train-data*))
        (lbl (car *train-labels*))
-       (y (network ($constant data) nil))
+       (y (network data nil))
        (res (tensor.float ($ge ($data y) 0.5)))
        (d ($- ($reshape res (* 2 *batch-size*)) lbl)))
   (prn "TRAIN IDX:" idx "ERROR:" (/ ($dot d d) (* 2 *batch-size*)))
@@ -179,7 +178,7 @@
 (let* ((idx (random *test-count*))
        (tdata (nth idx *test-data*))
        (tlbl (nth idx *test-labels*))
-       (res ($data (network ($constant tdata) nil)))
+       (res ($data (network tdata nil)))
        (fres (tensor.float ($ge res 0.5)))
        (d ($- ($reshape fres (* 2 *batch-size*)) tlbl)))
   (prn "TEST IDX:" idx "ERROR:" (/ ($dot d d) (* 2 *batch-size*)))

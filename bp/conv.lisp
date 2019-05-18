@@ -204,7 +204,7 @@
 (defmethod $conv2 ((x tensor) (k node) &optional (type :valid))
   (node ($conv2 x ($data k) type)
         :name :conv2
-        :link (link (to x ($conv2 x gv)))))
+        :link (link (to k ($conv2 x gv)))))
 
 ;; w should have the shape of (input-planes, output-planes, kh, kw)
 ;; b should have the shape of (output-planes)

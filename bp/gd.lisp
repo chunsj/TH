@@ -23,7 +23,7 @@
   (loop :for n :in nodes :do ($gd! n learning-rate)))
 
 (defmethod $gd! ((parameters parameters) &optional (learning-rate 0.01))
-  (loop :for p :in ($variables parameters) :do ($gd! p learning-rate)))
+  (loop :for p :in ($parameters parameters) :do ($gd! p learning-rate)))
 
 (defmethod $mgd! ((object t) &optional (learning-rate 0.01) (momentum 0.9))
   (declare (ignore learning-rate momentum)))
@@ -45,7 +45,7 @@
   (loop :for n :in nodes :do ($mgd! n learning-rate momentum)))
 
 (defmethod $mgd! ((parameters parameters) &optional (learning-rate 0.01) (momentum 0.9))
-  (loop :for n :in ($variables parameters) :do ($mgd! n learning-rate momentum)))
+  (loop :for n :in ($parameters parameters) :do ($mgd! n learning-rate momentum)))
 
 (defmethod $agd! ((object t) &optional (learning-rate 0.01))
   (declare (ignore learning-rate)))
@@ -69,7 +69,7 @@
   (loop :for n :in nodes :do ($agd! n learning-rate)))
 
 (defmethod $agd! ((parameters parameters) &optional (learning-rate 0.01))
-  (loop :for n :in ($variables parameters) :do ($agd! n learning-rate)))
+  (loop :for n :in ($parameters parameters) :do ($agd! n learning-rate)))
 
 (defmethod $amgd! ((object t) &optional (learning-rate 0.01) (β1 0.9) (β2 0.999))
   (declare (ignore learning-rate β1 β2)))
@@ -106,7 +106,7 @@
   (loop :for n :in nodes :do ($amgd! n learning-rate β1 β2)))
 
 (defmethod $amgd! ((parameters parameters) &optional (learning-rate 0.01) (β1 0.9) (β2 0.999))
-  (loop :for n :in ($variables parameters) :do ($amgd! n learning-rate β1 β2)))
+  (loop :for n :in ($parameters parameters) :do ($amgd! n learning-rate β1 β2)))
 
 (defmethod $rmgd! ((object t) &optional (learning-rate 0.001) (decay-rate 0.99))
   (declare (ignore learning-rate decay-rate)))
@@ -132,7 +132,7 @@
   (loop :for n :in nodes :do ($rmgd! n learning-rate decay-rate)))
 
 (defmethod $rmgd! ((parameters parameters) &optional (learning-rate 0.001) (decay-rate 0.99))
-  (loop :for n :in ($variables parameters) :do ($rmgd! n learning-rate decay-rate)))
+  (loop :for n :in ($parameters parameters) :do ($rmgd! n learning-rate decay-rate)))
 
 (defmethod $adgd! ((object t) &optional (decay-rate 0.95)) (declare (ignore decay-rate)))
 
@@ -166,4 +166,4 @@
   (loop :for n :in nodes :do ($adgd! n decay-rate)))
 
 (defmethod $adgd! ((parameters parameters) &optional (decay-rate 0.95))
-  (loop :for n :in ($variables parameters) :do ($adgd! n decay-rate)))
+  (loop :for n :in ($parameters parameters) :do ($adgd! n decay-rate)))
