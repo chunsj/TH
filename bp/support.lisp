@@ -25,9 +25,7 @@
                 &optional sm sd (momentum 0.1) (eps 1E-5))
   (node ($bn ($data x) ($data gamma) ($data beta) rm rv sm sd momentum eps)
         :name :bn
-        :bps (bps x (lambda (dv gv)
-                      (declare (ignore dv gv))
-                      (error "backprop not implemented yet")))))
+        :link (link (to x (error "backprop not implemented yet")))))
 
 (defun runstat (x mean var trainp momentum)
   (let* ((x (if (eq 1 ($ndim x))
@@ -89,8 +87,6 @@
 (defmethod $dropout ((x node) &optional (trainp t) (p 0.1))
   (node ($dropout ($data x) trainp p)
         :name :dropout
-        :bps (bps x (lambda (dv gv)
-                      (declare (ignore dv))
-                      (if trainp
-                          ($mul gv p)
-                          ($mul gv (- 1 p)))))))
+        :link (link (to x (if trainp
+                              ($mul gv p)
+                              ($mul gv (- 1 p)))))))

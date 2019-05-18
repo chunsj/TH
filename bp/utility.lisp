@@ -25,11 +25,19 @@
   (let ((o (or ones (ones (if (eq 1 ($ndim x)) 1 ($size x 0))))))
     ($add ($mm x w) ($vv o b))))
 
+(defmethod $xwpb ((x tensor) (w node) (b node) &optional ones)
+  (let ((o (or ones (ones (if (eq 1 ($ndim x)) 1 ($size x 0))))))
+    ($add ($mm x w) ($vv o b))))
+
 (defmethod $affine ((x tensor) (w tensor) (b tensor) &optional ones)
   (let ((o (or ones (ones ($size x 0) 1))))
     ($add! ($mm x w) ($mm o b))))
 
 (defmethod $affine ((x node) (w node) (b node) &optional ones)
+  (let ((o (or ones (ones ($size x 0) 1))))
+    ($add ($mm x w) ($mm o b))))
+
+(defmethod $affine ((x tensor) (w node) (b node) &optional ones)
   (let ((o (or ones (ones ($size x 0) 1))))
     ($add ($mm x w) ($mm o b))))
 

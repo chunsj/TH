@@ -18,16 +18,15 @@
   (:documentation "Represents a computational node for differentiable parameter."))
 
 (defmethod print-object ((node node) stream)
-  (format stream "[~A] " ($name node))
-  (format stream "~A" ($data node)))
+  (format stream "[~A] ~A" ($name node) ($data node)))
 
 (defun $pfn! (node f) (push f ($fns node)))
 
-(defun node (data &key (name :parameter) bps)
+(defun node (data &key (name :parameter) link)
   (let ((n (make-instance 'node)))
     (setf ($data n) data)
     (setf ($name n) name)
-    (when bps (loop :for (v f) :in bps :do (when (and v f) ($pfn! v f))))
+    (when link (funcall link n))
     n))
 
 (defun $gs! (node &optional gradientv)
@@ -40,9 +39,7 @@
 
 (defun compute-gradient (node)
   (if ($fns node)
-      (let ((gv (reduce #'$+
-                        (mapcar (lambda (f) (funcall f ($data node) ($gradient node)))
-                                (reverse ($fns node))))))
+      (let ((gv (reduce #'$+ (mapcar (lambda (f) (funcall f)) (reverse ($fns node))))))
         (setf ($fns node) nil)
         (setf ($gradientv node) gv))
       ($gs! node))
@@ -117,4 +114,13 @@
 (defmethod $cg! ((parameters parameters))
   (loop :for p :in ($parameters parameters) :do ($cg! p)))
 
-(defun bps (&rest args) (loop :for (v f) :on args :by #'cddr :collect (list v f)))
+(defmacro with-node ((self) &body body)
+  `(lambda ()
+     (let ((dv ($data ,self))
+           (gv ($gradient ,self)))
+       (declare (ignorable dv gv))
+       ,@body)))
+
+(defmacro to (target &body body) `($pfn! ,target (with-node (self) ,@body)))
+
+(defmacro link (&body body) `(lambda (self) ,@body))

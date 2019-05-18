@@ -21,26 +21,19 @@
 (defmethod $bce ((a node) (b node))
   (node ($bce ($data a) ($data b))
         :name :bce
-        :bps (bps a (lambda (dv gv)
-                      (declare (ignore dv gv))
-                      (dbce ($data a) ($data b)))
-                  b (lambda (dv gv)
-                      (declare (ignore dv gv))
-                      (dbce ($data b) ($data a))))))
+        :link (link
+                (to a (dbce ($data a) ($data b)))
+                (to b (dbce ($data b) ($data a))))))
 
 (defmethod $bce ((a node) (b tensor))
   (node ($bce ($data a) b)
         :name :bce
-        :bps (bps a (lambda (dv gv)
-                      (declare (ignore dv gv))
-                      (dbce ($data a) b)))))
+        :link (link (to a (dbce ($data a) b)))))
 
 (defmethod $bce ((a tensor) (b node))
   (node ($bce a ($data b))
         :name :bce
-        :bps (bps b (lambda (dv gv)
-                      (declare (ignore dv gv))
-                      (dbce ($data b) a)))))
+        :link (link (to b (dbce ($data b) a)))))
 
 (defmethod $mse ((a tensor) (b tensor))
   (let ((output ($empty a)))
@@ -55,26 +48,19 @@
 (defmethod $mse ((a node) (b node))
   (node ($mse ($data a) ($data b))
         :name :mse
-        :bps (bps a (lambda (dv gv)
-                      (declare (ignore dv))
-                      (dmse ($data a) ($data b) gv))
-                  b (lambda (dv gv)
-                      (declare (ignore dv))
-                      (dmse ($data b) ($data a) gv)))))
+        :link (link
+                (to a (dmse ($data a) ($data b) gv))
+                (to b (dmse ($data b) ($data a) gv)))))
 
 (defmethod $mse ((a node) (b tensor))
   (node ($mse ($data a) b)
         :name :mse
-        :bps (bps a (lambda (dv gv)
-                      (declare (ignore dv))
-                      (dmse ($data a) b gv)))))
+        :link (link (to a (dmse ($data a) b gv)))))
 
 (defmethod $mse ((a tensor) (b node))
   (node ($mse a ($data b))
         :name :mse
-        :bps (bps b (lambda (dv gv)
-                      (declare (ignore dv))
-                      (dmse ($data b) a gv)))))
+        :link (link (to b (dmse ($data b) a gv)))))
 
 (defmethod $cee ((a tensor) (b tensor))
   (let ((tiny 1D-7)
@@ -114,9 +100,7 @@
 (defmethod $cnll ((a node) (b tensor))
   (node ($cnll ($data a) ($data b))
         :name :cnll
-        :bps (bps a (lambda (dv gv)
-                      (declare (ignore dv gv))
-                      (dcnll ($data a) b)))))
+        :link (link (to a (dcnll ($data a) b)))))
 
 (defmethod $cec ((a tensor) (b tensor)) ($cnll ($logsoftmax a) b))
 (defmethod $cec ((a node) (b tensor)) ($cnll ($logsoftmax a) b))

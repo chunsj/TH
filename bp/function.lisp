@@ -7,160 +7,126 @@
     (nn-abs-update-output ($data x) out)
     (node out
           :name :abs
-          :bps (bps x (lambda (dv gv)
-                        (declare (ignore dv))
-                        (let ((d ($empty ($data x))))
-                          (nn-abs-update-grad-input ($data x) gv d)
-                          d))))))
+          :link (link (to x (let ((d ($empty ($data x))))
+                                      (nn-abs-update-grad-input ($data x) gv d)
+                                      d))))))
 
 (defmethod $acos ((x node))
   (node ($acos ($data x))
         :name :acos
-        :bps (bps x (lambda (dv gv)
-                      (declare (ignore dv))
-                      ($mul! ($div -1 ($sqrt! ($sub 1 ($expt ($data x) 2)))) gv)))))
+        :link (link (to x ($mul! ($div -1 ($sqrt! ($sub 1 ($expt ($data x) 2)))) gv)))))
 
 (defmethod $asin ((x node))
   (node ($asin ($data x))
         :name :asin
-        :bps (bps x (lambda (dv gv)
-                      (declare (ignore dv))
-                      ($mul! ($neg! ($sqrt! ($cinv! ($neg! ($sub! ($expt ($data x) 2) 1))))) gv)))))
+        :link (link
+                (to x ($mul! ($neg! ($sqrt! ($cinv! ($neg! ($sub! ($expt ($data x) 2) 1)))))
+                                 gv)))))
 
 (defmethod $atan ((x node))
   (node ($atan ($data x))
         :name :atan
-        :bps (bps x (lambda (dv gv)
-                      (declare (ignore dv))
-                      ($mul! ($cinv! ($add! ($expt ($data x) 2) 1)) gv)))))
+        :link (link (to x ($mul! ($cinv! ($add! ($expt ($data x) 2) 1)) gv)))))
 
 (defmethod $atan2 ((y node) (x node))
   (node ($atan2 ($data y) ($data x))
         :name :atan2
-        :bps (bps y (lambda (dv gv)
-                      (declare (ignore dv))
-                      ($mul! ($mul! ($cinv! ($add! ($expt ($data x) 2) ($expt ($data y) 2)))
-                                    ($data x))
-                             gv))
-                  x (lambda (dv gv)
-                      (declare (ignore dv))
-                      ($neg! ($mul! ($mul! ($cinv! ($add! ($expt ($data x) 2) ($expt ($data y) 2)))
-                                           ($data y))
-                                    gv))))))
+        :link (link
+                (to y (let ((xd ($data x))
+                                (yd ($data y)))
+                            ($mul! ($mul! ($cinv! ($add! ($expt xd 2) ($expt yd 2))) xd) gv)))
+                (to x (let ((xd ($data x))
+                                (yd ($data y)))
+                            ($neg! ($mul! ($mul! ($cinv! ($add! ($expt xd 2) ($expt yd 2))) yd)
+                                          gv)))))))
 
 (defmethod $cos ((x node))
   (node ($cos ($data x))
         :name :cos
-        :bps (bps x (lambda (dv gv)
-                      (declare (ignore dv))
-                      ($mul! ($neg! ($sin ($data x))) gv)))))
+        :link (link (to x ($mul! ($neg! ($sin ($data x))) gv)))))
 
 (defmethod $cosh ((x node))
   (node ($cosh ($data x))
         :name :cosh
-        :bps (bps x (lambda (dv gv)
-                      (declare (ignore dv))
-                      ($mul! ($sinh ($data x)) gv)))))
+        :link (link (to x ($mul! ($sinh ($data x)) gv)))))
 
 (defmethod $exp ((x node))
   (node ($exp ($data x))
         :name :exp
-        :bps (bps x (lambda (dv gv) ($mul dv gv)))))
+        :link (link (to x ($mul dv gv)))))
 
 (defmethod $expt ((a node) (b node))
   (node ($expt ($data a) ($data b))
         :name :expt
-        :bps (bps a (lambda (dv gv)
-                      (declare (ignore dv))
-                      ($mul! ($mul gv ($data b)) ($expt ($data a) ($- ($data b) 1))))
-                  b (lambda (dv gv)
-                      (declare (ignore dv))
-                      ($mul! ($mul! ($log ($data a)) ($expt ($data a) ($data b))) gv)))))
+        :link (link
+                (to a ($mul! ($mul gv ($data b)) ($expt ($data a) ($- ($data b) 1))))
+                (to b ($mul! ($mul! ($log ($data a)) ($expt ($data a) ($data b))) gv)))))
 
 (defmethod $expt ((a node) (b tensor))
   (node ($expt ($data a) b)
         :name :expt
-        :bps (bps a (lambda (dv gv)
-                      (declare (ignore dv))
-                      ($mul! ($mul! ($expt ($data a) ($- b 1)) gv) b)))))
+        :link (link (to a ($mul! ($mul! ($expt ($data a) ($- b 1)) gv) b)))))
 
 (defmethod $expt ((a node) (b number))
   (node ($expt ($data a) b)
         :name :expt
-        :bps (bps a (lambda (dv gv)
-                      (declare (ignore dv))
-                      ($mul! ($mul! ($expt ($data a) (- b 1)) gv) b)))))
+        :link (link (to a ($mul! ($mul! ($expt ($data a) (- b 1)) gv) b)))))
 
 (defmethod $expt ((a tensor) (b node))
   (node ($expt a ($data b))
         :name :expt
-        :bps (bps b (lambda (dv gv)
-                      (declare (ignore dv))
-                      ($mul! ($mul! ($log a) ($expt a ($data b))) gv)))))
+        :link (link (to b ($mul! ($mul! ($log a) ($expt a ($data b))) gv)))))
 
 (defmethod $expt ((a number) (b node))
   (node ($expt a ($data b))
         :name :expt
-        :bps (bps b (lambda (dv gv)
-                      (declare (ignore dv))
-                      ($mul! ($mul! ($expt a ($data b)) (log a)) gv)))))
+        :link (link (to b ($mul! ($mul! ($expt a ($data b)) (log a)) gv)))))
 
 (defun dlog (x) ($cinv x))
 
 (defmethod $log ((x node))
   (node ($log ($data x))
         :name :log
-        :bps (bps x (lambda (dv gv)
-                      (declare (ignore dv))
-                      ($mul! (dlog ($data x)) gv)))))
+        :link (link (to x ($mul! (dlog ($data x)) gv)))))
 
 (defmethod $sin ((x node))
   (node ($sin ($data x))
         :name :sin
-        :bps (bps x (lambda (dv gv)
-                      (declare (ignore dv))
-                      ($mul! ($cos ($data x)) gv)))))
+        :link (link (to x ($mul! ($cos ($data x)) gv)))))
 
 (defun dsigmoid (s) ($mul! ($sub 1 s) s))
 
 (defmethod $sigmoid ((x node))
   (node ($sigmoid ($data x))
         :name :sigmoid
-        :bps (bps x (lambda (dv gv)
-                      ($mul! (dsigmoid dv) gv)))))
+        :link (link (to x ($mul! (dsigmoid dv) gv)))))
 
 (defmethod $sinh ((x node))
   (node ($sinh ($data x))
         :name :sinh
-        :bps (bps x (lambda (dv gv)
-                      (declare (ignore dv))
-                      ($mul! ($cosh ($data x)) gv)))))
+        :link (link (to x ($mul! ($cosh ($data x)) gv)))))
 
 (defmethod $sqrt ((x node))
   (node ($sqrt ($data x))
         :name :sqrt
-        :bps (bps x (lambda (dv gv)
-                      ($div! ($mul gv 0.5) dv)))))
+        :link (link (to x ($div! ($mul gv 0.5) dv)))))
 
 (defmethod $tan ((x node))
   (node ($tan ($data x))
         :name :tan
-        :bps (bps x (lambda (dv gv)
-                      (declare (ignore dv))
-                      ($mul! ($expt! ($cos ($data x)) 2) gv)))))
+        :link (link (to x ($mul! ($expt! ($cos ($data x)) 2) gv)))))
 
 (defun dtanh (s) ($neg! ($sub! ($mul s s) 1)))
 
 (defmethod $tanh ((x node))
   (node ($tanh ($data x))
         :name :tanh
-        :bps (bps x (lambda (dv gv)
-                      ($mul! (dtanh dv) gv)))))
+        :link (link (to x ($mul! (dtanh dv) gv)))))
 
 (defmethod $sign ((x node))
   (node ($sign ($data x))
         :name :sign
-        :bps (bps x (lambda (dv gv) (declare (ignore dv)) ($zero gv)))))
+        :link (link (to x ($zero gv)))))
 
 (defgeneric $relu (x) (:documentation "RELU activation function."))
 (defgeneric $lrelu (x &optional nv) (:documentation "Leaky RELU activation function."))
@@ -184,9 +150,7 @@
 (defmethod $relu ((x node))
   (node ($relu ($data x))
         :name :relu
-        :bps (bps x (lambda (dv gv)
-                      (declare (ignore dv))
-                      (drelu ($data x) gv)))))
+        :link (link (to x (drelu ($data x) gv)))))
 
 (defmethod $lrelu ((x number) &optional (nv 0.01)) (max (* nv x) x))
 
@@ -203,9 +167,7 @@
 (defmethod $lrelu ((x node) &optional (nv 0.01))
   (node ($lrelu ($data x) nv)
         :name :lrelu
-        :bps (bps x (lambda (dv gv)
-                      (declare (ignore dv))
-                      (dlrelu ($data x) gv nv)))))
+        :link (link (to x (dlrelu ($data x) gv nv)))))
 
 (defmethod $elu ((x number) &optional (α 1))
   (if (<= x 0)
@@ -225,8 +187,7 @@
 (defmethod $elu ((x node) &optional (α 1))
   (node ($elu ($data x) α)
         :name :elu
-        :bps (bps x (lambda (dv gv)
-                      (delu ($data x) dv gv α)))))
+        :link (link (to x (delu ($data x) dv gv α)))))
 
 (defmethod $selu ((x number))
   (let ((alpha 1.6732632423543772848170429916717)
@@ -256,8 +217,7 @@
 (defmethod $softmax ((x node))
   (node ($softmax ($data x))
         :name :softmax
-        :bps (bps x (lambda (dv gv)
-                      (dsoftmax ($data x) dv gv)))))
+        :link (link (to x (dsoftmax ($data x) dv gv)))))
 
 (defmethod $logsoftmax ((x tensor))
   (let ((output ($empty x)))
@@ -272,5 +232,4 @@
 (defmethod $logsoftmax ((x node))
   (node ($logsoftmax ($data x))
         :name :logsoftmax
-        :bps (bps x (lambda (dv gv)
-                      (dlogsoftmax ($data x) dv gv)))))
+        :link (link (to x (dlogsoftmax ($data x) dv gv)))))
