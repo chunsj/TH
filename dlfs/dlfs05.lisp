@@ -11,12 +11,12 @@
 (prn *mnist*)
 
 ;; network parameters
-(defparameter *w1* ($variable (rndn 784 50)))
-(defparameter *b1* ($variable (zeros 50)))
-(defparameter *w2* ($variable (rndn 50 100)))
-(defparameter *b2* ($variable (zeros 100)))
-(defparameter *w3* ($variable (rndn 100 10)))
-(defparameter *b3* ($variable (zeros 10)))
+(defparameter *w1* ($parameter (rndn 784 50)))
+(defparameter *b1* ($parameter (zeros 50)))
+(defparameter *w2* ($parameter (rndn 50 100)))
+(defparameter *b2* ($parameter (zeros 100)))
+(defparameter *w3* ($parameter (rndn 100 10)))
+(defparameter *b3* ($parameter (zeros 10)))
 
 (defun mnist-predict (x)
   (-> x
@@ -67,7 +67,7 @@
   (prn ($count (loop :for i :from 0 :below ($size xt 0)
                      :for xi = ($index xt 0 (list i))
                      :for yi = ($index yt 0 (list i))
-                     :for yi* = ($data (mnist-predict ($constant xi)))
+                     :for yi* = ($data (mnist-predict xi))
                      :for err = ($sum ($abs ($sub ($round yi*) yi)))
                      :when (> err 0)
                        :collect i))))
@@ -78,7 +78,7 @@
     ($count (loop :for i :from 0 :below ($size xt 0)
                   :for xi = ($index xt 0 (list i))
                   :for yi = ($index yt 0 (list i))
-                  :for yi* = ($data (mnist-predict ($constant xi)))
+                  :for yi* = ($data (mnist-predict xi))
                   :for err = ($sum ($abs ($sub ($round yi*) yi)))
                   :when (> err 0)
                     :collect i))))
@@ -86,11 +86,9 @@
 ;; full training
 (with-foreign-memory-limit
     (let* ((x (-> *mnist*
-                  ($ :train-images)
-                  ($constant)))
+                  ($ :train-images)))
            (y (-> *mnist*
-                  ($ :train-labels)
-                  ($constant)))
+                  ($ :train-labels)))
            (lr 1.4)
            (pwrcnt 526))
       (loop :for i :from 1 :to 1000

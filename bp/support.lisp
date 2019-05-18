@@ -68,6 +68,16 @@
          (zx ($div ($sub x ($vv os mean)) ($vv os ($sqrt ($add var eps))))))
     ($add ($mul zx ($vv os gamma)) ($vv os beta))))
 
+(defmethod $bnorm ((x node) (gamma node) (beta node) (mean tensor) (var tensor)
+                   &optional (trainp t) (momentum 0.1) (eps 1E-7))
+  (runstat ($data x) mean var trainp momentum)
+  (let* ((x (if (eq 1 ($ndim x))
+                ($vv (ones 1) x)
+                x))
+         (os (ones ($size x 0)))
+         (zx ($div ($sub x ($vv os mean)) ($vv os ($sqrt ($add var eps))))))
+    ($add ($mul zx ($vv os gamma)) ($vv os beta))))
+
 (defmethod $bnorm ((x node) (gamma null) (beta null) (mean node) (var node)
                    &optional (trainp t) (momentum 0.1) (eps 1E-7))
   (runstat ($data x) ($data mean) ($data var) trainp momentum)

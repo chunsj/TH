@@ -87,18 +87,3 @@
                   ($gd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr)))
       (prn y)
       (prn ($round ($data (mnist-predict x))))))
-
-(let* ((sels '(0 1 2 3 4))
-       (x (-> *mnist*
-              ($ :train-images)
-              ($index 0 sels)))
-       (y (-> *mnist*
-              ($ :train-labels)
-              ($index 0 sels)))
-       (lr 0.01))
-  (let* ((y* (mnist-predict x))
-         (loss (mnist-loss y* y)))
-    ($gs! loss)
-    (prn loss)
-    (prn (th::$fns *w1*))
-    ($gd! *w1* lr)))
