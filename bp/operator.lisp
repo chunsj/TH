@@ -273,6 +273,28 @@
                                 ($broadcast (/ gv ($count xd)) xd)
                                 ($div! ($expand gv ($size x)) ($size xd dimension))))))))
 
+(defmethod $var ((x node) &optional (dimension -1) biased)
+  (node ($var ($data x) dimension biased)
+        :name :var
+        :link (link (to x (let* ((xd ($data x))
+                                 (md ($mean xd dimension)))
+                            (if (< dimension 0)
+                                ($mul! ($sub xd md) (/ (* 2 gv) ($size x)))
+                                ($mul! ($div! ($expand ($mul gv 2) ($size x))
+                                              ($size xd dimension))
+                                       ($sub xd md))))))))
+
+(defmethod $sd ((x node) &optional (dimension -1) biased)
+  (node ($sd ($data x) dimension biased)
+        :name :sd
+        :link (link (to x (let* ((xd ($data x))
+                                 (md ($mean xd dimension)))
+                            (if (< dimension 0)
+                                ($mul! ($sub xd md) (/ gv ($size x) dv))
+                                ($mul! ($div! ($expand ($div gv dv) ($size x))
+                                              ($size xd dimension))
+                                       ($sub xd md))))))))
+
 (defun seteq! (a b v)
   (let ((m ($eq a b)))
     ($mul! ($copy! ($resize! ($empty a) a) m) v)))
