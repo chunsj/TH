@@ -54,7 +54,7 @@
 (defparameter *img-size* (* 28 28))
 (defparameter *lbl-size* 10)
 
-(defun xinit (size) ($parameter ($* (apply #'rndn size) (/ 1 (sqrt (/ ($ size 0) 2))))))
+(defun xinit (size) ($* (apply #'rndn size) (/ 1 (sqrt (/ ($ size 0) 2)))))
 
 (defparameter *os* (ones *batch-size* 1))
 
@@ -99,51 +99,52 @@
 
 (gcf)
 
-(loop :for epoch :from 1 :to *epoch*
-      :for dloss = 0
-      :for gloss = 0
-      :do (progn
-            ($cg! *discriminator*)
-            ($cg! *generator*)
-            (prn "*****")
-            (prn "EPOCH:" epoch)
-            (loop :for x :in *train-data-batches*
-                  :for c :in *train-data-labels*
-                  :for bidx :from 0
-                  :for z = (samplez)
-                  :do (let ((dlv nil)
-                            (dgv nil))
-                        ;; discriminator
-                        (dotimes (k *k*)
-                          (let* ((dr (discriminate x c))
-                                 (df (discriminate (generate z c) c))
-                                 (l ($data (lossd dr df))))
-                            (incf dloss l)
-                            (setf dlv l)
-                            (optm *discriminator*)
-                            ($cg! *discriminator*)
-                            ($cg! *generator*)))
-                        ;; generator
-                        (let* ((df (discriminate (generate z c) c))
-                               (l ($data (lossg df))))
-                          (incf gloss l)
-                          (setf dgv l)
-                          (optm *generator*)
-                          ($cg! *discriminator*)
-                          ($cg! *generator*))
-                        (when (zerop (rem bidx 100))
-                          (prn "  D/L:" bidx dlv dgv))))
-            (when (zerop (rem epoch 1))
-              (let* ((c (car *train-data-labels*))
-                     (g (generate (samplez) c)))
+(with-foreign-memory-limit
+    (loop :for epoch :from 1 :to *epoch*
+          :for dloss = 0
+          :for gloss = 0
+          :do (progn
                 ($cg! *discriminator*)
                 ($cg! *generator*)
-                (loop :for i :from 1 :to 1
-                      :for s = (random *batch-size*)
-                      :for fname = (format nil "~A/i~A-~A.png" *output* epoch i)
-                      :do (outpng ($index ($data g) 0 s) fname))))
-            (prn " LOSS:" epoch (/ dloss *train-count*) (/ gloss *train-count*))
-            (gcf)))
+                (prn "*****")
+                (prn "EPOCH:" epoch)
+                (loop :for x :in *train-data-batches*
+                      :for c :in *train-data-labels*
+                      :for bidx :from 0
+                      :for z = (samplez)
+                      :do (let ((dlv nil)
+                                (dgv nil))
+                            ;; discriminator
+                            (dotimes (k *k*)
+                              (let* ((dr (discriminate x c))
+                                     (df (discriminate (generate z c) c))
+                                     (l ($data (lossd dr df))))
+                                (incf dloss l)
+                                (setf dlv l)
+                                (optm *discriminator*)
+                                ($cg! *discriminator*)
+                                ($cg! *generator*)))
+                            ;; generator
+                            (let* ((df (discriminate (generate z c) c))
+                                   (l ($data (lossg df))))
+                              (incf gloss l)
+                              (setf dgv l)
+                              (optm *generator*)
+                              ($cg! *discriminator*)
+                              ($cg! *generator*))
+                            (when (zerop (rem bidx 100))
+                              (prn "  D/L:" bidx dlv dgv))))
+                (when (zerop (rem epoch 1))
+                  (let* ((c (car *train-data-labels*))
+                         (g (generate (samplez) c)))
+                    ($cg! *discriminator*)
+                    ($cg! *generator*)
+                    (loop :for i :from 1 :to 1
+                          :for s = (random *batch-size*)
+                          :for fname = (format nil "~A/i~A-~A.png" *output* epoch i)
+                          :do (outpng ($index ($data g) 0 s) fname))))
+                (prn " LOSS:" epoch (/ dloss *train-count*) (/ gloss *train-count*))
+                (gcf))))
 
 (defun outpngs49 (data81 fname &optional (w 28) (h 28))
   (let* ((n 7)
@@ -169,7 +170,7 @@
                    :collect ($index ($data generated) 0 i))
              (format nil "~A/G49.png" *output*))
   (outpngs49 (loop :for i :from 0 :below 49
-                   :collect ($index ($data data) 0 i))
+                   :collect ($index data 0 i))
              (format nil "~A/D49.png" *output*))
   ($cg! *discriminator*)
   ($cg! *generator*))

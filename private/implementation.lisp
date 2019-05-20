@@ -267,7 +267,7 @@
         (sb-ext:finalize tr (lambda () (ft-tensor-free h)))
         tr))
     (defmethod tensor-new-narrow ((tensor tensor.type) dimension first-index size)
-      (let ((r (make-instance 'tensor.byte))
+      (let ((r (make-instance 'tensor.type))
             (h (ft-tensor-new-narrow ($handle tensor) dimension first-index size)))
         (setf ($handle r) h)
         (sb-ext:finalize r (lambda () (ft-tensor-free h)))

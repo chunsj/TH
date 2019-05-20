@@ -22,8 +22,7 @@
         ((eq 1 ($count ($data c))) (broadcast-1x1 c m))
         (t "cannot broadcast automatically other than number.")))
 
-(defmethod $broadcast ((c number) (m node))
-  (node ($mul! ($one ($data m)) c) :name :broadcast))
+(defmethod $broadcast ((c number) (m node)) ($mul! ($one ($data m)) c))
 
 (defmethod $add ((a node) (b node))
   (node ($add ($data a) ($data b))
@@ -346,7 +345,7 @@
 (defmethod $cat ((x tensor) (y node) &optional (dimension 0))
   (node ($cat x ($data y) dimension)
         :name :cat
-        :link (link (to y ($narrow gv dimension ($size ($data x) 1) ($size ($data y) 1))))))
+        :link (link (to y ($narrow gv dimension ($size x 1) ($size ($data y) 1))))))
 
 (defmethod $concat ((x node) nodes &rest others)
   (let ((pd ($last others)))
