@@ -16,7 +16,7 @@
 
 ;; mnist data has following dataset
 ;; train-images, train-labels and test-images, test-labels
-(print *mnist*)
+(prn *mnist*)
 
 ;; png output directory
 (defparameter *output* (format nil "~A/Desktop" (user-homedir-pathname)))
@@ -47,12 +47,12 @@
 (defparameter *batch-count* (/ 60000 *batch-size*))
 
 (defparameter *generator* (parameters))
-(defparameter *gw1* ($parameter *generator* (vxavier (list *nz* *nimg*))))
-(defparameter *gb1* ($parameter *generator* (zeros 1 *nimg*)))
-(defparameter *gk2* ($parameter *generator* ($* 0.01 (rndn 16 32 4 4))))
-(defparameter *gb2* ($parameter *generator* ($* 0.01 (rndn 32))))
-(defparameter *gk3* ($parameter *generator* ($* 0.04 (rndn 32 1 4 4))))
-(defparameter *gb3* ($parameter *generator* ($* 0.04 (rndn 1))))
+(defparameter *gw1* ($push *generator* (vxavier (list *nz* *nimg*))))
+(defparameter *gb1* ($push *generator* (zeros 1 *nimg*)))
+(defparameter *gk2* ($push *generator* ($* 0.01 (rndn 16 32 4 4))))
+(defparameter *gb2* ($push *generator* ($* 0.01 (rndn 32))))
+(defparameter *gk3* ($push *generator* ($* 0.04 (rndn 32 1 4 4))))
+(defparameter *gb3* ($push *generator* ($* 0.04 (rndn 1))))
 
 (defun generate (z)
   (let ((nbatch ($size z 0)))
@@ -67,21 +67,21 @@
 
 ;; generator shape checking
 (let* ((nbatch 10)
-       (noise ($constant (rndn nbatch *nz*))))
+       (noise (rndn nbatch *nz*)))
   ($cg! *generator*)
   (prn noise)
   (prn (generate noise))
   ($cg! *generator*))
 
 (defparameter *discriminator* (parameters))
-(defparameter *dk1* ($parameter *discriminator* ($* 0.04 (rndn 32 1 4 4))))
-(defparameter *db1* ($parameter *discriminator* ($* 0.04 (rndn 32))))
-(defparameter *dk2* ($parameter *discriminator* ($* 0.01 (rndn 16 32 4 4))))
-(defparameter *db2* ($parameter *discriminator* ($* 0.01 (rndn 16))))
-(defparameter *dw3* ($parameter *discriminator* ($* 0.03 (rndn *nimg* *hidden-size*))))
-(defparameter *db3* ($parameter *discriminator* (zeros 1 *hidden-size*)))
-(defparameter *dw4* ($parameter *discriminator* ($* 0.04 (rndn *hidden-size* 1))))
-(defparameter *db4* ($parameter *discriminator* (zeros 1 1)))
+(defparameter *dk1* ($push *discriminator* ($* 0.04 (rndn 32 1 4 4))))
+(defparameter *db1* ($push *discriminator* ($* 0.04 (rndn 32))))
+(defparameter *dk2* ($push *discriminator* ($* 0.01 (rndn 16 32 4 4))))
+(defparameter *db2* ($push *discriminator* ($* 0.01 (rndn 16))))
+(defparameter *dw3* ($push *discriminator* ($* 0.03 (rndn *nimg* *hidden-size*))))
+(defparameter *db3* ($push *discriminator* (zeros 1 *hidden-size*)))
+(defparameter *dw4* ($push *discriminator* ($* 0.04 (rndn *hidden-size* 1))))
+(defparameter *db4* ($push *discriminator* (zeros 1 1)))
 
 (defun discriminate (x)
   (let ((nbatch ($size x 0)))
@@ -98,16 +98,16 @@
 
 ;; discriminator shape checking
 (let* ((nbatch 10)
-       (x ($constant (rnd nbatch 1 *imgh* *imgw*))))
+       (x (rnd nbatch 1 *imgh* *imgw*)))
   ($cg! *discriminator*)
   (prn x)
   (prn (discriminate x))
   ($cg! *discriminator*))
 
-(defun samplez () ($constant (rndn *batch-size* *nz*)))
+(defun samplez () (rndn *batch-size* *nz*))
 
-(defun bced (dr df) ($+ ($bce dr ($constant ($one dr))) ($bce df ($constant ($zero df)))))
-(defun bceg (df) ($bce df ($constant ($one df))))
+(defun bced (dr df) ($+ ($bce dr ($one dr)) ($bce df ($zero df))))
+(defun bceg (df) ($bce df ($one df)))
 
 (defun lossd (dr df) (bced dr df))
 (defun lossg (df) (bceg df))
@@ -132,50 +132,49 @@
 
 (gcf)
 
-(loop :for epoch :from 1 :to *epoch*
-      :for dloss = 0
-      :for gloss = 0
-      :do (progn
-            ($cg! *generator*)
-            ($cg! *discriminator*)
-            (prn "*****")
-            (prn "EPOCH:" epoch)
-            (loop :for data :in *train-data-batches*
-                  :for bidx :from 0
-                  :for x = ($constant ($reshape data *batch-size* 1 *imgh* *imgw*))
-                  :for z = (samplez)
-                  :do (let ((dlv nil)
-                            (dgv nil))
-                        ;; discriminator
-                        (dotimes (k *k*)
-                          (let* ((dr (discriminate x))
-                                 (df (discriminate (generate z)))
-                                 (l ($data (lossd dr df))))
-                            (incf dloss l)
-                            (setf dlv l)
-                            (optm *discriminator*)
-                            ($cg! *generator*)
-                            ($cg! *discriminator*)))
-                        ;; generator
-                        (let* ((df (discriminate (generate z)))
-                               (l ($data (lossg df))))
-                          (incf gloss l)
-                          (setf dgv l)
-                          (optm *generator*)
-                          ($cg! *generator*)
-                          ($cg! *discriminator*))
-                        (when (zerop (rem bidx 10))
-                          (prn "  D/G:" bidx dlv dgv)
-                          (gcf))))
-            ;; output at every epoch
-            (prn " LOSS:" epoch (/ dloss *train-count* *k*) (/ gloss *train-count*))
-            (let ((generated (generate (samplez))))
-              (outpngs (loop :for i :from 0 :below 49
-                             :collect ($index ($data generated) 0 (random *batch-size*)))
-                       (format nil "~A/samples-~A.png" *output* epoch))
-              ($cg! *generator*)
-              ($cg! *discriminator*)
-              (gcf))))
+(with-foreign-memory-limit
+    (loop :for epoch :from 1 :to *epoch*
+          :for dloss = 0
+          :for gloss = 0
+          :do (progn
+                ($cg! *generator*)
+                ($cg! *discriminator*)
+                (prn "*****")
+                (prn "EPOCH:" epoch)
+                (loop :for data :in *train-data-batches*
+                      :for bidx :from 0
+                      :for x = ($reshape data *batch-size* 1 *imgh* *imgw*)
+                      :for z = (samplez)
+                      :do (let ((dlv nil)
+                                (dgv nil))
+                            ;; discriminator
+                            (dotimes (k *k*)
+                              (let* ((dr (discriminate x))
+                                     (df (discriminate (generate z)))
+                                     (l ($data (lossd dr df))))
+                                (incf dloss l)
+                                (setf dlv l)
+                                (optm *discriminator*)
+                                ($cg! *generator*)
+                                ($cg! *discriminator*)))
+                            ;; generator
+                            (let* ((df (discriminate (generate z)))
+                                   (l ($data (lossg df))))
+                              (incf gloss l)
+                              (setf dgv l)
+                              (optm *generator*)
+                              ($cg! *generator*)
+                              ($cg! *discriminator*))
+                            (when (zerop (rem bidx 10))
+                              (prn "  D/G:" bidx dlv dgv))))
+                ;; output at every epoch
+                (prn " LOSS:" epoch (/ dloss *train-count* *k*) (/ gloss *train-count*))
+                (let ((generated (generate (samplez))))
+                  (outpngs (loop :for i :from 0 :below 49
+                                 :collect ($index ($data generated) 0 (random *batch-size*)))
+                           (format nil "~A/samples-~A.png" *output* epoch))
+                  ($cg! *generator*)
+                  ($cg! *discriminator*)))))
 
 ;; generate samples
 (let ((generated (generate (samplez))))

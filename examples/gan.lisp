@@ -15,12 +15,12 @@
 
 ;; mnist data has following dataset
 ;; train-images, train-labels and test-images, test-labels
-(print *mnist*)
+(prn *mnist*)
 
 (defparameter *output* (format nil "~A/Desktop" (user-homedir-pathname)))
 
-(defun bced (dr df) ($+ ($bce dr ($constant ($one dr))) ($bce df ($constant ($zero df)))))
-(defun bceg (df) ($bce df ($constant ($one df))))
+(defun bced (dr df) ($+ ($bce dr ($one dr)) ($bce df ($zero df))))
+(defun bceg (df) ($bce df ($one df)))
 
 (defun lossd (dr df) (bced dr df))
 (defun lossg (df) (bceg df))
@@ -52,10 +52,10 @@
 (defparameter *os* (ones *batch-size* 1))
 
 ;; generator network
-(defparameter *gw1* ($parameter *generator* (xinit (list *gen-size* *hidden-size*))))
-(defparameter *gb1* ($parameter *generator* (zeros 1 *hidden-size*)))
-(defparameter *gw2* ($parameter *generator* (xinit (list *hidden-size* *img-size*))))
-(defparameter *gb2* ($parameter *generator* (zeros 1 *img-size*)))
+(defparameter *gw1* ($push *generator* (xinit (list *gen-size* *hidden-size*))))
+(defparameter *gb1* ($push *generator* (zeros 1 *hidden-size*)))
+(defparameter *gw2* ($push *generator* (xinit (list *hidden-size* *img-size*))))
+(defparameter *gb2* ($push *generator* (zeros 1 *img-size*)))
 
 ;; you can apply leaky relu, $lrelu
 (defun generate (z)
@@ -64,10 +64,10 @@
     x))
 
 ;; discriminator network
-(defparameter *dw1* ($parameter *discriminator* (xinit (list *img-size* *hidden-size*))))
-(defparameter *db1* ($parameter *discriminator* (zeros 1 *hidden-size*)))
-(defparameter *dw2* ($parameter *discriminator* (xinit (list *hidden-size* 1))))
-(defparameter *db2* ($parameter *discriminator* (zeros 1 1)))
+(defparameter *dw1* ($push *discriminator* (xinit (list *img-size* *hidden-size*))))
+(defparameter *db1* ($push *discriminator* (zeros 1 *hidden-size*)))
+(defparameter *dw2* ($push *discriminator* (xinit (list *hidden-size* 1))))
+(defparameter *db2* ($push *discriminator* (zeros 1 1)))
 
 ;; you can apply leaky relu, $lrelu
 (defun discriminate (x)
