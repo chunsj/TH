@@ -65,7 +65,7 @@
   go under home directory as ~/.th/models/[modelname] (for exact path, refer vgg16.lisp code).
 
 ## On API - Neural Network related
-  1. Variable creation: $varaible, for constant use $constant
+  1. Differentiable parameter creation: $parameter
   2. State (recurrent) creation/accessing: $state, $prev
   3. Operators: $+, $-, $*, $/ $@, ...
   4. Functions: $sigmoid, $tanh, $softmax
@@ -94,6 +94,6 @@
   Refer mhack.lisp for detailed implementation. The idea is simple; try run gc if externally
   allocated memory hits some threshold. To do this, I've overrided allocator and to use
   foreign-alloc and foreign-free.
-  By using with-foreign-memory-hack block, at least to my example codes, the system can keep
+  By using with-foreign-memory-limit block, at least to my example codes, the system can keep
   the memory usage under limit. And with 512MB of threshold, for me, this makes code runs faster
   than the one using periodic gc.
