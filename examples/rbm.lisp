@@ -15,7 +15,7 @@
 
 ;; mnist data has following dataset
 ;; train-images, train-labels and test-images, test-labels
-(print *mnist*)
+(prn *mnist*)
 
 (defparameter *batch-size* 60)
 (defparameter *batch-count* (/ 60000 *batch-size*))
@@ -31,24 +31,24 @@
 
 (defparameter *rbm* (parameters))
 
-(defparameter *w* ($parameter *rbm* ($* 1E-2 (rndn *n-vis* *n-hin*))))
-(defparameter *vb* ($parameter *rbm* (zeros 1 *n-vis*)))
-(defparameter *hb* ($parameter *rbm* (zeros 1 *n-hin*)))
+(defparameter *w* ($push *rbm* ($* 1E-2 (rndn *n-vis* *n-hin*))))
+(defparameter *vb* ($push *rbm* (zeros 1 *n-vis*)))
+(defparameter *hb* ($push *rbm* (zeros 1 *n-hin*)))
 (defparameter *k* 1)
 
 (defun sample-from-p (p)
-  ($relu ($sign ($- p ($constant (apply #'rnd ($size p)))))))
+  ($relu ($sign ($- p (apply #'rnd ($size p))))))
 
 (defun v-to-h (v)
   (let* ((nrow ($size v 0))
-         (os ($constant (ones nrow 1)))
+         (os (ones nrow 1))
          (ah ($+ ($@ v *w*) ($@ os *hb*)))
          (ph ($sigmoid ah)))
     ph))
 
 (defun h-to-v (h)
   (let* ((nrow ($size h 0))
-         (os ($constant (ones nrow 1)))
+         (os (ones nrow 1))
          (av ($+ ($@ h ($transpose *w*)) ($@ os *vb*)))
          (pv ($sigmoid av)))
     pv))
@@ -69,7 +69,7 @@
 (defun free-energy (v)
   (let* ((vbias ($@ v ($transpose *vb*)))
          (nrow ($size v 0))
-         (os ($constant (ones nrow 1)))
+         (os (ones nrow 1))
          (wxb ($+ ($@ v *w*) ($@ os *hb*)))
          (hidden ($sum ($log ($+ ($exp wxb) 1)) 1)))
     ($mean ($- ($neg hidden) vbias))))
@@ -82,20 +82,20 @@
 
 ($cg! *rbm*)
 
-(loop :for epoch :from 1 :to *epoch*
-      :for loss = nil
-      :do (progn
-            ($cg! *rbm*)
-            (loop :for input :in *mnist-train-image-batches*
-                  :for sample = ($bernoulli input input)
-                  :for v = ($constant sample)
-                  :for v1 = (run v)
-                  :for l = ($- (free-energy v) (free-energy v1))
-                  :do (progn
-                        (push ($data l) loss)
-                        (opt!)))
-            (prn epoch (mean loss))
-            (gcf)))
+(with-foreign-memory-limit
+    (loop :for epoch :from 1 :to *epoch*
+          :for loss = nil
+          :do (progn
+                ($cg! *rbm*)
+                (loop :for input :in *mnist-train-image-batches*
+                      :for sample = ($bernoulli input input)
+                      :for v = sample
+                      :for v1 = (run v)
+                      :for l = ($- (free-energy v) (free-energy v1))
+                      :do (progn
+                            (push ($data l) loss)
+                            (opt!)))
+                (prn epoch (mean loss)))))
 
 (defparameter *output* (format nil "~A/Desktop" (user-homedir-pathname)))
 
@@ -110,11 +110,11 @@
 
 (let* ((input (car *mnist-train-image-batches*))
        (sample ($bernoulli input input))
-       (v ($constant sample))
+       (v sample)
        (v1 (run v))
        (idx (random ($size input 0))))
   (outpng ($index input 0 idx) "input.png")
-  (outpng ($index ($data v) 0 idx) "outv.png")
+  (outpng ($index v 0 idx) "outv.png")
   (outpng ($index ($data v1) 0 idx) "outv1.png"))
 
 ;; clear resources

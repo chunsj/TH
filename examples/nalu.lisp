@@ -40,49 +40,46 @@
 
 (defparameter *nalu* (parameters))
 
-(defparameter *w-hat* ($parameter *nalu* (vrnt *shape* 0 0.02)))
-(defparameter *m-hat* ($parameter *nalu* (vrnt *shape* 0 0.02)))
-(defparameter *g* ($parameter *nalu* (vrnt *shape* 0 0.02)))
+(defparameter *w-hat* ($push *nalu* (vrnt *shape* 0 0.02)))
+(defparameter *m-hat* ($push *nalu* (vrnt *shape* 0 0.02)))
+(defparameter *g* ($push *nalu* (vrnt *shape* 0 0.02)))
 
 (defparameter *epochs* 200)
 
 ($cg! *nalu*)
 
-(loop :for epoch :from 1 :to *epochs*
-      :for iter = 1
-      :do (loop :for input :in *dataset*
-                :for target :in *target*
-                :for x = ($constant input)
-                :for w = ($* ($tanh *w-hat*) ($sigmoid *m-hat*))
-                :for m = ($exp ($@ ($log ($+ ($abs x) ($constant 1E-7))) w))
-                :for g = ($sigmoid ($@ x *g*))
-                :for a = ($@ x w)
-                :for y* = ($+ ($* g a) ($* ($- ($constant 1) g) m))
-                :for y = ($constant target)
-                :for d = ($- y* y)
-                :for l = ($/ ($dot d d) ($constant *batch-size*))
-                :do (progn
-                      ($adgd! *nalu*)
-                      (when (zerop (rem iter 100))
-                        (prn "LOSS:" iter epoch ($data l))
-                        (prn ($sum ($- ($round ($data y*)) ($round target)))))
-                      (incf iter))))
+(with-foreign-memory-limit
+    (loop :for epoch :from 1 :to *epochs*
+          :for iter = 1
+          :do (loop :for x :in *dataset*
+                    :for y :in *target*
+                    :for w = ($* ($tanh *w-hat*) ($sigmoid *m-hat*))
+                    :for m = ($exp ($@ ($log ($+ ($abs x) 1E-7)) w))
+                    :for g = ($sigmoid ($@ x *g*))
+                    :for a = ($@ x w)
+                    :for y* = ($+ ($* g a) ($* ($- 1 g) m))
+                    :for d = ($- y* y)
+                    :for l = ($/ ($dot d d) *batch-size*)
+                    :do (progn
+                          ($adgd! *nalu*)
+                          (when (zerop (rem iter 100))
+                            (prn "LOSS:" iter epoch ($data l))
+                            (prn ($sum ($- ($round ($data y*)) ($round y)))))
+                          (incf iter)))))
 
 ;; check training accuracy
-(loop :for input :in *dataset*
-      :for target :in *target*
-      :for x = ($constant input)
+(loop :for x :in *dataset*
+      :for y :in *target*
       :for w = ($* ($tanh *w-hat*) ($sigmoid *m-hat*))
-      :for m = ($exp ($@ ($log ($+ ($abs x) ($constant 1E-7))) w))
+      :for m = ($exp ($@ ($log ($+ ($abs x) 1E-7)) w))
       :for g = ($sigmoid ($@ x *g*))
       :for a = ($@ x w)
-      :for y* = ($+ ($* g a) ($* ($- ($constant 1) g) m))
-      :for y = ($constant target)
+      :for y* = ($+ ($* g a) ($* ($- 1 g) m))
       :for d = ($- y* y)
-      :for l = ($/ ($dot d d) ($constant *batch-size*))
+      :for l = ($/ ($dot d d) *batch-size*)
       :do (progn
             ($cg! *nalu*)
-            (when (> ($sum ($- ($round ($data y*)) ($data y))) 1E-4)
+            (when (> ($sum ($- ($round ($data y*)) y)) 1E-4)
               (prn "Y*" y*)
               (prn "Y" y))))
 
@@ -104,20 +101,18 @@
             (push vals *target*)))
 
 ;; okay, check with new data -
-(loop :for input :in *dataset*
-      :for target :in *target*
-      :for x = ($constant input)
+(loop :for x :in *dataset*
+      :for y :in *target*
       :for w = ($* ($tanh *w-hat*) ($sigmoid *m-hat*))
-      :for m = ($exp ($@ ($log ($+ ($abs x) ($constant 1E-7))) w))
+      :for m = ($exp ($@ ($log ($+ ($abs x) 1E-7)) w))
       :for g = ($sigmoid ($@ x *g*))
       :for a = ($@ x w)
-      :for y* = ($+ ($* g a) ($* ($- ($constant 1) g) m))
-      :for y = ($constant target)
+      :for y* = ($+ ($* g a) ($* ($- 1 g) m))
       :for d = ($- y* y)
-      :for l = ($/ ($dot d d) ($constant *batch-size*))
+      :for l = ($/ ($dot d d) *batch-size*)
       :do (progn
             ($cg! *nalu*)
-            (when (> ($sum ($- ($round ($data y*)) ($data y))) 1E-4)
+            (when (> ($sum ($- ($round ($data y*)) y)) 1E-4)
               (prn "**DIFFERENT**")
               (prn "X" x)
               (prn "Y*" y*)

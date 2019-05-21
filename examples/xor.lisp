@@ -32,10 +32,10 @@
 ;; using ad or autograd
 (time
  (with-foreign-memory-limit
-     (let* ((w1 ($variable (rndn 3 3)))
-            (w2 ($variable (rndn 3 1)))
-            (X ($constant '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
-            (Y ($constant '(0 1 1 0)))
+     (let* ((w1 ($parameter (rndn 3 3)))
+            (w2 ($parameter (rndn 3 1)))
+            (X (tensor '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
+            (Y (tensor '(0 1 1 0)))
             (lr 1))
        (loop :for i :from 0 :below 1000
              :do (let* ((l1 ($sigmoid ($mm X w1)))
@@ -47,10 +47,10 @@
                    ($gd! w2 lr)))
        (prn ($sigmoid ($mm ($sigmoid ($mm X w1)) w2))))))
 
-(let* ((w1 ($variable ($xaviern! (tensor 3 3))))
-       (w2 ($variable ($xaviern! (tensor 3 1))))
-       (X ($constant '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
-       (Y ($constant '(0 1 1 0)))
+(let* ((w1 ($parameter ($xaviern! (tensor 3 3))))
+       (w2 ($parameter ($xaviern! (tensor 3 1))))
+       (X (tensor '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
+       (Y (tensor '(0 1 1 0)))
        (lr 1))
   (loop :for i :from 0 :below 1000
         :do (let* ((l1 ($sigmoid ($mm X w1)))
@@ -64,8 +64,8 @@
 
 (let* ((w1 (vxavier '(3 3)))
        (w2 (vxavier '(3 1)))
-       (X ($constant '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
-       (Y ($constant '(0 1 1 0)))
+       (X (tensor '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
+       (Y (tensor '(0 1 1 0)))
        (lr 1))
   (loop :for i :from 0 :below 1000
         :do (let* ((l1 ($sigmoid ($mm X w1)))
@@ -77,10 +77,10 @@
               ($gd! w2 lr)))
   (prn ($sigmoid ($mm ($sigmoid ($mm X w1)) w2))))
 
-(let* ((w1 ($variable (rndn 3 3)))
-       (w2 ($variable (rndn 3 1)))
-       (X ($constant '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
-       (Y ($constant '(0 1 1 0)))
+(let* ((w1 ($parameter (rndn 3 3)))
+       (w2 ($parameter (rndn 3 1)))
+       (X (tensor '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
+       (Y (tensor '(0 1 1 0)))
        (lr 1))
   (loop :for i :from 0 :below 1000
         :do (let* ((l1 ($sigmoid ($mm X w1)))
@@ -92,10 +92,10 @@
               ($mgd! w2 lr)))
   (prn ($sigmoid ($mm ($sigmoid ($mm X w1)) w2))))
 
-(let* ((w1 ($variable (rndn 3 3)))
-       (w2 ($variable (rndn 3 1)))
-       (X ($constant '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
-       (Y ($constant '(0 1 1 0)))
+(let* ((w1 ($parameter (rndn 3 3)))
+       (w2 ($parameter (rndn 3 1)))
+       (X (tensor '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
+       (Y (tensor '(0 1 1 0)))
        (lr 1))
   (loop :for i :from 0 :below 1000
         :do (let* ((l1 ($sigmoid ($mm X w1)))
@@ -108,10 +108,10 @@
   (prn ($sigmoid ($mm ($sigmoid ($mm X w1)) w2))))
 
 (let* ((ps (parameters))
-       (w1 ($parameter ps ($variable (rndn 3 3))))
-       (w2 ($parameter ps ($variable (rndn 3 1))))
-       (X ($constant '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
-       (Y ($constant '(0 1 1 0)))
+       (w1 ($parameter ps (rndn 3 3)))
+       (w2 ($parameter ps (rndn 3 1)))
+       (X (tensor '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
+       (Y (tensor '(0 1 1 0)))
        (lr 0.01))
   (loop :for i :from 0 :below 1000
         :do (let* ((l1 ($sigmoid ($mm X w1)))
@@ -122,10 +122,10 @@
               ($amgd! ps lr)))
   (prn ($sigmoid ($mm ($sigmoid ($mm X w1)) w2))))
 
-(let* ((w1 ($variable (rndn 3 3)))
-       (w2 ($variable (rndn 3 1)))
-       (X ($constant '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
-       (Y ($constant '(0 1 1 0)))
+(let* ((w1 ($parameter (rndn 3 3)))
+       (w2 ($parameter (rndn 3 1)))
+       (X (tensor '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
+       (Y (tensor '(0 1 1 0)))
        (lr 0.1))
   (loop :for i :from 0 :below 1000
         :do (let* ((l1 ($sigmoid ($mm X w1)))
@@ -137,10 +137,10 @@
               ($rmgd! w2 lr)))
   (prn ($sigmoid ($mm ($sigmoid ($mm X w1)) w2))))
 
-(let* ((w1 ($variable (rndn 3 3)))
-       (w2 ($variable (rndn 3 1)))
-       (X ($constant '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
-       (Y ($constant '(0 1 1 0))))
+(let* ((w1 ($parameter (rndn 3 3)))
+       (w2 ($parameter (rndn 3 1)))
+       (X (tensor '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
+       (Y (tensor '(0 1 1 0))))
   (loop :for i :from 0 :below 1000
         :do (let* ((l1 ($sigmoid ($mm X w1)))
                    (l2 ($sigmoid ($mm l1 w2)))

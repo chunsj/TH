@@ -58,13 +58,13 @@
 (defparameter *iterations* 2)
 (defparameter *hidden-size* 100)
 
-(defparameter *w01* ($variable ($- ($* 0.2 (rnd ($count *words*) *hidden-size*)) 0.1)))
-(defparameter *w12* ($variable ($- ($* 0.2 (rnd *hidden-size* 1)) 0.1)))
+(defparameter *w01* ($parameter ($- ($* 0.2 (rnd ($count *words*) *hidden-size*)) 0.1)))
+(defparameter *w12* ($parameter ($- ($* 0.2 (rnd *hidden-size* 1)) 0.1)))
 
 ;; for easier reset
 (defun reset-weights ()
-  (setf *w01* ($variable ($- ($* 0.2 (rnd ($count *words*) *hidden-size*)) 0.1)))
-  (setf *w12* ($variable ($- ($* 0.2 (rnd *hidden-size* 1)) 0.1))))
+  (setf *w01* ($parameter ($- ($* 0.2 (rnd ($count *words*) *hidden-size*)) 0.1)))
+  (setf *w12* ($parameter ($- ($* 0.2 (rnd *hidden-size* 1)) 0.1))))
 
 ;; prediction
 (defun predict-sentiment (x)
@@ -91,28 +91,26 @@
 
 ;; train using autograd, however, this is very slow compared to direct implementation
 (reset-weights)
-(loop :for iter :from 1 :to *iterations*
-      :do (let ((total 0)
-                (correct 0))
-            (loop :for i :from 0 :below ($count *train-dataset*)
-                  :for x :in *train-dataset*
-                  :for y = ($ *train-targets* i)
-                  :for y* = (predict-sentiment x)
-                  :for d = ($sub y* ($constant y))
-                  :for er = ($dot d d)
-                  :do (progn
-                        ($gs! er 1)
-                        ($adgd! (list *w01* *w12*))
-                        (incf total)
-                        (when (< (abs ($data d)) 0.5)
-                          (incf correct))
-                        (when (zerop (rem i 100))
-                          (prn iter total correct))
-                        (when (zerop (rem i 10))
-                          (gcf))))
-            (when (zerop (rem iter 1))
-              (print-test-perf)
-              (gcf))))
+(with-foreign-memory-limit
+    (loop :for iter :from 1 :to *iterations*
+          :do (let ((total 0)
+                    (correct 0))
+                (loop :for i :from 0 :below ($count *train-dataset*)
+                      :for x :in *train-dataset*
+                      :for y = ($ *train-targets* i)
+                      :for y* = (predict-sentiment x)
+                      :for d = ($sub y* y)
+                      :for er = ($dot d d)
+                      :do (progn
+                            ($gs! er 1)
+                            ($adgd! (list *w01* *w12*))
+                            (incf total)
+                            (when (< (abs ($data d)) 0.5)
+                              (incf correct))
+                            (when (zerop (rem i 100))
+                              (prn iter total correct))))
+                (when (zerop (rem iter 1))
+                  (print-test-perf)))))
 
 ;; direct implementation, faster than above
 ;; (XXX, there're differences in backpropagation in this code and the book has no explanation)
