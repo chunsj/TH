@@ -11,7 +11,7 @@
 
 ;; mnist data has following dataset
 ;; train-images, train-labels and test-images, test-labels
-(print *mnist*)
+(prn *mnist*)
 
 ;; utility functions for easier, systematic building convolution data
 (defun mkfilter (fn nc kw kh) (tensor fn nc kw kh))
@@ -33,21 +33,21 @@
 (defparameter *k* (-> (mkfilter *filter-number* *channel-number*
                                 *filter-width* *filter-height*)
                       ($uniform! 0 0.01)
-                      ($variable)))
+                      ($parameter)))
 (defparameter *kb* (-> (mkfbias *filter-number*)
                        ($zero!)
-                       ($variable)))
+                       ($parameter)))
 (defparameter *w2* (-> (rnd (* *filter-number* *pool-out-width* *pool-out-height*)
                             *l2-output*)
                        ($mul! 0.01)
-                       ($variable)))
+                       ($parameter)))
 (defparameter *b2* (-> (zeros *l2-output*)
-                       ($variable)))
+                       ($parameter)))
 (defparameter *w3* (-> (rnd *l2-output* *l3-output*)
                        ($mul! 0.01)
-                       ($variable)))
+                       ($parameter)))
 (defparameter *b3* (-> (zeros *l3-output*)
-                       ($variable)))
+                       ($parameter)))
 
 ;; reading/writing network weights - this example comes from dlfs follow-ups
 (defun mnist-write-weight-to (w fname)
@@ -105,21 +105,21 @@
 (loop :for p :in (list *k* *kb* *w2* *b2* *w3* *b3*)
       :do (th::$cg! p))
 
+(defparameter *epoch* 50)
+
 ;; the actual training
-(loop :for epoch :from 1 :to 50
-      :do (loop :for i :from 0 :below 60
-                :for xi = ($ *mnist-train-image-batches* i)
-                :for x = (-> xi
-                             ($reshape ($size xi 0) *channel-number* 28 28)
-                             ($constant))
-                :for y = (-> ($ *mnist-train-label-batches* i)
-                             ($constant))
-                :for y* = (mnist-predict x)
-                :for loss = ($cee y* y)
-                :do (progn
-                      (prn (format nil "[~A|~A]: ~A" (1+ i) epoch ($data loss)))
-                      ($adgd! (list *k* *kb* *w2* *b2* *w3* *b3*))
-                      (gcf))))
+(with-foreign-memory-limit
+    (loop :for epoch :from 1 :to *epoch*
+          :do (loop :for i :from 0 :below 60
+                    :for xi = ($ *mnist-train-image-batches* i)
+                    :for x = (-> xi
+                                 ($reshape ($size xi 0) *channel-number* 28 28))
+                    :for y = (-> ($ *mnist-train-label-batches* i))
+                    :for y* = (mnist-predict x)
+                    :for loss = ($cee y* y)
+                    :do (progn
+                          (prn (format nil "[~A|~A]: ~A" (1+ i) epoch ($data loss)))
+                          ($adgd! (list *k* *kb* *w2* *b2* *w3* *b3*))))))
 
 ;; test stats
 (defun mnist-test-stat ()
@@ -128,14 +128,14 @@
     ($count (loop :for i :from 0 :below ($size xt 0)
                   :for xi = ($index xt 0 (list i))
                   :for yi = ($index yt 0 (list i))
-                  :for yi* = ($data (mnist-predict ($constant ($reshape xi ($size xi 0) 1 28 28))))
+                  :for yi* = ($data (mnist-predict ($reshape xi ($size xi 0) 1 28 28)))
                   :for err = (let ((e ($sum ($abs ($sub ($round yi*) yi)))))
                                (when (> e 0) (prn (list i e)))
                                e)
                   :when (> err 0)
                     :collect i))))
 
-;; print test stats after training
+;; prn test stats after training
 (prn (mnist-test-stat))
 
 ;; writing/reading
