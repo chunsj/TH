@@ -34,22 +34,21 @@
 (defparameter *sequence-length* 25)
 
 (defparameter *rnn* (parameters))
-(defparameter *wx* ($parameter *rnn* ($* 0.01 (rndn *vocab-size* *hidden-size*))))
-(defparameter *wh* ($parameter *rnn* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *wy* ($parameter *rnn* ($* 0.01 (rndn *hidden-size* *vocab-size*))))
-(defparameter *bh* ($parameter *rnn* (zeros 1 *hidden-size*)))
-(defparameter *by* ($parameter *rnn* (zeros 1 *vocab-size*)))
+(defparameter *wx* ($push *rnn* ($* 0.01 (rndn *vocab-size* *hidden-size*))))
+(defparameter *wh* ($push *rnn* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
+(defparameter *wy* ($push *rnn* ($* 0.01 (rndn *hidden-size* *vocab-size*))))
+(defparameter *bh* ($push *rnn* (zeros 1 *hidden-size*)))
+(defparameter *by* ($push *rnn* (zeros 1 *vocab-size*)))
 
 (defun sample (h seed-idx n &optional (temperature 1))
   (let ((x (zeros 1 *vocab-size*))
         (indices (list seed-idx))
-        (ph ($constant h)))
+        (ph h))
     (setf ($ x 0 seed-idx) 1)
     (loop :for i :from 0 :below n
-          :for xt = ($constant x)
-          :for ht = ($tanh ($+ ($@ xt *wx*) ($@ ph *wh*) *bh*))
+          :for ht = ($tanh ($+ ($@ x *wx*) ($@ h *wh*) *bh*))
           :for yt = ($+ ($@ ht *wy*) *by*)
-          :for ps = ($softmax ($/ yt ($constant temperature)))
+          :for ps = ($softmax ($/ yt temperature))
           :for nidx = (choose ($data ps))
           :do (progn
                 (setf ph ht)
@@ -64,82 +63,82 @@
 
 (time
  (with-foreign-memory-limit
-   (loop :for iter :from 1 :to 1
-         :for n = 0
-         :for upto = *upto*
-         :do (loop :for p :from 0 :below upto :by *sequence-length*
-                   :for input-str = (subseq *data* p (+ p *sequence-length*))
-                   :for target-str = (subseq *data* (1+ p) (+ p *sequence-length* 1))
-                   :for input = (let ((m (zeros *sequence-length* *vocab-size*)))
-                                  (loop :for i :from 0 :below *sequence-length*
-                                        :for ch = ($ input-str i)
-                                        :do (setf ($ m i ($ *char-to-idx* ch)) 1))
-                                  m)
-                   :for target = (let ((m (zeros *sequence-length* *vocab-size*)))
-                                   (loop :for i :from 0 :below *sequence-length*
-                                         :for ch = ($ target-str i)
-                                         :do (setf ($ m i ($ *char-to-idx* ch)) 1))
-                                   m)
-                   :do (let ((ph ($constant (zeros 1 *hidden-size*)))
-                             (losses nil)
-                             (tloss 0))
-                         (loop :for i :from 0 :below ($size input 0)
-                               :for xt = ($constant ($index input 0 i))
-                               :for ht = ($tanh ($+ ($@ xt *wx*) ($@ ph *wh*) *bh*))
-                               :for yt = ($+ ($@ ht *wy*) *by*)
-                               :for ps = ($softmax yt)
-                               :for y = ($constant ($index target 0 i))
-                               :for l = ($cee ps y)
-                               :do (progn
-                                     (setf ph ht)
-                                     (incf tloss ($data l))
-                                     (push l losses)))
-                         ($adgd! *rnn*)
-                         (when (zerop (rem n 100))
-                           (prn "")
-                           (prn "[ITER]" n (/ tloss (* 1.0 *sequence-length*)))
-                           (prn (sample ($data ph) ($ *char-to-idx* ($ input-str 0)) 72))
-                           (prn ""))
-                         (incf n))))))
+     (loop :for iter :from 1 :to 1
+           :for n = 0
+           :for upto = *upto*
+           :do (loop :for p :from 0 :below upto :by *sequence-length*
+                     :for input-str = (subseq *data* p (+ p *sequence-length*))
+                     :for target-str = (subseq *data* (1+ p) (+ p *sequence-length* 1))
+                     :for input = (let ((m (zeros *sequence-length* *vocab-size*)))
+                                    (loop :for i :from 0 :below *sequence-length*
+                                          :for ch = ($ input-str i)
+                                          :do (setf ($ m i ($ *char-to-idx* ch)) 1))
+                                    m)
+                     :for target = (let ((m (zeros *sequence-length* *vocab-size*)))
+                                     (loop :for i :from 0 :below *sequence-length*
+                                           :for ch = ($ target-str i)
+                                           :do (setf ($ m i ($ *char-to-idx* ch)) 1))
+                                     m)
+                     :do (let ((ph (zeros 1 *hidden-size*))
+                               (losses nil)
+                               (tloss 0))
+                           (loop :for i :from 0 :below ($size input 0)
+                                 :for xt = ($index input 0 i)
+                                 :for ht = ($tanh ($+ ($@ xt *wx*) ($@ ph *wh*) *bh*))
+                                 :for yt = ($+ ($@ ht *wy*) *by*)
+                                 :for ps = ($softmax yt)
+                                 :for y = ($index target 0 i)
+                                 :for l = ($cee ps y)
+                                 :do (progn
+                                       (setf ph ht)
+                                       (incf tloss ($data l))
+                                       (push l losses)))
+                           ($adgd! *rnn*)
+                           (when (zerop (rem n 100))
+                             (prn "")
+                             (prn "[ITER]" n (/ tloss (* 1.0 *sequence-length*)))
+                             (prn (sample ($data ph) ($ *char-to-idx* ($ input-str 0)) 72))
+                             (prn ""))
+                           (incf n))))))
 
 (time
- (loop :for iter :from 1 :to 1
-       :for n = 0
-       :for upto = *upto*
-       :do (loop :for p :from 0 :below upto :by *sequence-length*
-                 :for input-str = (subseq *data* p (+ p *sequence-length*))
-                 :for target-str = (subseq *data* (1+ p) (+ p *sequence-length* 1))
-                 :for input = (let ((m (zeros *sequence-length* *vocab-size*)))
-                                (loop :for i :from 0 :below *sequence-length*
-                                      :for ch = ($ input-str i)
-                                      :do (setf ($ m i ($ *char-to-idx* ch)) 1))
-                                m)
-                 :for target = (let ((m (zeros *sequence-length* *vocab-size*)))
-                                 (loop :for i :from 0 :below *sequence-length*
-                                       :for ch = ($ target-str i)
-                                       :do (setf ($ m i ($ *char-to-idx* ch)) 1))
-                                 m)
-                 :do (let ((ph ($constant (zeros 1 *hidden-size*)))
-                           (losses nil)
-                           (tloss 0))
-                       (loop :for i :from 0 :below ($size input 0)
-                             :for xt = ($constant ($index input 0 i))
-                             :for ht = ($tanh ($+ ($@ xt *wx*) ($@ ph *wh*) *bh*))
-                             :for yt = ($+ ($@ ht *wy*) *by*)
-                             :for ps = ($softmax yt)
-                             :for y = ($constant ($index target 0 i))
-                             :for l = ($cee ps y)
-                             :do (progn
-                                   (setf ph ht)
-                                   (incf tloss ($data l))
-                                   (push l losses)))
-                       ($adgd! *rnn*)
-                       (when (zerop (rem n 100))
-                         (prn "")
-                         (prn "[ITER]" n (/ tloss (* 1.0 *sequence-length*)))
-                         (prn (sample ($data ph) ($ *char-to-idx* ($ input-str 0)) 72))
-                         (prn "")
-                         (gc))
-                       (incf n)))))
+ (with-foreign-memory-limit
+     (loop :for iter :from 1 :to 1
+           :for n = 0
+           :for upto = *upto*
+           :do (loop :for p :from 0 :below upto :by *sequence-length*
+                     :for input-str = (subseq *data* p (+ p *sequence-length*))
+                     :for target-str = (subseq *data* (1+ p) (+ p *sequence-length* 1))
+                     :for input = (let ((m (zeros *sequence-length* *vocab-size*)))
+                                    (loop :for i :from 0 :below *sequence-length*
+                                          :for ch = ($ input-str i)
+                                          :do (setf ($ m i ($ *char-to-idx* ch)) 1))
+                                    m)
+                     :for target = (let ((m (zeros *sequence-length* *vocab-size*)))
+                                     (loop :for i :from 0 :below *sequence-length*
+                                           :for ch = ($ target-str i)
+                                           :do (setf ($ m i ($ *char-to-idx* ch)) 1))
+                                     m)
+                     :do (let ((ph (zeros 1 *hidden-size*))
+                               (losses nil)
+                               (tloss 0))
+                           (loop :for i :from 0 :below ($size input 0)
+                                 :for xt = ($index input 0 i)
+                                 :for ht = ($tanh ($+ ($@ xt *wx*) ($@ ph *wh*) *bh*))
+                                 :for yt = ($+ ($@ ht *wy*) *by*)
+                                 :for ps = ($softmax yt)
+                                 :for y = ($index target 0 i)
+                                 :for l = ($cee ps y)
+                                 :do (progn
+                                       (setf ph ht)
+                                       (incf tloss ($data l))
+                                       (push l losses)))
+                           ($adgd! *rnn*)
+                           (when (zerop (rem n 100))
+                             (prn "")
+                             (prn "[ITER]" n (/ tloss (* 1.0 *sequence-length*)))
+                             (prn (sample ($data ph) ($ *char-to-idx* ($ input-str 0)) 72))
+                             (prn ""))
+                           (incf n))))))
 
 (prn (sample (zeros 1 *hidden-size*) (random *vocab-size*) 800 0.5))

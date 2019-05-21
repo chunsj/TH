@@ -16,7 +16,7 @@
 
 ;; mnist data has following dataset
 ;; train-images, train-labels and test-images, test-labels
-(print *mnist*)
+(prn *mnist*)
 
 (defparameter *output* (format nil "~A/Desktop" (user-homedir-pathname)))
 
