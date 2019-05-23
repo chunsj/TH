@@ -296,7 +296,7 @@
 
 (defun seteq! (a b v)
   (let ((m ($eq a b)))
-    ($mul! ($copy! ($resize! ($empty a) a) m) v)))
+    ($mul! ($copy! ($clear a) m) v)))
 
 (defmethod $min ((x node) &optional (dimension -1))
   (node ($min ($data x) dimension)

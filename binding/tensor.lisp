@@ -2037,3 +2037,7 @@
                  (t (error "cannot broadcast automatically")))))))
 
 (defmethod $broadcast ((c number) (m tensor)) ($mul! ($one m) c))
+
+(defgeneric $clear (tensor) (:documentation "new tensor allocated as given one."))
+
+(defmethod $clear ((tensor tensor)) (apply #'tensor ($size tensor)))

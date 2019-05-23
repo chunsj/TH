@@ -3,13 +3,13 @@
 (in-package :th)
 
 (defmethod $abs ((x node))
-  (let ((out ($empty ($data x))))
+  (let ((out ($clear ($data x))))
     (nn-abs-update-output ($data x) out)
     (node out
           :name :abs
-          :link (link (to x (let ((d ($empty ($data x))))
-                                      (nn-abs-update-grad-input ($data x) gv d)
-                                      d))))))
+          :link (link (to x (let ((d ($clear ($data x))))
+                              (nn-abs-update-grad-input ($data x) gv d)
+                              d))))))
 
 (defmethod $acos ((x node))
   (node ($acos ($data x))
@@ -138,12 +138,12 @@
 (defmethod $relu ((x number)) (max 0 x))
 
 (defmethod $relu ((x tensor))
-  (let ((output ($empty x)))
+  (let ((output ($clear x)))
     (nn-threshold-update-output x output 0 0 nil)
     output))
 
 (defun drelu (input gradient)
-  (let ((dinput ($empty input)))
+  (let ((dinput ($clear input)))
     (nn-threshold-update-grad-input input gradient dinput 0 0 nil)
     dinput))
 
@@ -155,12 +155,12 @@
 (defmethod $lrelu ((x number) &optional (nv 0.01)) (max (* nv x) x))
 
 (defmethod $lrelu ((x tensor) &optional (nv 0.01))
-  (let ((output ($empty x)))
+  (let ((output ($clear x)))
     (nn-leaky-relu-update-output x output nv nil)
     output))
 
 (defun dlrelu (input gradient &optional (nv 0.01))
-  (let ((dinput ($empty input)))
+  (let ((dinput ($clear input)))
     (nn-leaky-relu-update-grad-input input gradient dinput nv nil)
     dinput))
 
@@ -175,12 +175,12 @@
       x))
 
 (defmethod $elu ((x tensor) &optional (α 1))
-  (let ((output ($empty x)))
+  (let ((output ($clear x)))
     (nn-elu-update-output x output α nil)
     output))
 
 (defun delu (input output gradient &optional (alpha 1))
-  (let ((dinput ($empty output)))
+  (let ((dinput ($clear output)))
     (nn-elu-update-grad-input input gradient dinput output alpha nil)
     dinput))
 
@@ -205,12 +205,12 @@
     ($* ($elu x alpha) scale)))
 
 (defmethod $softmax ((x tensor))
-  (let ((output ($empty x)))
+  (let ((output ($clear x)))
     (nn-softmax-update-output x output)
     output))
 
 (defun dsoftmax (input output gradient)
-  (let ((dinput ($empty input)))
+  (let ((dinput ($clear input)))
     (nn-softmax-update-grad-input input gradient dinput output)
     dinput))
 
@@ -220,12 +220,12 @@
         :link (link (to x (dsoftmax ($data x) dv gv)))))
 
 (defmethod $logsoftmax ((x tensor))
-  (let ((output ($empty x)))
+  (let ((output ($clear x)))
     (nn-log-softmax-update-output x output)
     output))
 
 (defun dlogsoftmax (input output gradient)
-  (let ((dinput ($empty input)))
+  (let ((dinput ($clear input)))
     (nn-log-softmax-update-grad-input input gradient dinput output)
     dinput))
 

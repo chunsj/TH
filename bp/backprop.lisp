@@ -87,6 +87,7 @@
   x)
 
 (defmethod $empty ((node node)) ($parameter ($empty ($data node))))
+(defmethod $clear ((node node)) ($parameter ($clear ($data node))))
 
 (defmethod $storage ((node node)) ($storage ($data node)))
 (defmethod $offset ((node node)) ($offset ($data node)))

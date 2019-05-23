@@ -334,6 +334,7 @@
            #:$parameterp
            #:$append
            #:$broadcast
+           #:$clear
            #:$krows
            #:$kcols
            #:$gs!
