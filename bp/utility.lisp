@@ -22,7 +22,6 @@
     (allocate-tensor-handle tensor (list nframe))
     ($one! tensor)))
 
-;; XXX maybe a @ b' or a' @ b should be separately implemented
 (defun affine-without-bias (x w)
   (let ((dim ($ndim x)))
     (cond ((eq dim 1) (let ((output ($zero! ($resize! ($empty x) (list ($size w 1)))))
