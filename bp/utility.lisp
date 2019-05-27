@@ -17,29 +17,145 @@
 (defgeneric $lecunu! (tensor) (:documentation "Fills with Lecun uniform."))
 (defgeneric $lecunn! (tensor) (:documentation "Fills with Lecun normal."))
 
+(defun allocate-addbuf (nframe)
+  (let ((tensor (make-instance *default-tensor-class*)))
+    (allocate-tensor-handle tensor (list nframe))
+    ($one! tensor)))
+
+;; XXX maybe a @ b' or a' @ b should be separately implemented
+(defun affine-without-bias (x w)
+  (let ((dim ($ndim x)))
+    (cond ((eq dim 1) (let ((output ($zero! ($resize! ($empty x) (list ($size w 1)))))
+                            (tw (allocate-transpose w)))
+                        ($addmv! output tw x 1 1)
+                        (deallocate-tensor-handle tw)
+                        output))
+          ((eq dim 2) (let* ((nframe ($size x 0))
+                             (output ($zero! ($resize! ($empty x)
+                                                       (list nframe ($size w 1))))))
+                        ($addmm! output x w 1 0)
+                        output)))))
+
+(defun affine-with-bias (x w b os)
+  (let ((dim ($ndim x)))
+    (cond ((eq dim 1) (let ((output ($copy! ($resize! ($empty x) (list ($size w 1))) b))
+                            (tw (allocate-transpose w)))
+                        ($addmv! output tw x 1 1)
+                        (deallocate-tensor-handle tw)
+                        output))
+          ((eq dim 2) (let* ((nframe ($size x 0))
+                             (output ($zero! ($resize! ($empty x) (list nframe ($size w 1)))))
+                             (addbuf (or os (allocate-addbuf nframe))))
+                        ($addmm! output x w 1 0)
+                        ($addr! output addbuf b 1 1)
+                        (when (null os) (deallocate-tensor-handle addbuf))
+                        output)))))
+
+(defun daffine-output (x w gv)
+  (let ((dx ($zero x))
+        (dim ($ndim x)))
+    (cond ((eq dim 1) (progn
+                        ($addmv! dx w gv 1 0)
+                        dx))
+          ((eq dim 2) (let ((tw (allocate-transpose w)))
+                        ($addmm! dx gv tw 1 0)
+                        (deallocate-tensor-handle tw)
+                        dx)))))
+
+(defun daffine-weight (x w gv)
+  (let ((dw ($zero w))
+        (dim ($ndim x)))
+    (cond ((eq dim 1))
+          ((eq dim 2) (let ((tx (allocate-transpose x)))
+                        ($addmm! dw tx gv 1 1)
+                        (deallocate-tensor-handle tx)
+                        dw)))))
+
+(defun daffine-bias (x b gv os)
+  (let ((db ($zero b))
+        (dim ($ndim x)))
+    (cond ((eq dim 1))
+          ((eq dim 2) (let* ((nframe ($size x 0))
+                             (tgv (allocate-transpose gv))
+                             (addbuf (or os (allocate-addbuf nframe))))
+                        ($addmv! db tgv addbuf 1 1)
+                        (when (null os) (deallocate-tensor-handle addbuf))
+                        (deallocate-tensor-handle tgv)
+                        db)))))
+
 (defmethod $xwpb ((x tensor) (w tensor) (b tensor) &optional ones)
-  (let ((o (or ones (ones (if (eq 1 ($ndim x)) 1 ($size x 0))))))
-    ($add! ($mm x w) ($vv o b))))
+  (cond ((null b) (affine-without-bias x w))
+        (t (affine-with-bias x w b ones))))
 
 (defmethod $xwpb ((x node) (w node) (b node) &optional ones)
-  (let ((o (or ones (ones (if (eq 1 ($ndim x)) 1 ($size x 0))))))
-    ($add ($mm x w) ($vv o b))))
+  (node ($xwpb ($data x) ($data w) (when b ($data b)) ones)
+        :name :xwpb
+        :link (link
+                (to x (daffine-output ($data x) ($data w) gv))
+                (to w (daffine-weight ($data x) ($data w) gv))
+                (when b (to b (daffine-bias ($data x) ($data b) gv ones))))))
 
 (defmethod $xwpb ((x tensor) (w node) (b node) &optional ones)
-  (let ((o (or ones (ones (if (eq 1 ($ndim x)) 1 ($size x 0))))))
-    ($add ($mm x w) ($vv o b))))
+  (node ($xwpb x ($data w) (when b ($data b)) ones)
+        :name :xwpb
+        :link (link
+                (to w (daffine-weight x ($data w) gv))
+                (when b (to b (daffine-bias x ($data b) gv ones))))))
+
+(defmethod $xwpb ((x tensor) (w tensor) (b node) &optional ones)
+  (node ($xwpb x w (when b ($data b)) ones)
+        :name :xwpb
+        :link (link
+                (when b (to b (daffine-bias x ($data b) gv ones))))))
+
+;; (defmethod $xwpb ((x tensor) (w tensor) (b tensor) &optional ones)
+;;   (let ((o (or ones (ones (if (eq 1 ($ndim x)) 1 ($size x 0))))))
+;;     ($add! ($mm x w) ($vv o b))))
+
+;; (defmethod $xwpb ((x node) (w node) (b node) &optional ones)
+;;   (let ((o (or ones (ones (if (eq 1 ($ndim x)) 1 ($size x 0))))))
+;;     ($add ($mm x w) ($vv o b))))
+
+;; (defmethod $xwpb ((x tensor) (w node) (b node) &optional ones)
+;;   (let ((o (or ones (ones (if (eq 1 ($ndim x)) 1 ($size x 0))))))
+;;     ($add ($mm x w) ($vv o b))))
 
 (defmethod $affine ((x tensor) (w tensor) (b tensor) &optional ones)
-  (let ((o (or ones (ones ($size x 0) 1))))
-    ($add! ($mm x w) ($mm o b))))
+  (cond ((null b) (affine-without-bias x w))
+        (t (affine-with-bias x w b ones))))
 
 (defmethod $affine ((x node) (w node) (b node) &optional ones)
-  (let ((o (or ones (ones ($size x 0) 1))))
-    ($add ($mm x w) ($mm o b))))
+  (node ($xwpb ($data x) ($data w) (when b ($data b)) ones)
+        :name :xwpb
+        :link (link
+                (to x (daffine-output ($data x) ($data w) gv))
+                (to w (daffine-weight ($data x) ($data w) gv))
+                (when b (to b (daffine-bias ($data x) ($data b) gv ones))))))
 
 (defmethod $affine ((x tensor) (w node) (b node) &optional ones)
-  (let ((o (or ones (ones ($size x 0) 1))))
-    ($add ($mm x w) ($mm o b))))
+  (node ($xwpb x ($data w) (when b ($data b)) ones)
+        :name :xwpb
+        :link (link
+                (to w (daffine-weight x ($data w) gv))
+                (when b (to b (daffine-bias x ($data b) gv ones))))))
+
+(defmethod $affine ((x tensor) (w tensor) (b node) &optional ones)
+  (node ($xwpb x w (when b ($data b)) ones)
+        :name :xwpb
+        :link (link
+                (when b (to b (daffine-bias x ($data b) gv ones))))))
+
+;; (defmethod $affine ((x tensor) (w tensor) (b tensor) &optional ones)
+;;   (let ((o (or ones (ones ($size x 0) 1))))
+;;     ($add! ($mm x w) ($mm o b))))
+
+;; (defmethod $affine ((x node) (w node) (b node) &optional ones)
+;;   (let ((o (or ones (ones ($size x 0) 1))))
+;;     ($add ($mm x w) ($mm o b))))
+
+;; (defmethod $affine ((x tensor) (w node) (b node) &optional ones)
+;;   (let ((o (or ones (ones ($size x 0) 1))))
+;;     ($add ($mm x w) ($mm o b))))
 
 (defmethod $wimb ((xwi list) (w tensor)) ($sum ($index w 0 xwi) 0))
 (defmethod $wimb ((xwi tensor.int) (w tensor)) ($sum ($index w 0 xwi) 0))

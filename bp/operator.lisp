@@ -97,12 +97,24 @@
 
 (defmethod $dot ((a tensor) (b node)) ($dot b a))
 
+(defun allocate-transpose (x)
+  (let ((tensor (make-instance *default-tensor-class*)))
+    (allocate-tensor-handle tensor)
+    (tensor-transpose tensor x 0 1)
+    tensor))
+
+(defun $tvv (m v)
+  (let* ((mt (allocate-transpose m))
+         (r ($mv mt v)))
+    (deallocate-tensor-handle mt)
+    r))
+
 (defmethod $mv ((m node) (v node))
   (node ($mv ($data m) ($data v))
         :name :mv
         :link (link
                 (to m ($vv gv ($data v)))
-                (to v ($@ ($transpose ($data m)) gv)))))
+                (to v ($tvv ($data m) gv)))))
 
 (defmethod $mv ((m node) (v tensor))
   (node ($mv ($data m) v)
@@ -112,24 +124,36 @@
 (defmethod $mv ((m tensor) (v node))
   (node ($mv m ($data v))
         :name :mv
-        :link (link (to v ($@ ($transpose m) gv)))))
+        :link (link (to v ($tvv m gv)))))
+
+(defun $mmt (a b)
+  (let* ((bt (allocate-transpose b))
+         (r ($mm a bt)))
+    (deallocate-tensor-handle bt)
+    r))
+
+(defun $tmm (a b)
+  (let* ((at (allocate-transpose a))
+         (r ($mm at b)))
+    (deallocate-tensor-handle at)
+    r))
 
 (defmethod $mm ((a node) (b node))
   (node ($mm ($data a) ($data b))
         :name :mm
         :link (link
-                (to a ($mm gv ($transpose ($data b))))
-                (to b ($mm ($transpose ($data a)) gv)))))
+                (to a ($mmt gv ($data b)))
+                (to b ($tmm ($data a) gv)))))
 
 (defmethod $mm ((a node) (b tensor))
   (node ($mm ($data a) b)
         :name :mm
-        :link (link (to a ($mm gv ($transpose b))))))
+        :link (link (to a ($mmt gv b)))))
 
 (defmethod $mm ((a tensor) (b node))
   (node ($mm a ($data b))
         :name :mm
-        :link (link (to b ($mm ($transpose a) gv)))))
+        :link (link (to b ($tmm a gv)))))
 
 (defmethod $mul ((a node) (b node))
   (node ($mul ($data a) ($data b))
