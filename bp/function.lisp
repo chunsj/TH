@@ -109,12 +109,16 @@
 (defmethod $sqrt ((x node))
   (node ($sqrt ($data x))
         :name :sqrt
-        :link (link (to x ($div! ($mul gv 0.5) dv)))))
+        :link (link (to x (let* ((dx ($clear ($data x))))
+                            (nn-sqrt-update-grad-input ($data x) gv dx dv)
+                            dx)))))
 
 (defmethod $tan ((x node))
   (node ($tan ($data x))
         :name :tan
-        :link (link (to x ($mul! ($expt! ($cos ($data x)) 2) gv)))))
+        :link (link (to x (let* ((dx ($clear ($data x))))
+                            (nn-tanh-update-grad-input gv dx dv)
+                            dx)))))
 
 (defun dtanh (s) ($neg! ($sub! ($mul s s) 1)))
 
