@@ -108,6 +108,7 @@
 (defparameter *epoch* 50)
 
 (gcf)
+
 ;; the actual training
 (time
  (with-foreign-memory-limit
