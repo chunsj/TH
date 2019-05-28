@@ -4,7 +4,7 @@
 
 (defvar *mhack-foreign-memory-allocated* nil)
 (defvar *mhack-foreign-memory-threshold* nil)
-(defvar *mhack-foreign-memory-threshold-default* (round (/ (sb-ext:dynamic-space-size) 1024 1024 8)))
+(defvar *mhack-foreign-memory-threshold-default* (round (/ (sb-ext:dynamic-space-size) 1024 1024 2)))
 
 (cffi:defcvar (*th-default-allocator* "THDefaultAllocator") (:struct th-allocator))
 
@@ -31,7 +31,7 @@
     (sb-ext:atomic-update *mhack-foreign-memory-allocated* (lambda (x) (incf x size)))
     (when (>= *mhack-foreign-memory-allocated* *mhack-foreign-memory-threshold*)
       (sb-ext:atomic-update *mhack-foreign-memory-allocated* (lambda (x) (setf x 0)))
-      (gcf))))
+      (sb-ext:gc :full T))))
 
 (cffi:defcallback malloc (:pointer :void) ((ctx :pointer) (size :long-long))
   (declare (ignore ctx))
