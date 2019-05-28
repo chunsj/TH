@@ -59,8 +59,6 @@
 
 (defparameter *upto* (- *data-size* *sequence-length* 1))
 
-(setf *upto* 80000)
-
 (time
  (with-foreign-memory-limit
      (loop :for iter :from 1 :to 1
