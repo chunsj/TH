@@ -4,7 +4,7 @@
 
 (defvar *mhack-foreign-memory-allocated* nil)
 (defvar *mhack-foreign-memory-threshold* nil)
-(defvar *mhack-foreign-memory-threshold-default* (round (/ (sb-ext:dynamic-space-size) 1024 1024 2)))
+(defvar *mhack-foreign-memory-threshold-default* 2048)
 
 (cffi:defcvar (*th-default-allocator* "THDefaultAllocator") (:struct th-allocator))
 
