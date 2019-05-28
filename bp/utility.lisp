@@ -64,7 +64,9 @@
 (defun daffine-weight (x w gv)
   (let ((dw ($zero w))
         (dim ($ndim x)))
-    (cond ((eq dim 1))
+    (cond ((eq dim 1) (progn
+                        ($addr! dw x gv 1 1)
+                        dw))
           ((eq dim 2) (let ((tx (allocate-transpose x)))
                         ($addmm! dw tx gv 1 1)
                         (deallocate-tensor-handle tx)
@@ -73,7 +75,9 @@
 (defun daffine-bias (x b gv os)
   (let ((db ($zero b))
         (dim ($ndim x)))
-    (cond ((eq dim 1))
+    (cond ((eq dim 1) (progn
+                        (tensor-cadd db db 1 gv)
+                        db))
           ((eq dim 2) (let* ((nframe ($size x 0))
                              (tgv (allocate-transpose gv))
                              (addbuf (or os (allocate-addbuf nframe))))
