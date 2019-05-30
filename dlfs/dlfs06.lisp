@@ -232,115 +232,108 @@
                     :collect i))))
 
 ;; compare sgd vs others
-(with-foreign-memory-limit* 1024
-  (let* ((x (-> *mnist*
-                ($ :train-images)))
-         (y (-> *mnist*
-                ($ :train-labels)))
-         (lr 0.01))
-    (mnist-reset-parameters-xavier)
-    (loop :for i :from 1 :to 10
-          :for y* = (mnist-predict x)
-          :for loss = (mnist-loss y* y)
-          :do (progn
-                (prn (list i ($data loss)))
-                ($gs! loss)
-                ($gd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr)))))
+(let* ((x (-> *mnist*
+              ($ :train-images)))
+       (y (-> *mnist*
+              ($ :train-labels)))
+       (lr 0.01))
+  (mnist-reset-parameters-xavier)
+  (loop :for i :from 1 :to 10
+        :for y* = (mnist-predict x)
+        :for loss = (mnist-loss y* y)
+        :do (progn
+              (prn (list i ($data loss)))
+              ($gs! loss)
+              ($gd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr))))
 
-(with-foreign-memory-limit
-    (let* ((x (-> *mnist*
-                  ($ :train-images)))
-           (y (-> *mnist*
-                  ($ :train-labels)))
-           (lr 0.01)
-           (a 0.9))
-      (mnist-reset-parameters-xavier)
-      (loop :for i :from 1 :to 10
-            :for y* = (mnist-predict x)
-            :for loss = (mnist-loss y* y)
-            :do (progn
-                  (prn (list i ($data loss)))
-                  ($gs! loss)
-                  ($mgd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr a)))))
+(let* ((x (-> *mnist*
+              ($ :train-images)))
+       (y (-> *mnist*
+              ($ :train-labels)))
+       (lr 0.01)
+       (a 0.9))
+  (mnist-reset-parameters-xavier)
+  (loop :for i :from 1 :to 10
+        :for y* = (mnist-predict x)
+        :for loss = (mnist-loss y* y)
+        :do (progn
+              (prn (list i ($data loss)))
+              ($gs! loss)
+              ($mgd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr a))))
 
-(with-foreign-memory-limit
-    (let* ((x (-> *mnist*
-                  ($ :train-images)))
-           (y (-> *mnist*
-                  ($ :train-labels)))
-           (lr 0.01))
-      (mnist-reset-parameters-xavier)
-      (loop :for i :from 1 :to 10
-            :for y* = (mnist-predict x)
-            :for loss = (mnist-loss y* y)
-            :do (progn
-                  (prn (list i ($data loss)))
-                  ($gs! loss)
-                  ($agd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr)))))
+(let* ((x (-> *mnist*
+              ($ :train-images)))
+       (y (-> *mnist*
+              ($ :train-labels)))
+       (lr 0.01))
+  (mnist-reset-parameters-xavier)
+  (loop :for i :from 1 :to 10
+        :for y* = (mnist-predict x)
+        :for loss = (mnist-loss y* y)
+        :do (progn
+              (prn (list i ($data loss)))
+              ($gs! loss)
+              ($agd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr))))
 
 ;; relu model comparison
-(with-foreign-memory-limit
-    (let* ((x (-> *mnist*
-                  ($ :train-images)))
-           (y (-> *mnist*
-                  ($ :train-labels)))
-           (lr 0.01))
-      (mnist-reset-parameters-he)
-      (loop :for i :from 1 :to 10
-            :for y* = (mnist-predict-relu x)
-            :for loss = (mnist-loss y* y)
-            :do (progn
-                  (prn (list i ($data loss)))
-                  ($gs! loss)
-                  ($gd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr)))))
+(let* ((x (-> *mnist*
+              ($ :train-images)))
+       (y (-> *mnist*
+              ($ :train-labels)))
+       (lr 0.01))
+  (mnist-reset-parameters-he)
+  (loop :for i :from 1 :to 10
+        :for y* = (mnist-predict-relu x)
+        :for loss = (mnist-loss y* y)
+        :do (progn
+              (prn (list i ($data loss)))
+              ($gs! loss)
+              ($gd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr))))
 
-(with-foreign-memory-limit
-    (let* ((x (-> *mnist*
-                  ($ :train-images)))
-           (y (-> *mnist*
-                  ($ :train-labels)))
-           (lr 0.01)
-           (a 0.9))
-      (mnist-reset-parameters-he)
-      (loop :for i :from 1 :to 10
-            :for y* = (mnist-predict-relu x)
-            :for loss = (mnist-loss y* y)
-            :do (progn
-                  (prn (list i ($data loss)))
-                  ($gs! loss)
-                  ($mgd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr a)))))
+(let* ((x (-> *mnist*
+              ($ :train-images)))
+       (y (-> *mnist*
+              ($ :train-labels)))
+       (lr 0.01)
+       (a 0.9))
+  (mnist-reset-parameters-he)
+  (loop :for i :from 1 :to 10
+        :for y* = (mnist-predict-relu x)
+        :for loss = (mnist-loss y* y)
+        :do (progn
+              (prn (list i ($data loss)))
+              ($gs! loss)
+              ($mgd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr a))))
 
-(with-foreign-memory-limit
-    (let* ((x (-> *mnist*
-                  ($ :train-images)))
-           (y (-> *mnist*
-                  ($ :train-labels)))
-           (lr 0.01))
-      (mnist-reset-parameters-he)
-      (loop :for i :from 1 :to 10
-            :for y* = (mnist-predict-relu x)
-            :for loss = (mnist-loss y* y)
-            :do (progn
-                  (prn (list i ($data loss)))
-                  ($gs! loss)
-                  ($agd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr)))))
+(let* ((x (-> *mnist*
+              ($ :train-images)))
+       (y (-> *mnist*
+              ($ :train-labels)))
+       (lr 0.01))
+  (mnist-reset-parameters-he)
+  (loop :for i :from 1 :to 10
+        :for y* = (mnist-predict-relu x)
+        :for loss = (mnist-loss y* y)
+        :do (progn
+              (prn (list i ($data loss)))
+              ($gs! loss)
+              ($agd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr))))
 
 ;; dropout
-(with-foreign-memory-limit
-    (let* ((x (-> *mnist*
-                  ($ :train-images)))
-           (y (-> *mnist*
-                  ($ :train-labels)))
-           (lr 0.01)
-           (p 0.4))
-      (mnist-reset-parameters-he)
-      (loop :for i :from 1 :to 10
-            :for y* = (mnist-predict-relu-do x t p)
-            :for loss = (mnist-loss y* y)
-            :do (progn
-                  (prn (list i ($data loss)))
-                  ($gs! loss)
-                  ($agd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr)))))
+(let* ((x (-> *mnist*
+              ($ :train-images)))
+       (y (-> *mnist*
+              ($ :train-labels)))
+       (lr 0.01)
+       (p 0.4))
+  (mnist-reset-parameters-he)
+  (loop :for i :from 1 :to 10
+        :for y* = (mnist-predict-relu-do x t p)
+        :for loss = (mnist-loss y* y)
+        :do (progn
+              (prn (list i ($data loss)))
+              ($gs! loss)
+              ($agd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr))))
 
 (let ((xt ($ *mnist* :test-images))
       (yt ($ *mnist* :test-labels))
@@ -364,37 +357,35 @@
                        :collect i))))
 
 ;; without weight regularization
-(with-foreign-memory-limit
-    (let* ((x (-> *mnist*
-                  ($ :train-images)))
-           (y (-> *mnist*
-                  ($ :train-labels)))
-           (lr 0.01))
-      (mnist-reset-parameters-he)
-      (loop :for i :from 1 :to 10
-            :for y* = (mnist-predict-relu x)
-            :for loss = (mnist-loss y* y)
-            :do (progn
-                  (prn (list i ($data loss)))
-                  ($gs! loss)
-                  ($agd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr)))))
+(let* ((x (-> *mnist*
+              ($ :train-images)))
+       (y (-> *mnist*
+              ($ :train-labels)))
+       (lr 0.01))
+  (mnist-reset-parameters-he)
+  (loop :for i :from 1 :to 10
+        :for y* = (mnist-predict-relu x)
+        :for loss = (mnist-loss y* y)
+        :do (progn
+              (prn (list i ($data loss)))
+              ($gs! loss)
+              ($agd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr))))
 
 ;; with weight regularization - does not work in 50 step
-(with-foreign-memory-limit
-    (let* ((x (-> *mnist*
-                  ($ :train-images)))
-           (y (-> *mnist*
-                  ($ :train-labels)))
-           (lr 0.01)
-           (l 0.1))
-      (mnist-reset-parameters-he)
-      (loop :for i :from 1 :to 100
-            :for y* = (mnist-predict-relu x)
-            :for loss = (mnist-loss-wr y* y l)
-            :do (progn
-                  (prn (list i ($data loss)))
-                  ($gs! loss)
-                  ($agd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr)))))
+(let* ((x (-> *mnist*
+              ($ :train-images)))
+       (y (-> *mnist*
+              ($ :train-labels)))
+       (lr 0.01)
+       (l 0.1))
+  (mnist-reset-parameters-he)
+  (loop :for i :from 1 :to 100
+        :for y* = (mnist-predict-relu x)
+        :for loss = (mnist-loss-wr y* y l)
+        :do (progn
+              (prn (list i ($data loss)))
+              ($gs! loss)
+              ($agd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr))))
 
 ;; test result
 (let ((xt ($ *mnist* :test-images))
@@ -408,20 +399,19 @@
                        :collect i))))
 
 ;; without batch normalization
-(with-foreign-memory-limit
-    (let* ((x (-> *mnist*
-                  ($ :train-images)))
-           (y (-> *mnist*
-                  ($ :train-labels)))
-           (lr 0.01))
-      (mnist-reset-parameters-he)
-      (loop :for i :from 1 :to 50
-            :for y* = (mnist-predict-relu x)
-            :for loss = (mnist-loss y* y)
-            :do (progn
-                  (prn (list i ($data loss)))
-                  ($gs! loss)
-                  ($agd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr)))))
+(let* ((x (-> *mnist*
+              ($ :train-images)))
+       (y (-> *mnist*
+              ($ :train-labels)))
+       (lr 0.01))
+  (mnist-reset-parameters-he)
+  (loop :for i :from 1 :to 50
+        :for y* = (mnist-predict-relu x)
+        :for loss = (mnist-loss y* y)
+        :do (progn
+              (prn (list i ($data loss)))
+              ($gs! loss)
+              ($agd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr))))
 
 ;; test result
 (let ((xt ($ *mnist* :test-images))
@@ -435,20 +425,19 @@
                        :collect i))))
 
 ;; batch normalization - does not converge
-(with-foreign-memory-limit
-    (let* ((x (-> *mnist*
-                  ($ :train-images)))
-           (y (-> *mnist*
-                  ($ :train-labels)))
-           (lr 0.01))
-      (mnist-reset-parameters-bn)
-      (loop :for i :from 1 :to 40
-            :for y* = (mnist-predict-bn x)
-            :for loss = (mnist-loss y* y)
-            :do (progn
-                  (prn (list i ($data loss)))
-                  ($gs! loss)
-                  ($agd! (list *w1* *b1* *w2* *b2* *w3* *b3* *g1* *e1* *g2* *m2*) lr)))))
+(let* ((x (-> *mnist*
+              ($ :train-images)))
+       (y (-> *mnist*
+              ($ :train-labels)))
+       (lr 0.01))
+  (mnist-reset-parameters-bn)
+  (loop :for i :from 1 :to 40
+        :for y* = (mnist-predict-bn x)
+        :for loss = (mnist-loss y* y)
+        :do (progn
+              (prn (list i ($data loss)))
+              ($gs! loss)
+              ($agd! (list *w1* *b1* *w2* *b2* *w3* *b3* *g1* *e1* *g2* *m2*) lr))))
 
 ;; test result
 (let ((xt ($ *mnist* :test-images))

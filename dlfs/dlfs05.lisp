@@ -84,28 +84,27 @@
                     :collect i))))
 
 ;; full training
-(with-foreign-memory-limit
-    (let* ((x (-> *mnist*
-                  ($ :train-images)))
-           (y (-> *mnist*
-                  ($ :train-labels)))
-           (lr 1.4)
-           (pwrcnt 526))
-      (loop :for i :from 1 :to 1000
-            :for y* = (mnist-predict x)
-            :for loss = (mnist-loss y* y)
-            :do (progn
-                  (when (zerop (mod i 5))
-                    (prn (list i ($data loss)))
-                    (finish-output))
-                  ($gs! loss)
-                  ($gd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr)
-                  (when (zerop (mod i 50))
-                    (let ((wrcnt (mnist-test-stat)))
-                      (prn (list i wrcnt 10000))
-                      (when (< wrcnt pwrcnt)
-                        (setf pwrcnt wrcnt)
-                        (prn "Saving weights...")
-                        (mnist-write-weights)
-                        (prn "Done saving."))))))
-      (prn (mnist-test-stat))))
+(let* ((x (-> *mnist*
+              ($ :train-images)))
+       (y (-> *mnist*
+              ($ :train-labels)))
+       (lr 1.4)
+       (pwrcnt 526))
+  (loop :for i :from 1 :to 1000
+        :for y* = (mnist-predict x)
+        :for loss = (mnist-loss y* y)
+        :do (progn
+              (when (zerop (mod i 5))
+                (prn (list i ($data loss)))
+                (finish-output))
+              ($gs! loss)
+              ($gd! (list *w1* *b1* *w2* *b2* *w3* *b3*) lr)
+              (when (zerop (mod i 50))
+                (let ((wrcnt (mnist-test-stat)))
+                  (prn (list i wrcnt 10000))
+                  (when (< wrcnt pwrcnt)
+                    (setf pwrcnt wrcnt)
+                    (prn "Saving weights...")
+                    (mnist-write-weights)
+                    (prn "Done saving."))))))
+  (prn (mnist-test-stat)))

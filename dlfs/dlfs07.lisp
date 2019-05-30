@@ -221,20 +221,19 @@
       ($softmax)))
 
 ;; use batches for performance
-(with-foreign-memory-limit
-    (loop :for epoch :from 1 :to 5
-          :do (loop :for i :from 0 :below 10
-                    :for xi = ($ *mnist-train-image-batches* i)
-                    :for x = (-> xi
-                                 ($reshape ($size xi 0) *channel-number* 28 28))
-                    :for y = (-> ($ *mnist-train-label-batches* i))
-                    :for y* = (mnist-predict x)
-                    :for loss = ($cee y* y)
-                    :do (progn
-                          (format t "[~A|~A]: ~A~%" (1+ i) epoch loss)
-                          (finish-output)
-                          ($gs! loss)
-                          ($agd! (list *k* *kb* *w2* *b2* *w3* *b3*) 0.01)))))
+(loop :for epoch :from 1 :to 5
+      :do (loop :for i :from 0 :below 10
+                :for xi = ($ *mnist-train-image-batches* i)
+                :for x = (-> xi
+                             ($reshape ($size xi 0) *channel-number* 28 28))
+                :for y = (-> ($ *mnist-train-label-batches* i))
+                :for y* = (mnist-predict x)
+                :for loss = ($cee y* y)
+                :do (progn
+                      (format t "[~A|~A]: ~A~%" (1+ i) epoch loss)
+                      (finish-output)
+                      ($gs! loss)
+                      ($agd! (list *k* *kb* *w2* *b2* *w3* *b3*) 0.01))))
 
 ;; test
 (let* ((xtest ($ *mnist* :test-images))

@@ -64,23 +64,22 @@
     ($max! vals indices x dimension)
     indices))
 
-(with-foreign-memory-limit
-    (loop :for n :from 1 :to 100
-          :do (let ((ndata ($size *mnist-train-images* 0)))
-                (loop :for i :from 0 :below ndata
-                      :for x = ($index *mnist-train-images* 0 (list i))
-                      :for y = ($index *mnist-train-labels* 0 (list i))
-                      :for y* = (mnist-predict x)
-                      :for l = (mnist-loss y* y)
-                      :do (progn
-                            ($gs! l)
-                            ($gd! (list *w01* *w12*) *alpha*)))
-                (when (zerop (rem n 1))
-                  (let* ((indices (loop :for k :from 0 :below ndata :collect k))
-                         (predictions (mnist-predict ($index *mnist-train-images* 0 indices)))
-                         (truevals ($index *mnist-train-labels* 0 indices)))
-                    (prn n ($data (mnist-loss predictions truevals)))
-                    (prn "missed:" ($sum ($ne (amax ($data predictions) 1) (amax truevals 1)))))))))
+(loop :for n :from 1 :to 100
+      :do (let ((ndata ($size *mnist-train-images* 0)))
+            (loop :for i :from 0 :below ndata
+                  :for x = ($index *mnist-train-images* 0 (list i))
+                  :for y = ($index *mnist-train-labels* 0 (list i))
+                  :for y* = (mnist-predict x)
+                  :for l = (mnist-loss y* y)
+                  :do (progn
+                        ($gs! l)
+                        ($gd! (list *w01* *w12*) *alpha*)))
+            (when (zerop (rem n 1))
+              (let* ((indices (loop :for k :from 0 :below ndata :collect k))
+                     (predictions (mnist-predict ($index *mnist-train-images* 0 indices)))
+                     (truevals ($index *mnist-train-labels* 0 indices)))
+                (prn n ($data (mnist-loss predictions truevals)))
+                (prn "missed:" ($sum ($ne (amax ($data predictions) 1) (amax truevals 1))))))))
 
 (let* ((indices (loop :for k :from 0 :below 100 :collect k))
        (ps (mnist-predict ($index ($ *mnist* :test-images) 0 indices)))
@@ -103,23 +102,22 @@
 (defparameter *w01* ($parameter ($- ($* 0.2 (rnd *pixels-per-image* *hidden-size*)) 0.1)))
 (defparameter *w12* ($parameter ($- ($* 0.2 (rnd *hidden-size* *num-labels*)) 0.1)))
 
-(with-foreign-memory-limit
-    (loop :for n :from 1 :to 100
-          :do (let ((ndata ($size *mnist-train-images* 0)))
-                (loop :for i :from 0 :below ndata
-                      :for x = ($index *mnist-train-images* 0 (list i))
-                      :for y = ($index *mnist-train-labels* 0 (list i))
-                      :for y* = (mnist-predict-do x t)
-                      :for l = (mnist-loss y* y)
-                      :do (progn
-                            ($gs! l)
-                            ($gd! (list *w01* *w12*) *alpha*)))
-                (when (zerop (rem n 1))
-                  (let* ((indices (loop :for k :from 0 :below ndata :collect k))
-                         (predictions (mnist-predict-do ($index *mnist-train-images* 0 indices)))
-                         (truevals ($index *mnist-train-labels* 0 indices)))
-                    (prn n ($data (mnist-loss predictions truevals)))
-                    (prn "missed:" ($sum ($ne (amax ($data predictions) 1) (amax truevals 1)))))))))
+(loop :for n :from 1 :to 100
+      :do (let ((ndata ($size *mnist-train-images* 0)))
+            (loop :for i :from 0 :below ndata
+                  :for x = ($index *mnist-train-images* 0 (list i))
+                  :for y = ($index *mnist-train-labels* 0 (list i))
+                  :for y* = (mnist-predict-do x t)
+                  :for l = (mnist-loss y* y)
+                  :do (progn
+                        ($gs! l)
+                        ($gd! (list *w01* *w12*) *alpha*)))
+            (when (zerop (rem n 1))
+              (let* ((indices (loop :for k :from 0 :below ndata :collect k))
+                     (predictions (mnist-predict-do ($index *mnist-train-images* 0 indices)))
+                     (truevals ($index *mnist-train-labels* 0 indices)))
+                (prn n ($data (mnist-loss predictions truevals)))
+                (prn "missed:" ($sum ($ne (amax ($data predictions) 1) (amax truevals 1))))))))
 
 (let* ((indices (loop :for k :from 0 :below 100 :collect k))
        (ps (mnist-predict-do ($index ($ *mnist* :test-images) 0 indices)))

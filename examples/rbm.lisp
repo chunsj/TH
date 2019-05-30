@@ -82,20 +82,19 @@
 
 ($cg! *rbm*)
 
-(with-foreign-memory-limit
-    (loop :for epoch :from 1 :to *epoch*
-          :for loss = nil
-          :do (progn
-                ($cg! *rbm*)
-                (loop :for input :in *mnist-train-image-batches*
-                      :for sample = ($bernoulli input input)
-                      :for v = sample
-                      :for v1 = (run v)
-                      :for l = ($- (free-energy v) (free-energy v1))
-                      :do (progn
-                            (push ($data l) loss)
-                            (opt!)))
-                (prn epoch (mean loss)))))
+(loop :for epoch :from 1 :to *epoch*
+      :for loss = nil
+      :do (progn
+            ($cg! *rbm*)
+            (loop :for input :in *mnist-train-image-batches*
+                  :for sample = ($bernoulli input input)
+                  :for v = sample
+                  :for v1 = (run v)
+                  :for l = ($- (free-energy v) (free-energy v1))
+                  :do (progn
+                        (push ($data l) loss)
+                        (opt!)))
+            (prn epoch (mean loss))))
 
 (defparameter *output* (format nil "~A/Desktop" (user-homedir-pathname)))
 
