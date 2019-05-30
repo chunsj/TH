@@ -6,7 +6,6 @@
 
 (cffi:defcallback thgc :void ((data :pointer))
   (declare (ignore data))
-  (prn "full gc")
   (sb-ext:gc :full T))
 
 (cffi:defcfun ("THSetGCHandler" th-set-gc-handler) :void
