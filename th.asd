@@ -9,7 +9,6 @@
   :depends-on ("cffi"
                "mu")
   :components ((:file "package")
-               (:file "load")
                (:module ffi :components ((:file "macros")
                                          (:file "libs")
                                          (:file "structs")
