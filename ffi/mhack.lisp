@@ -6,7 +6,7 @@
 (defvar *mhack-foreign-memory-threshold* nil)
 (defvar *mhack-foreign-memory-threshold-default* 2048)
 
-(cffi:defcfun ("get_current_memeory_usage" mh-get-current-memory-usage) :long)
+(cffi:defcfun ("get_current_memory_usage" mh-get-current-memory-usage) :long)
 (defun current-memory-usage () (round (/ (mh-get-current-memory-usage) 1024 1024)))
 
 (cffi:defcvar (*th-default-allocator* "THDefaultAllocator") (:struct th-allocator))
