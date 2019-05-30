@@ -1,7 +1,7 @@
 (defsystem th
   :name "th"
   :author "Sungjin Chun <chunsj@gmail.com>"
-  :version "1.31"
+  :version "1.32"
   :maintainer "Sungjin Chun <chunsj@gmail.com>"
   :license "GPL3"
   :description "common lisp tensor and deep learning library"
@@ -9,7 +9,6 @@
   :depends-on ("cffi"
                "mu")
   :components ((:file "package")
-               (:file "load")
                (:module ffi :components ((:file "macros")
                                          (:file "libs")
                                          (:file "structs")
