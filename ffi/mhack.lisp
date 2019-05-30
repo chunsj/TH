@@ -6,6 +6,9 @@
 (defvar *mhack-foreign-memory-threshold* nil)
 (defvar *mhack-foreign-memory-threshold-default* 2048)
 
+(cffi:defcfun ("get_current_memeory_usage" mh-get-current-memory-usage) :long)
+(defun current-memory-usage () (round (/ (mh-get-current-memory-usage) 1024 1024)))
+
 (cffi:defcvar (*th-default-allocator* "THDefaultAllocator") (:struct th-allocator))
 
 (defvar *original-malloc* (cffi:foreign-slot-value (cffi:get-var-pointer '*th-default-allocator*)
@@ -33,9 +36,16 @@
       (sb-ext:atomic-update *mhack-foreign-memory-allocated* (lambda (x) (setf x 0)))
       (sb-ext:gc :full T))))
 
+(defun manage-current-memory-size (size)
+  (when (and *mhack-foreign-memory-threshold* (> size 0))
+    (when (> (current-memory-usage) *mhack-foreign-memory-threshold*)
+      (prn "called")
+      (sb-ext:gc :full T))))
+
 (cffi:defcallback malloc (:pointer :void) ((ctx :pointer) (size :long-long))
   (declare (ignore ctx))
-  (manage-foreign-memory size)
+  ;;(manage-foreign-memory size)
+  (manage-current-memory-size size)
   (cffi:foreign-alloc :char :count size))
 
 (cffi:defcallback free :void ((ctx :pointer) (ptr :pointer))
