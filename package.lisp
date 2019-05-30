@@ -384,5 +384,4 @@
            #:vhe
            #:vlecun
            #:vselu
-           #:with-foreign-memory-limit*
-           #:with-foreign-memory-limit))
+           #:set-gc-threshold))
