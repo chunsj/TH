@@ -46,7 +46,7 @@
                                     (unless (and dx dk db)
                                       (setf dx ($zero xd))
                                       (setf dk ($zero kd))
-                                      (setf db ($zero db))
+                                      (setf db ($zero bd))
                                       (nn-spatial-convolution-mm-update-grad-input xd
                                                                                    gv
                                                                                    dx
