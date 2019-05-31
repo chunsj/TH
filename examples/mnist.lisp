@@ -112,7 +112,9 @@
 
 (gcf)
 
+;; for 6000 batch size, more memory required
 (set-gc-threshold (* 8 1024 1024 1024))
+
 ;; the actual training
 (time
  (loop :for epoch :from 1 :to *epoch*
