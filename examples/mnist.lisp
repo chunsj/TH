@@ -89,16 +89,19 @@
       ($xwpb *w3* *b3*)
       ($softmax)))
 
+(defparameter *batch-size* 1500)
+(defparameter *batch-count* (/ ($size ($ *mnist* :train-images) 0) *batch-size*))
+
 ;; training data - uses batches for performance
 (defparameter *mnist-train-image-batches*
-  (loop :for i :from 0 :below 60
-        :for rng = (loop :for k :from (* i 1000) :below (* (1+ i) 1000)
+  (loop :for i :from 0 :below *batch-count*
+        :for rng = (loop :for k :from (* i *batch-size*) :below (* (1+ i) *batch-size*)
                          :collect k)
         :collect ($contiguous! ($index ($ *mnist* :train-images) 0 rng))))
 
 (defparameter *mnist-train-label-batches*
-  (loop :for i :from 0 :below 60
-        :for rng = (loop :for k :from (* i 1000) :below (* (1+ i) 1000)
+  (loop :for i :from 0 :below *batch-count*
+        :for rng = (loop :for k :from (* i *batch-size*) :below (* (1+ i) *batch-size*)
                          :collect k)
         :collect ($contiguous! ($index ($ *mnist* :train-labels) 0 rng))))
 
@@ -112,7 +115,7 @@
 ;; the actual training
 (time
  (loop :for epoch :from 1 :to *epoch*
-       :do (loop :for i :from 0 :below 60
+       :do (loop :for i :from 0 :below *batch-count*
                  :for xi = ($ *mnist-train-image-batches* i)
                  :for x = (-> xi
                               ($reshape ($size xi 0) *channel-number* 28 28))
