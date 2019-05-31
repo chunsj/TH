@@ -44,9 +44,9 @@
                              (gfn (lambda (dv gv)
                                     (declare (ignore dv))
                                     (unless (and dx dk db)
-                                      (setf dx ($empty xd))
-                                      (setf dk (apply #'zeros ($size kd)))
-                                      (setf db (apply #'zeros ($size bd)))
+                                      (setf dx ($zero xd))
+                                      (setf dk ($zero kd))
+                                      (setf db ($zero db))
                                       (nn-spatial-convolution-mm-update-grad-input xd
                                                                                    gv
                                                                                    dx
@@ -85,8 +85,8 @@
                              (gfn (lambda (dv gv)
                                     (declare (ignore dv))
                                     (unless (and dx dk)
-                                      (setf dx ($empty xd))
-                                      (setf dk (apply #'zeros ($size kd)))
+                                      (setf dx ($zero xd))
+                                      (setf dk ($zero kd))
                                       (nn-spatial-convolution-mm-update-grad-input xd
                                                                                    gv
                                                                                    dx
@@ -155,7 +155,7 @@
     (nn-spatial-average-pooling-update-output ($data x) out kw kh dw dh pw ph ceilp count-pad-p)
     (node out
           :name :avgpool2d
-          :link (link (to x (let ((dx ($empty ($data x))))
+          :link (link (to x (let ((dx ($zero ($data x))))
                               (nn-spatial-average-pooling-update-grad-input ($data x)
                                                                             gv
                                                                             dx
@@ -237,9 +237,9 @@
                              (gfn (lambda (dv gv)
                                     (declare (ignore dv))
                                     (unless (and dx dk db)
-                                      (setf dx (apply #'zeros ($size xd)))
-                                      (setf dk (apply #'zeros ($size kd)))
-                                      (setf db (apply #'zeros ($size bd)))
+                                      (setf dx ($zero xd))
+                                      (setf dk ($zero kd))
+                                      (setf db ($zero bd))
                                       (nn-spatial-full-convolution-update-grad-input xd
                                                                                      gv
                                                                                      dx
@@ -281,8 +281,8 @@
                              (gfn (lambda (dv gv)
                                     (declare (ignore dv))
                                     (unless (and dx dk)
-                                      (setf dx (apply #'zeros ($size xd)))
-                                      (setf dk (apply #'zeros ($size kd)))
+                                      (setf dx ($zero xd))
+                                      (setf dk ($zero kd))
                                       (nn-spatial-full-convolution-update-grad-input xd
                                                                                      gv
                                                                                      dx
