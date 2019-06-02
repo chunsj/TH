@@ -26,8 +26,8 @@
 
 (defparameter *words* (remove-duplicates (apply #'$concat *reviews*) :test #'equal))
 (defparameter *w2i* (let ((h (make-hash-table :test 'equal :size ($count *words*))))
-                      (loop :for i :from 0 :below ($count *words*)
-                            :for w = ($ *words* i)
+                      (loop :for w :in *words*
+                            :for i :from 0
                             :do (setf ($ h w) i))
                       h))
 
@@ -106,12 +106,13 @@
                             (incf correct))))
               (when (zerop (rem iter 1))
                 (prn iter total correct)
-                (prn-test-perf)
-                (gcf)))))
+                (prn-test-perf)))))
 
 ;; execute training
 (reset-weights)
-(train)
+(time (train))
+
+(gcf)
 
 ;; personal test to check the network really works
 (let* ((my-review "this so called franchise movie of avengers is great master piece. i've enjoyed it very much and my kids love this one as well. though my wife generally does not like this kind of genre, she said this one is better than others.")
@@ -253,7 +254,8 @@
                           (prn niter nreview (similar "terrible")))))))
 
 (reset-weights)
-(train)
+(time (train))
+(gcf)
 
 (prn (similar "terrible"))
 (prn (similar "king"))
