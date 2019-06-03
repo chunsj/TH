@@ -89,7 +89,7 @@
       ($xwpb *w3* *b3*)
       ($softmax)))
 
-(defparameter *batch-size* 6000)
+(defparameter *batch-size* 600)
 (defparameter *batch-count* (/ ($size ($ *mnist* :train-images) 0) *batch-size*))
 
 ;; training data - uses batches for performance
@@ -108,12 +108,9 @@
 (loop :for p :in (list *k* *kb* *w2* *b2* *w3* *b3*)
       :do (th::$cg! p))
 
-(defparameter *epoch* 50)
+(defparameter *epoch* 25)
 
 (gcf)
-
-;; for 6000 batch size, more memory required
-(set-gc-threshold (* 8 1024 1024 1024))
 
 ;; the actual training
 (time
