@@ -89,8 +89,7 @@
     (-> x
         ($conv2d *k* *kb*)
         ($relu)
-        ($maxpool2d *pool-width* *pool-height*
-                    *pool-stride-width* *pool-stride-height*)
+        ($maxpool2d *pool-width* *pool-height* *pool-stride-width* *pool-stride-height*)
         ($reshape ($size x 0) (* *filter-number* *pool-out-width* *pool-out-height*))
         ($xwpb *w2* *b2*)
         ($relu)
