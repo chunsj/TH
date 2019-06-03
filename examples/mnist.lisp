@@ -127,7 +127,7 @@
                        ($adgd! (list *k* *kb* *w2* *b2* *w3* *b3*))))))
 
 ;; test stats
-(defun mnist-test-stat ()
+(defun mnist-test-stat (&optional verbose)
   (let ((xt ($ *mnist* :test-images))
         (yt ($ *mnist* :test-labels)))
     ($count (loop :for i :from 0 :below ($size xt 0)
@@ -135,7 +135,7 @@
                   :for yi = ($index yt 0 (list i))
                   :for yi* = ($data (mnist-predict ($reshape xi ($size xi 0) 1 28 28)))
                   :for err = (let ((e ($sum ($abs ($sub ($round yi*) yi)))))
-                               (when (> e 0) (prn (list i e)))
+                               (when (and verbose (> e 0)) (prn (list i e)))
                                e)
                   :when (> err 0)
                     :collect i))))
