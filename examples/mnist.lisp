@@ -126,6 +126,18 @@
                        (prn (format nil "[~A|~A]: ~A" (1+ i) epoch ($data loss)))
                        ($adgd! (list *k* *kb* *w2* *b2* *w3* *b3*))))))
 
+(defun mnist-predict-eval (x)
+  (-> x
+      ($conv2d ($data *k*) ($data *kb*))
+      ($relu)
+      ($maxpool2d *pool-width* *pool-height*
+                  *pool-stride-width* *pool-stride-height*)
+      ($reshape ($size x 0) (* *filter-number* *pool-out-width* *pool-out-height*))
+      ($xwpb ($data *w2*) ($data *b2*))
+      ($relu)
+      ($xwpb ($data *w3*) ($data *b3*))
+      ($softmax)))
+
 ;; test stats
 (defun mnist-test-stat (&optional verbose)
   (let ((xt ($ *mnist* :test-images))
@@ -133,7 +145,7 @@
     ($count (loop :for i :from 0 :below ($size xt 0)
                   :for xi = ($index xt 0 (list i))
                   :for yi = ($index yt 0 (list i))
-                  :for yi* = ($data (mnist-predict ($reshape xi ($size xi 0) 1 28 28)))
+                  :for yi* = (mnist-predict-eval ($reshape xi ($size xi 0) 1 28 28))
                   :for err = (let ((e ($sum ($abs ($sub ($round yi*) yi)))))
                                (when (and verbose (> e 0)) (prn (list i e)))
                                e)
