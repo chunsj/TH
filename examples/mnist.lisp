@@ -6,8 +6,6 @@
 
 (in-package :mnist-example)
 
-(set-gc-threshold (* 4 1024 1024 1024))
-
 ;; load mnist data, takes ~22 secs in macbook 2017
 (defparameter *mnist* (read-mnist-data))
 
