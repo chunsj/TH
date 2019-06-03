@@ -6,6 +6,8 @@
 
 (in-package :mnist-example)
 
+(set-gc-threshold (* 4 1024 1024 1024))
+
 ;; load mnist data, takes ~22 secs in macbook 2017
 (defparameter *mnist* (read-mnist-data))
 
@@ -76,25 +78,17 @@
   (mnist-read-weight-from *w3* "examples/mnist-cnn-weights/mnist-cnn-w3.dat")
   (mnist-read-weight-from *b3* "examples/mnist-cnn-weights/mnist-cnn-b3.dat"))
 
-(defun strip-eval (x eval) (if eval ($data x) x))
-
 ;; x should have been reshaped before entering
-(defun mnist-predict (x &optional eval)
-  (let ((*k* (strip-eval *k* eval))
-        (*kb* (strip-eval *kb* eval))
-        (*w2* (strip-eval *w2* eval))
-        (*b2* (strip-eval *b2* eval))
-        (*w3* (strip-eval *w3* eval))
-        (*b3* (strip-eval *b3* eval)))
-    (-> x
-        ($conv2d *k* *kb*)
-        ($relu)
-        ($maxpool2d *pool-width* *pool-height* *pool-stride-width* *pool-stride-height*)
-        ($reshape ($size x 0) (* *filter-number* *pool-out-width* *pool-out-height*))
-        ($xwpb *w2* *b2*)
-        ($relu)
-        ($xwpb *w3* *b3*)
-        ($softmax))))
+(defun mnist-predict (x)
+  (-> x
+      ($conv2d *k* *kb*)
+      ($relu)
+      ($maxpool2d *pool-width* *pool-height* *pool-stride-width* *pool-stride-height*)
+      ($reshape ($size x 0) (* *filter-number* *pool-out-width* *pool-out-height*))
+      ($xwpb *w2* *b2*)
+      ($relu)
+      ($xwpb *w3* *b3*)
+      ($softmax)))
 
 (defparameter *batch-size* 600)
 (defparameter *batch-count* (/ ($size ($ *mnist* :train-images) 0) *batch-size*))
@@ -139,14 +133,15 @@
          (yt (-> ($ *mnist* :test-labels)
                  (tensor.byte)))
          (yt* (-> ($reshape xt ($size xt 0) *channel-number* 28 28)
-                  (mnist-predict T)
+                  (mnist-predict)
+                  ($data)
                   ($round)
                   (tensor.byte)))
          (errors ($ne ($sum ($eq yt* yt) 1)
                       (-> (tensor.byte ($size yt 0) 1)
                           ($fill! 10)))))
     (when verbose (loop :for i :from 0 :below ($size errors 0)
-                        :do (unless (eq 1 ($ errors i 0))
+                        :do (when (eq 1 ($ errors i 0))
                               (prn i))))
     ($sum errors)))
 
