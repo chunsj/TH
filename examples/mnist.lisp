@@ -146,7 +146,7 @@
     ($sum errors)))
 
 ;; prn test stats after training
-(prn (mnist-test-stat T))
+(prn (mnist-test-stat))
 
 ;; writing/reading
 (mnist-cnn-write-weights)
