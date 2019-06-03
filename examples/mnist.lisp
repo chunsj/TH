@@ -76,18 +76,26 @@
   (mnist-read-weight-from *w3* "examples/mnist-cnn-weights/mnist-cnn-w3.dat")
   (mnist-read-weight-from *b3* "examples/mnist-cnn-weights/mnist-cnn-b3.dat"))
 
+(defun strip-eval (x eval) (if eval ($data x) x))
+
 ;; x should have been reshaped before entering
-(defun mnist-predict (x)
-  (-> x
-      ($conv2d *k* *kb*)
-      ($relu)
-      ($maxpool2d *pool-width* *pool-height*
-                  *pool-stride-width* *pool-stride-height*)
-      ($reshape ($size x 0) (* *filter-number* *pool-out-width* *pool-out-height*))
-      ($xwpb *w2* *b2*)
-      ($relu)
-      ($xwpb *w3* *b3*)
-      ($softmax)))
+(defun mnist-predict (x &optional eval)
+  (let ((*k* (strip-eval *k* eval))
+        (*kb* (strip-eval *kb* eval))
+        (*w2* (strip-eval *w2* eval))
+        (*b2* (strip-eval *b2* eval))
+        (*w3* (strip-eval *w3* eval))
+        (*b3* (strip-eval *b3* eval)))
+    (-> x
+        ($conv2d *k* *kb*)
+        ($relu)
+        ($maxpool2d *pool-width* *pool-height*
+                    *pool-stride-width* *pool-stride-height*)
+        ($reshape ($size x 0) (* *filter-number* *pool-out-width* *pool-out-height*))
+        ($xwpb *w2* *b2*)
+        ($relu)
+        ($xwpb *w3* *b3*)
+        ($softmax))))
 
 (defparameter *batch-size* 600)
 (defparameter *batch-count* (/ ($size ($ *mnist* :train-images) 0) *batch-size*))
@@ -126,34 +134,25 @@
                        (prn (format nil "[~A|~A]: ~A" (1+ i) epoch ($data loss)))
                        ($adgd! (list *k* *kb* *w2* *b2* *w3* *b3*))))))
 
-(defun mnist-predict-eval (x)
-  (-> x
-      ($conv2d ($data *k*) ($data *kb*))
-      ($relu)
-      ($maxpool2d *pool-width* *pool-height*
-                  *pool-stride-width* *pool-stride-height*)
-      ($reshape ($size x 0) (* *filter-number* *pool-out-width* *pool-out-height*))
-      ($xwpb ($data *w2*) ($data *b2*))
-      ($relu)
-      ($xwpb ($data *w3*) ($data *b3*))
-      ($softmax)))
-
 ;; test stats
 (defun mnist-test-stat (&optional verbose)
-  (let ((xt ($ *mnist* :test-images))
-        (yt ($ *mnist* :test-labels)))
-    ($count (loop :for i :from 0 :below ($size xt 0)
-                  :for xi = ($index xt 0 (list i))
-                  :for yi = ($index yt 0 (list i))
-                  :for yi* = (mnist-predict-eval ($reshape xi ($size xi 0) 1 28 28))
-                  :for err = (let ((e ($sum ($abs ($sub ($round yi*) yi)))))
-                               (when (and verbose (> e 0)) (prn (list i e)))
-                               e)
-                  :when (> err 0)
-                    :collect i))))
+  (let* ((xt ($ *mnist* :test-images))
+         (yt (-> ($ *mnist* :test-labels)
+                 (tensor.byte)))
+         (yt* (-> ($reshape xt ($size xt 0) *channel-number* 28 28)
+                  (mnist-predict T)
+                  ($round)
+                  (tensor.byte)))
+         (errors ($ne ($sum ($eq yt* yt) 1)
+                      (-> (tensor.byte ($size yt 0) 1)
+                          ($fill! 10)))))
+    (when verbose (loop :for i :from 0 :below ($size errors 0)
+                        :do (unless (eq 1 ($ errors i 0))
+                              (prn i))))
+    ($sum errors)))
 
 ;; prn test stats after training
-(prn (mnist-test-stat))
+(prn (mnist-test-stat T))
 
 ;; writing/reading
 (mnist-cnn-write-weights)
