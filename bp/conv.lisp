@@ -126,8 +126,10 @@
 
 (defmethod $maxpool2d ((x tensor) kw kh &optional (dw 1) (dh 1) (pw 0) (ph 0) ceilp)
   (let ((out ($empty x))
-        (indices (tensor.long)))
+        (indices (make-instance 'tensor.long)))
+    (allocate-tensor-handle indices)
     (nn-spatial-max-pooling-update-output x out indices kw kh dw dh pw ph ceilp)
+    (deallocate-tensor-handle indices)
     out))
 
 (defmethod $maxpool2d ((x node) kw kh &optional (dw 1) (dh 1) (pw 0) (ph 0) ceilp)

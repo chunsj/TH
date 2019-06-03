@@ -32,15 +32,13 @@
   (input th-float-tensor-ptr)
   (target th-float-tensor-ptr)
   (output th-float-tensor-ptr)
-  (size-average :char)
-  (reduce :char))
+  (size-average :bool))
 (cffi:defcfun ("THNN_DoubleAbsCriterion_updateOutput" thnn-double-abs-criterion-update-output) :void
   (state thnn-state-ptr)
   (input th-double-tensor-ptr)
   (target th-double-tensor-ptr)
   (output th-double-tensor-ptr)
-  (size-average :char)
-  (reduce :char))
+  (size-average :bool))
 
 ;; [OUT] grad-input
 (cffi:defcfun ("THNN_FloatAbsCriterion_updateGradInput"
@@ -48,19 +46,15 @@
   (state thnn-state-ptr)
   (input th-float-tensor-ptr)
   (target th-float-tensor-ptr)
-  (grad-output th-float-tensor-ptr)
   (grad-input th-float-tensor-ptr)
-  (size-average :char)
-  (reduce :char))
+  (size-average :bool))
 (cffi:defcfun ("THNN_DoubleAbsCriterion_updateGradInput"
                thnn-double-abs-criterion-update-grad-input) :void
   (state thnn-state-ptr)
   (input th-double-tensor-ptr)
   (target th-double-tensor-ptr)
-  (grad-output th-double-tensor-ptr)
   (grad-input th-double-tensor-ptr)
-  (size-average :char)
-  (reduce :char))
+  (size-average :bool))
 
 (cffi:defcfun ("THNN_FloatBCECriterion_updateOutput"
                thnn-float-bce-criterion-update-output) :void
@@ -68,7 +62,7 @@
   (input th-float-tensor-ptr)
   (target th-float-tensor-ptr)
   (output th-float-tensor-ptr)
-  (size-average :char)
+  (size-average :bool)
   (weights th-float-tensor-ptr))
 (cffi:defcfun ("THNN_DoubleBCECriterion_updateOutput"
                thnn-double-bce-criterion-update-output) :void
@@ -76,7 +70,7 @@
   (input th-double-tensor-ptr)
   (target th-double-tensor-ptr)
   (output th-double-tensor-ptr)
-  (size-average :char)
+  (size-average :bool)
   (weights th-double-tensor-ptr))
 
 (cffi:defcfun ("THNN_FloatBCECriterion_updateGradInput"
@@ -85,7 +79,7 @@
   (input th-float-tensor-ptr)
   (target th-float-tensor-ptr)
   (grad-input th-float-tensor-ptr)
-  (size-average :char)
+  (size-average :bool)
   (weights th-float-tensor-ptr))
 (cffi:defcfun ("THNN_DoubleBCECriterion_updateGradInput"
                thnn-double-bce-criterion-update-grad-input) :void
@@ -93,7 +87,7 @@
   (input th-double-tensor-ptr)
   (target th-double-tensor-ptr)
   (grad-input th-double-tensor-ptr)
-  (size-average :char)
+  (size-average :bool)
   (weights th-double-tensor-ptr))
 
 (cffi:defcfun ("THNN_FloatBatchNormalization_updateOutput"
@@ -107,7 +101,7 @@
   (running-var th-float-tensor-ptr)
   (save-mean th-float-tensor-ptr)
   (save-std th-float-tensor-ptr)
-  (train :char)
+  (train :bool)
   (momentum :double)
   (eps :double))
 (cffi:defcfun ("THNN_DoubleBatchNormalization_updateOutput"
@@ -121,7 +115,7 @@
   (running-var th-double-tensor-ptr)
   (save-mean th-double-tensor-ptr)
   (save-std th-double-tensor-ptr)
-  (train :char)
+  (train :bool)
   (momentum :double)
   (eps :double))
 
@@ -138,7 +132,7 @@
   (running-var th-float-tensor-ptr)
   (save-mean th-float-tensor-ptr)
   (save-std th-float-tensor-ptr)
-  (train :char)
+  (train :bool)
   (scale :double)
   (eps :double))
 (cffi:defcfun ("THNN_DoubleBatchNormalization_backward"
@@ -154,7 +148,7 @@
   (running-var th-double-tensor-ptr)
   (save-mean th-double-tensor-ptr)
   (save-std th-double-tensor-ptr)
-  (train :char)
+  (train :bool)
   (scale :double)
   (eps :double))
 
@@ -1911,7 +1905,7 @@
   (padh :int)
   (dilationw :int)
   (dilationh :int)
-  (ceil-mode :char))
+  (ceil-mode :bool))
 (cffi:defcfun ("THNN_DoubleSpatialDilatedMaxPooling_updateOutput"
                thnn-double-spatial-dilated-max-pooling-update-output) :void
   (state thnn-state-ptr)
@@ -1926,7 +1920,7 @@
   (padh :int)
   (dilationw :int)
   (dilationh :int)
-  (ceil-mode :char))
+  (ceil-mode :bool))
 
 (cffi:defcfun ("THNN_FloatSpatialDilatedMaxPooling_updateGradInput"
                thnn-float-spatial-dilated-max-pooling-update-grad-input) :void
@@ -2237,7 +2231,7 @@
   (dh :int)
   (padw :int)
   (padh :int)
-  (ceil-mode :char))
+  (ceil-mode :bool))
 (cffi:defcfun ("THNN_DoubleSpatialMaxPooling_updateOutput"
                thnn-double-spatial-max-pooling-update-output) :void
   (state thnn-state-ptr)
@@ -2250,7 +2244,7 @@
   (dh :int)
   (padw :int)
   (padh :int)
-  (ceil-mode :char))
+  (ceil-mode :bool))
 
 (cffi:defcfun ("THNN_FloatSpatialMaxPooling_updateGradInput"
                thnn-float-spatial-max-pooling-update-grad-input) :void
@@ -2265,7 +2259,7 @@
   (dh :int)
   (padw :int)
   (padh :int)
-  (ceil-mode :char))
+  (ceil-mode :bool))
 (cffi:defcfun ("THNN_DoubleSpatialMaxPooling_updateGradInput"
                thnn-double-spatial-max-pooling-update-grad-input) :void
   (state thnn-state-ptr)
@@ -2279,7 +2273,7 @@
   (dh :int)
   (padw :int)
   (padh :int)
-  (ceil-mode :char))
+  (ceil-mode :bool))
 
 (cffi:defcfun ("THNN_FloatSpatialMaxUnpooling_updateOutput"
                thnn-float-spatial-max-unpooling-update-output) :void
