@@ -88,7 +88,7 @@
       ($xwpb *w3* *b3*)
       ($softmax)))
 
-(defparameter *batch-size* 600)
+(defparameter *batch-size* 500)
 (defparameter *batch-count* (/ ($size ($ *mnist* :train-images) 0) *batch-size*))
 
 ;; training data - uses batches for performance
@@ -110,6 +110,7 @@
 (defparameter *epoch* 25)
 
 (gcf)
+(set-gc-threshold (* 4 1024 1024 1024))
 
 ;; the actual training
 (time
