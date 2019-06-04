@@ -11,6 +11,8 @@
 
 (in-package :cgan)
 
+(setf th::*default-tensor-class* 'tensor.double)
+
 ;; load mnist data, takes ~22 secs in macbook 2017
 (defparameter *mnist* (read-mnist-data))
 
@@ -56,38 +58,40 @@
 
 (defun xinit (size) ($* (apply #'rndn size) (/ 1 (sqrt (/ ($ size 0) 2)))))
 
-(defparameter *os* (ones *batch-size* 1))
+(defparameter *os* (ones *batch-size*))
 
 ;; generator network
 (defparameter *gw1* ($push *generator* (xinit (list (+ *gen-size* *lbl-size*) *hidden-size*))))
-(defparameter *gb1* ($push *generator* (zeros 1 *hidden-size*)))
+(defparameter *gb1* ($push *generator* (zeros *hidden-size*)))
 (defparameter *gw2* ($push *generator* (xinit (list *hidden-size* *img-size*))))
-(defparameter *gb2* ($push *generator* (zeros 1 *img-size*)))
+(defparameter *gb2* ($push *generator* (zeros *img-size*)))
 
 ;; you can apply leaky relu, $lrelu
 (defun generate (z c)
-  (let* ((z ($cat z c 1))
-         (h ($relu ($+ ($@ z *gw1*) ($@ *os* *gb1*))))
-         (x ($sigmoid ($+ ($@ h *gw2*) ($@ *os* *gb2*)))))
-    x))
+  (-> ($cat z c 1)
+      ($affine *gw1* *gb1* *os*)
+      ($relu)
+      ($affine *gw2* *gb2* *os*)
+      ($sigmoid)))
 
 ;; discriminator network
 (defparameter *dw1* ($push *discriminator* (xinit (list (+ *img-size* *lbl-size*)
                                                         *hidden-size*))))
-(defparameter *db1* ($push *discriminator* (zeros 1 *hidden-size*)))
+(defparameter *db1* ($push *discriminator* (zeros *hidden-size*)))
 (defparameter *dw2* ($push *discriminator* (xinit (list *hidden-size* 1))))
-(defparameter *db2* ($push *discriminator* (zeros 1 1)))
+(defparameter *db2* ($push *discriminator* (zeros 1)))
 
 ;; you can apply leaky relu, $lrelu
 (defun discriminate (x c)
-  (let* ((x ($cat x c 1))
-         (h ($relu ($+ ($@ x *dw1*) ($@ *os* *db1*))))
-         (y ($sigmoid ($+ ($@ h *dw2*) ($@ *os* *db2*)))))
-    y))
+  (-> ($cat x c 1)
+      ($affine *dw1* *db1* *os*)
+      ($relu)
+      ($affine *dw2* *db2* *os*)
+      ($sigmoid)))
 
 (defun samplez () (rndn *batch-size* *gen-size*))
 
-(defparameter *epoch* 100)
+(defparameter *epoch* 50)
 (defparameter *k* 1)
 
 ($cg! *discriminator*)
@@ -180,3 +184,5 @@
       *train-data-batches* nil
       *train-data-labels* nil)
 (gcf)
+
+(setf th::*default-tensor-class* 'tensor.float)

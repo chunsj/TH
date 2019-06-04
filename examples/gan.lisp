@@ -83,7 +83,7 @@
 
 (defun samplez () (rndn *batch-size* *gen-size*))
 
-(defparameter *epoch* 100)
+(defparameter *epoch* 50)
 (defparameter *k* 1)
 
 ($cg! *discriminator*)
@@ -94,7 +94,7 @@
 
 (gcf)
 
-(setf *epoch* 20)
+(setf *epoch* 1)
 (time
  (loop :for epoch :from 1 :to *epoch*
        :for dloss = 0
@@ -168,3 +168,5 @@
       *train-data-batches* nil)
 
 (gcf)
+
+(setf th::*default-tensor-class* 'tensor.float)
