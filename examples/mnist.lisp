@@ -110,6 +110,8 @@
 (defparameter *epoch* 25)
 
 (gcf)
+
+;; better performance than default 2Gb
 (set-gc-threshold (* 4 1024 1024 1024))
 
 ;; the actual training
