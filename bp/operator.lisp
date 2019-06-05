@@ -334,9 +334,15 @@
   (node ($max ($data x) dimension)
         :name :max
         :link (link (to x (let* ((xd ($data x)) (xs ($size xd)))
-                                    (if (< dimension 0)
-                                        (seteq! xd dv gv)
-                                        (seteq! xd ($expand dv xs) ($expand gv xs))))))))
+                            (if (< dimension 0)
+                                (seteq! xd dv gv)
+                                (seteq! xd ($expand dv xs) ($expand gv xs))))))))
+
+(defmethod $clamp ((x node) min max)
+  (node ($clamp ($data x) min max)
+        :name :clamp
+        :link (link (to x (let* ((xd ($data x)))
+                            (seteq! xd dv gv))))))
 
 (defmethod $transpose ((x node) &optional dimension0 dimension1)
   (node ($transpose ($data x) dimension0 dimension1)
