@@ -48,23 +48,24 @@
 
 ($cg! *nalu*)
 
-(loop :for epoch :from 1 :to *epochs*
-      :for iter = 1
-      :do (loop :for x :in *dataset*
-                :for y :in *target*
-                :for w = ($* ($tanh *w-hat*) ($sigmoid *m-hat*))
-                :for m = ($exp ($@ ($log ($+ ($abs x) 1E-7)) w))
-                :for g = ($sigmoid ($@ x *g*))
-                :for a = ($@ x w)
-                :for y* = ($+ ($* g a) ($* ($- 1 g) m))
-                :for d = ($- y* y)
-                :for l = ($/ ($dot d d) *batch-size*)
-                :do (progn
-                      ($adgd! *nalu*)
-                      (when (zerop (rem iter 100))
-                        (prn "LOSS:" iter epoch ($data l))
-                        (prn ($sum ($- ($round ($data y*)) ($round y)))))
-                      (incf iter))))
+(time
+ (loop :for epoch :from 1 :to *epochs*
+       :for iter = 1
+       :do (loop :for x :in *dataset*
+                 :for y :in *target*
+                 :for w = ($* ($tanh *w-hat*) ($sigmoid *m-hat*))
+                 :for m = ($exp ($@ ($log ($+ ($abs x) 1E-7)) w))
+                 :for g = ($sigmoid ($@ x *g*))
+                 :for a = ($@ x w)
+                 :for y* = ($+ ($* g a) ($* ($- 1 g) m))
+                 :for d = ($- y* y)
+                 :for l = ($/ ($dot d d) *batch-size*)
+                 :do (progn
+                       ($adgd! *nalu*)
+                       (when (zerop (rem iter 100))
+                         (prn "LOSS:" iter epoch ($data l))
+                         (prn ($sum ($- ($round ($data y*)) ($round y)))))
+                       (incf iter)))))
 
 ;; check training accuracy
 (loop :for x :in *dataset*
