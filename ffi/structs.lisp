@@ -40,8 +40,11 @@
 ;;(cffi:defcfun ("omp_get_num_threads" omp-get-num-threads) :int)
 ;;(cffi:defcfun ("omp_set_num_threads" omp-set-num-threads) :void (n :int))
 
-(th-set-num-threads 4)
+;;(th-set-num-threads 4)
 ;;(omp-set-num-threads 4)
+
+;; macbook 12 2017
+(th-set-num-threads 2)
 
 (defparameter *th-type-infos* '(("byte" :unsigned-char "Byte" :long)
                                 ("char" :char "Char" :long)
