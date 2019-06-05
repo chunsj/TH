@@ -34,12 +34,12 @@
 (defparameter *ae* (parameters))
 
 (defparameter *wenc* ($push *ae* (vxavier (list *num-input* *num-hidden*))))
-(defparameter *benc* ($push *ae* (ones 1 *num-hidden*)))
+(defparameter *benc* ($push *ae* (ones *num-hidden*)))
 (defparameter *wdec* ($push *ae* (vxavier (list *num-hidden* *num-input*))))
-(defparameter *bdec* ($push *ae* (ones 1 *num-input*)))
+(defparameter *bdec* ($push *ae* (ones *num-input*)))
 
-(defparameter *os* (ones *num-batch* 1))
-(defparameter *p* ($fill! (tensor 1 *num-hidden*) *rho*))
+(defparameter *os* (ones *num-batch*))
+(defparameter *p* ($fill! (tensor *num-hidden*) *rho*))
 
 (defun validate ()
   (let ((we ($data *wenc*))
@@ -47,9 +47,13 @@
         (wd ($data *wdec*))
         (bd ($data *bdec*)))
     (let* ((x ($ *mnist* :test-images))
-           (os (ones ($size x 0) 1))
-           (encoded ($sigmoid ($+ ($@ x we) ($@ os be))))
-           (decoded ($sigmoid ($+ ($@ encoded wd) ($@ os bd))))
+           (os (ones ($size x 0)))
+           (encoded (-> x
+                        ($affine we be os)
+                        ($sigmoid)))
+           (decoded (-> encoded
+                        ($affine wd bd os)
+                        ($sigmoid)))
            (d ($- decoded x))
            (loss ($/ ($dot d d) ($size x 0))))
       loss)))
@@ -67,42 +71,56 @@
 
 ($cg! *ae*)
 
+(gcf)
+
 ;; train without sparsity consideration
-(loop :for epoch :from 1 :to *epochs*
-      :do (progn
-            ($cg! *ae*)
-            (loop :for x :in *mnist-train-image-batches*
-                  :for bidx :from 1
-                  :for encoded = ($sigmoid ($+ ($@ x *wenc*) ($@ *os* *benc*)))
-                  :for decoded = ($sigmoid ($+ ($@ encoded *wdec*) ($@ *os* *bdec*)))
-                  :for d = ($- decoded x)
-                  :for mse = ($/ ($dot d d) *num-batch*)
-                  :for loss = mse
-                  :do (progn
-                        ($adgd! *ae*)
-                        (when (zerop (rem bidx 10))
-                          (prn "LOSS:" bidx "/" epoch loss))))
-            (prn "[TEST]" epoch (validate))))
+(time
+ (loop :for epoch :from 1 :to *epochs*
+       :do (progn
+             ($cg! *ae*)
+             (loop :for x :in *mnist-train-image-batches*
+                   :for bidx :from 1
+                   :for encoded = (-> x
+                                      ($affine *wenc* *benc* *os*)
+                                      ($sigmoid))
+                   :for decoded = (-> encoded
+                                      ($affine *wdec* *bdec* *os*)
+                                      ($sigmoid))
+                   :for d = ($- decoded x)
+                   :for mse = ($/ ($dot d d) *num-batch*)
+                   :for loss = mse
+                   :do (progn
+                         ($adgd! *ae*)
+                         (when (zerop (rem bidx 10))
+                           (prn "LOSS:" bidx "/" epoch loss))))
+             (prn "[TEST]" epoch (validate)))))
 
 ;; train with sparsity penalty
-(loop :for epoch :from 1 :to *epochs*
-      :do (progn
-            ($cg! *ae*)
-            (loop :for x :in *mnist-train-image-batches*
-                  :for bidx :from 1
-                  :for encoded = ($sigmoid ($+ ($@ x *wenc*) ($@ *os* *benc*)))
-                  :for decoded = ($sigmoid ($+ ($@ encoded *wdec*) ($@ *os* *bdec*)))
-                  :for d = ($- decoded x)
-                  :for mse = ($/ ($dot d d) *num-batch*)
-                  :for rho-hat = ($mean encoded 0)
-                  :for kld = (kl-divergence rho-hat)
-                  :for esparsity = ($* kld *beta*)
-                  :for loss = ($+ mse esparsity)
-                  :do (progn
-                        ($adgd! *ae*)
-                        (when (zerop (rem bidx 10))
-                          (prn "LOSS:" bidx "/" epoch loss mse esparsity))))
-            (prn "[TEST]" epoch (validate))))
+(time
+ (loop :for epoch :from 1 :to *epochs*
+       :do (progn
+             ($cg! *ae*)
+             (loop :for x :in *mnist-train-image-batches*
+                   :for bidx :from 1
+                   :for encoded = (-> x
+                                      ($affine *wenc* *benc* *os*)
+                                      ($sigmoid))
+                   :for decoded = (-> encoded
+                                      ($affine *wdec* *bdec* *os*)
+                                      ($sigmoid))
+                   :for d = ($- decoded x)
+                   :for mse = ($/ ($dot d d) *num-batch*)
+                   :for rho-hat = ($mean encoded 0)
+                   :for kld = (kl-divergence rho-hat)
+                   :for esparsity = ($* kld *beta*)
+                   :for loss = ($+ mse esparsity)
+                   :do (progn
+                         ($adgd! *ae*)
+                         (when (zerop (rem bidx 10))
+                           (prn "LOSS:" bidx "/" epoch loss mse esparsity))))
+             (prn "[TEST]" epoch (validate)))))
 
 (setf *mnist* nil)
 (setf *mnist-train-image-batches* nil)
+
+(gcf)
