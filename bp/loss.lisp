@@ -98,7 +98,7 @@
     dinput))
 
 (defmethod $cnll ((a node) (b tensor))
-  (node ($cnll ($data a) ($data b))
+  (node ($cnll ($data a) b)
         :name :cnll
         :link (link (to a (dcnll ($data a) b)))))
 
