@@ -66,43 +66,48 @@
 
 (defun xinit (size) ($* (apply #'rndn size) (/ 1 (sqrt (/ ($ size 0) 2)))))
 
-(defparameter *os* (ones *batch-size* 1))
+(defparameter *os* (ones *batch-size*))
 
 ;; generator network
 (defparameter *gw1* ($push *generator* (xinit (list (+ *gen-size* *lbl-size*) *hidden-size*))))
-(defparameter *gb1* ($push *generator* (zeros 1 *hidden-size*)))
+(defparameter *gb1* ($push *generator* (zeros *hidden-size*)))
 (defparameter *gw2* ($push *generator* (xinit (list *hidden-size* *img-size*))))
-(defparameter *gb2* ($push *generator* (zeros 1 *img-size*)))
+(defparameter *gb2* ($push *generator* (zeros *img-size*)))
 
 ;; you can apply leaky relu, $lrelu
 (defun generate (z c)
-  (let* ((z ($cat z c 1))
-         (h ($relu ($+ ($@ z *gw1*) ($@ *os* *gb1*))))
-         (x ($sigmoid ($+ ($@ h *gw2*) ($@ *os* *gb2*)))))
-    x))
+  (-> ($cat z c 1)
+      ($affine *gw1* *gb1* *os*)
+      ($relu)
+      ($affine *gw2* *gb2* *os*)
+      ($sigmoid)))
 
 ;; discriminator network
 (defparameter *dw1* ($push *discriminator* (xinit (list *img-size* *hidden-size*))))
-(defparameter *db1* ($push *discriminator* (zeros 1 *hidden-size*)))
+(defparameter *db1* ($push *discriminator* (zeros *hidden-size*)))
 (defparameter *dw2* ($push *discriminator* (xinit (list *hidden-size* 1))))
-(defparameter *db2* ($push *discriminator* (zeros 1 1)))
+(defparameter *db2* ($push *discriminator* (zeros 1)))
 
 ;; you can apply leaky relu, $lrelu
 (defun discriminate (x)
-  (let* ((h ($relu ($+ ($@ x *dw1*) ($@ *os* *db1*))))
-         (y ($sigmoid ($+ ($@ h *dw2*) ($@ *os* *db2*)))))
-    y))
+  (-> x
+      ($affine *dw1* *db1* *os*)
+      ($relu)
+      ($affine *dw2* *db2* *os*)
+      ($sigmoid)))
 
 ;; q(c|X) network
 (defparameter *qw1* ($push *qnet* (xinit (list *img-size* *hidden-size*))))
-(defparameter *qb1* ($push *qnet* (zeros 1 *hidden-size*)))
+(defparameter *qb1* ($push *qnet* (zeros *hidden-size*)))
 (defparameter *qw2* ($push *qnet* (xinit (list *hidden-size* *lbl-size*))))
-(defparameter *qb2* ($push *qnet* (zeros 1 *lbl-size*)))
+(defparameter *qb2* ($push *qnet* (zeros *lbl-size*)))
 
 (defun qnet (x)
-  (let* ((h ($relu ($+ ($@ x *qw1*) ($@ *os* *qb1*))))
-         (c ($softmax ($+ ($@ h *qw2*) ($@ *os* *qb2*)))))
-    c))
+  (-> x
+      ($affine *qw1* *qb1* *os*)
+      ($relu)
+      ($affine *qw2* *qb2* *os*)
+      ($softmax)))
 
 (defun rones (nrows cprobs)
   (let* ((indices ($multinomial cprobs nrows))
@@ -129,66 +134,67 @@
 
 (gcf)
 
-(loop :for epoch :from 1 :to *epoch*
-      :for dloss = 0
-      :for gloss = 0
-      :for qloss = 0
-      :do (progn
-            ($cg! *discriminator*)
-            ($cg! *generator*)
-            (prn "*****")
-            (prn "EPOCH:" epoch)
-            (loop :for x :in *train-data-batches*
-                  :for bidx :from 0
-                  :for c = (samplec)
-                  :for z = (samplez)
-                  :do (let ((dlv nil)
-                            (dgv nil)
-                            (dqv nil))
-                        ;; discriminator
-                        (dotimes (k *k*)
-                          (let* ((dr (discriminate x))
-                                 (df (discriminate (generate z c)))
-                                 (l ($data (lossd dr df))))
-                            (incf dloss l)
-                            (setf dlv l)
-                            (optm *discriminator*)
-                            ($cg! *discriminator*)
-                            ($cg! *generator*)
-                            ($cg! *qnet*)))
-                        ;; generator
-                        (let* ((df (discriminate (generate z c)))
-                               (l ($data (lossg df))))
-                          (incf gloss l)
-                          (setf dgv l)
-                          (optm *generator*)
-                          ($cg! *discriminator*)
-                          ($cg! *generator*)
-                          ($cg! *qnet*))
-                        ;; q network
-                        (let* ((g-sample (generate z c))
-                               (qc (qnet g-sample))
-                               (l ($data (lossq c qc))))
-                          (incf qloss l)
-                          (setf dqv l)
-                          (optm *generator*)
-                          (optm *qnet*)
-                          ($cg! *discriminator*)
-                          ($cg! *generator*)
-                          ($cg! *qnet*))
-                        (when (zerop (rem bidx 200))
-                          (prn "  D/L/Q:" bidx dlv dgv dqv))))
-            (when (zerop (rem epoch 1))
-              (let ((g (generate (samplez) (samplec))))
-                ($cg! *discriminator*)
-                ($cg! *generator*)
-                ($cg! *qnet*)
-                (loop :for i :from 1 :to 1
-                      :for s = (random *batch-size*)
-                      :for fname = (format nil "~A/i~A-~A.png" *output* epoch i)
-                      :do (outpng ($index ($data g) 0 s) fname))))
-            (prn " LOSS:" epoch (/ dloss *train-count*) (/ gloss *train-count*)
-                 (/ qloss *train-count*))))
+(time
+ (loop :for epoch :from 1 :to *epoch*
+       :for dloss = 0
+       :for gloss = 0
+       :for qloss = 0
+       :do (progn
+             ($cg! *discriminator*)
+             ($cg! *generator*)
+             (prn "*****")
+             (prn "EPOCH:" epoch)
+             (loop :for x :in *train-data-batches*
+                   :for bidx :from 0
+                   :for c = (samplec)
+                   :for z = (samplez)
+                   :do (let ((dlv nil)
+                             (dgv nil)
+                             (dqv nil))
+                         ;; discriminator
+                         (dotimes (k *k*)
+                           (let* ((dr (discriminate x))
+                                  (df (discriminate (generate z c)))
+                                  (l ($data (lossd dr df))))
+                             (incf dloss l)
+                             (setf dlv l)
+                             (optm *discriminator*)
+                             ($cg! *discriminator*)
+                             ($cg! *generator*)
+                             ($cg! *qnet*)))
+                         ;; generator
+                         (let* ((df (discriminate (generate z c)))
+                                (l ($data (lossg df))))
+                           (incf gloss l)
+                           (setf dgv l)
+                           (optm *generator*)
+                           ($cg! *discriminator*)
+                           ($cg! *generator*)
+                           ($cg! *qnet*))
+                         ;; q network
+                         (let* ((g-sample (generate z c))
+                                (qc (qnet g-sample))
+                                (l ($data (lossq c qc))))
+                           (incf qloss l)
+                           (setf dqv l)
+                           (optm *generator*)
+                           (optm *qnet*)
+                           ($cg! *discriminator*)
+                           ($cg! *generator*)
+                           ($cg! *qnet*))
+                         (when (zerop (rem bidx 200))
+                           (prn "  D/L/Q:" bidx dlv dgv dqv))))
+             (when (zerop (rem epoch 1))
+               (let ((g (generate (samplez) (samplec))))
+                 ($cg! *discriminator*)
+                 ($cg! *generator*)
+                 ($cg! *qnet*)
+                 (loop :for i :from 1 :to 1
+                       :for s = (random *batch-size*)
+                       :for fname = (format nil "~A/i~A-~A.png" *output* epoch i)
+                       :do (outpng ($index ($data g) 0 s) fname))))
+             (prn " LOSS:" epoch (/ dloss *train-count*) (/ gloss *train-count*)
+                  (/ qloss *train-count*)))))
 
 (defun outpngs25 (data81 fname &optional (w 28) (h 28))
   (let* ((n 5)
@@ -220,3 +226,9 @@
   ($cg! *discriminator*)
   ($cg! *generator*)
   ($cg! *qnet*))
+
+(setf *mnist* nil
+      *mnist-train-image-batches* nil
+      *train-data-batches* nil)
+
+(gcf)
