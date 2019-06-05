@@ -80,6 +80,7 @@
       ($affine *gw1* *gb1* *os*)
       ($relu)
       ($affine *gw2* *gb2* *os*)
+      ($clamp -10 10)
       ($sigmoid)))
 
 ;; discriminator network
@@ -94,6 +95,7 @@
       ($affine *dw1* *db1* *os*)
       ($relu)
       ($affine *dw2* *db2* *os*)
+      ($clamp -10 10)
       ($sigmoid)))
 
 ;; q(c|X) network
@@ -122,7 +124,7 @@
 (defun samplez () (rndn *batch-size* *gen-size*))
 (defun samplec () (rones *batch-size* *cprobs*))
 
-(defparameter *epoch* 100)
+(defparameter *epoch* 20)
 (defparameter *k* 1)
 
 ($cg! *discriminator*)
