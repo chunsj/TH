@@ -94,6 +94,8 @@
 
 (gcf)
 
+(setf *epoch* 1)
+
 (time
  (loop :for epoch :from 1 :to *epoch*
        :for dloss = 0
