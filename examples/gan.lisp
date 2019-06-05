@@ -10,8 +10,6 @@
 
 (in-package :gan)
 
-(setf th::*default-tensor-class* 'tensor.double)
-
 ;; load mnist data, takes ~22 secs in macbook 2017
 (defparameter *mnist* (read-mnist-data))
 
@@ -65,6 +63,7 @@
       ($affine *gw1* *gb1* *os*)
       ($relu)
       ($affine *gw2* *gb2* *os*)
+      ($clamp -10 10)
       ($sigmoid)))
 
 ;; discriminator network
@@ -79,6 +78,7 @@
       ($affine *dw1* *db1* *os*)
       ($relu)
       ($affine *dw2* *db2* *os*)
+      ($clamp -10 10)
       ($sigmoid)))
 
 (defun samplez () (rndn *batch-size* *gen-size*))
@@ -94,7 +94,6 @@
 
 (gcf)
 
-(setf *epoch* 1)
 (time
  (loop :for epoch :from 1 :to *epoch*
        :for dloss = 0
@@ -168,5 +167,3 @@
       *train-data-batches* nil)
 
 (gcf)
-
-(setf th::*default-tensor-class* 'tensor.float)
