@@ -86,11 +86,12 @@
       ($affine *dw1* *db1* *os*)
       ($lrelu 0.2)
       ($affine *dw2* *db2* *os*)
+      ($clamp -10 10)
       ($sigmoid)))
 
 (defun samplez () (rndn *batch-size* *gen-size*))
 
-(defparameter *epoch* 100)
+(defparameter *epoch* 20)
 (defparameter *k* 1)
 
 ($cg! *discriminator*)
@@ -101,7 +102,6 @@
 
 (gcf)
 
-(setf *epoch* 1)
 (time
  (loop :for epoch :from 1 :to *epoch*
        :for dloss = 0
