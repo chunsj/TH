@@ -366,6 +366,7 @@
            #:$dlmaxpool2d
            #:$dconv2d
            #:$affine
+           #:$affine2
            #:$xwpb
            #:$wimb
            #:$rn!
