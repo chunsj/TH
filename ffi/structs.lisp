@@ -29,21 +29,15 @@
   (fn :pointer)
   (data :pointer))
 
-(th-set-default-error-handler (cffi:callback error-handler) (cffi:null-pointer))
-(th-set-default-arg-error-handler (cffi:callback arg-error-handler) (cffi:null-pointer))
+(th-set-default-error-handler (cffi:callback error-handler) +nil+)
+(th-set-default-arg-error-handler (cffi:callback arg-error-handler) +nil+)
 
 (cffi:defctype th-file-ptr (:pointer :void))
 
 (cffi:defcfun ("THSetNumThreads" th-set-num-threads) :void (n :int))
 (cffi:defcfun ("THGetNumThreads" th-get-num-threads) :int)
 
-;;(cffi:defcfun ("omp_get_num_threads" omp-get-num-threads) :int)
-;;(cffi:defcfun ("omp_set_num_threads" omp-set-num-threads) :void (n :int))
-
-;;(th-set-num-threads 4)
-;;(omp-set-num-threads 4)
-
-;; macbook 12 2017
+;; macbook 12 2017 - default is 4 but half of it shows better performance
 (th-set-num-threads 2)
 
 (defparameter *th-type-infos* '(("byte" :unsigned-char "Byte" :long)
