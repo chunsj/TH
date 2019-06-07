@@ -4,6 +4,10 @@
 
 (defgeneric $conv1d (x w &optional b k d)
   (:documentation "Performs 1-dimentional convolution of x with kernel w, and optional bias b."))
+(defgeneric $maxpool1d (x k &optional d)
+  (:documentation "Performs max pooling over x."))
+(defgeneric $rowconv1d (x w &optional b k d feature-first)
+  (:documentation "Performs 1-dimensional row oriented convolution."))
 
 (defgeneric $conv2d (x k &optional b dw dh pw ph)
   (:documentation "Performs convolution of x with kernel k and bias b which is optional."))
@@ -50,8 +54,9 @@
 (defun conv1d-without-b (x xp w wp k d)
   (let* ((xd (if xp ($data x) x))
          (wd (if wp ($data w) w))
+         (bd (zeros ($size wd 0)))
          (out ($empty xd)))
-    (nn-temporal-convolution-update-output xd out wd nil k d
+    (nn-temporal-convolution-update-output xd out wd bd k d
                                            (/ ($size wd 1) k)
                                            ($size wd 0))
     (node out
@@ -65,17 +70,37 @@
                                             dw ($zero wd))
                                       (nn-temporal-convolution-update-grad-input xd gv dx
                                                                                  wd k d)
-                                      (nn-temporal-convolution-acc-grad-parameters xd gv dw nil
+                                      (nn-temporal-convolution-acc-grad-parameters xd gv dw bd
                                                                                    k d 1)))))
                         (when xp (to x (funcall gfn dv gv) dx))
                         (when wp (to w (funcall gfn dv gv) dw)))))))
 
+;; x can be 2d (n-input-frame x features) or 3d (n-batch-frame x n-input-frame x features)
+;; w should be (n-output-frame x n-input-frame*k), b should be (n-output-frame)
+;; output is (n-output-frame x output-features)
+;; n-output-frame = (n-input-frame - k) / d + 1
 (defmethod $conv1d ((x tensor) (w tensor) &optional b (k 1) (d 1))
-  (let ((out ($empty x)))
+  (let ((out ($empty x))
+        (b (or b (zeros ($size w 0)))))
     (nn-temporal-convolution-update-output x out w b k d
                                            (/ ($size w 1) k)
                                            ($size w 0))
     out))
+
+(defmethod $conv1d ((x node) (w node) &optional b (k 1) (d 1))
+  (if b
+      (conv1d-with-b x T w T b (typep b 'node) k d)
+      (conv1d-without-b x T w T k d)))
+
+(defmethod $conv1d ((x tensor) (w node) &optional b (k 1) (d 1))
+  (if b
+      (conv1d-with-b x nil w T b (typep b 'node) k d)
+      (conv1d-without-b x nil w T k d)))
+
+(defmethod $conv1d ((x node) (w tensor) &optional b (k 1) (d 1))
+  (if b
+      (conv1d-with-b x T w nil b (typep b 'node) k d)
+      (conv1d-without-b x T w nil k d)))
 
 ;; k should have the shape of (output-planes, intput-planes, kh, kw)
 ;; b should have the shape of (output-planes)

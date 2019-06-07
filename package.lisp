@@ -360,6 +360,8 @@
            #:$bn
            #:$dropout
            #:$conv1d
+           #:$maxpool1d
+           #:$rowconv1d
            #:$conv2d
            #:$maxpool2d
            #:$avgpool2d
