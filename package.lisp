@@ -367,6 +367,7 @@
            #:$dconv2d
            #:$affine
            #:$affine2
+           #:$addm2
            #:$xwpb
            #:$wimb
            #:$rn!

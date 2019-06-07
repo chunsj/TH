@@ -133,8 +133,8 @@
     (coerce (mapcar (lambda (i) ($ *idx-to-char* i)) (reverse indices)) 'string)))
 
 (defun sigmoid-gate (xt ph w u b) ($sigmoid ($affine2 xt w ph u b)))
-
 (defun tanh-gate (xt ph w u b) ($tanh ($affine2 xt w ph u b)))
+(defun cell-state (at it ft pc) ($addm2 at it ft pc))
 
 ($cg! *lstm2*)
 
@@ -160,13 +160,13 @@
                                :for ft1 = (sigmoid-gate xt ph1 *wf1* *uf1* *bf1*)
                                :for ot1 = (sigmoid-gate xt ph1 *wo1* *uo1* *bo1*)
                                :for at1 = (tanh-gate xt ph1 *wa1* *ua1* *ba1*)
-                               :for ct1 = ($+ ($* at1 it1) ($* ft1 pc1))
+                               :for ct1 = (cell-state at1 it1 ft1 pc1)
                                :for ht1 = ($* ($tanh ct1) ot1)
                                :for it2 = (sigmoid-gate ht1 ph2 *wi2* *ui2* *bi2*)
                                :for ft2 = (sigmoid-gate ht1 ph2 *wf2* *uf2* *bf2*)
                                :for ot2 = (sigmoid-gate ht1 ph2 *wo2* *uo2* *bo2*)
                                :for at2 = (tanh-gate ht1 ph2 *wa2* *ua2* *ba2*)
-                               :for ct2 = ($+ ($* at2 it2) ($* ft2 pc2))
+                               :for ct2 = (cell-state at2 it2 ft2 pc2)
                                :for ht2 = ($* ($tanh ct2) ot2)
                                :for yt = ($logsoftmax ($affine ht2 *wy* *by*))
                                :for y = (let ((m ($index target 1 time)))

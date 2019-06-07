@@ -5,6 +5,7 @@
 (defgeneric $xwpb (x w b &optional ones) (:documentation "Returns x@w + b."))
 (defgeneric $affine (x w b &optional ones) (:documentation "Affine transformation."))
 (defgeneric $affine2 (x1 w1 x2 w2 b &optional ones) (:documentation "Affine transformation."))
+(defgeneric $addm2 (x1 w1 x2 w2) (:documentation "x1*w1 + x2*w2"))
 
 (defgeneric $wimb (xwi w) (:documentation "Computes word embedding."))
 
@@ -17,6 +18,53 @@
 (defgeneric $hen! (tensor) (:documentation "Fills with He normal."))
 (defgeneric $lecunu! (tensor) (:documentation "Fills with Lecun uniform."))
 (defgeneric $lecunn! (tensor) (:documentation "Fills with Lecun normal."))
+
+(defun addmul (x1 w1 x2 w2) ($addmul! ($mul x1 w1) x2 w2))
+
+(defmethod $addm2 ((x1 node) (w1 node) (x2 node) (w2 node))
+  (node (addmul ($data x1) ($data w1) ($data x2) ($data w2))
+        :name :addm2
+        :link (link
+                (to x1 ($mul ($data w1) gv))
+                (to w1 ($mul ($data x1) gv))
+                (to x2 ($mul ($data w2) gv))
+                (to w2 ($mul ($data x2) gv)))))
+
+(defmethod $addm2 ((x1 tensor) (w1 node) (x2 tensor) (w2 node))
+  (node (addmul x1 ($data w1) x2 ($data w2))
+        :name :addm2
+        :link (link
+                (to w1 ($mul x1 gv))
+                (to w2 ($mul x2 gv)))))
+
+(defmethod $addm2 ((x1 node) (w1 tensor) (x2 node) (w2 tensor))
+  (node (addmul ($data x1) w1 ($data x2) w2)
+        :name :addm2
+        :link (link
+                (to x1 ($mul w1 gv))
+                (to x2 ($mul w2 gv)))))
+
+(defmethod $addm2 ((x1 tensor) (w1 tensor) (x2 node) (w2 node))
+  (node (addmul x1 w1 ($data x2) ($data w2))
+        :name :addm2
+        :link (link
+                (to x2 ($mul ($data w2) gv))
+                (to w2 ($mul ($data x2) gv)))))
+
+(defmethod $addm2 ((x1 node) (w1 node) (x2 tensor) (w2 tensor))
+  (node (addmul ($data x1) ($data w1) x2 w2)
+        :name :addm2
+        :link (link
+                (to x1 ($mul ($data w1) gv))
+                (to w1 ($mul ($data x1) gv)))))
+
+(defmethod $addm2 ((x1 node) (w1 node) (x2 node) (w2 tensor))
+  (node (addmul ($data x1) ($data w1) ($data x2) w2)
+        :name :addm2
+        :link (link
+                (to x1 ($mul ($data w1) gv))
+                (to w1 ($mul ($data x1) gv))
+                (to x2 ($mul w2 gv)))))
 
 (defun allocate-addbuf (nframe)
   (let ((tensor (make-instance *default-tensor-class*)))
