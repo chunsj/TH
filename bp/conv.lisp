@@ -2,6 +2,9 @@
 
 (in-package :th)
 
+(defgeneric $conv1d (x w &optional b k d)
+  (:documentation "Performs 1-dimentional convolution of x with kernel w, and optional bias b."))
+
 (defgeneric $conv2d (x k &optional b dw dh pw ph)
   (:documentation "Performs convolution of x with kernel k and bias b which is optional."))
 (defgeneric $maxpool2d (x kw kh &optional dw dh pw ph ceilp)
@@ -16,6 +19,63 @@
 
 (defgeneric $dconv2d (x w &optional b dw dh pw ph aw ah)
   (:documentation "Performs deconvolution using w weight, b bias and others."))
+
+(defun conv1d-with-b (x xp w wp b bp k d)
+  (let* ((xd (if xp ($data x) x))
+         (wd (if wp ($data w) w))
+         (bd (if bp ($data b) b))
+         (out ($empty xd)))
+    (nn-temporal-convolution-update-output xd out wd bd k d
+                                           (/ ($size wd 1) k)
+                                           ($size wd 0))
+    (node out
+          :name :conv1d
+          :link (link (let* ((dx nil)
+                             (dw nil)
+                             (db nil)
+                             (gfn (lambda (dv gv)
+                                    (declare (ignore dv))
+                                    (unless (and dx dw)
+                                      (setf dx ($zero xd)
+                                            dw ($zero wd)
+                                            db ($zero bd))
+                                      (nn-temporal-convolution-update-grad-input xd gv dx
+                                                                                 wd k d)
+                                      (nn-temporal-convolution-acc-grad-parameters xd gv dw db
+                                                                                   k d 1)))))
+                        (when xp (to x (funcall gfn dv gv) dx))
+                        (when wp (to w (funcall gfn dv gv) dw))
+                        (when bp (to b (funcall gfn dv gv) db)))))))
+
+(defun conv1d-without-b (x xp w wp k d)
+  (let* ((xd (if xp ($data x) x))
+         (wd (if wp ($data w) w))
+         (out ($empty xd)))
+    (nn-temporal-convolution-update-output xd out wd nil k d
+                                           (/ ($size wd 1) k)
+                                           ($size wd 0))
+    (node out
+          :name :conv1d
+          :link (link (let* ((dx nil)
+                             (dw nil)
+                             (gfn (lambda (dv gv)
+                                    (declare (ignore dv))
+                                    (unless (and dx dw)
+                                      (setf dx ($zero xd)
+                                            dw ($zero wd))
+                                      (nn-temporal-convolution-update-grad-input xd gv dx
+                                                                                 wd k d)
+                                      (nn-temporal-convolution-acc-grad-parameters xd gv dw nil
+                                                                                   k d 1)))))
+                        (when xp (to x (funcall gfn dv gv) dx))
+                        (when wp (to w (funcall gfn dv gv) dw)))))))
+
+(defmethod $conv1d ((x tensor) (w tensor) &optional b (k 1) (d 1))
+  (let ((out ($empty x)))
+    (nn-temporal-convolution-update-output x out w b k d
+                                           (/ ($size w 1) k)
+                                           ($size w 0))
+    out))
 
 ;; k should have the shape of (output-planes, intput-planes, kh, kw)
 ;; b should have the shape of (output-planes)
