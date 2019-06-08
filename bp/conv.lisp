@@ -102,6 +102,25 @@
       (conv1d-with-b x T w nil b (typep b 'node) k d)
       (conv1d-without-b x T w nil k d)))
 
+(defmethod $maxpool1d ((x tensor) k &optional (d 1))
+  (let ((out ($empty x))
+        (indices (make-instance 'tensor.long)))
+    (allocate-tensor-handle indices)
+    (nn-temporal-max-pooling-update-output x out indices k d)
+    (deallocate-tensor-handle indices)
+    out))
+
+(defmethod $maxpool1d ((x node) k &optional (d 1))
+  (let ((out ($empty ($data x)))
+        (indices (tensor.long)))
+    (nn-temporal-max-pooling-update-output x out indices k d)
+    (node out
+          :name :maxpool1d
+          :link (link (to x (let ((dx ($empty ($data x))))
+                              (nn-temporal-max-pooling-update-grad-input ($data x) gv dx
+                                                                         indices k d)
+                              dx))))))
+
 ;; k should have the shape of (output-planes, intput-planes, kh, kw)
 ;; b should have the shape of (output-planes)
 (defmethod $conv2d ((x tensor) (k tensor) &optional b (dw 1) (dh 1) (pw 0) (ph 0))
