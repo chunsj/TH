@@ -6,6 +6,8 @@
   (:documentation "Performs 1-dimentional convolution of x with kernel w, and optional bias b."))
 (defgeneric $maxpool1d (x k &optional d)
   (:documentation "Performs max pooling over x."))
+(defgeneric $subsample1d (x w &optional k d)
+  (:documentation "Performs 1-dimentional sub sampling."))
 (defgeneric $rowconv1d (x w &optional b k d feature-first)
   (:documentation "Performs 1-dimensional row oriented convolution."))
 
