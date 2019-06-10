@@ -6,6 +6,8 @@
   (:documentation "Performs 1-dimentional convolution of x with kernel w, and optional bias b."))
 (defgeneric $maxpool1d (x k &optional d)
   (:documentation "Performs max pooling over x."))
+(defgeneric $subsample1d (x w &optional b k d)
+  (:documentation "Performs 1-dimentional sub sampling."))
 (defgeneric $rowconv1d (x w &optional b k d feature-first)
   (:documentation "Performs 1-dimensional row oriented convolution."))
 
@@ -23,6 +25,154 @@
 
 (defgeneric $dconv2d (x w &optional b dw dh pw ph aw ah)
   (:documentation "Performs deconvolution using w weight, b bias and others."))
+
+(defun rowconv1d-with-b (x xp w wp b bp k d ffst)
+  (let* ((xd (if xp ($data x) x))
+         (wd (if wp ($data w) w))
+         (bd (if bp ($data b) b))
+         (f ($empty xd))
+         (df ($empty xd))
+         (out ($empty xd)))
+    (nn-temporal-row-convolution-update-output xd out wd bd f df k d 0 ffst)
+    (node out
+          :name :rowconv1d
+          :link (link (let* ((dx nil)
+                             (dw nil)
+                             (db nil)
+                             (gfn (lambda (dv gv)
+                                    (declare (ignore dv))
+                                    (unless (and dx dw)
+                                      (setf dx ($zero xd)
+                                            dw ($zero wd)
+                                            db ($zero bd))
+                                      (nn-temporal-row-convolution-update-grad-input xd gv dx wd
+                                                                                     f df k d 0
+                                                                                     ffst)
+                                      (nn-temporal-row-convolution-acc-grad-parameters xd gv dw db
+                                                                                       f df k d 0
+                                                                                       ffst 1)))))
+                        (when xp (to x (funcall gfn dv gv) dx))
+                        (when wp (to w (funcall gfn dv gv) dw))
+                        (when bp (to b (funcall gfn dv gv) db)))))))
+
+(defun rowconv1d-without-b (x xp w wp k d ffst)
+  (let* ((xd (if xp ($data x) x))
+         (wd (if wp ($data w) w))
+         (bd (zeros ($size wd 0)))
+         (f ($empty xd))
+         (df ($empty xd))
+         (out ($empty xd)))
+    (nn-temporal-row-convolution-update-output xd out wd bd f df k d 0 ffst)
+    (node out
+          :name :rowconv1d
+          :link (link (let* ((dx nil)
+                             (dw nil)
+                             (db nil)
+                             (gfn (lambda (dv gv)
+                                    (declare (ignore dv))
+                                    (unless (and dx dw)
+                                      (setf dx ($zero xd)
+                                            dw ($zero wd)
+                                            db ($zero bd))
+                                      (nn-temporal-row-convolution-update-grad-input xd gv dx wd
+                                                                                     f df k d 0
+                                                                                     ffst)
+                                      (nn-temporal-row-convolution-acc-grad-parameters xd gv dw db
+                                                                                       f df k d 0
+                                                                                       ffst 1)))))
+                        (when xp (to x (funcall gfn dv gv) dx))
+                        (when wp (to w (funcall gfn dv gv) dw)))))))
+
+(defmethod $rowconv1d ((x tensor) (w tensor) &optional b (k 1) (d 1) feature-first)
+  (let ((out ($empty x))
+        (b (or b (zeros ($size w 0))))
+        (f ($empty x))
+        (df ($empty x)))
+    (nn-temporal-row-convolution-update-output x out w b f df k d 0 feature-first)
+    out))
+
+(defmethod $rowconv1d ((x node) (w node) &optional b (k 1) (d 1) feature-first)
+  (if b
+      (rowconv1d-with-b x T w T b (typep b 'node) k d feature-first)
+      (rowconv1d-without-b x T w T k d feature-first)))
+
+(defmethod $rowconv1d ((x tensor) (w node) &optional b (k 1) (d 1) feature-first)
+  (if b
+      (rowconv1d-with-b x nil w T b (typep b 'node) k d feature-first)
+      (rowconv1d-without-b x nil w T k d feature-first)))
+
+(defmethod $rowconv1d ((x node) (w tensor) &optional b (k 1) (d 1) feature-first)
+  (if b
+      (rowconv1d-with-b x T w nil b (typep b 'node) k d feature-first)
+      (rowconv1d-without-b x T w nil k d feature-first)))
+
+(defun subsample1d-with-b (x xp w wp b bp k d)
+  (let* ((xd (if xp ($data x) x))
+         (wd (if wp ($data w) w))
+         (bd (if bp ($data b) b))
+         (out ($empty xd)))
+    (nn-temporal-subsampling-update-output xd out wd bd k d ($size wd 0))
+    (node out
+          :name :subsample1d
+          :link (link (let* ((dx nil)
+                             (dw nil)
+                             (db nil)
+                             (gfn (lambda (dv gv)
+                                    (declare (ignore dv))
+                                    (unless (and dx dw)
+                                      (setf dx ($zero xd)
+                                            dw ($zero wd)
+                                            db ($zero bd))
+                                      (nn-temporal-subsampling-update-grad-input xd gv dx wd k d)
+                                      (nn-temporal-subsampling-acc-grad-parameters xd gv dw db
+                                                                                   k d 1)))))
+                        (when xp (to x (funcall gfn dv gv) dx))
+                        (when wp (to w (funcall gfn dv gv) dw))
+                        (when bp (to b (funcall gfn dv gv) db)))))))
+
+(defun subsample1d-without-b (x xp w wp k d)
+  (let* ((xd (if xp ($data x) x))
+         (wd (if wp ($data w) w))
+         (bd (zeros ($size wd 0)))
+         (out ($empty xd)))
+    (nn-temporal-subsampling-update-output xd out wd bd k d ($size wd 0))
+    (node out
+          :name :subsample1d
+          :link (link (let* ((dx nil)
+                             (dw nil)
+                             (db nil)
+                             (gfn (lambda (dv gv)
+                                    (declare (ignore dv))
+                                    (unless (and dx dw)
+                                      (setf dx ($zero xd)
+                                            dw ($zero wd)
+                                            db ($zero bd))
+                                      (nn-temporal-subsampling-update-grad-input xd gv dx wd k d)
+                                      (nn-temporal-subsampling-acc-grad-parameters xd gv dw db
+                                                                                   k d 1)))))
+                        (when xp (to x (funcall gfn dv gv) dx))
+                        (when wp (to w (funcall gfn dv gv) dw)))))))
+
+(defmethod $subsample1d ((x tensor) (w tensor) &optional b (k 1) (d 1))
+  (let ((out ($empty x))
+        (b (or b (zeros ($size w 0)))))
+    (nn-temporal-subsampling-update-output x out w b k d ($size w 0))
+    out))
+
+(defmethod $subsample1d ((x node) (w node) &optional b (k 1) (d 1))
+  (if b
+      (subsample1d-with-b x T w T b (typep b 'node) k d)
+      (subsample1d-without-b x T w T k d)))
+
+(defmethod $subsample1d ((x tensor) (w node) &optional b (k 1) (d 1))
+  (if b
+      (subsample1d-with-b x nil w T b (typep b 'node) k d)
+      (subsample1d-without-b x nil w T k d)))
+
+(defmethod $subsample1d ((x node) (w tensor) &optional b (k 1) (d 1))
+  (if b
+      (subsample1d-with-b x T w nil b (typep b 'node) k d)
+      (subsample1d-without-b x T w nil k d)))
 
 (defun conv1d-with-b (x xp w wp b bp k d)
   (let* ((xd (if xp ($data x) x))
@@ -63,14 +213,16 @@
           :name :conv1d
           :link (link (let* ((dx nil)
                              (dw nil)
+                             (db nil)
                              (gfn (lambda (dv gv)
                                     (declare (ignore dv))
                                     (unless (and dx dw)
                                       (setf dx ($zero xd)
-                                            dw ($zero wd))
+                                            dw ($zero wd)
+                                            db ($zero bd))
                                       (nn-temporal-convolution-update-grad-input xd gv dx
                                                                                  wd k d)
-                                      (nn-temporal-convolution-acc-grad-parameters xd gv dw bd
+                                      (nn-temporal-convolution-acc-grad-parameters xd gv dw db
                                                                                    k d 1)))))
                         (when xp (to x (funcall gfn dv gv) dx))
                         (when wp (to w (funcall gfn dv gv) dw)))))))
@@ -101,6 +253,25 @@
   (if b
       (conv1d-with-b x T w nil b (typep b 'node) k d)
       (conv1d-without-b x T w nil k d)))
+
+(defmethod $maxpool1d ((x tensor) k &optional (d 1))
+  (let ((out ($empty x))
+        (indices (make-instance 'tensor.long)))
+    (allocate-tensor-handle indices)
+    (nn-temporal-max-pooling-update-output x out indices k d)
+    (deallocate-tensor-handle indices)
+    out))
+
+(defmethod $maxpool1d ((x node) k &optional (d 1))
+  (let ((out ($empty ($data x)))
+        (indices (tensor.long)))
+    (nn-temporal-max-pooling-update-output x out indices k d)
+    (node out
+          :name :maxpool1d
+          :link (link (to x (let ((dx ($empty ($data x))))
+                              (nn-temporal-max-pooling-update-grad-input ($data x) gv dx
+                                                                         indices k d)
+                              dx))))))
 
 ;; k should have the shape of (output-planes, intput-planes, kh, kw)
 ;; b should have the shape of (output-planes)
