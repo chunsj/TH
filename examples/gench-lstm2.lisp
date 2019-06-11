@@ -140,6 +140,7 @@
 
 (setf *max-epochs* 1)
 
+;; before re-training errors are 1.4~1.5, now 1.17~1.27
 (time
  (loop :for epoch :from 1 :to *max-epochs*
        :do (progn
