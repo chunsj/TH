@@ -164,7 +164,7 @@
 
 (setf *max-epochs* 1)
 
-;; 1.20~1.34
+;; 1.19~1.34
 (time
  (loop :for epoch :from 1 :to *max-epochs*
        :do (progn
