@@ -33,7 +33,7 @@
 (defparameter *hidden-size* 128)
 (defparameter *sequence-length* 50)
 
-(defparameter *batch-size* 100)
+(defparameter *batch-size* 50)
 
 (defparameter *max-epochs* 50)
 
@@ -164,6 +164,7 @@
 
 (setf *max-epochs* 1)
 
+;; 1.20~1.34
 (time
  (loop :for epoch :from 1 :to *max-epochs*
        :do (progn
