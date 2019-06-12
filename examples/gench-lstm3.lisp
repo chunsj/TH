@@ -164,7 +164,7 @@
 
 (setf *max-epochs* 1)
 
-;; 1.19~1.34
+;; 1.17~1.32
 (time
  (loop :for epoch :from 1 :to *max-epochs*
        :do (progn
@@ -228,7 +228,7 @@
 (prn (sample (zeros 1 *hidden-size*) (zeros 1 *hidden-size*)
              (zeros 1 *hidden-size*) (zeros 1 *hidden-size*)
              (zeros 1 *hidden-size*) (zeros 1 *hidden-size*)
-             (random *vocab-size*) 800 0.5))
+             (random *vocab-size*) 800 0.99))
 
 (defun lstm3-write-weight-to (w fname)
   (let ((f (file.disk fname "w")))
