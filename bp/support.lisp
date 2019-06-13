@@ -90,13 +90,16 @@
 
 (defmethod $dropout ((x tensor) &optional (trainp t) (p 0.1))
   (if trainp
-      (let ((mask ($bernoulli! ($resize! ($empty x) ($size x)) (- 1 p))))
+      (let ((mask ($mul! ($bernoulli! ($resize! ($empty x) ($size x)) (- 1 p)) (/ 1 (- 1 p)))))
         ($mul! mask x))
-      ($mul x (- 1.0 p))))
+      x))
 
 (defmethod $dropout ((x node) &optional (trainp t) (p 0.1))
-  (node ($dropout ($data x) trainp p)
-        :name :dropout
-        :link (link (to x (if trainp
-                              ($mul gv p)
-                              ($mul gv (- 1 p)))))))
+  (if trainp
+      (let ((mask ($mul! ($bernoulli! ($resize! ($empty x) ($size x)) (- 1 p)) (/ 1 (- 1 p)))))
+        (node ($mul! mask ($data x))
+              :name :dropout
+              :link (link (to x ($mul mask gv)))))
+      (node ($data p)
+            :name :dropout
+            :link (link (to x gv)))))
