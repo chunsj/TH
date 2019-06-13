@@ -40,7 +40,7 @@
 (defun accumulate-effects (node)
   (cond (($tensorp ($data node))
          (let ((gv ($zero ($data node))))
-           (loop :for f :in (reverse ($fns node)) :do ($add! gv (funcall f)))
+           (loop :for f :in ($fns node) :do ($add! gv (funcall f)))
            gv))
         ((numberp ($data node))
          (reduce #'+ (mapcar (lambda (f) (funcall f)) (reverse ($fns node)))
