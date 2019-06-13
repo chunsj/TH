@@ -12,7 +12,8 @@
 ;; 3-layer lstm with dropout
 ;;
 
-(defparameter *data-lines* (read-lines-from "data/tinyshakespeare.txt"))
+;;(defparameter *data-lines* (read-lines-from "data/tinyshakespeare.txt"))
+(defparameter *data-lines* (read-lines-from "data/pg.txt"))
 (defparameter *data* (format nil "~{~A~^~%~}" *data-lines*))
 (defparameter *chars* (remove-duplicates (coerce *data* 'list)))
 (defparameter *data-size* ($count *data*))
@@ -114,7 +115,7 @@
 (defparameter *wy* ($push *lstm3* ($- ($* 0.16 (rnd *hidden-size* *vocab-size*)) 0.08)))
 (defparameter *by* ($push *lstm3* ($- ($* 0.16 (rnd *vocab-size*)) 0.08)))
 
-(defparameter *dropout* 0.1)
+(defparameter *dropout* 0.4)
 
 (defun sample (ph1 pc1 ph2 pc2 ph3 pc3 seed-idx n &optional (temperature 1))
   (let ((x (zeros 1 *vocab-size*))
@@ -164,7 +165,7 @@
 
 ($cg! *lstm3*)
 
-(setf *max-epochs* 1)
+(setf *max-epochs* 15000)
 
 (time
  (loop :for epoch :from 1 :to *max-epochs*
@@ -218,7 +219,8 @@
                                      (setf pc3 ht3)
                                      (incf loss ($data l))))
                          ($amgd! *lstm3* *learning-rate*)
-                         (when (zerop (rem bidx 10))
+                         (when ;;(zerop (rem bidx 10))
+                             (and (zerop (rem bidx 10)) (zerop (rem epoch 20)))
                            (prn "")
                            (prn "[BTCH/ITER]" bidx "/" epoch (* loss (/ 1.0 *sequence-length*)))
                            (prn (sample ($index ($data ph1) 0 0) ($index ($data pc1) 0 0)
@@ -232,7 +234,7 @@
 (prn (sample (zeros 1 *hidden-size*) (zeros 1 *hidden-size*)
              (zeros 1 *hidden-size*) (zeros 1 *hidden-size*)
              (zeros 1 *hidden-size*) (zeros 1 *hidden-size*)
-             (random *vocab-size*) 800 0.99))
+             (random *vocab-size*) 800 0.8))
 
 (defun lstm3-write-weight-to (w fname)
   (let ((f (file.disk fname "w")))
