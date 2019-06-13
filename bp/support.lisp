@@ -96,8 +96,9 @@
 
 (defmethod $dropout ((x node) &optional (trainp t) (p 0.1))
   (if trainp
-      (let ((mask ($mul! ($bernoulli! ($resize! ($empty x) ($size x)) (- 1 p)) (/ 1 (- 1 p)))))
-        (node ($mul! mask ($data x))
+      (let* ((xd ($data x))
+             (mask ($mul! ($bernoulli! ($resize! ($empty xd) ($size xd)) (- 1 p)) (/ 1 (- 1 p)))))
+        (node ($mul mask xd)
               :name :dropout
               :link (link (to x ($mul mask gv)))))
       (node ($data p)
