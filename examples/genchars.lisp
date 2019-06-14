@@ -9,6 +9,7 @@
 (in-package :genchars)
 
 (defparameter *data-lines* (read-lines-from "data/tinyshakespeare.txt"))
+(defparameter *data-lines* (read-lines-from "data/pg.txt"))
 (defparameter *data* (format nil "~{~A~^~%~}" *data-lines*))
 (defparameter *chars* (remove-duplicates (coerce *data* 'list)))
 (defparameter *data-size* ($count *data*))
@@ -37,8 +38,8 @@
 (defparameter *wx* ($push *rnn* ($* 0.01 (rndn *vocab-size* *hidden-size*))))
 (defparameter *wh* ($push *rnn* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
 (defparameter *wy* ($push *rnn* ($* 0.01 (rndn *hidden-size* *vocab-size*))))
-(defparameter *bh* ($push *rnn* (zeros 1 *hidden-size*)))
-(defparameter *by* ($push *rnn* (zeros 1 *vocab-size*)))
+(defparameter *bh* ($push *rnn* (zeros *hidden-size*)))
+(defparameter *by* ($push *rnn* (zeros *vocab-size*)))
 
 (defun sample (h seed-idx n &optional (temperature 1))
   (let ((x (zeros 1 *vocab-size*))
@@ -46,8 +47,8 @@
         (ph h))
     (setf ($ x 0 seed-idx) 1)
     (loop :for i :from 0 :below n
-          :for ht = ($tanh ($+ ($@ x *wx*) ($@ h *wh*) *bh*))
-          :for yt = ($+ ($@ ht *wy*) *by*)
+          :for ht = ($tanh ($affine2 x *wx* ph *wh* *bh*))
+          :for yt = ($affine ht *wy* *by*)
           :for ps = ($softmax ($/ yt temperature))
           :for nidx = (choose ($data ps))
           :do (progn
@@ -81,8 +82,8 @@
                            (tloss 0))
                        (loop :for i :from 0 :below ($size input 0)
                              :for xt = ($index input 0 i)
-                             :for ht = ($tanh ($+ ($@ xt *wx*) ($@ ph *wh*) *bh*))
-                             :for yt = ($+ ($@ ht *wy*) *by*)
+                             :for ht = ($tanh ($affine2 xt *wx* ph *wh* *bh*))
+                             :for yt = ($affine ht *wy* *by*)
                              :for ps = ($softmax yt)
                              :for y = ($index target 0 i)
                              :for l = ($cee ps y)
