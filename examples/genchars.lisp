@@ -82,7 +82,6 @@
                                        :do (setf ($ m i ($ *char-to-idx* ch)) 1))
                                  m)
                  :do (let ((ph (zeros 1 *hidden-size*))
-                           (losses nil)
                            (tloss 0))
                        (loop :for i :from 0 :below ($size input 0)
                              :for xt = ($index input 0 i)
@@ -93,8 +92,7 @@
                              :for l = ($cee ps y)
                              :do (progn
                                    (setf ph ht)
-                                   (incf tloss ($data l))
-                                   (push l losses)))
+                                   (incf tloss ($data l))))
                        ($adgd! *rnn*)
                        (when (zerop (rem n 100))
                          (prn "")
