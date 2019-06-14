@@ -94,7 +94,7 @@
                        ($adgd! *rnn*)
                        (when (zerop (rem n 100))
                          (prn "")
-                         (prn "[ITER]" n (/ tloss (* 1.0 *sequence-length*)))
+                         (prn "[ITER]" iter n (/ tloss (* 1.0 *sequence-length*)))
                          (prn (sample ($data ph) ($ *char-to-idx* ($ input-str 0)) 72))
                          (prn ""))
                        (incf n)))))
