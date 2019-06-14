@@ -56,9 +56,13 @@
                 (push nidx indices)
                 ($zero! x)
                 (setf ($ x 0 nidx) 1)))
+    ($cg! *rnn*)
     (coerce (mapcar (lambda (i) ($ *idx-to-char* i)) (reverse indices)) 'string)))
 
 (defparameter *upto* (- *data-size* *sequence-length* 1))
+
+($cg! *rnn*)
+(gcf)
 
 (time
  (loop :for iter :from 1 :to 1
