@@ -127,9 +127,11 @@
 
 (defparameter *upto* (- *data-size* *sequence-length* 1))
 
+(gcf)
+
 (time
  (let ((n 0))
-   (loop :for iter :from 1 :to 100
+   (loop :for iter :from 1 :to 1000
          :for upto = *upto*
          :for ph = (zeros *hidden-size* 1)
          :do (loop :for p :from 0 :below upto :by *sequence-length*
@@ -159,3 +161,30 @@
                            (prn (sample hprev ($ inputs 0) 200))
                            (prn ""))
                          (incf n))))))
+
+(defun mrnn-write-weight-to (w fname)
+  (let ((f (file.disk fname "w")))
+    ($fwrite w f)
+    ($fclose f)))
+
+(defun mrnn-read-weight-from (w fname)
+  (let ((f (file.disk fname "r")))
+    ($fread w f)
+    ($fclose f)))
+
+(defun mrnn-write-weights ()
+  (mrnn-write-weight-to *wxh* "examples/weights/genchar1/mrnn-wxh.dat")
+  (mrnn-write-weight-to *whh* "examples/weights/genchar1/mrnn-whh.dat")
+  (mrnn-write-weight-to *why* "examples/weights/genchar1/mrnn-why.dat")
+  (mrnn-write-weight-to *bh* "examples/weights/genchar1/mrnn-bh.dat")
+  (mrnn-write-weight-to *by* "examples/weights/genchar1/mrnn-by.dat"))
+
+(defun mrnn-read-weights ()
+  (mrnn-read-weight-from *wxh* "examples/weights/genchar1/mrnn-wxh.dat")
+  (mrnn-read-weight-from *whh* "examples/weights/genchar1/mrnn-whh.dat")
+  (mrnn-read-weight-from *why* "examples/weights/genchar1/mrnn-why.dat")
+  (mrnn-read-weight-from *bh* "examples/weights/genchar1/mrnn-bh.dat")
+  (mrnn-read-weight-from *by* "examples/weights/genchar1/mrnn-by.dat"))
+
+(mrnn-write-weights)
+(mrnn-read-weights)
