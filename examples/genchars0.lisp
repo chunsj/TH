@@ -8,7 +8,7 @@
 
 (in-package :genchars0)
 
-(defparameter *data-lines* (read-lines-from "data/pg.txt"))
+(defparameter *data-lines* (read-lines-from "data/tinyshakespeare.txt"))
 (defparameter *data* (format nil "~{~A~^~%~}" *data-lines*))
 (defparameter *chars* (remove-duplicates (coerce *data* 'list)))
 (defparameter *data-size* ($count *data*))
