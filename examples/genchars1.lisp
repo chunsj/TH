@@ -155,7 +155,7 @@
                                      ($add! mem ($* dparam dparam))
                                      ($add! param ($/ ($* (- *learning-rate*) dparam)
                                                       ($sqrt ($+ mem 1E-8))))))
-                         (when (zerop (rem n 100))
+                         (when (zerop (rem n 500))
                            (prn "")
                            (prn "[ITER]" n *smooth-loss*)
                            (prn (sample hprev ($ inputs 0) 200))
