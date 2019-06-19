@@ -159,3 +159,30 @@
                            (prn (sample hprev ($ inputs 0) 200))
                            (prn ""))
                          (incf n))))))
+
+(defun mrnn-write-weight-to (w fname)
+  (let ((f (file.disk fname "w")))
+    ($fwrite w f)
+    ($fclose f)))
+
+(defun mrnn-read-weight-from (w fname)
+  (let ((f (file.disk fname "r")))
+    ($fread w f)
+    ($fclose f)))
+
+(defun mrnn-write-weights ()
+  (mrnn-write-weight-to *wxh* "examples/weights/genchar0/mrnn-wxh.dat")
+  (mrnn-write-weight-to *whh* "examples/weights/genchar0/mrnn-whh.dat")
+  (mrnn-write-weight-to *why* "examples/weights/genchar0/mrnn-why.dat")
+  (mrnn-write-weight-to *bh* "examples/weights/genchar0/mrnn-bh.dat")
+  (mrnn-write-weight-to *by* "examples/weights/genchar0/mrnn-by.dat"))
+
+(defun mrnn-read-weights ()
+  (mrnn-read-weight-from *wxh* "examples/weights/genchar0/mrnn-wxh.dat")
+  (mrnn-read-weight-from *whh* "examples/weights/genchar0/mrnn-whh.dat")
+  (mrnn-read-weight-from *why* "examples/weights/genchar0/mrnn-why.dat")
+  (mrnn-read-weight-from *bh* "examples/weights/genchar0/mrnn-bh.dat")
+  (mrnn-read-weight-from *by* "examples/weights/genchar0/mrnn-by.dat"))
+
+(mrnn-write-weights)
+(mrnn-read-weights)
