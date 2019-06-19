@@ -8,8 +8,6 @@
 
 (in-package :genchars1)
 
-(setf th::*default-tensor-class* 'tensor.double)
-
 (defparameter *data-lines* (read-lines-from "data/pg.txt"))
 (defparameter *data* (format nil "~{~A~^~%~}" *data-lines*))
 (defparameter *chars* (remove-duplicates (coerce *data* 'list)))
@@ -131,7 +129,7 @@
 
 (time
  (let ((n 0))
-   (loop :for iter :from 1 :to 10
+   (loop :for iter :from 1 :to 100
          :for upto = *upto*
          :for ph = (zeros *hidden-size* 1)
          :do (loop :for p :from 0 :below upto :by *sequence-length*
