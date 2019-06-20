@@ -118,6 +118,30 @@
 
 ;;(sample (zeros *hidden-size*) (random *vocab-size*) 10)
 
+(defun mrnn-write-weight-to (w fname)
+  (let ((f (file.disk fname "w")))
+    ($fwrite w f)
+    ($fclose f)))
+
+(defun mrnn-read-weight-from (w fname)
+  (let ((f (file.disk fname "r")))
+    ($fread w f)
+    ($fclose f)))
+
+(defun mrnn-write-weights ()
+  (mrnn-write-weight-to *wxh* "examples/weights/genchar0/mrnn-wxh.dat")
+  (mrnn-write-weight-to *whh* "examples/weights/genchar0/mrnn-whh.dat")
+  (mrnn-write-weight-to *why* "examples/weights/genchar0/mrnn-why.dat")
+  (mrnn-write-weight-to *bh* "examples/weights/genchar0/mrnn-bh.dat")
+  (mrnn-write-weight-to *by* "examples/weights/genchar0/mrnn-by.dat"))
+
+(defun mrnn-read-weights ()
+  (mrnn-read-weight-from *wxh* "examples/weights/genchar0/mrnn-wxh.dat")
+  (mrnn-read-weight-from *whh* "examples/weights/genchar0/mrnn-whh.dat")
+  (mrnn-read-weight-from *why* "examples/weights/genchar0/mrnn-why.dat")
+  (mrnn-read-weight-from *bh* "examples/weights/genchar0/mrnn-bh.dat")
+  (mrnn-read-weight-from *by* "examples/weights/genchar0/mrnn-by.dat"))
+
 (defparameter *mwxh* ($zero *wxh*))
 (defparameter *mwhh* ($zero *whh*))
 (defparameter *mwhy* ($zero *why*))
@@ -128,8 +152,9 @@
 (defparameter *upto* (- *data-size* *sequence-length* 1))
 
 (time
- (let ((n 0))
-   (loop :for iter :from 1 :to 100
+ (let ((n 0)
+       (ml *smooth-loss*))
+   (loop :for iter :from 1 :to 10
          :for upto = *upto*
          :for ph = (zeros *hidden-size* 1)
          :do (loop :for p :from 0 :below upto :by *sequence-length*
@@ -157,32 +182,12 @@
                            (prn "")
                            (prn "[ITER]" n *smooth-loss*)
                            (prn (sample hprev ($ inputs 0) 200))
+                           (when (and (< *smooth-loss* 45D0) (< *smooth-loss* ml))
+                             (prn "updating weights")
+                             (setf ml *smooth-loss*)
+                             (mrnn-write-weights))
                            (prn ""))
                          (incf n))))))
-
-(defun mrnn-write-weight-to (w fname)
-  (let ((f (file.disk fname "w")))
-    ($fwrite w f)
-    ($fclose f)))
-
-(defun mrnn-read-weight-from (w fname)
-  (let ((f (file.disk fname "r")))
-    ($fread w f)
-    ($fclose f)))
-
-(defun mrnn-write-weights ()
-  (mrnn-write-weight-to *wxh* "examples/weights/genchar0/mrnn-wxh.dat")
-  (mrnn-write-weight-to *whh* "examples/weights/genchar0/mrnn-whh.dat")
-  (mrnn-write-weight-to *why* "examples/weights/genchar0/mrnn-why.dat")
-  (mrnn-write-weight-to *bh* "examples/weights/genchar0/mrnn-bh.dat")
-  (mrnn-write-weight-to *by* "examples/weights/genchar0/mrnn-by.dat"))
-
-(defun mrnn-read-weights ()
-  (mrnn-read-weight-from *wxh* "examples/weights/genchar0/mrnn-wxh.dat")
-  (mrnn-read-weight-from *whh* "examples/weights/genchar0/mrnn-whh.dat")
-  (mrnn-read-weight-from *why* "examples/weights/genchar0/mrnn-why.dat")
-  (mrnn-read-weight-from *bh* "examples/weights/genchar0/mrnn-bh.dat")
-  (mrnn-read-weight-from *by* "examples/weights/genchar0/mrnn-by.dat"))
 
 (mrnn-write-weights)
 (mrnn-read-weights)
