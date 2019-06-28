@@ -166,6 +166,8 @@
 
 (setf *max-epochs* 50)
 
+(setf *learning-rate* 0.001) ;; for continued training
+
 (time
  (loop :for epoch :from 1 :to *max-epochs*
        :do (progn
