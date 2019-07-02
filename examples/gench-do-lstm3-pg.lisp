@@ -4,7 +4,8 @@
 (defpackage :gench-do-lstm3-pg
   (:use #:common-lisp
         #:mu
-        #:th))
+        #:th
+        #:th.ex.data))
 
 (in-package :gench-do-lstm3-pg)
 
@@ -12,7 +13,7 @@
 ;; 3-layer lstm with dropout
 ;;
 
-(defparameter *data-lines* (read-lines-from "data/pg.txt"))
+(defparameter *data-lines* (text-lines :pg))
 (defparameter *data* (format nil "~{~A~^~%~}" *data-lines*))
 (defparameter *chars* (remove-duplicates (coerce *data* 'list)))
 (defparameter *data-size* ($count *data*))
