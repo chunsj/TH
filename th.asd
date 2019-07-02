@@ -1,7 +1,7 @@
 (defsystem th
   :name "th"
   :author "Sungjin Chun <chunsj@gmail.com>"
-  :version "1.34"
+  :version "1.35"
   :maintainer "Sungjin Chun <chunsj@gmail.com>"
   :license "GPL3"
   :description "common lisp tensor and deep learning library"
@@ -41,7 +41,8 @@
                                         (:file "utility")))
                (:module db :components ((:file "mnist")
                                         (:file "fashion")
-                                        (:file "imdb")))
+                                        (:file "imdb")
+                                        (:file "exdata")))
                (:module m :components ((:file "imagenet")
                                        (:file "vgg16")
                                        (:file "vgg19")
