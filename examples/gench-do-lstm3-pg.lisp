@@ -261,9 +261,9 @@
 
 ($cg! *lstm3*)
 
-(setf *max-epochs* 50)
+(setf *max-epochs* 10)
 
-(setf *learning-rate* 0.0005) ;; for continued training
+(setf *learning-rate* 0.0001) ;; for continued training
 
 (time
  (loop :for epoch :from 1 :to *max-epochs*
