@@ -262,7 +262,7 @@
 
 ($cg! *lstm3*)
 
-(setf *max-epochs* 1)
+(setf *max-epochs* 10)
 
 ;;(setf *learning-rate* 0.00001) ;; for continued training
 
