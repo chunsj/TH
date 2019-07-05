@@ -66,6 +66,8 @@
                 (to w1 ($mul ($data x1) gv))
                 (to x2 ($mul w2 gv)))))
 
+(defmethod $addm2 ((x1 tensor) (w1 tensor) (x2 tensor) (w2 tensor)) (addmul x1 w1 x2 w2))
+
 (defun allocate-addbuf (nframe)
   (let ((tensor (make-instance *default-tensor-class*)))
     (allocate-tensor-handle tensor (list nframe))
