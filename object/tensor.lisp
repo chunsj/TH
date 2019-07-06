@@ -16,8 +16,6 @@
 (defclass tensor.float (tensor.fractional) ())
 (defclass tensor.double (tensor.fractional) ())
 
-(defgeneric allocate-tensor-handle (tensor &optional dimensions))
-(defgeneric deallocate-tensor-handle (tensor))
 (defgeneric allocate-tensor (tensor &optional dimensions))
 
 (defun mkdims (seqs)

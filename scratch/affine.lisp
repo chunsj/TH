@@ -21,17 +21,9 @@
 ;; preliminnary test
 (prn ($@ *input* *weight*))
 
-(defun allocate-addbuf (nframe)
-  (let ((tensor (make-instance th::*default-tensor-class*)))
-    (th::allocate-tensor-handle tensor (list nframe))
-    ($one! tensor)))
-
-(defun deallocate-addbuf (addbuf)
-  (th::deallocate-tensor-handle addbuf))
+(defun allocate-addbuf (nframe) ($one! (tensor (list nframe))))
 
 (let* ((addbuf (allocate-addbuf *input*)))
-  (prn addbuf)
-  (th::deallocate-tensor-handle addbuf)
   (prn addbuf))
 
 (defun affine (x w b &optional ones)
@@ -44,7 +36,6 @@
                              (addbuf (or ones (allocate-addbuf nframe))))
                         ($addmm! output x w 1 0)
                         ($addr! output addbuf b 1 1)
-                        (when (null ones) (deallocate-addbuf addbuf))
                         output)))))
 
 ($affine *input* *weight* *bias2*)

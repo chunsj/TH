@@ -40,7 +40,6 @@
 
 (defparameter *max-epochs* 50)
 
-
 (defparameter *learning-rate* 0.002)
 
 (defparameter *input* (let* ((sz *data-size*)
@@ -67,56 +66,56 @@
 
 (defparameter *lstm3* (parameters))
 
-(defparameter *wa1* ($push *lstm3* ($sub! ($mul 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
-(defparameter *ua1* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *ba1* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size*)) 0.08)))
+(defparameter *wa1* ($push *lstm3* ($sub! ($mul! (rnd *vocab-size* *hidden-size*) 0.16) 0.08)))
+(defparameter *ua1* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size* *hidden-size*) 0.16) 0.08)))
+(defparameter *ba1* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size*) 0.16) 0.08)))
 
-(defparameter *wi1* ($push *lstm3* ($sub! ($mul 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
-(defparameter *ui1* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *bi1* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size*)) 0.08)))
+(defparameter *wi1* ($push *lstm3* ($sub! ($mul! (rnd *vocab-size* *hidden-size*) 0.16) 0.08)))
+(defparameter *ui1* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size* *hidden-size*) 0.16) 0.08)))
+(defparameter *bi1* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size*) 0.16) 0.08)))
 
-(defparameter *wf1* ($push *lstm3* ($sub! ($mul 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
-(defparameter *uf1* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
+(defparameter *wf1* ($push *lstm3* ($sub! ($mul! (rnd *vocab-size* *hidden-size*) 0.16) 0.08)))
+(defparameter *uf1* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size* *hidden-size*) 0.16) 0.08)))
 (defparameter *bf1* ($push *lstm3* (ones *hidden-size*)))
 
-(defparameter *wo1* ($push *lstm3* ($sub! ($mul 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
-(defparameter *uo1* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *bo1* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size*)) 0.08)))
+(defparameter *wo1* ($push *lstm3* ($sub! ($mul! (rnd *vocab-size* *hidden-size*) 0.16) 0.08)))
+(defparameter *uo1* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size* *hidden-size*) 0.16) 0.08)))
+(defparameter *bo1* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size*) 0.16) 0.08)))
 
-(defparameter *wa2* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *ua2* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *ba2* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size*)) 0.08)))
+(defparameter *wa2* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size* *hidden-size*) 0.16) 0.08)))
+(defparameter *ua2* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size* *hidden-size*) 0.16) 0.08)))
+(defparameter *ba2* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size*) 0.16) 0.08)))
 
-(defparameter *wi2* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *ui2* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *bi2* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size*)) 0.08)))
+(defparameter *wi2* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size* *hidden-size*) 0.16) 0.08)))
+(defparameter *ui2* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size* *hidden-size*) 0.16) 0.08)))
+(defparameter *bi2* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size*) 0.16) 0.08)))
 
-(defparameter *wf2* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *uf2* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
+(defparameter *wf2* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size* *hidden-size*) 0.16) 0.08)))
+(defparameter *uf2* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size* *hidden-size*) 0.16) 0.08)))
 (defparameter *bf2* ($push *lstm3* (ones *hidden-size*)))
 
-(defparameter *wo2* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *uo2* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *bo2* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size*)) 0.08)))
+(defparameter *wo2* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size* *hidden-size*) 0.16) 0.08)))
+(defparameter *uo2* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size* *hidden-size*) 0.16) 0.08)))
+(defparameter *bo2* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size*) 0.16) 0.08)))
 
-(defparameter *wa3* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *ua3* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *ba3* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size*)) 0.08)))
+(defparameter *wa3* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size* *hidden-size*) 0.16) 0.08)))
+(defparameter *ua3* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size* *hidden-size*) 0.16) 0.08)))
+(defparameter *ba3* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size*) 0.16) 0.08)))
 
-(defparameter *wi3* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *ui3* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *bi3* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size*)) 0.08)))
+(defparameter *wi3* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size* *hidden-size*) 0.16) 0.08)))
+(defparameter *ui3* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size* *hidden-size*) 0.16) 0.08)))
+(defparameter *bi3* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size*) 0.16) 0.08)))
 
-(defparameter *wf3* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *uf3* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
+(defparameter *wf3* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size* *hidden-size*) 0.16) 0.08)))
+(defparameter *uf3* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size* *hidden-size*) 0.16) 0.08)))
 (defparameter *bf3* ($push *lstm3* (ones *hidden-size*)))
 
-(defparameter *wo3* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *uo3* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *bo3* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size*)) 0.08)))
+(defparameter *wo3* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size* *hidden-size*) 0.16) 0.08)))
+(defparameter *uo3* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size* *hidden-size*) 0.16) 0.08)))
+(defparameter *bo3* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size*) 0.16) 0.08)))
 
-(defparameter *wy* ($push *lstm3* ($sub! ($mul 0.16 (rnd *hidden-size* *vocab-size*)) 0.08)))
-(defparameter *by* ($push *lstm3* ($sub! ($mul 0.16 (rnd *vocab-size*)) 0.08)))
+(defparameter *wy* ($push *lstm3* ($sub! ($mul! (rnd *hidden-size* *vocab-size*) 0.16) 0.08)))
+(defparameter *by* ($push *lstm3* ($sub! ($mul! (rnd *vocab-size*) 0.16) 0.08)))
 
 (defun lstm3-write-weight-to (w fname)
   (let ((f (file.disk fname "w")))
@@ -263,7 +262,7 @@
 ($cg! *lstm3*)
 
 (setf *max-epochs* 1)
-(setf *learning-rate* 0.001) ;; for continued training
+;;(setf *learning-rate* 0.001) ;; for continued training
 
 (time
  (loop :for epoch :from 1 :to *max-epochs*
