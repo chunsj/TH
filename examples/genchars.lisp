@@ -32,7 +32,7 @@
 ;;
 
 (defparameter *hidden-size* 100)
-(defparameter *sequence-length* 25)
+(defparameter *sequence-length* 50)
 
 (defparameter *rnn* (parameters))
 (defparameter *wx* ($push *rnn* ($* 0.01 (rndn *vocab-size* *hidden-size*))))
@@ -40,6 +40,30 @@
 (defparameter *wy* ($push *rnn* ($* 0.01 (rndn *hidden-size* *vocab-size*))))
 (defparameter *bh* ($push *rnn* (zeros *hidden-size*)))
 (defparameter *by* ($push *rnn* (zeros *vocab-size*)))
+
+(defun rnn-write-weight-to (w fname)
+  (let ((f (file.disk fname "w")))
+    ($fwrite ($data w) f)
+    ($fclose f)))
+
+(defun rnn-read-weight-from (w fname)
+  (let ((f (file.disk fname "r")))
+    ($fread ($data w) f)
+    ($fclose f)))
+
+(defun rnn-write-weights ()
+  (rnn-write-weight-to *wx* "examples/weights/genchar/rnn-wx.dat")
+  (rnn-write-weight-to *wh* "examples/weights/genchar/rnn-wh.dat")
+  (rnn-write-weight-to *wy* "examples/weights/genchar/rnn-wy.dat")
+  (rnn-write-weight-to *bh* "examples/weights/genchar/rnn-bh.dat")
+  (rnn-write-weight-to *by* "examples/weights/genchar/rnn-by.dat"))
+
+(defun rnn-read-weights ()
+  (rnn-read-weight-from *wx* "examples/weights/genchar/rnn-wx.dat")
+  (rnn-read-weight-from *wh* "examples/weights/genchar/rnn-wh.dat")
+  (rnn-read-weight-from *wy* "examples/weights/genchar/rnn-wy.dat")
+  (rnn-read-weight-from *bh* "examples/weights/genchar/rnn-bh.dat")
+  (rnn-read-weight-from *by* "examples/weights/genchar/rnn-by.dat"))
 
 (defun sample (h seed-idx n &optional (temperature 1))
   (let ((x (zeros 1 *vocab-size*))
@@ -102,3 +126,6 @@
                        (incf n)))))
 
 (prn (sample (zeros 1 *hidden-size*) (random *vocab-size*) 800 0.5))
+
+(rnn-write-weights)
+(rnn-read-weights)
