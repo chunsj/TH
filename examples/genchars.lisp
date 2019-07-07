@@ -4,12 +4,12 @@
 (defpackage :genchars
   (:use #:common-lisp
         #:mu
-        #:th))
+        #:th
+        #:th.ex.data))
 
 (in-package :genchars)
 
-(defparameter *data-lines* (read-lines-from "data/tinyshakespeare.txt"))
-(defparameter *data-lines* (read-lines-from "data/pg.txt"))
+(defparameter *data-lines* (text-lines :pg))
 (defparameter *data* (format nil "~{~A~^~%~}" *data-lines*))
 (defparameter *chars* (remove-duplicates (coerce *data* 'list)))
 (defparameter *data-size* ($count *data*))
@@ -85,26 +85,31 @@
 
 (defparameter *upto* (- *data-size* *sequence-length* 1))
 
+(defparameter *inputs* (loop :for p :from 0 :below *upto* :by *sequence-length*
+                             :for input-str = (subseq *data* p (+ p *sequence-length*))
+                             :collect (let ((m (zeros *sequence-length* *vocab-size*)))
+                                        (loop :for i :from 0 :below *sequence-length*
+                                              :for ch = ($ input-str i)
+                                              :do (setf ($ m i ($ *char-to-idx* ch)) 1))
+                                        m)))
+(defparameter *targets* (loop :for p :from 0 :below *upto* :by *sequence-length*
+                              :for target-str = (subseq *data* (1+ p) (+ p *sequence-length* 1))
+                              :collect (let ((m (zeros *sequence-length* *vocab-size*)))
+                                         (loop :for i :from 0 :below *sequence-length*
+                                               :for ch = ($ target-str i)
+                                               :do (setf ($ m i ($ *char-to-idx* ch)) 1))
+                                         m)))
+
+(defparameter *mloss* (* (- (log (/ 1 *vocab-size*))) *sequence-length*))
+
 ($cg! *rnn*)
 (gcf)
 
 (time
  (loop :for iter :from 1 :to 1
        :for n = 0
-       :for upto = *upto*
-       :do (loop :for p :from 0 :below upto :by *sequence-length*
-                 :for input-str = (subseq *data* p (+ p *sequence-length*))
-                 :for target-str = (subseq *data* (1+ p) (+ p *sequence-length* 1))
-                 :for input = (let ((m (zeros *sequence-length* *vocab-size*)))
-                                (loop :for i :from 0 :below *sequence-length*
-                                      :for ch = ($ input-str i)
-                                      :do (setf ($ m i ($ *char-to-idx* ch)) 1))
-                                m)
-                 :for target = (let ((m (zeros *sequence-length* *vocab-size*)))
-                                 (loop :for i :from 0 :below *sequence-length*
-                                       :for ch = ($ target-str i)
-                                       :do (setf ($ m i ($ *char-to-idx* ch)) 1))
-                                 m)
+       :do (loop :for input :in *inputs*
+                 :for target :in *targets*
                  :do (let ((ph (zeros 1 *hidden-size*))
                            (tloss 0))
                        (loop :for i :from 0 :below ($size input 0)
@@ -117,15 +122,20 @@
                              :do (progn
                                    (setf ph ht)
                                    (incf tloss ($data l))))
-                       ($adgd! *rnn*)
-                       (when (zerop (rem n 100))
+                       ($rmgd! *rnn*)
+                       (setf *mloss* (+ (* 0.999 *mloss*) (* 0.001 tloss)))
+                       (when (zerop (rem n 200))
                          (prn "")
-                         (prn "[ITER]" iter n (/ tloss (* 1.0 *sequence-length*)))
-                         (prn (sample ($data ph) ($ *char-to-idx* ($ input-str 0)) 72))
+                         (prn "[ITER]" iter n *mloss*)
+                         (prn (sample ($data ph) (random *vocab-size*) 72))
                          (prn ""))
                        (incf n)))))
 
-(prn (sample (zeros 1 *hidden-size*) (random *vocab-size*) 800 0.5))
+(prn (sample (zeros 1 *hidden-size*) (random *vocab-size*) 800 0.8))
 
 (rnn-write-weights)
 (rnn-read-weights)
+
+;; rmgd 0.002 0.99 -  1.31868 - 1.61637
+;; adgd - 1.551497 - 1.841827
+;; amgd 0.002 - 1.3747485 - 1.70623
