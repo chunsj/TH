@@ -15,6 +15,10 @@
 (cffi:defcfun ("THSetGCHardMax" th-set-gc-hard-max) :void
   (hm :long-long))
 
+(cffi:defcfun ("THGetHeapSize" th-get-heap-size) :long-long)
+(cffi:defcfun ("THGetHeapDelta" th-get-heap-delta) :long-long)
+(cffi:defcfun ("THGetHeapSoftmax" th-get-heap-softmax) :long-long)
+
 (th-set-gc-hard-max *mhack-foreign-memory-threshold-default*)
 (th-set-gc-handler (cffi:callback thgc) +nil+)
 
