@@ -74,28 +74,46 @@
 
 (defun rstrings (indices) (coerce (mapcar (lambda (i) ($ *idx-to-char* i)) indices) 'string))
 
-(defun seedh (str)
+(defun seedh (str &optional (temperature 1))
   (let ((input (cindices str))
         (ph (zeros 1 *hidden-size*))
         (wx ($data *wx*))
         (wh ($data *wh*))
-        (bh ($data *bh*)))
+        (bh ($data *bh*))
+        (wy ($data *wy*))
+        (by ($data *by*))
+        (ncidx 0))
     (loop :for i :from 0 :below ($size input 0)
           :for xt = ($index input 0 i)
           :for ht = ($tanh ($affine2 xt wx ph wh bh))
-          :do (setf ph ht))
-    ph))
+          :for yt = ($affine ht wy by)
+          :for ps = ($softmax ($/ yt temperature))
+          :for nidx = (choose ps)
+          :do (setf ph ht
+                    ncidx nidx))
+    (cons ncidx ph)))
 
-(defun sample (h seed-idx n &optional (temperature 1))
+(defun sample (str n &optional (temperature 1))
   (let ((x (zeros 1 *vocab-size*))
-        (indices (list seed-idx))
-        (ph h)
+        (indices nil)
+        (sh (when str (seedh str temperature)))
         (wx ($data *wx*))
         (wh ($data *wh*))
         (bh ($data *bh*))
         (wy ($data *wy*))
-        (by ($data *by*)))
-    (setf ($ x 0 seed-idx) 1)
+        (by ($data *by*))
+        (ph nil))
+    (if sh
+        (let ((idx0 (car sh))
+              (h (cdr sh)))
+          (setf ($ x 0 idx0) 1)
+          (setf ph h)
+          (push idx0 indices))
+        (let ((idx0 (random *vocab-size*))
+              (h (zeros 1 *hidden-size*)))
+          (setf ($ x 0 idx0) 1)
+          (setf ph h)
+          (push idx0 indices)))
     (loop :for i :from 0 :below n
           :for ht = ($tanh ($affine2 x wx ph wh bh))
           :for yt = ($affine ht wy by)
@@ -106,7 +124,7 @@
                 (push nidx indices)
                 ($zero! x)
                 (setf ($ x 0 nidx) 1)))
-    (rstrings (reverse indices))))
+    (concatenate 'string str (rstrings (reverse indices)))))
 
 (defparameter *upto* (- *data-size* *sequence-length* 1))
 
@@ -131,7 +149,7 @@
 (gcf)
 
 (time
- (loop :for iter :from 1 :to 1
+ (loop :for iter :from 1 :to 5
        :for n = 0
        :do (loop :for input :in *inputs*
                  :for target :in *targets*
@@ -153,11 +171,8 @@
                          (prn "[ITER]" iter n *mloss*))
                        (incf n)))))
 
-(prn (sample (zeros 1 *hidden-size*) ($ *char-to-idx* #\T) 800 0.8))
-(prn (sample (zeros 1 *hidden-size*) (random *vocab-size*) 800 0.8))
-
-(prn (sample (seedh "Startups will succeed.") ($ *char-to-idx* #\T) 800 0.8))
-(prn (sample (seedh "Startups will succeed.") (random *vocab-size*) 800 0.8))
+(prn (sample "This is not correct." 100 0.5))
+(prn (sample "T" 100 0.5))
 
 (rnn-write-weights)
 (rnn-read-weights)
