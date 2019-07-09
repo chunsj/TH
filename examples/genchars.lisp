@@ -149,7 +149,7 @@
 (gcf)
 
 (time
- (loop :for iter :from 1 :to 5
+ (loop :for iter :from 1 :to 1
        :for n = 0
        :for maxloss = 0
        :for maxloss-pos = -1
@@ -189,5 +189,5 @@
 (loop :for p :from 0 :below *upto* :by *sequence-length*
       :for n :from 0
       :for input-str = (subseq *data* p (+ p *sequence-length*))
-      :do (when (member n '(16308 11670 7661 1079 291 160))
+      :do (when (member n '(16260 11637 7615 1076 232 192))
             (prn n input-str)))
