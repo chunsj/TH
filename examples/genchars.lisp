@@ -152,6 +152,7 @@
  (loop :for iter :from 1 :to 5
        :for n = 0
        :for maxloss = 0
+       :for maxloss-pos = -1
        :do (loop :for input :in *inputs*
                  :for target :in *targets*
                  :do (let ((ph (zeros 1 *hidden-size*))
@@ -166,11 +167,13 @@
                              :do (progn
                                    (setf ph ht)
                                    (incf tloss ($data l))))
-                       (when (> tloss maxloss) (setf maxloss tloss))
+                       (when (> tloss maxloss)
+                         (setf maxloss-pos n)
+                         (setf maxloss tloss))
                        ($rmgd! *rnn*)
                        (setf *mloss* (+ (* 0.999 *mloss*) (* 0.001 tloss)))
                        (when (zerop (rem n 200))
-                         (prn "[ITER]" iter n *mloss* maxloss))
+                         (prn "[ITER]" iter n *mloss* maxloss maxloss-pos))
                        (incf n)))))
 
 (prn (sample "This is not correct." 200 0.5))
