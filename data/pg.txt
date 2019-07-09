@@ -1778,12 +1778,6 @@ Value
 
 It's hard to find something that grows consistently at several percent a week, but if you do you may have found something surprisingly valuable. If we project forward we see why.
 
-weekly	yearly
-1%	1.7x
-2%	2.8x
-5%	12.6x
-7%	33.7x
-10%	142.0x
 A company that grows at 1% a week will grow 1.7x a year, whereas a company that grows at 5% a week will grow 12.6x. A company making $1000 a month (a typical number early in YC) and growing at 1% a week will 4 years later be making $7900 a month, which is less than a good programmer makes in salary in Silicon Valley. A startup that grows at 5% a week will in 4 years be making $25 million a month. [10]
 
 Our ancestors must rarely have encountered cases of exponential growth, because our intutitions are no guide here. What happens to fast growing startups tends to surprise even the founders.
