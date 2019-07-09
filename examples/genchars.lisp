@@ -185,3 +185,9 @@
 ;; rmgd 0.002 0.99 -  1.31868 - 1.61637
 ;; adgd - 1.551497 - 1.841827
 ;; amgd 0.002 - 1.3747485 - 1.70623
+
+(loop :for p :from 0 :below *upto* :by *sequence-length*
+      :for n :from 0
+      :for input-str = (subseq *data* p (+ p *sequence-length*))
+      :do (when (member n '(16308 11670 7661 1079 291 160))
+            (prn n input-str)))
