@@ -9,7 +9,7 @@
 
 (in-package :genchars)
 
-(defparameter *data-lines* (text-lines :pg))
+(defparameter *data-lines* (remove-if (lambda (line) (< ($count line) 1)) (text-lines :pg)))
 (defparameter *data* (format nil "~{~A~^~%~}" *data-lines*))
 (defparameter *chars* (remove-duplicates (coerce *data* 'list)))
 (defparameter *data-size* ($count *data*))
