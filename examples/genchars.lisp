@@ -146,6 +146,7 @@
                                          m)))
 
 (defparameter *mloss* (* (- (log (/ 1 *vocab-size*))) *sequence-length*))
+(defparameter *min-mloss* *mloss*)
 
 ($cg! *rnn*)
 (gcf)
@@ -155,28 +156,34 @@
        :for n = 0
        :for maxloss = 0
        :for maxloss-pos = -1
-       :do (loop :for input :in *inputs*
-                 :for target :in *targets*
-                 :do (let ((ph (zeros 1 *hidden-size*))
-                           (tloss 0))
-                       (loop :for i :from 0 :below ($size input 0)
-                             :for xt = ($index input 0 i)
-                             :for ht = ($tanh ($affine2 xt *wx* ph *wh* *bh*))
-                             :for yt = ($affine ht *wy* *by*)
-                             :for ps = ($softmax yt)
-                             :for y = ($index target 0 i)
-                             :for l = ($cee ps y)
-                             :do (progn
-                                   (setf ph ht)
-                                   (incf tloss ($data l))))
-                       (when (> tloss maxloss)
-                         (setf maxloss-pos n)
-                         (setf maxloss tloss))
-                       ($rmgd! *rnn*)
-                       (setf *mloss* (+ (* 0.999 *mloss*) (* 0.001 tloss)))
-                       (when (zerop (rem n 200))
-                         (prn "[ITER]" iter n *mloss* maxloss maxloss-pos))
-                       (incf n)))))
+       :for max-mloss = 0
+       :do (progn
+             (loop :for input :in *inputs*
+                   :for target :in *targets*
+                   :do (let ((ph (zeros 1 *hidden-size*))
+                             (tloss 0))
+                         (loop :for i :from 0 :below ($size input 0)
+                               :for xt = ($index input 0 i)
+                               :for ht = ($tanh ($affine2 xt *wx* ph *wh* *bh*))
+                               :for yt = ($affine ht *wy* *by*)
+                               :for ps = ($softmax yt)
+                               :for y = ($index target 0 i)
+                               :for l = ($cee ps y)
+                               :do (progn
+                                     (setf ph ht)
+                                     (incf tloss ($data l))))
+                         (when (> tloss maxloss)
+                           (setf maxloss-pos n)
+                           (setf maxloss tloss))
+                         ($rmgd! *rnn*)
+                         (setf *mloss* (+ (* 0.999 *mloss*) (* 0.001 tloss)))
+                         (when (zerop (rem n 200))
+                           (prn "[ITER]" iter n *mloss* maxloss maxloss-pos))
+                         (incf n)))
+             (when (< max-mloss *min-mloss*)
+               (prn "BETTER MLOSS - WRITE WEIGHTS")
+               (setf *min-mloss* max-mloss)
+               (rnn-write-weights)))))
 
 (prn (sample "This is not correct." 200 0.5))
 (prn (sample "I" 200 0.5))
