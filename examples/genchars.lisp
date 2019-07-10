@@ -128,6 +128,8 @@
 
 (defparameter *upto* (- *data-size* *sequence-length* 1))
 
+;; XXX of course, we need better strategy for building data
+;; for example, breaking at the word level will be better one.
 (defparameter *inputs* (loop :for p :from 0 :below *upto* :by *sequence-length*
                              :for input-str = (subseq *data* p (+ p *sequence-length*))
                              :collect (let ((m (zeros *sequence-length* *vocab-size*)))
@@ -189,5 +191,5 @@
 (loop :for p :from 0 :below *upto* :by *sequence-length*
       :for n :from 0
       :for input-str = (subseq *data* p (+ p *sequence-length*))
-      :do (when (member n '(16260 11637 7615 1076 232 192))
+      :do (when (member n '(16260 11637 7640 7615 1076 290 232 192 87))
             (prn n input-str)))
