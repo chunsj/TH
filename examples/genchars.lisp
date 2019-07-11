@@ -29,8 +29,12 @@
 
 ;; XXX from this build a manual bp utility - also for batch input
 ;; XXX word embedding should also be done efficiently
-(defun $rnn (x wx ph wh b &optional ones) ($tanh ($affine2 x wx ph wh b ones)))
-
+(defun rnn (x wx ph wh b &optional ones) ($tanh ($affine2 x wx ph wh b ones)))
+(defun outps (h wy by &optional (temperature 1) ones)
+  (-> ($affine h wy by ones)
+      ($/ temperature)
+      ($softmax)))
+(defun next-idx (h wy by &optional (temperature 1) ones) (choose (outps h wy by temperature ones)))
 ;;
 ;; vanilla rnn
 ;;
@@ -89,10 +93,8 @@
         (ncidx 0))
     (loop :for i :from 0 :below ($size input 0)
           :for xt = ($index input 0 i)
-          :for ht = ($tanh ($affine2 xt wx ph wh bh))
-          :for yt = ($affine ht wy by)
-          :for ps = ($softmax ($/ yt temperature))
-          :for nidx = (choose ps)
+          :for ht = (rnn xt wx ph wh bh)
+          :for nidx = (next-idx ht wy by temperature)
           :do (setf ph ht
                     ncidx nidx))
     (cons ncidx ph)))
@@ -119,10 +121,8 @@
           (setf ph h)
           (push idx0 indices)))
     (loop :for i :from 0 :below n
-          :for ht = ($tanh ($affine2 x wx ph wh bh))
-          :for yt = ($affine ht wy by)
-          :for ps = ($softmax ($/ yt temperature))
-          :for nidx = (choose ps)
+          :for ht = (rnn x wx ph wh bh)
+          :for nidx = (next-idx ht wy by temperature)
           :do (progn
                 (setf ph ht)
                 (push nidx indices)
@@ -168,9 +168,8 @@
                              (tloss 0))
                          (loop :for i :from 0 :below ($size input 0)
                                :for xt = ($index input 0 i)
-                               :for ht = ($tanh ($affine2 xt *wx* ph *wh* *bh*))
-                               :for yt = ($affine ht *wy* *by*)
-                               :for ps = ($softmax yt)
+                               :for ht = (rnn xt *wx* ph *wh* *bh*)
+                               :for ps = (outps ht *wy* *by*)
                                :for y = ($index target 0 i)
                                :for l = ($cee ps y)
                                :do (progn
