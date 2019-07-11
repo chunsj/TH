@@ -27,6 +27,9 @@
          (probs ($div probs sprobs)))
     ($ ($reshape! ($multinomial probs 1) ($count probs)) 0)))
 
+;; XXX from this build a manual bp utility - also for batch input
+(defun $rnn (x wx ph wh b &optional ones) ($tanh ($affine2 x wx ph wh b ones)))
+
 ;;
 ;; vanilla rnn
 ;;
