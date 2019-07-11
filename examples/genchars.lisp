@@ -152,7 +152,7 @@
 (gcf)
 
 (time
- (loop :for iter :from 1 :to 10
+ (loop :for iter :from 1 :to 5
        :for n = 0
        :for maxloss = 0
        :for maxloss-pos = -1
@@ -182,7 +182,7 @@
                            (prn "[ITER]" iter n *mloss* maxloss maxloss-pos))
                          (incf n)))
              (when (< max-mloss *min-mloss*)
-               (prn "BETTER MLOSS - WRITE WEIGHTS: FROM" *min-loss* "TO" max-loss)
+               (prn "*** BETTER MLOSS - WRITE WEIGHTS: FROM" *min-mloss* "TO" max-mloss)
                (setf *min-mloss* max-mloss)
                (rnn-write-weights)))))
 
