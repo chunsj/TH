@@ -7,6 +7,9 @@
 (defgeneric $affine2 (x1 w1 x2 w2 b &optional ones) (:documentation "Affine transformation."))
 (defgeneric $addm2 (x1 w1 x2 w2) (:documentation "x1*w1 + x2*w2"))
 
+(defgeneric $rnn (x ph wx wh b &optional ones) (:documentation "Simple RNN cell using tanh."))
+(defgeneric $lstm (x ph pc wi ui wf uf wo uo wa ua &optional ones) (:documentation "LSTM cell."))
+
 (defgeneric $wimb (xwi w) (:documentation "Computes word embedding."))
 
 (defgeneric $rn! (tensor &optional µ σ) (:documentation "Fills with random normal."))
