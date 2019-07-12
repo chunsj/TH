@@ -8,7 +8,8 @@
 (defgeneric $addm2 (x1 w1 x2 w2) (:documentation "x1*w1 + x2*w2"))
 
 (defgeneric $rnn (x ph wx wh b &optional ones) (:documentation "Simple RNN cell using tanh."))
-(defgeneric $lstm (x ph pc wi ui wf uf wo uo wa ua &optional ones) (:documentation "LSTM cell."))
+(defgeneric $lstm (x ph pc wi ui wf uf wo uo wa ua bi bf bo ba &optional ones)
+  (:documentation "LSTM cell."))
 
 (defgeneric $wimb (xwi w) (:documentation "Computes word embedding."))
 
@@ -272,6 +273,15 @@
   (cond ((null b) (rnn-without-bias x wx ph wh))
         (t (rnn-with-bias x wx ph wh b ones))))
 
+(defmethod $lstm ((x tensor) (ph tensor) (pc tensor)
+                  (wi tensor) (ui tensor)
+                  (wf tensor) (uf tensor)
+                  (wo tensor) (uo tensor)
+                  (wa tensor) (ua tensor)
+                  (bi tensor) (bf tensor) (bo tensor) (ba tensor) &optional ones)
+  (when (and bi bf bo ba)
+    ))
+
 (defmethod $affine2 ((x1 node) (w1 node) (x2 node) (w2 node) (b node) &optional ones)
   (node ($affine2 ($data x1) ($data w1) ($data x2) ($data w2) (when b ($data b)) ones)
         :name :affine2
@@ -301,6 +311,15 @@
                 (to w2 (daffine-weight ($data x2) ($data w2) gv))
                 (when b (to b (daffine-bias x1 ($data b) gv ones))))))
 
+(defmethod $rnn ((x tensor) (ph node) (wx node) (wh node) (b node) &optional ones)
+  (node ($rnn x ($data ph) ($data wx) ($data wh) (when b ($data b)) ones)
+        :name :rnn
+        :link (link
+                (to ph (daffine-output ($data ph) ($data wh) ($mul! (dtanh gv) gv)))
+                (to wx (daffine-weight x ($data wx) ($mul! (dtanh gv) gv)))
+                (to wh (daffine-weight ($data ph) ($data wh) ($mul! (dtanh gv) gv)))
+                (when b (to b (daffine-bias ($data x) ($data b) ($mul! (dtanh gv) gv) ones))))))
+
 (defmethod $affine2 ((x1 node) (w1 node) (x2 tensor) (w2 node) (b node) &optional ones)
   (node ($affine2 ($data x1) ($data w1) x2 ($data w2) (when b ($data b)) ones)
         :name :affine2
@@ -309,6 +328,15 @@
                 (to w1 (daffine-weight ($data x1) ($data w1) gv))
                 (to w2 (daffine-weight x2 ($data w2) gv))
                 (when b (to b (daffine-bias ($data x1) ($data b) gv ones))))))
+
+(defmethod $rnn ((x node) (ph tensor) (wx node) (wh node) (b node) &optional ones)
+  (node ($rnn ($data x) ph ($data wx) ($data wh) (when b ($data b)) ones)
+        :name :rnn
+        :link (link
+                (to x (daffine-output ($data x) ($data wx) ($mul! (dtanh gv) gv)))
+                (to wx (daffine-weight ($data x) ($data wx) ($mul! (dtanh gv) gv)))
+                (to wh (daffine-weight ph ($data wh) ($mul! (dtanh gv) gv)))
+                (when b (to b (daffine-bias ($data x) ($data b) ($mul! (dtanh gv) gv) ones))))))
 
 (defmethod $affine2 ((x1 tensor) (w1 node) (x2 tensor) (w2 node) (b node) &optional ones)
   (node ($affine2 x1 ($data w1) x2 ($data w2) (when b ($data b)) ones)
