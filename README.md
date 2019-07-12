@@ -92,5 +92,5 @@
   referencing CLOS object is garbage collected, but the gc does not know how much external
   memory is used - I've implemented a hack of trying gc if some predefined threshold met.
   Refer mhack.lisp for detailed implementation. The idea is simple; try run gc if externally
-  allocated memory hits some threshold. To do this, I've overrided allocator and to use
-  foreign-alloc and foreign-free. If you want to change the theshold, ffi/mhack.lisp is the file.
+  allocated memory hits some threshold. To do this, I've modified and patched libTHTensor;
+  specifically THGeneral.c. If you want to change the theshold, ffi/mhack.lisp is the file.
