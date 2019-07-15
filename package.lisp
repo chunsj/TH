@@ -373,6 +373,8 @@
            #:$addm2
            #:$xwpb
            #:$wimb
+           #:$rnn
+           #:$lstm
            #:$rn!
            #:$ru!
            #:$rnt!
