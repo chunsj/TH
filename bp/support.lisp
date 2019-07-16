@@ -116,4 +116,4 @@
         (ot ($sigmoid ($affine2 x wo ph uo bo ones)))
         (at ($tanh ($affine2 x wa ph ua ba ones))))
     (let ((ct ($addm2 at it ft pc)))
-      (values ($mul ($tanh ct) ot) ct))))
+      (list ($mul ($tanh ct) ot) ct))))

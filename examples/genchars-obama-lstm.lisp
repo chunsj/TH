@@ -41,22 +41,22 @@
 
 (defparameter *wa* ($push *lstm* ($- ($* 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
 (defparameter *ua* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *ba* ($push *lstm* ($- ($* 0.16 (rnd 1 *hidden-size*)) 0.08)))
+(defparameter *ba* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size*)) 0.08)))
 
 (defparameter *wi* ($push *lstm* ($- ($* 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
 (defparameter *ui* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *bi* ($push *lstm* ($- ($* 0.16 (rnd 1 *hidden-size*)) 0.08)))
+(defparameter *bi* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size*)) 0.08)))
 
 (defparameter *wf* ($push *lstm* ($- ($* 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
 (defparameter *uf* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *bf* ($push *lstm* (ones 1 *hidden-size*)))
+(defparameter *bf* ($push *lstm* (ones *hidden-size*)))
 
 (defparameter *wo* ($push *lstm* ($- ($* 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
 (defparameter *uo* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *bo* ($push *lstm* ($- ($* 0.16 (rnd 1 *hidden-size*)) 0.08)))
+(defparameter *bo* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size*)) 0.08)))
 
 (defparameter *wy* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size* *vocab-size*)) 0.08)))
-(defparameter *by* ($push *lstm* ($- ($* 0.16 (rnd 1 *vocab-size*)) 0.08)))
+(defparameter *by* ($push *lstm* ($- ($* 0.16 (rnd *vocab-size*)) 0.08)))
 
 (defun lstm-write-weight-to (w fname)
   (let ((f (file.disk fname "w")))
@@ -109,12 +109,10 @@
 
 (defun rstrings (indices) (coerce (mapcar (lambda (i) ($ *idx-to-char* i)) indices) 'string))
 
-;; XXX build lstm function here
-
 (defun seedh (str &optional (temperature 1))
   (let ((input (cindices str))
-        (pout (zeros 1 *hidden-size*))
-        (pstate (zeros 1 *hidden-size*))
+        (ph (zeros 1 *hidden-size*))
+        (pc (zeros 1 *hidden-size*))
         (wa ($data *wa*))
         (ua ($data *ua*))
         (ba ($data *ba*))
@@ -132,16 +130,14 @@
         (ncidx 0))
     (loop :for i :from 0 :below ($size input 0)
           :for xt = ($index input 0 i)
-          :for rt = ($lstm xt pout pstate wi ui wf uf wo uo wa ua bi bf bo ba)
-          :for out = (car rt)
-          :for state = (cdr rt)
-          :for yt = ($affine out wy by)
+          :for (ht ct) = ($lstm xt ph pc wi ui wf uf wo uo wa ua bi bf bo ba)
+          :for yt = ($affine ht wy by)
           :for ps = ($softmax ($/ yt temperature))
           :for nidx = (choose ps)
-          :do (setf pout out
-                    pstate state
+          :do (setf ph ht
+                    pc ct
                     ncidx nidx))
-    (list ncidx pout pstate)))
+    (list ncidx ph pc)))
 
 (defun sample (str n &optional (temperature 1))
   (let ((x (zeros 1 *vocab-size*))
@@ -161,33 +157,31 @@
         (bo ($data *bo*))
         (wy ($data *wy*))
         (by ($data *by*))
-        (pout nil)
-        (pstate nil))
+        (ph nil)
+        (pc nil))
     (if sh
         (let ((idx0 ($0 sh))
-              (out ($1 sh))
-              (state ($2 sh)))
+              (h ($1 sh))
+              (c ($2 sh)))
           (setf ($ x 0 idx0) 1)
-          (setf pout out
-                pstate state)
+          (setf ph h
+                pc c)
           (push idx0 indices))
         (let ((idx0 (random *vocab-size*))
-              (out (zeros 1 *hidden-size*))
-              (state (zeros 1 *hidden-size*)))
+              (h (zeros 1 *hidden-size*))
+              (c (zeros 1 *hidden-size*)))
           (setf ($ x 0 idx0) 1)
-          (setf pout out
-                pstate state)
+          (setf ph h
+                pc c)
           (push idx0 indices)))
     (loop :for i :from 0 :below n
-          :for rt = ($lstm x pout pstate wi ui wf uf wo uo wa ua bi bf bo ba)
-          :for out = (car rt)
-          :for state = (cdr rt)
-          :for yt = ($affine out wy by)
+          :for (ht ct) = ($lstm x ph pc wi ui wf uf wo uo wa ua bi bf bo ba)
+          :for yt = ($affine ht wy by)
           :for ps = ($softmax ($/ yt temperature))
           :for nidx = (choose ps)
           :do (progn
-                (setf pout out
-                      pstate state)
+                (setf ph ht
+                      pc ct)
                 (push nidx indices)
                 ($zero! x)
                 (setf ($ x 0 nidx) 1)))
@@ -219,7 +213,7 @@
 (gcf)
 
 (time
- (loop :for iter :from 1 :to 100
+ (loop :for iter :from 1 :to 1
        :for n = 0
        :for maxloss = 0
        :for maxloss-pos = -1
@@ -228,16 +222,19 @@
              (loop :for input :in *inputs*
                    :for target :in *targets*
                    :do (let ((ph (zeros 1 *hidden-size*))
+                             (pc (zeros 1 *hidden-size*))
                              (tloss 0))
                          (loop :for i :from 0 :below ($size input 0)
                                :for xt = ($index input 0 i)
-                               :for ht = ($tanh ($affine2 xt *wx* ph *wh* *bh*))
+                               :for (ht ct) = ($lstm xt ph pc *wi* *ui* *wf* *uf* *wo* *uo* *wa* *ua*
+                                                     *bi* *bf* *bo* *ba*)
                                :for yt = ($affine ht *wy* *by*)
                                :for ps = ($softmax yt)
                                :for y = ($index target 0 i)
                                :for l = ($cee ps y)
                                :do (progn
-                                     (setf ph ht)
+                                     (setf ph ht
+                                           pc ct)
                                      (incf tloss ($data l))))
                          (when (> tloss maxloss)
                            (setf maxloss-pos n)
