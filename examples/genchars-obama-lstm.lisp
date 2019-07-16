@@ -109,6 +109,8 @@
 
 (defun rstrings (indices) (coerce (mapcar (lambda (i) ($ *idx-to-char* i)) indices) 'string))
 
+;; XXX build lstm function here
+
 (defun seedh (str &optional (temperature 1))
   (let ((input (cindices str))
         (pout (zeros 1 *hidden-size*))
