@@ -104,3 +104,16 @@
       (node ($data p)
             :name :dropout
             :link (link (to x gv)))))
+
+(defun $rnn (x ph wx wh b &optional ones)
+  "Simple RNN cell using tanh"
+  ($tanh ($affine2 x wx ph wh b ones)))
+
+(defun $lstm (x ph pc wi ui wf uf wo uo wa ua bi bf bo ba &optional ones)
+  "Basic LSTM cell"
+  (let ((it ($sigmoid ($affine2 x wi ph ui bi ones)))
+        (ft ($sigmoid ($affine2 x wf ph uf bf ones)))
+        (ot ($sigmoid ($affine2 x wo ph uo bo ones)))
+        (at ($tanh ($affine2 x wa ph ua ba ones))))
+    (let ((ct ($addm2 at it ft pc)))
+      (values ($mul ($tanh ct) ot) ct))))
