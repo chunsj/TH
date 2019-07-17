@@ -263,5 +263,5 @@
 (loop :for p :from 0 :below *upto* :by *sequence-length*
       :for n :from 0
       :for input-str = (subseq *data* p (+ p *sequence-length*))
-      :do (when (member n '(29379 23660 21663 18796 336))
+      :do (when (member n '(75856 44515 44514 21663 18796 1258 336 178))
             (prn (format nil "~6,d" n) input-str)))
