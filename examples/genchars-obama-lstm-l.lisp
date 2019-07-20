@@ -253,7 +253,7 @@
 (prn (sample "This is not correct." 200 0.5))
 (prn (sample "I" 200 0.5))
 
-(lstm-write-weights)
+;;(lstm-write-weights)
 (lstm-read-weights)
 
 ;; rmgd 0.002 0.99 -  1.31868 - 1.61637
