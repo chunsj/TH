@@ -213,7 +213,7 @@
 (gcf)
 
 (time
- (loop :for iter :from 1 :to 4
+ (loop :for iter :from 1 :to 2
        :for n = 0
        :for maxloss = 0
        :for maxloss-pos = -1
@@ -262,6 +262,6 @@
 
 (loop :for p :from 0 :below *upto* :by *sequence-length*
       :for n :from 0
-      :for input-str = (subseq *data* p (+ p *sequence-length*))
-      :do (when (member n '(22257 14689 12155 10087 9482 2450 629 362 279 198 31))
-            (prn (format nil "~6,d" n) input-str)))
+      :for instr = (subseq *data* p (+ p *sequence-length*))
+      :do (when (member n '(22257 17027 12155 10087 629 362 279 198 89))
+            (prn (format nil "~6,d" n) instr)))
