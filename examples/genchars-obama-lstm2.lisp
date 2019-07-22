@@ -59,15 +59,15 @@
 (defparameter *ua2* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
 (defparameter *ba2* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size*)) 0.08)))
 
-(defparameter *wi2* ($push *lstm* ($- ($* 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
+(defparameter *wi2* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
 (defparameter *ui2* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
 (defparameter *bi2* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size*)) 0.08)))
 
-(defparameter *wf2* ($push *lstm* ($- ($* 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
+(defparameter *wf2* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
 (defparameter *uf2* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
 (defparameter *bf2* ($push *lstm* (ones *hidden-size*)))
 
-(defparameter *wo2* ($push *lstm* ($- ($* 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
+(defparameter *wo2* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
 (defparameter *uo2* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
 (defparameter *bo2* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size*)) 0.08)))
 
