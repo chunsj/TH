@@ -10,7 +10,7 @@
 (in-package :genchars-obama-lstm2)
 
 (th::th-set-num-threads 12)
-(th::th-set-gc-hard-max (* 8 1024 1024 1024))
+(th::th-set-gc-hard-max (* 10 1024 1024 1024))
 
 (defparameter *data-lines* (remove-if (lambda (line) (< ($count line) 1)) (text-lines :obama)))
 (defparameter *data* (format nil "~{~A~^~%~}" *data-lines*))
@@ -34,8 +34,8 @@
 ;; non batched lstm for example
 ;;
 
-(defparameter *hidden-size* 100)
-(defparameter *sequence-length* 50)
+(defparameter *hidden-size* 256)
+(defparameter *sequence-length* 100)
 
 (defparameter *lstm* (parameters))
 
@@ -295,7 +295,7 @@
 (gcf)
 
 (time
- (loop :for iter :from 1 :to 50
+ (loop :for iter :from 1 :to 10
        :for n = 0
        :for maxloss = 0
        :for maxloss-pos = -1
@@ -343,7 +343,7 @@
 (prn (sample "This is not correct." 200 0.5))
 (prn (sample "I" 200 0.5))
 
-(lstm-write-weights)
+;;(lstm-write-weights)
 (lstm-read-weights)
 
 ;; rmgd 0.002 0.99 -  1.31868 - 1.61637

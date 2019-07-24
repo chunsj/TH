@@ -213,7 +213,7 @@
 (gcf)
 
 (time
- (loop :for iter :from 1 :to 10
+ (loop :for iter :from 1 :to 5
        :for n = 0
        :for maxloss = 0
        :for maxloss-pos = -1
