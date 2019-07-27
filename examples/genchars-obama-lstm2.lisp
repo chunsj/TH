@@ -291,6 +291,11 @@
 (defparameter *mloss* (* (- (log (/ 1 *vocab-size*))) *sequence-length*))
 (defparameter *min-mloss* *mloss*)
 
+(defparameter *ph1* (zeros 1 *hidden-size*))
+(defparameter *pc1* (zeros 1 *hidden-size*))
+(defparameter *ph2* (zeros 1 *hidden-size*))
+(defparameter *pc2* (zeros 1 *hidden-size*))
+
 ($cg! *lstm*)
 (gcf)
 
@@ -303,10 +308,10 @@
        :do (progn
              (loop :for input :in *inputs*
                    :for target :in *targets*
-                   :do (let ((ph1 (zeros 1 *hidden-size*))
-                             (pc1 (zeros 1 *hidden-size*))
-                             (ph2 (zeros 1 *hidden-size*))
-                             (pc2 (zeros 1 *hidden-size*))
+                   :do (let ((ph1 *ph1*)
+                             (pc1 *pc1*)
+                             (ph2 *ph2*)
+                             (pc2 *pc2*)
                              (tloss 0))
                          (loop :for i :from 0 :below ($size input 0)
                                :for xt = ($index input 0 i)

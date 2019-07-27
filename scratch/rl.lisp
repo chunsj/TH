@@ -69,3 +69,6 @@
 (defparameter *num-stocks* 0)
 
 (run-simulations *policy* *budget* *num-stocks* ($ *prices* (list 5000 3000)) 3)
+
+(defclass q-learning-decision-policy (decision-policy)
+  )
