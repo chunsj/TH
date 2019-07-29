@@ -289,7 +289,7 @@
                                          m)))
 
 (defparameter *mloss* (* (- (log (/ 1 *vocab-size*))) *sequence-length*))
-(defparameter *min-mloss* *mloss*) ;; 116.5306 as of now
+(defparameter *min-mloss* *mloss*) ;; 115.8551 as of now
 
 (defparameter *ph1* (zeros 1 *hidden-size*))
 (defparameter *pc1* (zeros 1 *hidden-size*))
@@ -358,5 +358,5 @@
 (loop :for p :from 0 :below *upto* :by *sequence-length*
       :for n :from 0
       :for input-str = (subseq *data* p (+ p *sequence-length*))
-      :do (when (member n '(39773 22257 12155 629 362 171 32))
+      :do (when (member n '(39773 25383 22257 12208 12155 629 362 171 32))
             (prn (format nil "~6,d" n) input-str)))
