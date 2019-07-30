@@ -289,7 +289,7 @@
                                          m)))
 
 (defparameter *mloss* (* (- (log (/ 1 *vocab-size*))) *sequence-length*))
-(defparameter *min-mloss* *mloss*) ;; 115.8551 as of now
+(defparameter *min-mloss* *mloss*) ;; 115.7057 as of now
 
 (defparameter *ph1* (zeros 1 *hidden-size*))
 (defparameter *pc1* (zeros 1 *hidden-size*))
