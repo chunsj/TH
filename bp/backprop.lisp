@@ -120,6 +120,9 @@
     (push v ($parameters parameters))
     v))
 
+(defmethod $cg! ((parameters list))
+  (loop :for p :in parameters :do ($cg! p)))
+
 (defmethod $cg! ((parameters parameters))
   (loop :for p :in ($parameters parameters) :do ($cg! p)))
 
