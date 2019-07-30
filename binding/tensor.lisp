@@ -2042,4 +2042,8 @@
 
 (defgeneric $clear (tensor) (:documentation "new tensor allocated as given one."))
 
-(defmethod $clear ((tensor tensor)) (apply #'tensor ($size tensor)))
+(defmethod $clear ((tensor tensor))
+  (let* ((cls (type-of tensor))
+         (instance (make-instance cls)))
+    (allocate-tensor instance ($size tensor))
+    instance))
