@@ -10,7 +10,6 @@
 (in-package :genchars-obama-lstm2)
 
 (th::th-set-num-threads 12)
-(th::th-set-num-threads 4)
 (th::th-set-gc-hard-max (* 8 1024 1024 1024))
 
 (defparameter *data-lines* (remove-if (lambda (line) (< ($count line) 1)) (text-lines :obama)))
@@ -340,7 +339,7 @@
                          ($gd! *lstm* 0.0001)
                          (setf *mloss* (+ (* 0.999 *mloss*) (* 0.001 tloss)))
                          (when (> *mloss* max-mloss) (setf max-mloss *mloss*))
-                         (when (zerop (rem n 100))
+                         (when (zerop (rem n 20))
                            (prn "[ITER]" iter n *mloss* maxloss maxloss-pos (local-time:now)))
                          (incf n)))
              (when (< max-mloss *min-mloss*)
