@@ -9,7 +9,7 @@
 
 #+ccl
 (defmethod ccl:terminate ((f file))
-  (when (has-valid-handle f)
+  (when (has-valid-handle-p f)
     (th-file-free ($handle f))
     (reset-handle f)))
 
