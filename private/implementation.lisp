@@ -233,7 +233,7 @@
     (defmethod tensor-storage ((tensor tensor.type))
       (let ((h (ft-tensor-storage ($handle tensor))))
         (when (and h (not (cffi:null-pointer-p h)))
-          (let ((storage (make-instance 'storage.type :shallow T)))
+          (let ((storage (make-instance 'storage.type)))
             (setf ($handle storage) h)
             storage))))
     (defmethod tensor-storage-offset ((tensor tensor.type))

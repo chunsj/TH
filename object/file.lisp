@@ -18,6 +18,7 @@
         (h (th-disk-file-new name mode (if quietp 1 0))))
     (setf ($handle n) h)
     #+sbcl (sb-ext:finalize n (lambda () (th-file-free h)))
+    #+ccl (ccl:terminate-when-unreachable n)
     n))
 
 (defun file.pipe (name mode &optional quietp)
@@ -25,6 +26,7 @@
         (h (th-pipe-file-new name mode (if quietp 1 0))))
     (setf ($handle n) h)
     #+sbcl (sb-ext:finalize n (lambda () (th-file-free h)))
+    #+ccl (ccl:terminate-when-unreachable n)
     n))
 
 (defun file.memory (mode &optional storage)
@@ -34,4 +36,5 @@
                (th-memory-file-new mode))))
     (setf ($handle n) h)
     #+sbcl (sb-ext:finalize n (lambda () (th-file-free h)))
+    #+ccl (ccl:terminate-when-unreachable n)
     n))

@@ -16,6 +16,7 @@
         (h (th-generator-new)))
     (setf ($handle gen) h)
     #+sbcl (sb-ext:finalize gen (lambda () (th-generator-free h)))
+    #+ccl (ccl:terminate-when-unreachable gen)
     (when seed
       (th-random-manual-seed ($handle gen) (coerce seed 'integer)))
     gen))
