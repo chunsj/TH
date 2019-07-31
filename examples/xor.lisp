@@ -106,8 +106,8 @@
   (prn ($sigmoid ($mm ($sigmoid ($mm X w1)) w2))))
 
 (let* ((ps (parameters))
-       (w1 ($parameter ps (rndn 3 3)))
-       (w2 ($parameter ps (rndn 3 1)))
+       (w1 ($push ps (rndn 3 3)))
+       (w2 ($push ps (rndn 3 1)))
        (X (tensor '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
        (Y (tensor '(0 1 1 0)))
        (lr 0.01))
