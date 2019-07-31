@@ -41,7 +41,7 @@
            gv))
         ((numberp ($data node))
          (let ((gv 0D0))
-           (loop :for v :in ($fns node) :do (incf gv v))
+           (loop :for f :in ($fns node) :do (incf gv (funcall f)))
            gv))))
 
 (defun compute-gradient (node)

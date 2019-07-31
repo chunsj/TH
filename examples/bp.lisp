@@ -10,8 +10,7 @@
        (y (tensor '(1 2 3)))
        (out ($broadcast x y)))
   ($gs! out (tensor '(1 2 3)))
-  (prn ($gradient x))
-  (prn ($gradient y)))
+  (prn ($gradient x)))
 
 (let* ((a (tensor '(5 5 5)))
        (c ($parameter 5))
