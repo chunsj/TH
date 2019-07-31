@@ -39,7 +39,6 @@
        (y ($parameter (tensor '(3 2 1))))
        (out ($sub x y)))
   ($gs! out (tensor '(1 1 1)))
-  (prn ($gradient x))
   (prn ($gradient y)))
 
 (let* ((x ($parameter '(1 2 3)))

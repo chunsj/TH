@@ -32,7 +32,7 @@
 (defun $gs! (node &optional gradientv)
   "Set gradient seed value."
   (when ($fns node) (setf ($fns node) nil))
-  (setf ($gradientv node) (or gradientv ($one 1))))
+  (setf ($gradientv node) (or gradientv ($one ($data node)))))
 
 (defun accumulate-effects (node)
   (cond (($tensorp ($data node))
