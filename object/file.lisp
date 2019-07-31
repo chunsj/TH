@@ -9,9 +9,9 @@
 
 #+ccl
 (defmethod ccl:terminate ((f file))
-  (let ((h ($handle f)))
-    (th-file-free h)
-    (setf ($handle f) nil)))
+  (when (has-valid-handle f)
+    (th-file-free ($handle f))
+    (reset-handle f)))
 
 (defun file.disk (name mode &optional quietp)
   (let ((n (make-instance 'file.disk))

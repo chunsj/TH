@@ -6,9 +6,9 @@
 
 #+ccl
 (defmethod ccl:terminate ((g generator))
-  (let ((h ($handle g)))
-    (th-generator-free h)
-    (setf ($handle g) nil)))
+  (when (has-valid-handle-p g)
+    (th-generator-free ($handle g))
+    (reset-handle g)))
 
 
 (defun generator (&optional seed)
