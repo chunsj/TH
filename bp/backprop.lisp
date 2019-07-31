@@ -32,10 +32,7 @@
 (defun $gs! (node &optional gradientv)
   "Set gradient seed value."
   (when ($fns node) (setf ($fns node) nil))
-  (let ((gradient (or gradientv (if ($tensorp ($data node))
-                                    ($one ($data node))
-                                    1))))
-    (setf ($gradientv node) gradient)))
+  (setf ($gradientv node) (or gradientv ($one 1))))
 
 (defun accumulate-effects (node)
   (cond (($tensorp ($data node))
@@ -43,8 +40,9 @@
            (loop :for f :in ($fns node) :do ($add! gv (funcall f)))
            gv))
         ((numberp ($data node))
-         (reduce #'+ (mapcar (lambda (f) (funcall f)) (reverse ($fns node)))
-                 :initial-value 0))))
+         (let ((gv 0D0))
+           (loop :for v :in ($fns node) :do (incf gv v))
+           gv))))
 
 (defun compute-gradient (node)
   (if ($fns node)

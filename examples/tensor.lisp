@@ -5,6 +5,9 @@
 
 (in-package :th.tensor-examples)
 
+;; plain storage
+(prn (storage.float))
+
 ;; creates an empty tensor of default tensor class (float)
 (prn (tensor))
 

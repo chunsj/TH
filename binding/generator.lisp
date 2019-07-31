@@ -7,7 +7,7 @@
         (h (th-generator-copy ($handle generator)
                               ($handle from))))
     (setf ($handle gen) h)
-    (sb-ext:finalize gen (lambda () (th-generator-free h)))
+    #+sbcl (sb-ext:finalize gen (lambda () (th-generator-free h)))
     gen))
 
 (defmethod $seed ((generator generator)) (th-random-seed ($handle generator)))

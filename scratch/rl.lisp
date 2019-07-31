@@ -56,7 +56,7 @@
     (+ budget (* num-stocks share-value))))
 
 (defun run-simulations (policy budget num-stocks prices hist)
-  (let ((num-tries 10))
+  (let ((num-tries 5))
     (loop :for i :from 0 :below num-tries
           :for final-portfolio = (run-simulation policy budget num-stocks prices hist)
           :collect (progn
@@ -105,27 +105,31 @@
   (let* ((q (compute-q-value policy x))
          (d ($- y q)))
     ($@ d d))
-  ($amgd! (q-learning-parameters policy) 0.001))
+  ($amgd! (q-learning-parameters policy)))
 
 (defun q-value (policy x)
   (let ((q (compute-q-value policy x)))
     (reset-gradients policy)
     ($data q)))
 
+(defun $argmax (tensor &optional (dimension 0))
+  (let ((maxc ($max tensor dimension))
+        (nd ($ndim tensor)))
+    (cond ((eq nd 1) ($ (cadr maxc) 0))
+          ((eq nd 2) ($ (cadr maxc) 0 0)))))
+
 (defmethod select-action ((policy q-learning-decision-policy) current-state step)
   (let ((threshold (min (q-learning-epsilon policy) (/ step 1000D0))))
     (if (< (random 1D0) threshold)
         (let* ((action-q-value (q-value policy current-state))
-               (maxd ($max action-q-value 0))
-               (argmax ($ (cadr maxd) 0)))
+               (argmax ($argmax action-q-value)))
           ($ (policy-actions policy) argmax))
         ($ (policy-actions policy) (random ($count (policy-actions policy)))))))
 
 (defmethod update-Q ((policy q-learning-decision-policy) state action reward next-state)
   (let* ((q (q-value policy state))
          (nq (q-value policy next-state))
-         (nmaxd ($max nq 0))
-         (nargmax ($ (cadr nmaxd) 0)))
+         (nargmax ($argmax nq)))
     (setf ($ q nargmax)
           (+ reward (* (q-learning-gamma policy) ($ nq nargmax))))
     (train-q-value policy state q)))
