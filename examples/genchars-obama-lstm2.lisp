@@ -289,7 +289,7 @@
                                          m)))
 
 (defparameter *mloss* (* (- (log (/ 1 *vocab-size*))) *sequence-length*))
-(defparameter *min-mloss* *mloss*) ;; 115.2973 as of now
+(defparameter *min-mloss* *mloss*)
 
 (defparameter *ph1* (zeros 1 *hidden-size*))
 (defparameter *pc1* (zeros 1 *hidden-size*))
@@ -298,6 +298,8 @@
 
 ($cg! *lstm*)
 (gcf)
+
+(setf *min-mloss* 115.0499) ;; updated
 
 (time
  (loop :for iter :from 1 :to 10
