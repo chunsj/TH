@@ -444,8 +444,6 @@
 
 (defmethod $clone ((tensor tensor)) (tensor-clone tensor))
 
-
-
 (defmethod $contiguous! ((tensor tensor))
   (unless ($contiguousp tensor)
     (tensor-contiguous tensor))

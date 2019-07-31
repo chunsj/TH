@@ -1,5 +1,8 @@
 # My Deep Learning Library for Common Lisp using libTH/libTHNN
 
+## NEWS
+  Now, this code runs on Clozure CL as well as SBCL.
+
 ## What is this?
   Common Lisp Deep Learning Library which supports automatic backpropagation. I'd like to learn how
   neural network and automatic backpropagation works and this is my personal journey on the subject.

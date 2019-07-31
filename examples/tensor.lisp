@@ -431,14 +431,14 @@
     (prn x)))
 
 ;; permute - multidimensional transposing
-(let ((x (tensor 3 4 2 5)))
+(let ((x (ones 3 4 2 5)))
   (prn "original size")
   (prn ($size x))
   (prn "permute size with 2nd, 3rd, 1st and 4th dimensions - 4,2,3,5")
   (prn ($size ($permute x 1 2 0 3))))
 
 ;; unfold - slice with size by step along dimension
-(let ((x (tensor 7)))
+(let ((x (ones 7)))
   (loop :for i :from 1 :to 7 :do (setf ($ x (1- i)) i))
   (prn "vector, 1 to 7")
   (prn x)
@@ -1099,7 +1099,7 @@
   (prn ($@ v ($diag e) ($transpose v)))
   (prn ($dist a ($triu ($@ v ($diag e) ($transpose v))))))
 
-;; ev - XXX ERROR, overflow with float32
+;; ev
 (let ((a (-> (tensor '((1.96  0.00  0.00  0.00  0.00)
                        (-6.49  3.80  0.00  0.00  0.00)
                        (-0.47 -6.39  4.17  0.00  0.00)
