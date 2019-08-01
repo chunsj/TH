@@ -303,7 +303,7 @@
 (setf *min-mloss* 114.4042) ;; updated
 
 (time
- (loop :for iter :from 1 :to 10
+ (loop :for iter :from 1 :to 5
        :for n = 0
        :for maxloss = 0
        :for maxloss-pos = -1
@@ -364,3 +364,5 @@
       :for input-str = (subseq *data* p (+ p *sequence-length*))
       :do (when (member n '(39773 25383 22257 12208 12155 629 362 171 32))
             (prn (format nil "~6,d" n) input-str)))
+
+;; 20~22%
