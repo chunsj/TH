@@ -61,6 +61,7 @@
   19. SqueezeNet1.1, pretrained model: examples/squeezenet11.lisp (refer torch-squeezenet11.py)
   20. Fully convolutional network: examples/fcn.lisp
   21. Hidden Markov model: examples/hmm.lisp (from the Machine Learning with Tensorflow book)
+  22. Reinforcement learning example: examples/rl.lisp (ditto)
 
 ## Pretrained Models
   Though there's currently 5 models, VGG16, VGG19, ResNet50, DenseNet161 and SqueezeNet1.1 are
