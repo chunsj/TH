@@ -10,7 +10,6 @@
 
 (in-package :genchars-obama-lstm2)
 
-;;(th::th-set-num-threads 12)
 (th::th-set-gc-hard-max (* 8 1024 1024 1024))
 
 (defparameter *data-lines* (remove-if (lambda (line) (< ($count line) 1)) (text-lines :obama)))
@@ -303,13 +302,13 @@
 (setf *min-mloss* 114.4042) ;; updated
 
 (time
- (loop :for iter :from 1 :to 5
+ (loop :for iter :from 1 :to 1
        :for n = 0
        :for maxloss = 0
        :for maxloss-pos = -1
        :for max-mloss = 0
        :do (progn
-             (loop :for input :in *inputs*
+             (loop :for input :in (subseq *inputs* 0 50)
                    :for target :in *targets*
                    :do (let ((ph1 *ph1*)
                              (pc1 *pc1*)
