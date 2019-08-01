@@ -2,7 +2,7 @@
 
 (in-package :th)
 
-(defvar *mhack-foreign-memory-threshold-default* (* 2 1024 1024 1024))
+(defvar *mhack-foreign-memory-threshold-default* (* 8 1024 1024 1024))
 
 (cffi:defcallback thgc :void ((data :pointer))
   (declare (ignore data))
