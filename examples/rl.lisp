@@ -3,6 +3,9 @@
         #:mu
         #:th))
 
+;; XXX
+;; NO, this code will not teach or show you how to trade!
+
 (in-package :rl-simple)
 
 (defparameter *prices* (->> (read-lines-from "./data/msft.txt")
