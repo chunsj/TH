@@ -4,6 +4,7 @@
 (defpackage :genchars-obama-lstm2
   (:use #:common-lisp
         #:mu
+        #:mdt
         #:th
         #:th.ex.data))
 
@@ -340,7 +341,7 @@
                          (setf *mloss* (+ (* 0.999 *mloss*) (* 0.001 tloss)))
                          (when (> *mloss* max-mloss) (setf max-mloss *mloss*))
                          (when (zerop (rem n 20))
-                           (prn "[ITER]" iter n *mloss* maxloss maxloss-pos (local-time:now)))
+                           (prn "[ITER]" iter n *mloss* maxloss maxloss-pos (now)))
                          (incf n)))
              (when (< max-mloss *min-mloss*)
                (prn "*** BETTER MLOSS - WRITE WEIGHTS: FROM" *min-mloss* "TO" max-mloss)
