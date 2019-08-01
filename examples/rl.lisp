@@ -5,8 +5,9 @@
 
 (in-package :rl-simple)
 
-;; XXX this should not use other library
-(defparameter *prices* (tensor (reverse (ma:opens (ma:bars "005930" :start "1980-01-01")))))
+(defparameter *prices* (->> (read-lines-from "./data/msft.txt")
+                            (mapcar (lambda (s) (parse-float s)))
+                            (tensor)))
 
 (defclass decision-policy ()
   ((actions :accessor policy-actions)))
@@ -67,8 +68,9 @@
 (defparameter *policy* (random-decision-policy *actions*))
 (defparameter *budget* 100000D0)
 (defparameter *num-stocks* 0)
+(defparameter *hist* 3)
 
-(run-simulations *policy* *budget* *num-stocks* ($ *prices* (list 5000 3000)) 3)
+(run-simulations *policy* *budget* *num-stocks* *prices* *hist*)
 
 (defclass q-learning-decision-policy (decision-policy)
   ((epsilon :initform 0.95D0 :accessor q-learning-epsilon)
@@ -129,16 +131,45 @@
 (defmethod update-Q ((policy q-learning-decision-policy) state action reward next-state)
   (let* ((q (q-value policy state))
          (nq (q-value policy next-state))
-         (nargmax ($argmax nq)))
-    (setf ($ q nargmax)
+         (nargmax ($argmax nq))
+         (na (position action (policy-actions policy))))
+    (setf ($ q na)
           (+ reward (* (q-learning-gamma policy) ($ nq nargmax))))
     (train-q-value policy state q)))
 
+(defun run-simulation (policy initial-budget initial-num-stocks prices hist)
+  (let ((budget initial-budget)
+        (num-stocks initial-num-stocks)
+        (share-value 0)
+        (transitions (list)))
+    (loop :for i :from 0 :below (- ($count prices) hist 1)
+          :for current-state = ($cat ($ prices (list i hist)) (tensor (list budget num-stocks)))
+          :for current-portfolio = (+ budget (* num-stocks share-value))
+          :for action = (select-action policy current-state i)
+          :do (progn
+                (setf share-value ($ prices (+ i hist)))
+                (cond ((and (eq action :buy) (>= budget share-value))
+                       (progn
+                         (decf budget share-value)
+                         (incf num-stocks)))
+                      ((and (eq action :shell) (> num-stocks 0))
+                       (progn
+                         (incf budget share-value)
+                         (decf num-stocks)))
+                      (t (setf action :hold)))
+                (let* ((new-portfolio (+ budget (* num-stocks share-value)))
+                       (reward (- new-portfolio current-portfolio))
+                       (next-state ($cat ($ prices (list (1+ i) hist))
+                                         (tensor (list budget num-stocks)))))
+                  (push (list current-state action reward next-state) transitions)
+                  (update-Q policy current-state action reward next-state))))
+    (+ budget (* num-stocks share-value))))
+
 (defparameter *actions* '(:buy :sell :hold))
-(defparameter *policy* (q-learning-decision-policy *actions* (+ 3 2)))
+(defparameter *policy* (q-learning-decision-policy *actions* (+ *hist* 2)))
 (defparameter *budget* 100000D0)
 (defparameter *num-stocks* 0)
 
-(run-simulations *policy* *budget* *num-stocks* ($ *prices* (list 5000 3000)) 3)
+(run-simulations *policy* *budget* *num-stocks* *prices* *hist*)
 
 (gcf)
