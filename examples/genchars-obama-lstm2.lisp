@@ -297,7 +297,7 @@
 ($cg! *lstm*)
 (gcf)
 
-(setf *min-mloss* 114.4042) ;; updated
+(setf *min-mloss* 114.1244) ;; updated
 
 (time
  (loop :for iter :from 1 :to 1
