@@ -337,6 +337,7 @@
                          (when (> tloss maxloss)
                            (setf maxloss-pos n)
                            (setf maxloss tloss))
+                         ;;($rmgd! *lstm*)
                          ($gd! *lstm* 0.0001)
                          (setf *mloss* (+ (* 0.999 *mloss*) (* 0.001 tloss)))
                          (when (> *mloss* max-mloss) (setf max-mloss *mloss*))
