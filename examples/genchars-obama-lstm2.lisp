@@ -10,7 +10,7 @@
 
 (in-package :genchars-obama-lstm2)
 
-(th::th-set-num-threads 12)
+;;(th::th-set-num-threads 12)
 (th::th-set-gc-hard-max (* 8 1024 1024 1024))
 
 (defparameter *data-lines* (remove-if (lambda (line) (< ($count line) 1)) (text-lines :obama)))

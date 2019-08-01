@@ -1,0 +1,718 @@
+diff --git a/README.md b/README.md
+index a20a13d..ec490a9 100644
+--- a/README.md
++++ b/README.md
+@@ -1,5 +1,8 @@
+ # My Deep Learning Library for Common Lisp using libTH/libTHNN
+ 
++## NEWS
++  Now, this code runs on Clozure CL as well as SBCL.
++
+ ## What is this?
+   Common Lisp Deep Learning Library which supports automatic backpropagation. I'd like to learn how
+   neural network and automatic backpropagation works and this is my personal journey on the subject.
+diff --git a/binding/generator.lisp b/binding/generator.lisp
+index da076dc..3c9cc52 100644
+--- a/binding/generator.lisp
++++ b/binding/generator.lisp
+@@ -7,7 +7,7 @@
+         (h (th-generator-copy ($handle generator)
+                               ($handle from))))
+     (setf ($handle gen) h)
+-    (sb-ext:finalize gen (lambda () (th-generator-free h)))
++    #+sbcl (sb-ext:finalize gen (lambda () (th-generator-free h)))
+     gen))
+ 
+ (defmethod $seed ((generator generator)) (th-random-seed ($handle generator)))
+diff --git a/binding/storage.lisp b/binding/storage.lisp
+index 69c15dc..777e64a 100644
+--- a/binding/storage.lisp
++++ b/binding/storage.lisp
+@@ -27,48 +27,91 @@
+   (setf (cffi:mem-aref ($handle pointer) ($type pointer) location)
+         ($coerce pointer value)))
+ 
++#+ccl
++(defmethod ccl:terminate ((x storage.byte))
++  (when (has-valid-handle-p x)
++    (th-byte-storage-free ($handle x))
++    (reset-handle x)))
++#+ccl
++(defmethod ccl:terminate ((x storage.char))
++  (when (has-valid-handle-p x)
++    (th-char-storage-free ($handle x))
++    (reset-handle x)))
++#+ccl
++(defmethod ccl:terminate ((x storage.short))
++  (when (has-valid-handle-p x)
++    (th-short-storage-free ($handle x))
++    (reset-handle x)))
++#+ccl
++(defmethod ccl:terminate ((x storage.int))
++  (when (has-valid-handle-p x)
++    (th-int-storage-free ($handle x))
++    (reset-handle x)))
++#+ccl
++(defmethod ccl:terminate ((x storage.long))
++  (when (has-valid-handle-p x)
++    (th-long-storage-free ($handle x))
++    (reset-handle x)))
++#+ccl
++(defmethod ccl:terminate ((x storage.float))
++  (when (has-valid-handle-p x)
++    (th-float-storage-free ($handle x))
++    (reset-handle x)))
++#+ccl
++(defmethod ccl:terminate ((x storage.double))
++  (when (has-valid-handle-p x)
++    (th-double-storage-free ($handle x))
++    (reset-handle x)))
++
+ (defmethod allocate-storage ((storage storage.byte) &optional size)
+   (let ((handle (if size
+                     (th-byte-storage-new-with-size size)
+                     (th-byte-storage-new))))
+     (setf ($handle storage) handle)
+-    (sb-ext:finalize storage (lambda () (th-byte-storage-free handle)))))
++    #+sbcl (sb-ext:finalize storage (lambda () (th-byte-storage-free handle)))
++    #+ccl (ccl:terminate-when-unreachable storage)))
+ (defmethod allocate-storage ((storage storage.char) &optional size)
+   (let ((handle (if size
+                     (th-char-storage-new-with-size size)
+                     (th-char-storage-new))))
+     (setf ($handle storage) handle)
+-    (sb-ext:finalize storage (lambda () (th-char-storage-free handle)))))
++    #+sbcl (sb-ext:finalize storage (lambda () (th-char-storage-free handle)))
++    #+ccl (ccl:terminate-when-unreachable storage)))
+ (defmethod allocate-storage ((storage storage.short) &optional size)
+   (let ((handle (if size
+                     (th-short-storage-new-with-size size)
+                     (th-short-storage-new))))
+     (setf ($handle storage) handle)
+-    (sb-ext:finalize storage (lambda () (th-short-storage-free handle)))))
++    #+sbcl (sb-ext:finalize storage (lambda () (th-short-storage-free handle)))
++    #+ccl (ccl:terminate-when-unreachable storage)))
+ (defmethod allocate-storage ((storage storage.int) &optional size)
+   (let ((handle (if size
+                     (th-int-storage-new-with-size size)
+                     (th-int-storage-new))))
+     (setf ($handle storage) handle)
+-    (sb-ext:finalize storage (lambda () (th-int-storage-free handle)))))
++    #+sbcl (sb-ext:finalize storage (lambda () (th-int-storage-free handle)))
++    #+ccl (ccl:terminate-when-unreachable storage)))
+ (defmethod allocate-storage ((storage storage.long) &optional size)
+   (let ((handle (if size
+                     (th-long-storage-new-with-size size)
+                     (th-long-storage-new))))
+     (setf ($handle storage) handle)
+-    (sb-ext:finalize storage (lambda () (th-long-storage-free handle)))))
++    #+sbcl (sb-ext:finalize storage (lambda () (th-long-storage-free handle)))
++    #+ccl (ccl:terminate-when-unreachable storage)))
+ (defmethod allocate-storage ((storage storage.float) &optional size)
+   (let ((handle (if size
+                     (th-float-storage-new-with-size size)
+                     (th-float-storage-new))))
+     (setf ($handle storage) handle)
+-    (sb-ext:finalize storage (lambda () (th-float-storage-free handle)))))
++    #+sbcl (sb-ext:finalize storage (lambda () (th-float-storage-free handle)))
++    #+ccl (ccl:terminate-when-unreachable storage)))
+ (defmethod allocate-storage ((storage storage.double) &optional size)
+   (let ((handle (if size
+                     (th-double-storage-new-with-size size)
+                     (th-double-storage-new))))
+     (setf ($handle storage) handle)
+-    (sb-ext:finalize storage (lambda () (th-double-storage-free handle)))))
++    #+sbcl (sb-ext:finalize storage (lambda () (th-double-storage-free handle)))
++    #+ccl (ccl:terminate-when-unreachable storage)))
+ 
+ (defmethod $empty ((storage storage)) (make-storage (type-of storage)))
+ 
+diff --git a/binding/tensor.lisp b/binding/tensor.lisp
+index f55ceec..7dc50d3 100644
+--- a/binding/tensor.lisp
++++ b/binding/tensor.lisp
+@@ -2,48 +2,91 @@
+ 
+ (in-package :th)
+ 
++#+ccl
++(defmethod ccl:terminate ((x tensor.byte))
++  (when (has-valid-handle-p x)
++    (th-byte-tensor-free ($handle x))
++    (reset-handle x)))
++#+ccl
++(defmethod ccl:terminate ((x tensor.char))
++  (when (has-valid-handle-p x)
++    (th-char-tensor-free ($handle x))
++    (reset-handle x)))
++#+ccl
++(defmethod ccl:terminate ((x tensor.short))
++  (when (has-valid-handle-p x)
++    (th-short-tensor-free ($handle x))
++    (reset-handle x)))
++#+ccl
++(defmethod ccl:terminate ((x tensor.int))
++  (when (has-valid-handle-p x)
++    (th-int-tensor-free ($handle x))
++    (reset-handle x)))
++#+ccl
++(defmethod ccl:terminate ((x tensor.long))
++  (when (has-valid-handle-p x)
++    (th-long-tensor-free ($handle x))
++    (reset-handle x)))
++#+ccl
++(defmethod ccl:terminate ((x tensor.float))
++  (when (has-valid-handle-p x)
++    (th-float-tensor-free ($handle x))
++    (reset-handle x)))
++#+ccl
++(defmethod ccl:terminate ((x tensor.double))
++  (when (has-valid-handle-p x)
++    (th-double-tensor-free ($handle x))
++    (reset-handle x)))
++
+ (defmethod allocate-tensor ((tensor tensor.byte) &optional dimensions)
+   (let ((handle (if dimensions
+                     (th-byte-tensor-new-with-size ($handle (storage.long dimensions)) +nil+)
+                     (th-byte-tensor-new))))
+     (setf ($handle tensor) handle)
+-    (sb-ext:finalize tensor (lambda () (th-byte-tensor-free handle)))))
++    #+sbcl (sb-ext:finalize tensor (lambda () (th-byte-tensor-free handle)))
++    #+ccl (ccl:terminate-when-unreachable tensor)))
+ (defmethod allocate-tensor ((tensor tensor.char) &optional dimensions)
+   (let ((handle (if dimensions
+                     (th-char-tensor-new-with-size ($handle (storage.long dimensions)) +nil+)
+                     (th-char-tensor-new))))
+     (setf ($handle tensor) handle)
+-    (sb-ext:finalize tensor (lambda () (th-char-tensor-free handle)))))
++    #+sbcl (sb-ext:finalize tensor (lambda () (th-char-tensor-free handle)))
++    #+ccl (ccl:terminate-when-unreachable tensor)))
+ (defmethod allocate-tensor ((tensor tensor.short) &optional dimensions)
+   (let ((handle (if dimensions
+                     (th-short-tensor-new-with-size ($handle (storage.long dimensions)) +nil+)
+                     (th-short-tensor-new))))
+     (setf ($handle tensor) handle)
+-    (sb-ext:finalize tensor (lambda () (th-short-tensor-free handle)))))
++    #+sbcl (sb-ext:finalize tensor (lambda () (th-short-tensor-free handle)))
++    #+ccl (ccl:terminate-when-unreachable tensor)))
+ (defmethod allocate-tensor ((tensor tensor.int) &optional dimensions)
+   (let ((handle (if dimensions
+                     (th-int-tensor-new-with-size ($handle (storage.long dimensions)) +nil+)
+                     (th-int-tensor-new))))
+     (setf ($handle tensor) handle)
+-    (sb-ext:finalize tensor (lambda () (th-int-tensor-free handle)))))
++    #+sbcl (sb-ext:finalize tensor (lambda () (th-int-tensor-free handle)))
++    #+ccl (ccl:terminate-when-unreachable tensor)))
+ (defmethod allocate-tensor ((tensor tensor.long) &optional dimensions)
+   (let ((handle (if dimensions
+                     (th-long-tensor-new-with-size ($handle (storage.long dimensions)) +nil+)
+                     (th-long-tensor-new))))
+     (setf ($handle tensor) handle)
+-    (sb-ext:finalize tensor (lambda () (th-long-tensor-free handle)))))
++    #+sbcl (sb-ext:finalize tensor (lambda () (th-long-tensor-free handle)))
++    #+ccl (ccl:terminate-when-unreachable tensor)))
+ (defmethod allocate-tensor ((tensor tensor.float) &optional dimensions)
+   (let ((handle (if dimensions
+                     (th-float-tensor-new-with-size ($handle (storage.long dimensions)) +nil+)
+                     (th-float-tensor-new))))
+     (setf ($handle tensor) handle)
+-    (sb-ext:finalize tensor (lambda () (th-float-tensor-free handle)))))
++    #+sbcl (sb-ext:finalize tensor (lambda () (th-float-tensor-free handle)))
++    #+ccl (ccl:terminate-when-unreachable tensor)))
+ (defmethod allocate-tensor ((tensor tensor.double) &optional dimensions)
+   (let ((handle (if dimensions
+                     (th-double-tensor-new-with-size ($handle (storage.long dimensions)) +nil+)
+                     (th-double-tensor-new))))
+     (setf ($handle tensor) handle)
+-    (sb-ext:finalize tensor (lambda () (th-double-tensor-free handle)))))
++    #+sbcl (sb-ext:finalize tensor (lambda () (th-double-tensor-free handle)))
++    #+ccl (ccl:terminate-when-unreachable tensor)))
+ 
+ (defmethod $empty ((tensor tensor)) (make-tensor (type-of tensor)))
+ 
+@@ -415,8 +458,6 @@
+ 
+ (defmethod $clone ((tensor tensor)) (tensor-clone tensor))
+ 
+-
+-
+ (defmethod $contiguous! ((tensor tensor))
+   (unless ($contiguousp tensor)
+     (tensor-contiguous tensor))
+@@ -2042,4 +2083,8 @@
+ 
+ (defgeneric $clear (tensor) (:documentation "new tensor allocated as given one."))
+ 
+-(defmethod $clear ((tensor tensor)) (apply #'tensor ($size tensor)))
++(defmethod $clear ((tensor tensor))
++  (let* ((cls (type-of tensor))
++         (instance (make-instance cls)))
++    (allocate-tensor instance ($size tensor))
++    instance))
+diff --git a/bp/backprop.lisp b/bp/backprop.lisp
+index 7fdb99a..805bbf9 100644
+--- a/bp/backprop.lisp
++++ b/bp/backprop.lisp
+@@ -32,10 +32,7 @@
+ (defun $gs! (node &optional gradientv)
+   "Set gradient seed value."
+   (when ($fns node) (setf ($fns node) nil))
+-  (let ((gradient (or gradientv (if ($tensorp ($data node))
+-                                    ($one ($data node))
+-                                    1))))
+-    (setf ($gradientv node) gradient)))
++  (setf ($gradientv node) (or gradientv ($one ($data node)))))
+ 
+ (defun accumulate-effects (node)
+   (cond (($tensorp ($data node))
+@@ -43,8 +40,9 @@
+            (loop :for f :in ($fns node) :do ($add! gv (funcall f)))
+            gv))
+         ((numberp ($data node))
+-         (reduce #'+ (mapcar (lambda (f) (funcall f)) (reverse ($fns node)))
+-                 :initial-value 0))))
++         (let ((gv 0D0))
++           (loop :for f :in ($fns node) :do (incf gv (funcall f)))
++           gv))))
+ 
+ (defun compute-gradient (node)
+   (if ($fns node)
+@@ -120,6 +118,9 @@
+     (push v ($parameters parameters))
+     v))
+ 
++(defmethod $cg! ((parameters list))
++  (loop :for p :in parameters :do ($cg! p)))
++
+ (defmethod $cg! ((parameters parameters))
+   (loop :for p :in ($parameters parameters) :do ($cg! p)))
+ 
+diff --git a/examples/bp.lisp b/examples/bp.lisp
+index 3df8532..83d51eb 100644
+--- a/examples/bp.lisp
++++ b/examples/bp.lisp
+@@ -10,8 +10,7 @@
+        (y (tensor '(1 2 3)))
+        (out ($broadcast x y)))
+   ($gs! out (tensor '(1 2 3)))
+-  (prn ($gradient x))
+-  (prn ($gradient y)))
++  (prn ($gradient x)))
+ 
+ (let* ((a (tensor '(5 5 5)))
+        (c ($parameter 5))
+@@ -40,7 +39,6 @@
+        (y ($parameter (tensor '(3 2 1))))
+        (out ($sub x y)))
+   ($gs! out (tensor '(1 1 1)))
+-  (prn ($gradient x))
+   (prn ($gradient y)))
+ 
+ (let* ((x ($parameter '(1 2 3)))
+diff --git a/examples/genchars-obama-lstm2.lisp b/examples/genchars-obama-lstm2.lisp
+index b1085ca..f98516e 100644
+--- a/examples/genchars-obama-lstm2.lisp
++++ b/examples/genchars-obama-lstm2.lisp
+@@ -10,6 +10,7 @@
+ (in-package :genchars-obama-lstm2)
+ 
+ (th::th-set-num-threads 12)
++(th::th-set-num-threads 4)
+ (th::th-set-gc-hard-max (* 8 1024 1024 1024))
+ 
+ (defparameter *data-lines* (remove-if (lambda (line) (< ($count line) 1)) (text-lines :obama)))
+@@ -289,7 +290,7 @@
+                                          m)))
+ 
+ (defparameter *mloss* (* (- (log (/ 1 *vocab-size*))) *sequence-length*))
+-(defparameter *min-mloss* *mloss*) ;; 115.8551 as of now
++(defparameter *min-mloss* *mloss*)
+ 
+ (defparameter *ph1* (zeros 1 *hidden-size*))
+ (defparameter *pc1* (zeros 1 *hidden-size*))
+@@ -299,6 +300,8 @@
+ ($cg! *lstm*)
+ (gcf)
+ 
++(setf *min-mloss* 114.6048) ;; updated
++
+ (time
+  (loop :for iter :from 1 :to 10
+        :for n = 0
+@@ -338,7 +341,7 @@
+                          (setf *mloss* (+ (* 0.999 *mloss*) (* 0.001 tloss)))
+                          (when (> *mloss* max-mloss) (setf max-mloss *mloss*))
+                          (when (zerop (rem n 100))
+-                           (prn "[ITER]" iter n *mloss* maxloss maxloss-pos))
++                           (prn "[ITER]" iter n *mloss* maxloss maxloss-pos (local-time:now)))
+                          (incf n)))
+              (when (< max-mloss *min-mloss*)
+                (prn "*** BETTER MLOSS - WRITE WEIGHTS: FROM" *min-mloss* "TO" max-mloss)
+diff --git a/examples/tensor.lisp b/examples/tensor.lisp
+index 814e9e7..1a4265e 100644
+--- a/examples/tensor.lisp
++++ b/examples/tensor.lisp
+@@ -5,6 +5,9 @@
+ 
+ (in-package :th.tensor-examples)
+ 
++;; plain storage
++(prn (storage.float))
++
+ ;; creates an empty tensor of default tensor class (float)
+ (prn (tensor))
+ 
+@@ -428,14 +431,14 @@
+     (prn x)))
+ 
+ ;; permute - multidimensional transposing
+-(let ((x (tensor 3 4 2 5)))
++(let ((x (ones 3 4 2 5)))
+   (prn "original size")
+   (prn ($size x))
+   (prn "permute size with 2nd, 3rd, 1st and 4th dimensions - 4,2,3,5")
+   (prn ($size ($permute x 1 2 0 3))))
+ 
+ ;; unfold - slice with size by step along dimension
+-(let ((x (tensor 7)))
++(let ((x (ones 7)))
+   (loop :for i :from 1 :to 7 :do (setf ($ x (1- i)) i))
+   (prn "vector, 1 to 7")
+   (prn x)
+@@ -1096,7 +1099,7 @@
+   (prn ($@ v ($diag e) ($transpose v)))
+   (prn ($dist a ($triu ($@ v ($diag e) ($transpose v))))))
+ 
+-;; ev - XXX ERROR, overflow with float32
++;; ev
+ (let ((a (-> (tensor '((1.96  0.00  0.00  0.00  0.00)
+                        (-6.49  3.80  0.00  0.00  0.00)
+                        (-0.47 -6.39  4.17  0.00  0.00)
+diff --git a/examples/xor.lisp b/examples/xor.lisp
+index 1703352..8acbc06 100644
+--- a/examples/xor.lisp
++++ b/examples/xor.lisp
+@@ -106,8 +106,8 @@
+   (prn ($sigmoid ($mm ($sigmoid ($mm X w1)) w2))))
+ 
+ (let* ((ps (parameters))
+-       (w1 ($parameter ps (rndn 3 3)))
+-       (w2 ($parameter ps (rndn 3 1)))
++       (w1 ($push ps (rndn 3 3)))
++       (w2 ($push ps (rndn 3 1)))
+        (X (tensor '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
+        (Y (tensor '(0 1 1 0)))
+        (lr 0.01))
+diff --git a/ffi/mhack.lisp b/ffi/mhack.lisp
+index fcdc633..23743dc 100644
+--- a/ffi/mhack.lisp
++++ b/ffi/mhack.lisp
+@@ -6,7 +6,8 @@
+ 
+ (cffi:defcallback thgc :void ((data :pointer))
+   (declare (ignore data))
+-  (sb-ext:gc :full T))
++  #+sbcl (sb-ext:gc :full T)
++  #+ccl (ccl:gc))
+ 
+ (cffi:defcfun ("THSetGCHandler" th-set-gc-handler) :void
+   (fn :pointer)
+diff --git a/ffi/tensors.lisp b/ffi/tensors.lisp
+index 480c857..77bedf6 100644
+--- a/ffi/tensors.lisp
++++ b/ffi/tensors.lisp
+@@ -368,7 +368,7 @@
+     ("sinh" sinh :void (result tensorptr) (tensor tensorptr))
+     ("tan" tan :void (result tensorptr) (tensor tensorptr))
+     ("atan" atan :void (result tensorptr) (tensor tensorptr))
+-    ("atan2" atan2 :void (result tensorptr) (tensor tensorptr))
++    ("atan2" atan2 :void (result tensorptr) (tensorx tensorptr) (tensory tensorptr))
+     ("tanh" tanh :void (result tensorptr) (tensor tensorptr))
+     ("pow" pow :void (result tensorptr) (tensor tensorptr) (value real))
+     ("tpow" tpow :void (result tensorptr) (value real) (tensor tensorptr))
+@@ -399,8 +399,8 @@
+     ("logspace" logspace :void (result tensorptr) (a real) (b real) (n :long))
+     ("rand" rand :void (result tensorptr) (generator th-generator-ptr) (size th-long-storage-ptr))
+     ("randn" randn :void (result tensorptr) (generator th-generator-ptr) (size th-long-storage-ptr))
+-    ("gesv" gesv :void (rb tensorptr) (ra tensorptr) (b tensorptr) (a tensorptr) (uplo :string)
+-     (trans :string) (diag :string))
++    ("trtrs" trtrs :void (rb tensorptr) (ra tensorptr) (b tensorptr) (a tensorptr) (uplo :string) (trans :string) (diag :string))
++    ("gesv" gesv :void (rb tensorptr) (ra tensorptr) (b tensorptr) (a tensorptr))
+     ("gels" gels :void (rb tensorptr) (ra tensorptr) (b tensorptr) (a tensorptr))
+     ("syev" syev :void (re tensorptr) (rv tensorptr) (a tensorptr) (jobz :string) (uplo :string))
+     ("geev" geev :void (re tensorptr) (rv tensorptr) (a tensorptr) (jobvr :string))
+diff --git a/object/file.lisp b/object/file.lisp
+index 08d3fed..ded255f 100644
+--- a/object/file.lisp
++++ b/object/file.lisp
+@@ -7,18 +7,26 @@
+ (defclass file.pipe (file.disk) ())
+ (defclass file.memory (file) ())
+ 
++#+ccl
++(defmethod ccl:terminate ((f file))
++  (when (has-valid-handle-p f)
++    (th-file-free ($handle f))
++    (reset-handle f)))
++
+ (defun file.disk (name mode &optional quietp)
+   (let ((n (make-instance 'file.disk))
+         (h (th-disk-file-new name mode (if quietp 1 0))))
+     (setf ($handle n) h)
+-    (sb-ext:finalize n (lambda () (th-file-free h)))
++    #+sbcl (sb-ext:finalize n (lambda () (th-file-free h)))
++    #+ccl (ccl:terminate-when-unreachable n)
+     n))
+ 
+ (defun file.pipe (name mode &optional quietp)
+   (let ((n (make-instance 'file.pipe))
+         (h (th-pipe-file-new name mode (if quietp 1 0))))
+     (setf ($handle n) h)
+-    (sb-ext:finalize n (lambda () (th-file-free h)))
++    #+sbcl (sb-ext:finalize n (lambda () (th-file-free h)))
++    #+ccl (ccl:terminate-when-unreachable n)
+     n))
+ 
+ (defun file.memory (mode &optional storage)
+@@ -27,5 +35,6 @@
+                (th-memory-file-new-with-storage ($handle storage) mode)
+                (th-memory-file-new mode))))
+     (setf ($handle n) h)
+-    (sb-ext:finalize n (lambda () (th-file-free h)))
++    #+sbcl (sb-ext:finalize n (lambda () (th-file-free h)))
++    #+ccl (ccl:terminate-when-unreachable n)
+     n))
+diff --git a/object/generator.lisp b/object/generator.lisp
+index a9b039b..8f6c98a 100644
+--- a/object/generator.lisp
++++ b/object/generator.lisp
+@@ -4,11 +4,19 @@
+ 
+ (defclass generator (th.object) ())
+ 
++#+ccl
++(defmethod ccl:terminate ((g generator))
++  (when (has-valid-handle-p g)
++    (th-generator-free ($handle g))
++    (reset-handle g)))
++
++
+ (defun generator (&optional seed)
+   (let ((gen (make-instance 'generator))
+         (h (th-generator-new)))
+     (setf ($handle gen) h)
+-    (sb-ext:finalize gen (lambda () (th-generator-free h)))
++    #+sbcl (sb-ext:finalize gen (lambda () (th-generator-free h)))
++    #+ccl (ccl:terminate-when-unreachable gen)
+     (when seed
+       (th-random-manual-seed ($handle gen) (coerce seed 'integer)))
+     gen))
+diff --git a/object/object.lisp b/object/object.lisp
+index ef5bb56..7c2237d 100644
+--- a/object/object.lisp
++++ b/object/object.lisp
+@@ -3,4 +3,12 @@
+ (in-package :th)
+ 
+ (defclass th.object () ((handle :initform nil :accessor $handle)))
++
+ (defmethod $handle (null) +nil+)
++
++#+ccl
++(defun has-valid-handle-p (o)
++  (and ($handle o) (not (cffi:null-pointer-p ($handle o)))))
++
++#+ccl
++(defun reset-handle (o) (setf ($handle o) nil))
+diff --git a/private/implementation.lisp b/private/implementation.lisp
+index 365f5e6..1a0d12d 100644
+--- a/private/implementation.lisp
++++ b/private/implementation.lisp
+@@ -16,7 +16,8 @@
+                                                           +nil+
+                                                           ($handle stride)))))
+            (setf ($handle tr) rh)
+-           (sb-ext:finalize tr (lambda () (th-float-tensor-free rh)))
++           #+sbcl (sb-ext:finalize tr (lambda () (th-float-tensor-free rh)))
++           #+ccl (ccl:terminate-when-unreachable tr)
+            tr))
+         ((eq *default-tensor-class* 'tensor.double)
+          (let* ((tr (make-instance 'tensor.double))
+@@ -31,7 +32,8 @@
+                                                            +nil+
+                                                            ($handle stride)))))
+            (setf ($handle tr) rh)
+-           (sb-ext:finalize tr (lambda () (th-double-tensor-free rh)))
++           #+sbcl (sb-ext:finalize tr (lambda () (th-double-tensor-free rh)))
++           #+ccl (ccl:terminate-when-unreachable tr)
+            tr))
+         (T nil)))
+ 
+@@ -180,7 +182,8 @@
+       (let ((tr (make-instance 'tensor.type))
+             (rh (ft-tensor-new-with-tensor ($handle tensor))))
+         (setf ($handle tr) rh)
+-        (sb-ext:finalize tr (lambda () (ft-tensor-free rh)))
++        #+sbcl (sb-ext:finalize tr (lambda () (ft-tensor-free rh)))
++        #+ccl (ccl:terminate-when-unreachable tr)
+         tr))
+     (defmethod tensor-with-storage ((storage storage.type) &optional (storage-offset 0) size stride)
+       (let* ((tr (make-instance 'tensor.type))
+@@ -195,7 +198,8 @@
+                                                  +nil+
+                                                  ($handle stride)))))
+         (setf ($handle tr) rh)
+-        (sb-ext:finalize tr (lambda () (ft-tensor-free rh)))
++        #+sbcl (sb-ext:finalize tr (lambda () (ft-tensor-free rh)))
++        #+ccl (ccl:terminate-when-unreachable tr)
+         tr))
+     (defmethod tensor-at ((tensor tensor.type) location &rest others-and-default)
+       (if (null others-and-default)
+@@ -231,11 +235,11 @@
+                                      v))))
+         v))
+     (defmethod tensor-storage ((tensor tensor.type))
+-      (let ((storage (make-instance 'storage.type))
+-            (h (ft-tensor-storage ($handle tensor))))
+-        (when (not (cffi:null-pointer-p h))
+-          (setf ($handle storage) h)
+-          storage)))
++      (let ((h (ft-tensor-storage ($handle tensor))))
++        (when (and h (not (cffi:null-pointer-p h)))
++          (let ((storage (make-instance 'storage.type)))
++            (setf ($handle storage) h)
++            storage))))
+     (defmethod tensor-storage-offset ((tensor tensor.type))
+       (ft-tensor-storage-offset ($handle tensor)))
+     (defmethod tensor-n-dimension ((tensor tensor.type))
+@@ -252,37 +256,43 @@
+       (let ((clone (make-instance 'tensor.type))
+             (handle (ft-tensor-new-clone ($handle tensor))))
+         (setf ($handle clone) handle)
+-        (sb-ext:finalize clone (lambda () (ft-tensor-free handle)))
++        #+sbcl (sb-ext:finalize clone (lambda () (ft-tensor-free handle)))
++        #+ccl (ccl:terminate-when-unreachable clone)
+         clone))
+     (defmethod tensor-contiguous ((tensor tensor.type))
+       (let ((tr (make-instance 'tensor.type))
+             (rh (ft-tensor-new-contiguous ($handle tensor))))
+         (setf ($handle tr) rh)
+-        (sb-ext:finalize tr (lambda () (ft-tensor-free rh)))
++        #+sbcl (sb-ext:finalize tr (lambda () (ft-tensor-free rh)))
++        #+ccl (ccl:terminate-when-unreachable tr)
+         tr))
+     (defmethod tensor-new-select ((tensor tensor.type) dimension slice-index)
+       (let ((tr (make-instance 'tensor.type))
+             (h (ft-tensor-new-select ($handle tensor) dimension slice-index)))
+         (setf ($handle tr) h)
+-        (sb-ext:finalize tr (lambda () (ft-tensor-free h)))
++        #+sbcl (sb-ext:finalize tr (lambda () (ft-tensor-free h)))
++        #+ccl (ccl:terminate-when-unreachable tr)
+         tr))
+     (defmethod tensor-new-narrow ((tensor tensor.type) dimension first-index size)
+       (let ((r (make-instance 'tensor.type))
+             (h (ft-tensor-new-narrow ($handle tensor) dimension first-index size)))
+         (setf ($handle r) h)
+-        (sb-ext:finalize r (lambda () (ft-tensor-free h)))
++        #+sbcl (sb-ext:finalize r (lambda () (ft-tensor-free h)))
++        #+ccl (ccl:terminate-when-unreachable r)
+         r))
+     (defmethod tensor-new-transpose ((tensor tensor.type))
+       (let ((r (make-instance 'tensor.type))
+             (h (ft-tensor-new-transpose ($handle tensor) 0 1)))
+         (setf ($handle r) h)
+-        (sb-ext:finalize r (lambda () (ft-tensor-free h)))
++        #+sbcl (sb-ext:finalize r (lambda () (ft-tensor-free h)))
++        #+ccl (ccl:terminate-when-unreachable r)
+         r))
+     (defmethod tensor-new-unfold ((tensor tensor.type) dimension size step)
+       (let ((r (make-instance 'tensor.type))
+             (h (ft-tensor-new-unfold ($handle tensor) dimension size step)))
+         (setf ($handle r) h)
+-        (sb-ext:finalize r (lambda () (ft-tensor-free h)))
++        #+sbcl (sb-ext:finalize r (lambda () (ft-tensor-free h)))
++        #+ccl (ccl:terminate-when-unreachable r)
+         r))
+     (defmethod tensor-new-view ((tensor tensor.type) (size list))
+       (let* ((r (make-instance 'tensor.type))
+@@ -292,13 +302,15 @@
+                   s))
+              (h (ft-tensor-new-view ($handle tensor) ($handle s))))
+         (setf ($handle r) h)
+-        (sb-ext:finalize r (lambda () (ft-tensor-free h)))
++        #+sbcl (sb-ext:finalize r (lambda () (ft-tensor-free h)))
++        #+ccl (ccl:terminate-when-unreachable r)
+         r))
+     (defmethod tensor-new-view ((tensor tensor.type) (size storage.long))
+       (let ((r (make-instance 'tensor.type))
+             (h (ft-tensor-new-view ($handle tensor) ($handle size))))
+         (setf ($handle r) h)
+-        (sb-ext:finalize r (lambda () (ft-tensor-free h)))
++        #+sbcl (sb-ext:finalize r (lambda () (ft-tensor-free h)))
++        #+ccl (ccl:terminate-when-unreachable r)
+         r))
+     (defmethod tensor-expand ((tensor tensor.type) (src tensor.type) (size list))
+       (when (> ($count size) 0)
+diff --git a/scratch/rl.lisp b/scratch/rl.lisp
+index 0edace1..dec6743 100644
+--- a/scratch/rl.lisp
++++ b/scratch/rl.lisp
+@@ -56,7 +56,7 @@
+     (+ budget (* num-stocks share-value))))
+ 
+ (defun run-simulations (policy budget num-stocks prices hist)
+-  (let ((num-tries 10))
++  (let ((num-tries 5))
+     (loop :for i :from 0 :below num-tries
+           :for final-portfolio = (run-simulation policy budget num-stocks prices hist)
+           :collect (progn
+@@ -105,27 +105,31 @@
+   (let* ((q (compute-q-value policy x))
+          (d ($- y q)))
+     ($@ d d))
+-  ($amgd! (q-learning-parameters policy) 0.001))
++  ($amgd! (q-learning-parameters policy)))
+ 
+ (defun q-value (policy x)
+   (let ((q (compute-q-value policy x)))
+     (reset-gradients policy)
+     ($data q)))
+ 
++(defun $argmax (tensor &optional (dimension 0))
++  (let ((maxc ($max tensor dimension))
++        (nd ($ndim tensor)))
++    (cond ((eq nd 1) ($ (cadr maxc) 0))
++          ((eq nd 2) ($ (cadr maxc) 0 0)))))
++
+ (defmethod select-action ((policy q-learning-decision-policy) current-state step)
+   (let ((threshold (min (q-learning-epsilon policy) (/ step 1000D0))))
+     (if (< (random 1D0) threshold)
+         (let* ((action-q-value (q-value policy current-state))
+-               (maxd ($max action-q-value 0))
+-               (argmax ($ (cadr maxd) 0)))
++               (argmax ($argmax action-q-value)))
+           ($ (policy-actions policy) argmax))
+         ($ (policy-actions policy) (random ($count (policy-actions policy)))))))
+ 
+ (defmethod update-Q ((policy q-learning-decision-policy) state action reward next-state)
+   (let* ((q (q-value policy state))
+          (nq (q-value policy next-state))
+-         (nmaxd ($max nq 0))
+-         (nargmax ($ (cadr nmaxd) 0)))
++         (nargmax ($argmax nq)))
+     (setf ($ q nargmax)
+           (+ reward (* (q-learning-gamma policy) ($ nq nargmax))))
+     (train-q-value policy state q)))
+diff --git a/th.asd b/th.asd
+index c79858e..fc53b1c 100644
+--- a/th.asd
++++ b/th.asd
+@@ -1,7 +1,7 @@
+ (defsystem th
+   :name "th"
+   :author "Sungjin Chun <chunsj@gmail.com>"
+-  :version "1.36"
++  :version "1.40"
+   :maintainer "Sungjin Chun <chunsj@gmail.com>"
+   :license "GPL3"
+   :description "common lisp tensor and deep learning library"
