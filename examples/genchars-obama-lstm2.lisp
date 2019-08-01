@@ -10,8 +10,6 @@
 
 (in-package :genchars-obama-lstm2)
 
-(th::th-set-gc-hard-max (* 8 1024 1024 1024))
-
 (defparameter *data-lines* (remove-if (lambda (line) (< ($count line) 1)) (text-lines :obama)))
 (defparameter *data* (format nil "~{~A~^~%~}" *data-lines*))
 (defparameter *chars* (remove-duplicates (coerce *data* 'list)))
@@ -279,14 +277,14 @@
                                         (loop :for i :from 0 :below *sequence-length*
                                               :for ch = ($ input-str i)
                                               :do (setf ($ m i ($ *char-to-idx* ch)) 1))
-                                        m)))
+                                        ($contiguous! m))))
 (defparameter *targets* (loop :for p :from 0 :below *upto* :by *sequence-length*
                               :for target-str = (subseq *data* (1+ p) (+ p *sequence-length* 1))
                               :collect (let ((m (zeros *sequence-length* *vocab-size*)))
                                          (loop :for i :from 0 :below *sequence-length*
                                                :for ch = ($ target-str i)
                                                :do (setf ($ m i ($ *char-to-idx* ch)) 1))
-                                         m)))
+                                         ($contiguous! m))))
 
 (defparameter *mloss* (* (- (log (/ 1 *vocab-size*))) *sequence-length*))
 (defparameter *min-mloss* *mloss*)
@@ -308,7 +306,7 @@
        :for maxloss-pos = -1
        :for max-mloss = 0
        :do (progn
-             (loop :for input :in (subseq *inputs* 0 50)
+             (loop :for input :in *inputs*
                    :for target :in *targets*
                    :do (let ((ph1 *ph1*)
                              (pc1 *pc1*)
@@ -340,7 +338,7 @@
                          ($gd! *lstm* 0.0001)
                          (setf *mloss* (+ (* 0.999 *mloss*) (* 0.001 tloss)))
                          (when (> *mloss* max-mloss) (setf max-mloss *mloss*))
-                         (when (zerop (rem n 20))
+                         (when (zerop (rem n 100))
                            (prn "[ITER]" iter n *mloss* maxloss maxloss-pos (now)))
                          (incf n)))
              (when (< max-mloss *min-mloss*)
