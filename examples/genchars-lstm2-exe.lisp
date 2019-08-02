@@ -1,14 +1,18 @@
 ;; from
 ;; http://karpathy.github.io/2015/05/21/rnn-effectiveness/
 
-(defpackage :genchars-obama-lstm2
+;; XXX trying to build a trainer exe - not working yet
+
+(ql:quickload '(:mu :mdt :th))
+
+(defpackage :genchars-lstm2-exe
   (:use #:common-lisp
         #:mu
         #:mdt
         #:th
         #:th.ex.data))
 
-(in-package :genchars-obama-lstm2)
+(in-package :genchars-lstm2-exe)
 
 (defparameter *data-lines* (remove-if (lambda (line) (< ($count line) 1)) (text-lines :obama)))
 (defparameter *data* (format nil "~{~A~^~%~}" *data-lines*))
@@ -346,22 +350,6 @@
 
 (setf *min-mloss* 114.0360) ;; updated
 
-(time (train 10))
+(defun mymain () (time (train 10)))
 
-(prn (sample "This is not correct." 200 0.5))
-(prn (sample "I" 200 0.5))
-
-;;(lstm-write-weights)
-(lstm-read-weights)
-
-;; rmgd 0.002 0.99 -  1.31868 - 1.61637
-;; adgd - 1.551497 - 1.841827
-;; amgd 0.002 - 1.3747485 - 1.70623
-
-(loop :for p :from 0 :below *upto* :by *sequence-length*
-      :for n :from 0
-      :for input-str = (subseq *data* p (+ p *sequence-length*))
-      :do (when (member n '(39773 25383 22257 12208 12155 629 362 171 32))
-            (prn (format nil "~6,d" n) input-str)))
-
-;; 20~22%
+(sb-ext:save-lisp-and-die "train-genchars-lstm2-exe" :toplevel #'mymain :executable T)
