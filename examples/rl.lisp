@@ -178,3 +178,8 @@
 (run-simulations *policy* *budget* *num-stocks* *prices* *hist*)
 
 (gcf)
+
+;; you'll need mplot
+(ql:quickload :mplot)
+(mplot:plot-lines (->> (read-lines-from "./data/msft.txt")
+                       (mapcar (lambda (s) (parse-float s)))))
