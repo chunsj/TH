@@ -69,15 +69,15 @@
 
 (defparameter *actions* '(:buy :sell :hold))
 (defparameter *policy* (random-decision-policy *actions*))
-(defparameter *budget* 100000D0)
+(defparameter *budget* 1000D0)
 (defparameter *num-stocks* 0)
 (defparameter *hist* 3)
 
 (run-simulations *policy* *budget* *num-stocks* *prices* *hist*)
 
 (defclass q-learning-decision-policy (decision-policy)
-  ((epsilon :initform 0.95D0 :accessor q-learning-epsilon)
-   (gamma :initform 0.3D0 :accessor q-learning-gamma)
+  ((epsilon :initform 0.9D0 :accessor q-learning-epsilon)
+   (gamma :initform 0.001D0 :accessor q-learning-gamma)
    (w1 :accessor q-learning-w1)
    (b1 :accessor q-learning-b1)
    (w2 :accessor q-learning-w2)
@@ -85,11 +85,12 @@
    (q :accessor policy-q)))
 
 (defun q-learning-decision-policy (actions input-dim)
-  (let ((n (make-instance 'q-learning-decision-policy)))
+  (let ((n (make-instance 'q-learning-decision-policy))
+        (nh 20))
     (setf (policy-actions n) actions)
-    (setf (q-learning-w1 n) ($parameter (rndn input-dim 20)))
-    (setf (q-learning-b1 n) ($parameter ($* 0.1 (ones 20))))
-    (setf (q-learning-w2 n) ($parameter (rndn 20 ($count actions))))
+    (setf (q-learning-w1 n) ($parameter (rndn input-dim nh)))
+    (setf (q-learning-b1 n) ($parameter ($* 0.1 (ones nh))))
+    (setf (q-learning-w2 n) ($parameter (rndn nh ($count actions))))
     (setf (q-learning-b2 n) ($parameter ($* 0.1 (ones ($count actions)))))
     n))
 
@@ -150,7 +151,7 @@
           :for current-portfolio = (+ budget (* num-stocks share-value))
           :for action = (select-action policy current-state i)
           :do (progn
-                (setf share-value ($ prices (+ i hist)))
+                (setf share-value ($ prices (+ i hist 1)))
                 (cond ((and (eq action :buy) (>= budget share-value))
                        (progn
                          (decf budget share-value)
@@ -169,8 +170,9 @@
     (+ budget (* num-stocks share-value))))
 
 (defparameter *actions* '(:buy :sell :hold))
+(defparameter *hist* 3)
 (defparameter *policy* (q-learning-decision-policy *actions* (+ *hist* 2)))
-(defparameter *budget* 100000D0)
+(defparameter *budget* 1000D0)
 (defparameter *num-stocks* 0)
 
 (run-simulations *policy* *budget* *num-stocks* *prices* *hist*)
