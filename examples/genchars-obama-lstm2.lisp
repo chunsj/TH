@@ -344,7 +344,7 @@
 ($cg! *lstm*)
 (gcf)
 
-(setf *min-mloss* 114.0360) ;; updated
+(setf *min-mloss* 113.9494) ;; updated
 
 (time (train 10))
 
@@ -365,3 +365,4 @@
             (prn (format nil "~6,d" n) input-str)))
 
 ;; 20~22%
+;; 52~54%
