@@ -368,11 +368,15 @@
 
 ;; 20~22%
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 (setf *data-lines* nil
       *data* nil
       *inputs* nil
       *targets* nil)
+=======
+;; 52~54%
+>>>>>>> 869a921262bda3fec01ee29b90d60d55e4b86630
 =======
 ;; 52~54%
 >>>>>>> 869a921262bda3fec01ee29b90d60d55e4b86630
