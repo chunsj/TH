@@ -366,17 +366,10 @@
       :do (when (member n '(39773 25383 22257 12208 12155 629 362 171 32))
             (prn (format nil "~6,d" n) input-str)))
 
-;; 20~22%
-<<<<<<< HEAD
-<<<<<<< HEAD
+;; 20~22% - ccl
+;; 52~54% - sbcl
 
 (setf *data-lines* nil
       *data* nil
       *inputs* nil
       *targets* nil)
-=======
-;; 52~54%
->>>>>>> 869a921262bda3fec01ee29b90d60d55e4b86630
-=======
-;; 52~54%
->>>>>>> 869a921262bda3fec01ee29b90d60d55e4b86630
