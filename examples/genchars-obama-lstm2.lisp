@@ -310,6 +310,7 @@
                               (tloss 0))
                           (loop :for i :from 0 :below ($size input 0)
                                 :for xt = ($index input 0 i)
+                                ;;:for xt = ($reshape ($ input i) 1 86)
                                 :for (ht1 ct1) = ($lstm xt ph1 pc1 *wi1* *ui1* *wf1* *uf1*
                                                         *wo1* *uo1* *wa1* *ua1*
                                                         *bi1* *bf1* *bo1* *ba1*)
@@ -319,6 +320,7 @@
                                 :for yt = ($affine ht2 *wy* *by*)
                                 :for ps = ($softmax yt)
                                 :for y = ($index target 0 i)
+                                ;;:for y = ($reshape ($ target 0) 1 86)
                                 :for l = ($cee ps y)
                                 :do (progn
                                       (setf ph1 ht1
@@ -365,3 +367,8 @@
             (prn (format nil "~6,d" n) input-str)))
 
 ;; 20~22%
+
+(setf *data-lines* nil
+      *data* nil
+      *inputs* nil
+      *targets* nil)
