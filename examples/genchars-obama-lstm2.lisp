@@ -332,7 +332,7 @@
                             (setf maxloss-pos n)
                             (setf maxloss tloss))
                           ;;($rmgd! *lstm*)
-                          ($gd! *lstm* 0.001)
+                          ($gd! *lstm* 0.0005)
                           (setf *mloss* (+ (* 0.999 *mloss*) (* 0.001 tloss)))
                           (when (> *mloss* max-mloss) (setf max-mloss *mloss*))
                           (when (zerop (rem n 100))
@@ -346,7 +346,7 @@
 ($cg! *lstm*)
 (gcf)
 
-(setf *min-mloss* 111.9232) ;; updated
+(setf *min-mloss* 111.9183) ;; updated
 
 (time (train 10))
 
