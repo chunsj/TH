@@ -346,7 +346,7 @@
 ($cg! *lstm*)
 (gcf)
 
-(setf *min-mloss* 105.2873) ;; updated
+(setf *min-mloss* 105.0701) ;; updated
 (setf *mloss* *min-mloss*)
 
 (time (train 40))
