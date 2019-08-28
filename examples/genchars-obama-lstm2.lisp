@@ -346,10 +346,10 @@
 ($cg! *lstm*)
 (gcf)
 
-(setf *min-mloss* 105.3450) ;; updated
+(setf *min-mloss* 105.2873) ;; updated
 (setf *mloss* *min-mloss*)
 
-(time (train 20))
+(time (train 40))
 
 (prn (sample "This is not correct." 200 0.5))
 (prn (sample "I" 200 0.5))
