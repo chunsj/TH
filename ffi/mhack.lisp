@@ -13,4 +13,4 @@
 (th-set-gc-handler (cffi:callback thgc) +nil+)
 
 #+sbcl
-(setf (sb-ext:bytes-consed-between-gcs) (* 16 1024 1024))
+(setf (sb-ext:bytes-consed-between-gcs) (* 12 1024 1024))
