@@ -357,6 +357,7 @@
            #:$softmax
            #:$logsoftmax
            #:$mish
+           #:$swish
            #:$bnorm
            #:$bn
            #:$dropout

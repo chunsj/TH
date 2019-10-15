@@ -139,6 +139,7 @@
 (defgeneric $softmax (x) (:documentation "Softmax function."))
 (defgeneric $logsoftmax (x) (:documentation "Log softmax function."))
 (defgeneric $mish (x) (:documentation "self regularized non-monotonic activation function."))
+(defgeneric $swish (x) (:documentation "swish activation function."))
 
 (defmethod $relu ((x number)) (max 0 x))
 
@@ -259,3 +260,20 @@
   (node ($mish ($data x))
         :name :mish
         :link (link (to x (dmish ($data x) gv)))))
+
+(defmethod $swish ((x number))
+  (* x ($sigmoid x)))
+
+(defmethod $swish ((x tensor))
+  ($mul! ($sigmoid x) x))
+
+(defun swish2 (x sx) ($mul sx x))
+
+(defun dswish (x sx gv)
+  ($mul! ($mul! ($add! ($mul! ($sub 1 sx) x) 1) sx) gv))
+
+(defmethod $swish ((x node))
+  (let ((sx ($sigmoid ($data x))))
+    (node (swish2 ($data x) sx)
+          :name :swish
+          :link (link (to x (dswish ($data x) sx gv))))))
