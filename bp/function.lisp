@@ -138,6 +138,7 @@
 (defgeneric $selu (x) (:documentation "Scaled exponential LU activiation function."))
 (defgeneric $softmax (x) (:documentation "Softmax function."))
 (defgeneric $logsoftmax (x) (:documentation "Log softmax function."))
+(defgeneric $mish (x) (:documentation "self regularized non-monotonic activation function."))
 
 (defmethod $relu ((x number)) (max 0 x))
 
@@ -237,3 +238,24 @@
   (node ($logsoftmax ($data x))
         :name :logsoftmax
         :link (link (to x (dlogsoftmax ($data x) dv gv)))))
+
+(defmethod $mish ((x number))
+  (* x (tanh (log (+ 1 (exp x))))))
+
+(defmethod $mish ((x tensor))
+  ($* x ($tanh ($log ($+ 1 ($exp x))))))
+
+(defun dmish (x gv)
+  (let* ((ex ($exp x))
+         (ex2 ($expt ex 2))
+         (ex3 ($expt ex 3))
+         (delta ($add! ($add! ($mul ex 2D0) 2D0) ex2))
+         (omega ($add! ($add! ($add! ($mul! ($add x 1) 4) ($mul ex2 4))
+                              ex3)
+                       ($mul! ($add! ($mul x 4) 6) ex))))
+    ($mul! ($div! ($mul! omega ex) ($expt delta 2)) gv)))
+
+(defmethod $mish ((x node))
+  (node ($mish ($data x))
+        :name :mish
+        :link (link (to x (dmish ($data x) gv)))))

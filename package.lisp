@@ -356,6 +356,7 @@
            #:$selu
            #:$softmax
            #:$logsoftmax
+           #:$mish
            #:$bnorm
            #:$bn
            #:$dropout
