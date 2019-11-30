@@ -2,6 +2,8 @@
 
 (in-package :th)
 
+;; XXX bnorm and bn should provide uniform interface and results
+
 (defgeneric $bnorm (x gamma beta mean sd &optional trainp momentum eps))
 (defgeneric $bn (x gamma beta rm rv &optional sm sd momentum eps))
 (defgeneric $dropout (x &optional trainp p))
