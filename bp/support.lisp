@@ -25,7 +25,56 @@
                 &optional sm sd (momentum 0.1) (eps 1E-5))
   (node ($bn ($data x) ($data gamma) ($data beta) rm rv sm sd momentum eps)
         :name :bn
-        :link (link (to x (error "backprop not implemented yet")))))
+        :link (link (let* ((dx nil)
+                           (dgamma nil)
+                           (dbeta nil)
+                           (gfn (lambda (dv gv)
+                                  (declare (ignore dv))
+                                  (unless (and dx dgamma dbeta)
+                                    (setf dgamma ($zero ($data gamma))
+                                          dbeta ($zero ($data beta))
+                                          dx ($zero ($data x)))
+                                    (if (and sm sd)
+                                        (nn-batch-normalization-backward
+                                         ($data x) gv dx
+                                         dgamma dbeta gamma
+                                         rm rv sm sd t 1 eps)
+                                        (let ((sm (zeros ($size x 1)))
+                                              (sd (ones ($size x 1))))
+                                          (nn-batch-normalization-backward
+                                           ($data x) gv dx
+                                           dgamma dbeta gamma
+                                           rm rv sm sd nil 1 eps)))))))
+                      (to x (funcall gfn dv gv) dx)
+                      (to gamma (funcall gfn dv gv) dgamma)
+                      (to beta (funcall gfn dv gv) dbeta)))))
+
+(defmethod $bn ((x tensor) (gamma node) (beta node) (rm tensor) (rv tensor)
+                &optional sm sd (momentum 0.1) (eps 1E-5))
+  (node ($bn x ($data gamma) ($data beta) rm rv sm sd momentum eps)
+        :name :bn
+        :link (link (let* ((dx nil)
+                           (dgamma nil)
+                           (dbeta nil)
+                           (gfn (lambda (dv gv)
+                                  (declare (ignore dv))
+                                  (unless (and dx dgamma dbeta)
+                                    (setf dgamma ($zero ($data gamma))
+                                          dbeta ($zero ($data beta))
+                                          dx ($zero x))
+                                    (if (and sm sd)
+                                        (nn-batch-normalization-backward
+                                         x gv dx
+                                         dgamma dbeta gamma
+                                         rm rv sm sd t 1 eps)
+                                        (let ((sm (zeros ($size x 1)))
+                                              (sd (ones ($size x 1))))
+                                          (nn-batch-normalization-backward
+                                           x gv dx
+                                           dgamma dbeta gamma
+                                           rm rv sm sd nil 1 eps)))))))
+                      (to gamma (funcall gfn dv gv) dgamma)
+                      (to beta (funcall gfn dv gv) dbeta)))))
 
 (defun runstat (x mean var trainp momentum)
   (let* ((x (if (eq 1 ($ndim x))
