@@ -93,9 +93,11 @@
   2. They may not work at all.
 
 ## On Memory Hack
-  To avoid work around thrashing of system due to foreign allocated memory - it is freed when
+  Currently, no memory hack is used. Following is just for referencing old hacks but yet I need
+  to set some custom gc configuration to avoid memory thrashing. Refer ffi/mhack.lisp for detail.
+  (To avoid work around thrashing of system due to foreign allocated memory - it is freed when
   referencing CLOS object is garbage collected, but the gc does not know how much external
   memory is used - I've implemented a hack of trying gc if some predefined threshold met.
   Refer mhack.lisp for detailed implementation. The idea is simple; try run gc if externally
   allocated memory hits some threshold. To do this, I've modified and patched libTHTensor;
-  specifically THGeneral.c. If you want to change the theshold, ffi/mhack.lisp is the file.
+  specifically THGeneral.c. If you want to change the theshold, ffi/mhack.lisp is the file.)
