@@ -8,6 +8,20 @@
 
 (defparameter *mnist* (read-mnist-data))
 
+(defparameter *x-train* ($index ($ *mnist* :train-images) 0 (xrange 0 1000)))
+(defparameter *y-train* ($index ($ *mnist* :train-labels) 0 (xrange 0 1000)))
+
+(defparameter *x-batches*
+  (loop :for i :from 0 :below 10
+        :for rng = (loop :for k :from (* i 100) :below (* (1+ i) 100)
+                         :collect k)
+        :collect ($contiguous! ($index *x-train* 0 rng))))
+(defparameter *y-batches*
+  (loop :for i :from 0 :below 10
+        :for rng = (loop :for k :from (* i 100) :below (* (1+ i) 100)
+                         :collect k)
+        :collect ($contiguous! ($index *y-train* 0 rng))))
+
 (defparameter *w01* ($parameter (-> (tensor 784 100)
                                     ($uniform! 0 0.01))))
 (defparameter *b01* ($parameter (zeros 100)))
@@ -93,20 +107,6 @@
                           *rm13* *rv13* *sm13* *sd13*
                           *rm14* *rv14* *sm14* *sd14*
                           *rm15* *rv15* *sm15* *sd15*))
-
-(defparameter *x-train* ($index ($ *mnist* :train-images) 0 (xrange 0 1000)))
-(defparameter *y-train* ($index ($ *mnist* :train-labels) 0 (xrange 0 1000)))
-
-(defparameter *x-batches*
-  (loop :for i :from 0 :below 10
-        :for rng = (loop :for k :from (* i 100) :below (* (1+ i) 100)
-                         :collect k)
-        :collect ($contiguous! ($index *x-train* 0 rng))))
-(defparameter *y-batches*
-  (loop :for i :from 0 :below 10
-        :for rng = (loop :for k :from (* i 100) :below (* (1+ i) 100)
-                         :collect k)
-        :collect ($contiguous! ($index *y-train* 0 rng))))
 
 (defun single-step (params x)
   (let ((w1 ($ params 0))
