@@ -356,6 +356,7 @@
            #:$selu
            #:$softmax
            #:$logsoftmax
+           #:$softplus
            #:$mish
            #:$swish
            #:$bnorm
