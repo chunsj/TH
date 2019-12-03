@@ -39,6 +39,7 @@
                                         (:file "loss")
                                         (:file "support")
                                         (:file "utility")))
+               (:module layers :components ((:file "layers")))
                (:module db :components ((:file "mnist")
                                         (:file "fashion")
                                         (:file "imdb")
