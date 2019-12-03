@@ -7,6 +7,7 @@
 
 (in-package :mnist-bn)
 
+;; use one of following
 (defparameter *mnist* (read-mnist-data))
 (defparameter *mnist* (read-fashion-data))
 
