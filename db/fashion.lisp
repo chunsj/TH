@@ -20,8 +20,8 @@
     (#x0D single-float 4)
     (#x0E double-float 8)))
 
-(defparameter +fmnist-location++ ($concat (namestring (user-homedir-pathname))
-                                          ".th/datasets/fashion-mnist"))
+(defparameter +fmnist-location+ ($concat (namestring (user-homedir-pathname))
+                                         ".th/datasets/fashion-mnist"))
 
 (defun read-nbyte (n str)
   (let ((ret 0))
@@ -80,25 +80,25 @@
             :do (read-single-label-into-m m i (read-byte str) onehot))
       m)))
 
-(defun read-fashion-train-images (&key (path +fmnist-location++) (normalize nil) (verbose nil))
+(defun read-fashion-train-images (&key (path +fmnist-location+) (normalize nil) (verbose nil))
   (read-fashion-images (strcat path "/train-images-idx3-ubyte")
                        :normalize normalize :verbose verbose))
 
-(defun read-fashion-train-labels (&key (path +fmnist-location++) (verbose nil) (onehot nil))
+(defun read-fashion-train-labels (&key (path +fmnist-location+) (verbose nil) (onehot nil))
   (read-fashion-labels (strcat path "/train-labels-idx1-ubyte")
                        :onehot onehot
                        :verbose verbose))
 
-(defun read-fashion-t10k-images (&key (path +fmnist-location++) (normalize nil) (verbose nil))
+(defun read-fashion-t10k-images (&key (path +fmnist-location+) (normalize nil) (verbose nil))
   (read-fashion-images (strcat path "/t10k-images-idx3-ubyte")
                        :normalize normalize :verbose verbose))
 
-(defun read-fashion-t10k-labels (&key (path +fmnist-location++) (onehot nil) (verbose nil))
+(defun read-fashion-t10k-labels (&key (path +fmnist-location+) (onehot nil) (verbose nil))
   (read-fashion-labels (strcat path "/t10k-labels-idx1-ubyte")
                        :onehot onehot
                        :verbose verbose))
 
-(defun read-fashion-data (&key (path +fmnist-location++) (normalize T) (onehot T))
+(defun read-fashion-data (&key (path +fmnist-location+) (normalize T) (onehot T))
   #{:train-images (read-fashion-train-images :path path :normalize normalize)
     :train-labels (read-fashion-train-labels :path path :onehot onehot)
     :test-images (read-fashion-t10k-images :path path :normalize normalize)
