@@ -11,78 +11,87 @@
 (defparameter *mnist* (read-mnist-data))
 (defparameter *mnist* (read-fashion-data))
 
-(defparameter *x-train* ($index ($ *mnist* :train-images) 0 (xrange 0 1000)))
-(defparameter *y-train* ($index ($ *mnist* :train-labels) 0 (xrange 0 1000)))
+(defparameter *data-size* 500)
+
+(defparameter *x-train* ($index ($ *mnist* :train-images) 0 (xrange 0 *data-size*)))
+(defparameter *y-train* ($index ($ *mnist* :train-labels) 0 (xrange 0 *data-size*)))
+
+(defparameter *batch-size* 100)
+(defparameter *batch-count* (/ *data-size* *batch-size*))
 
 (defparameter *x-batches*
-  (loop :for i :from 0 :below 10
-        :for rng = (loop :for k :from (* i 100) :below (* (1+ i) 100)
+  (loop :for i :from 0 :below *batch-count*
+        :for rng = (loop :for k :from (* i *batch-size*) :below (* (1+ i) *batch-size*)
                          :collect k)
         :collect ($contiguous! ($index *x-train* 0 rng))))
 (defparameter *y-batches*
-  (loop :for i :from 0 :below 10
-        :for rng = (loop :for k :from (* i 100) :below (* (1+ i) 100)
+  (loop :for i :from 0 :below *batch-count*
+        :for rng = (loop :for k :from (* i *batch-size*) :below (* (1+ i) *batch-size*)
                          :collect k)
         :collect ($contiguous! ($index *y-train* 0 rng))))
 
-(defparameter *w01* (vhe '(784 100)))
-(defparameter *b01* ($parameter (zeros 100)))
-(defparameter *w02* (vhe '(100 100)))
-(defparameter *b02* ($parameter (zeros 100)))
-(defparameter *w03* (vhe '(100 100)))
-(defparameter *b03* ($parameter (zeros 100)))
-(defparameter *w04* (vhe '(100 100)))
-(defparameter *b04* ($parameter (zeros 100)))
-(defparameter *w05* (vhe '(100 100)))
-(defparameter *b05* ($parameter (zeros 100)))
-(defparameter *w06* (vhe '(100 10)))
-(defparameter *b06* ($parameter (zeros 10)))
+(defparameter *input-size* 784)
+(defparameter *weight-size* 100)
+(defparameter *output-size* 10)
+
+(defparameter *w01* (vhe '(*input-size* *weight-size*)))
+(defparameter *b01* ($parameter (zeros *weight-size*)))
+(defparameter *w02* (vhe '(*weight-size* *weight-size*)))
+(defparameter *b02* ($parameter (zeros *weight-size*)))
+(defparameter *w03* (vhe '(*weight-size* *weight-size*)))
+(defparameter *b03* ($parameter (zeros *weight-size*)))
+(defparameter *w04* (vhe '(*weight-size* *weight-size*)))
+(defparameter *b04* ($parameter (zeros *weight-size*)))
+(defparameter *w05* (vhe '(*weight-size* *weight-size*)))
+(defparameter *b05* ($parameter (zeros *weight-size*)))
+(defparameter *w06* (vhe '(*weight-size* *output-size*)))
+(defparameter *b06* ($parameter (zeros *output-size*)))
 
 (defparameter *p01* (list *w01* *b01* *w02* *b02* *w03* *b03*
                           *w04* *b04* *w05* *b05* *w06* *b06*))
 
-(defparameter *w11* (vhe '(784 100)))
-(defparameter *b11* ($parameter (zeros 100)))
-(defparameter *g11* ($parameter (ones 784)))
-(defparameter *e11* ($parameter (zeros 784)))
-(defparameter *rm11* (zeros 784))
-(defparameter *rv11* (ones 784))
-(defparameter *sm11* (zeros 784))
-(defparameter *sd11* (ones 784))
-(defparameter *w12* (vhe '(100 100)))
-(defparameter *b12* ($parameter (zeros 100)))
-(defparameter *g12* ($parameter (ones 100)))
-(defparameter *e12* ($parameter (zeros 100)))
-(defparameter *rm12* (zeros 100))
-(defparameter *rv12* (ones 100))
-(defparameter *sm12* (zeros 100))
-(defparameter *sd12* (ones 100))
-(defparameter *w13* (vhe '(100 100)))
-(defparameter *b13* ($parameter (zeros 100)))
-(defparameter *g13* ($parameter (ones 100)))
-(defparameter *e13* ($parameter (zeros 100)))
-(defparameter *rm13* (zeros 100))
-(defparameter *rv13* (ones 100))
-(defparameter *sm13* (zeros 100))
-(defparameter *sd13* (ones 100))
-(defparameter *w14* (vhe '(100 100)))
-(defparameter *b14* ($parameter (zeros 100)))
-(defparameter *g14* ($parameter (ones 100)))
-(defparameter *e14* ($parameter (zeros 100)))
-(defparameter *rm14* (zeros 100))
-(defparameter *rv14* (ones 100))
-(defparameter *sm14* (zeros 100))
-(defparameter *sd14* (ones 100))
-(defparameter *w15* (vhe '(100 100)))
-(defparameter *b15* ($parameter (zeros 100)))
-(defparameter *g15* ($parameter (ones 100)))
-(defparameter *e15* ($parameter (zeros 100)))
-(defparameter *rm15* (zeros 100))
-(defparameter *rv15* (ones 100))
-(defparameter *sm15* (zeros 100))
-(defparameter *sd15* (ones 100))
-(defparameter *w16* (vhe '(100 10)))
-(defparameter *b16* ($parameter (zeros 10)))
+(defparameter *w11* (vhe '(*input-size* *weight-size*)))
+(defparameter *b11* ($parameter (zeros *weight-size*)))
+(defparameter *g11* ($parameter (ones *input-size*)))
+(defparameter *e11* ($parameter (zeros *input-size*)))
+(defparameter *rm11* (zeros *input-size*))
+(defparameter *rv11* (ones *input-size*))
+(defparameter *sm11* (zeros *input-size*))
+(defparameter *sd11* (ones *input-size*))
+(defparameter *w12* (vhe '(*weight-size* *weight-size*)))
+(defparameter *b12* ($parameter (zeros *weight-size*)))
+(defparameter *g12* ($parameter (ones *weight-size*)))
+(defparameter *e12* ($parameter (zeros *weight-size*)))
+(defparameter *rm12* (zeros *weight-size*))
+(defparameter *rv12* (ones *weight-size*))
+(defparameter *sm12* (zeros *weight-size*))
+(defparameter *sd12* (ones *weight-size*))
+(defparameter *w13* (vhe '(*weight-size* *weight-size*)))
+(defparameter *b13* ($parameter (zeros *weight-size*)))
+(defparameter *g13* ($parameter (ones *weight-size*)))
+(defparameter *e13* ($parameter (zeros *weight-size*)))
+(defparameter *rm13* (zeros *weight-size*))
+(defparameter *rv13* (ones *weight-size*))
+(defparameter *sm13* (zeros *weight-size*))
+(defparameter *sd13* (ones *weight-size*))
+(defparameter *w14* (vhe '(*weight-size* *weight-size*)))
+(defparameter *b14* ($parameter (zeros *weight-size*)))
+(defparameter *g14* ($parameter (ones *weight-size*)))
+(defparameter *e14* ($parameter (zeros *weight-size*)))
+(defparameter *rm14* (zeros *weight-size*))
+(defparameter *rv14* (ones *weight-size*))
+(defparameter *sm14* (zeros *weight-size*))
+(defparameter *sd14* (ones *weight-size*))
+(defparameter *w15* (vhe '(*weight-size* *weight-size*)))
+(defparameter *b15* ($parameter (zeros *weight-size*)))
+(defparameter *g15* ($parameter (ones *weight-size*)))
+(defparameter *e15* ($parameter (zeros *weight-size*)))
+(defparameter *rm15* (zeros *weight-size*))
+(defparameter *rv15* (ones *weight-size*))
+(defparameter *sm15* (zeros *weight-size*))
+(defparameter *sd15* (ones *weight-size*))
+(defparameter *w16* (vhe '(*weight-size* *output-size*)))
+(defparameter *b16* ($parameter (zeros *output-size*)))
 
 (defparameter *p02* (list *w11* *b11* *w12* *b12* *w13* *b13*
                           *w14* *b14* *w15* *b15* *w16* *b16*
@@ -94,50 +103,50 @@
                           *rm14* *rv14* *sm14* *sd14*
                           *rm15* *rv15* *sm15* *sd15*))
 
-(defparameter *w21* (vhe '(784 100)))
-(defparameter *b21* ($parameter (zeros 100)))
-(defparameter *w22* (vhe '(100 100)))
-(defparameter *b22* ($parameter (zeros 100)))
-(defparameter *w23* (vhe '(100 100)))
-(defparameter *b23* ($parameter (zeros 100)))
-(defparameter *w24* (vhe '(100 100)))
-(defparameter *b24* ($parameter (zeros 100)))
-(defparameter *w25* (vhe '(100 100)))
-(defparameter *b25* ($parameter (zeros 100)))
-(defparameter *w26* (vhe '(100 10)))
-(defparameter *b26* ($parameter (zeros 10)))
+(defparameter *w21* (vhe '(*input-size* *weight-size*)))
+(defparameter *b21* ($parameter (zeros *weight-size*)))
+(defparameter *w22* (vhe '(*weight-size* *weight-size*)))
+(defparameter *b22* ($parameter (zeros *weight-size*)))
+(defparameter *w23* (vhe '(*weight-size* *weight-size*)))
+(defparameter *b23* ($parameter (zeros *weight-size*)))
+(defparameter *w24* (vhe '(*weight-size* *weight-size*)))
+(defparameter *b24* ($parameter (zeros *weight-size*)))
+(defparameter *w25* (vhe '(*weight-size* *weight-size*)))
+(defparameter *b25* ($parameter (zeros *weight-size*)))
+(defparameter *w26* (vhe '(*weight-size* *output-size*)))
+(defparameter *b26* ($parameter (zeros *output-size*)))
 
 (defparameter *p03* (list *w21* *b21* *w22* *b22* *w23* *b23*
                           *w24* *b24* *w25* *b25* *w26* *b26*))
 
-(defparameter *w31* (vhe '(784 100)))
-(defparameter *b31* ($parameter (zeros 100)))
-(defparameter *w32* (vhe '(100 100)))
-(defparameter *b32* ($parameter (zeros 100)))
-(defparameter *w33* (vhe '(100 100)))
-(defparameter *b33* ($parameter (zeros 100)))
-(defparameter *w34* (vhe '(100 100)))
-(defparameter *b34* ($parameter (zeros 100)))
-(defparameter *w35* (vhe '(100 100)))
-(defparameter *b35* ($parameter (zeros 100)))
-(defparameter *w36* (vhe '(100 10)))
-(defparameter *b36* ($parameter (zeros 10)))
+(defparameter *w31* (vhe '(*input-size* *weight-size*)))
+(defparameter *b31* ($parameter (zeros *weight-size*)))
+(defparameter *w32* (vhe '(*weight-size* *weight-size*)))
+(defparameter *b32* ($parameter (zeros *weight-size*)))
+(defparameter *w33* (vhe '(*weight-size* *weight-size*)))
+(defparameter *b33* ($parameter (zeros *weight-size*)))
+(defparameter *w34* (vhe '(*weight-size* *weight-size*)))
+(defparameter *b34* ($parameter (zeros *weight-size*)))
+(defparameter *w35* (vhe '(*weight-size* *weight-size*)))
+(defparameter *b35* ($parameter (zeros *weight-size*)))
+(defparameter *w36* (vhe '(*weight-size* *output-size*)))
+(defparameter *b36* ($parameter (zeros *output-size*)))
 
 (defparameter *p04* (list *w31* *b31* *w32* *b32* *w33* *b33*
                           *w34* *b34* *w35* *b35* *w36* *b36*))
 
-(defparameter *w41* (vhe '(784 100)))
-(defparameter *b41* ($parameter (zeros 100)))
-(defparameter *w42* (vhe '(100 100)))
-(defparameter *b42* ($parameter (zeros 100)))
-(defparameter *w43* (vhe '(100 100)))
-(defparameter *b43* ($parameter (zeros 100)))
-(defparameter *w44* (vhe '(100 100)))
-(defparameter *b44* ($parameter (zeros 100)))
-(defparameter *w45* (vhe '(100 100)))
-(defparameter *b45* ($parameter (zeros 100)))
-(defparameter *w46* (vhe '(100 10)))
-(defparameter *b46* ($parameter (zeros 10)))
+(defparameter *w41* (vhe '(*input-size* *weight-size*)))
+(defparameter *b41* ($parameter (zeros *weight-size*)))
+(defparameter *w42* (vhe '(*weight-size* *weight-size*)))
+(defparameter *b42* ($parameter (zeros *weight-size*)))
+(defparameter *w43* (vhe '(*weight-size* *weight-size*)))
+(defparameter *b43* ($parameter (zeros *weight-size*)))
+(defparameter *w44* (vhe '(*weight-size* *weight-size*)))
+(defparameter *b44* ($parameter (zeros *weight-size*)))
+(defparameter *w45* (vhe '(*weight-size* *weight-size*)))
+(defparameter *b45* ($parameter (zeros *weight-size*)))
+(defparameter *w46* (vhe '(*weight-size* *output-size*)))
+(defparameter *b46* ($parameter (zeros *output-size*)))
 
 (defparameter *p05* (list *w41* *b41* *w42* *b42* *w43* *b43*
                           *w44* *b44* *w45* *b45* *w46* *b46*))
@@ -338,10 +347,12 @@
   ($cee y* *y-train*)
   ($cg! *p05*))
 
+(defparameter *epochs* 500)
+
 ;; 49.22, 52.18 secs
 (progn
   ($cg! *p01*)
-  (loop :for epoch :from 1 :to 500
+  (loop :for epoch :from 1 :to *epochs*
         :do (loop :for xb :in *x-batches*
                   :for yb :in *y-batches*
                   :for i :from 0
@@ -356,7 +367,7 @@
 ;; 66.33, 66.29 secs
 (progn
   ($cg! *p02*)
-  (loop :for epoch :from 1 :to 500
+  (loop :for epoch :from 1 :to *epochs*
         :do (loop :for xb :in *x-batches*
                   :for yb :in *y-batches*
                   :for i :from 0
@@ -371,7 +382,7 @@
 ;; 51.37, 57.52 secs
 (progn
   ($cg! *p03*)
-  (loop :for epoch :from 1 :to 500
+  (loop :for epoch :from 1 :to *epochs*
         :do (loop :for xb :in *x-batches*
                   :for yb :in *y-batches*
                   :for i :from 0
@@ -386,7 +397,7 @@
 ;; 50.82, 51.67 secs
 (progn
   ($cg! *p04*)
-  (loop :for epoch :from 1 :to 500
+  (loop :for epoch :from 1 :to *epochs*
         :do (loop :for xb :in *x-batches*
                   :for yb :in *y-batches*
                   :for i :from 0
@@ -401,7 +412,7 @@
 ;; 70.26, 69.76 secs
 (progn
   ($cg! *p05*)
-  (loop :for epoch :from 1 :to 500
+  (loop :for epoch :from 1 :to *epochs*
         :do (loop :for xb :in *x-batches*
                   :for yb :in *y-batches*
                   :for i :from 0
