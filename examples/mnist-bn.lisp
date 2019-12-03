@@ -2,11 +2,13 @@
   (:use #:common-lisp
         #:mu
         #:th
-        #:th.db.mnist))
+        #:th.db.mnist
+        #:th.db.fashion))
 
 (in-package :mnist-bn)
 
 (defparameter *mnist* (read-mnist-data))
+(defparameter *mnist* (read-fashion-data))
 
 (defparameter *x-train* ($index ($ *mnist* :train-images) 0 (xrange 0 1000)))
 (defparameter *y-train* ($index ($ *mnist* :train-labels) 0 (xrange 0 1000)))
@@ -335,6 +337,7 @@
   ($cee y* *y-train*)
   ($cg! *p05*))
 
+;; 49.22, 52.18 secs
 (progn
   ($cg! *p01*)
   (loop :for epoch :from 1 :to 500
@@ -349,6 +352,7 @@
                           (prn (format nil "[~A] ~A" epoch l)))
                         ($adgd! *p01*)))))
 
+;; 66.33, 66.29 secs
 (progn
   ($cg! *p02*)
   (loop :for epoch :from 1 :to 500
@@ -363,6 +367,7 @@
                           (prn (format nil "[~A] ~A" epoch l)))
                         ($adgd! *p02*)))))
 
+;; 51.37, 57.52 secs
 (progn
   ($cg! *p03*)
   (loop :for epoch :from 1 :to 500
@@ -377,6 +382,7 @@
                           (prn (format nil "[~A] ~A" epoch l)))
                         ($adgd! *p03*)))))
 
+;; 50.82, 51.67 secs
 (progn
   ($cg! *p04*)
   (loop :for epoch :from 1 :to 500
@@ -391,6 +397,7 @@
                           (prn (format nil "[~A] ~A" epoch l)))
                         ($adgd! *p04*)))))
 
+;; 70.26, 69.76 secs
 (progn
   ($cg! *p05*)
   (loop :for epoch :from 1 :to 500
