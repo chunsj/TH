@@ -6,7 +6,8 @@
         #:th)
   (:export #:$execute
            #:sequence-layer
-           #:affine-layer))
+           #:affine-layer
+           #:batch-normalization-layer))
 
 (in-package :th.layers)
 
@@ -19,6 +20,8 @@
 
 (defmethod $train-parameters ((l layer)) nil)
 (defmethod $evaluation-parameters ((l layer)) (mapcar #'$data ($train-parameters l)))
+
+(defmethod $parameters ((l layer)) ($train-parameters l))
 
 (defmethod $execute ((l layer) x &key (train t))
   (declare (ignore x train))
@@ -66,15 +69,46 @@
                   (setf r nr)))
       r)))
 
+(defclass batch-normalization-layer (layer)
+  ((g :initform nil)
+   (e :initform nil)
+   (rm :initform nil)
+   (rv :initform nil)
+   (sm :initform nil)
+   (sd :initform nil)))
+
+(defun batch-normalization-layer (input-size)
+  (let ((n (make-instance 'batch-normalization-layer)))
+    (with-slots (g e rm rv sm sd) n
+      (setf g ($parameter (ones input-size))
+            e ($parameter (zeros input-size))
+            rm (zeros input-size)
+            rv (ones input-size)
+            sm (zeros input-size)
+            sd (zeros input-size)))
+    n))
+
+(defmethod $train-parameters ((l batch-normalization-layer))
+  (with-slots (g e) l
+    (list g e)))
+
+(defmethod $execute ((l batch-normalization-layer) x &key (train t))
+  (with-slots (g e rm rv sm sd) l
+    (if train
+        ($bn x g e rm rv sm sd)
+        ($bn x g e rm rv))))
+
 (defclass affine-layer (layer)
   ((w :initform nil)
    (b :initform nil)
-   (a :initform nil)))
+   (a :initform nil)
+   (bn :initform nil)))
 
 (defun affine-layer (input-size output-size
-                     &key (activation :sigmoid) (weight-initializer :xavier-uniform))
+                     &key (activation :sigmoid) (weight-initializer :he-normal)
+                       batch-normalization-p)
   (let ((n (make-instance 'affine-layer)))
-    (with-slots (w b a) n
+    (with-slots (w b a bn) n
       (setf a (cond ((eq activation :sigmoid) #'$sigmoid)
                     ((eq activation :tanh) #'$tanh)
                     ((eq activation :relu) #'$relu)
@@ -97,19 +131,31 @@
                       ((eq weight-initializer :lecun-normal) (vlecun sz :normal))
                       ((eq weight-initializer :selu-uniform) (vselu sz :uniform))
                       ((eq weight-initializer :selu-normal) (vselu sz :normal))
-                      (t (vru sz))))))
+                      (t (vru sz)))))
+      (when batch-normalization-p
+        (setf bn (batch-normalization-layer output-size))))
     n))
 
 (defmethod $train-parameters ((l affine-layer))
-  (with-slots (w b) l
-    (list w b)))
+  (with-slots (w b bn) l
+    (if bn
+        (append (list w b) ($train-parameters bn))
+        (list w b))))
 
 (defmethod $execute ((l affine-layer) x &key (train t))
-  (with-slots (w b a) l
+  (with-slots (w b a bn ) l
     (if a
         (if train
-            (funcall a ($affine x w b))
-            (funcall a ($affine x ($data w) ($data b))))
+            (if bn
+                (funcall a ($execute bn ($affine x w b) :train train))
+                (funcall a ($affine x w b)))
+            (if bn
+                (funcall a ($execute bn ($affine x ($data w) ($data b)) :train train))
+                (funcall a ($affine x ($data w) ($data b)))))
         (if train
-            ($affine x w b)
-            ($affine x ($data w) ($data b))))))
+            (if bn
+                ($execute bn ($affine x w b) :train train)
+                ($affine x w b))
+            (if bn
+                ($execute bn ($affine x ($data w) ($data b)) :train train)
+                ($affine x ($data w) ($data b)))))))

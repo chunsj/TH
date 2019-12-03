@@ -55,6 +55,31 @@
                                      :activation :softmax
                                      :weight-initializer :he-normal)))
 
+(defparameter *net02* (sequence-layer
+                       (affine-layer *input-size* *weight-size*
+                                     :activation :relu
+                                     :weight-initializer :he-normal
+                                     :batch-normalization-p t)
+                       (affine-layer *weight-size* *weight-size*
+                                     :activation :relu
+                                     :weight-initializer :he-normal
+                                     :batch-normalization-p t)
+                       (affine-layer *weight-size* *weight-size*
+                                     :activation :relu
+                                     :weight-initializer :he-normal
+                                     :batch-normalization-p t)
+                       (affine-layer *weight-size* *weight-size*
+                                     :activation :relu
+                                     :weight-initializer :he-normal
+                                     :batch-normalization-p t)
+                       (affine-layer *weight-size* *weight-size*
+                                     :activation :relu
+                                     :weight-initializer :he-normal
+                                     :batch-normalization-p t)
+                       (affine-layer *weight-size* *output-size*
+                                     :activation :softmax
+                                     :weight-initializer :he-normal)))
+
 (defparameter *losses01* nil)
 (progn
   ($cg! *net01*)
@@ -72,6 +97,22 @@
                           (prn (format nil "[~A] ~A" epoch l)))
                         ($adgd! *net01*)))))
 
+(defparameter *losses02* nil)
+(progn
+  ($cg! *net02*)
+  (setf *losses02* nil)
+  (loop :for epoch :from 1 :to *epochs*
+        :do (loop :for xb :in *x-batches*
+                  :for yb :in *y-batches*
+                  :for i :from 0
+                  :for y* = ($execute *net02* xb)
+                  :for l = ($cee y* yb)
+                  :do (progn
+                        (when (and (zerop (rem epoch 100))
+                                   (zerop i))
+                          (push ($data l) *losses02*)
+                          (prn (format nil "[~A] ~A" epoch l)))
+                        ($adgd! *net02*)))))
 
 (defparameter *w01* (vhe (list *input-size* *weight-size*)))
 (defparameter *b01* ($parameter (zeros *weight-size*)))
