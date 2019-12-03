@@ -108,6 +108,29 @@
                           *rm14* *rv14* *sm14* *sd14*
                           *rm15* *rv15* *sm15* *sd15*))
 
+(defparameter *w21* ($parameter (-> (tensor 784 100)
+                                    ($uniform! 0 0.01))))
+(defparameter *b21* ($parameter (zeros 100)))
+(defparameter *w22* ($parameter (-> (tensor 100 100)
+                                    ($uniform! 0 0.01))))
+(defparameter *b22* ($parameter (zeros 100)))
+(defparameter *w23* ($parameter (-> (tensor 100 100)
+                                    ($uniform! 0 0.01))))
+(defparameter *b23* ($parameter (zeros 100)))
+(defparameter *w24* ($parameter (-> (tensor 100 100)
+                                    ($uniform! 0 0.01))))
+(defparameter *b24* ($parameter (zeros 100)))
+(defparameter *w25* ($parameter (-> (tensor 100 100)
+                                    ($uniform! 0 0.01))))
+(defparameter *b25* ($parameter (zeros 100)))
+(defparameter *w26* ($parameter (-> (tensor 100 10)
+                                    ($uniform! 0 0.01))))
+(defparameter *b26* ($parameter (zeros 10)))
+
+(defparameter *p03* (list *w21* *b21* *w22* *b22* *w23* *b23*
+                          *w24* *b24* *w25* *b25* *w26* *b26*))
+
+
 (defun single-step (params x)
   (let ((w1 ($ params 0))
         (b1 ($ params 1))
@@ -197,6 +220,33 @@
         ($affine w6 b6)
         ($softmax))))
 
+(defun single-step-snn (params x)
+  (let ((w1 ($ params 0))
+        (b1 ($ params 1))
+        (w2 ($ params 2))
+        (b2 ($ params 3))
+        (w3 ($ params 4))
+        (b3 ($ params 5))
+        (w4 ($ params 6))
+        (b4 ($ params 7))
+        (w5 ($ params 8))
+        (b5 ($ params 9))
+        (w6 ($ params 10))
+        (b6 ($ params 11)))
+    (-> x
+        ($affine w1 b1)
+        ($selu)
+        ($affine w2 b2)
+        ($selu)
+        ($affine w3 b3)
+        ($selu)
+        ($affine w4 b4)
+        ($selu)
+        ($affine w5 b5)
+        ($selu)
+        ($affine w6 b6)
+        ($softmax))))
+
 ($cg! *p01*)
 (let ((y* (single-step *p01* *x-train*)))
   ($cee y* *y-train*)
@@ -207,9 +257,14 @@
   ($cee y* *y-train*)
   ($cg! *p02*))
 
+($cg! *p03*)
+(let ((y* (single-step-snn *p03* *x-train*)))
+  ($cee y* *y-train*)
+  ($cg! *p03*))
+
 (progn
   ($cg! *p01*)
-  (loop :for epoch :from 1 :to 100
+  (loop :for epoch :from 1 :to 500
         :do (loop :for xb :in *x-batches*
                   :for yb :in *y-batches*
                   :for i :from 0
@@ -223,7 +278,7 @@
 
 (progn
   ($cg! *p02*)
-  (loop :for epoch :from 1 :to 100
+  (loop :for epoch :from 1 :to 500
         :do (loop :for xb :in *x-batches*
                   :for yb :in *y-batches*
                   :for i :from 0
@@ -234,3 +289,17 @@
                                    (zerop i))
                           (prn (format nil "[~A] ~A" epoch l)))
                         ($adgd! *p02*)))))
+
+(progn
+  ($cg! *p03*)
+  (loop :for epoch :from 1 :to 500
+        :do (loop :for xb :in *x-batches*
+                  :for yb :in *y-batches*
+                  :for i :from 0
+                  :for y* = (single-step-snn *p03* xb)
+                  :for l = ($cee y* yb)
+                  :do (progn
+                        (when (and (zerop (rem epoch 100))
+                                   (zerop i))
+                          (prn (format nil "[~A] ~A" epoch l)))
+                        ($adgd! *p03*)))))
