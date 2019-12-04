@@ -411,5 +411,5 @@
   "https://towardsdatascience.com/selu-make-fnns-great-again-snn-8d61526802a9"
   (let ((tensor (apply #'tensor sizes)))
     (if (eq dist :normal)
-        ($rn! tensor 0 (/ 1 (sqrt ($size tensor 0))))
-        ($ru! tensor (/ -1 (sqrt ($size tensor 0))) (/ 1 (sqrt ($size tensor 0)))))))
+        ($parameter ($rn! tensor 0 (/ 1 (sqrt ($size tensor 0)))))
+        ($parameter ($ru! tensor (/ -1 (sqrt ($size tensor 0))) (/ 1 (sqrt ($size tensor 0))))))))

@@ -5,6 +5,7 @@
         #:mu
         #:th)
   (:export #:$execute
+           #:$parameters
            #:sequence-layer
            #:affine-layer
            #:batch-normalization-layer))
@@ -96,7 +97,7 @@
   (with-slots (g e rm rv sm sd) l
     (if train
         ($bn x g e rm rv sm sd)
-        ($bn x g e rm rv))))
+        ($bn (if ($parameterp x) ($data x) x) g e rm rv))))
 
 (defclass affine-layer (layer)
   ((w :initform nil)
@@ -150,12 +151,14 @@
                 (funcall a ($execute bn ($affine x w b) :train train))
                 (funcall a ($affine x w b)))
             (if bn
-                (funcall a ($execute bn ($affine x ($data w) ($data b)) :train train))
-                (funcall a ($affine x ($data w) ($data b)))))
+                (funcall a ($execute bn ($affine (if ($parameterp x) ($data x) x)
+                                                 ($data w) ($data b)) :train train))
+                (funcall a ($affine (if ($parameterp x) ($data x) x) ($data w) ($data b)))))
         (if train
             (if bn
                 ($execute bn ($affine x w b) :train train)
                 ($affine x w b))
             (if bn
-                ($execute bn ($affine x ($data w) ($data b)) :train train)
-                ($affine x ($data w) ($data b)))))))
+                ($execute bn ($affine (if ($parameterp x) ($data x) x)
+                                      ($data w) ($data b)) :train train)
+                ($affine (if ($parameterp x) ($data x) x) ($data w) ($data b)))))))
