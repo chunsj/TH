@@ -77,6 +77,7 @@
   5. Gradient descent or parameter update: $gd!, $mgd!, $agd!, $amgd!, $rmgd!, $adgd!
   6. Weight initialization: $rn!, $ru!, $rnt!, $xavieru!, $xaviern!, $heu!, $hen!, $lecunu!, ...
   7. Weight creation utilities: vrn, vru, vrnt, vxavier, vhe, vlecun
+  8. For easy construction: th.layers api such as sequence-layer, affine-layer, ...
 
 ## Selected Book Follow Ups
   1. Deep Learning from Scratch: dlfs
