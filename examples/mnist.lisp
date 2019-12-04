@@ -52,6 +52,7 @@
 ;; reading/writing network weights - this example comes from dlfs follow-ups
 (defun mnist-write-weight-to (w fname)
   (let ((f (file.disk fname "w")))
+    (setf ($fbinaryp f) t)
     ($fwrite ($data w) f)
     ($fclose f)))
 
@@ -65,6 +66,7 @@
 
 (defun mnist-read-weight-from (w fname)
   (let ((f (file.disk fname "r")))
+    (setf ($fbinaryp f) t)
     ($fread ($data w) f)
     ($fclose f)))
 
@@ -150,5 +152,5 @@
 (prn (mnist-test-stat))
 
 ;; writing/reading
-(mnist-cnn-write-weights)
+;;(mnist-cnn-write-weights)
 (mnist-cnn-read-weights)

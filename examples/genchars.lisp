@@ -48,11 +48,13 @@
 
 (defun rnn-write-weight-to (w fname)
   (let ((f (file.disk fname "w")))
+    (setf ($fbinaryp f) t)
     ($fwrite ($data w) f)
     ($fclose f)))
 
 (defun rnn-read-weight-from (w fname)
   (let ((f (file.disk fname "r")))
+    (setf ($fbinaryp f) t)
     ($fread ($data w) f)
     ($fclose f)))
 
