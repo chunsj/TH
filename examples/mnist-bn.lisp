@@ -114,7 +114,7 @@
                     :for y* = ($execute net xb)
                     :for l = ($cee y* yb)
                     :do (progn
-                          ($adgd! net)
+                          ($gd! net)
                           (when (and (zerop (rem epoch 50))
                                      (zerop i))
                             (let ((lv ($data l)))

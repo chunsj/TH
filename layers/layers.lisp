@@ -95,9 +95,11 @@
 
 (defmethod $execute ((l batch-normalization-layer) x &key (train t))
   (with-slots (g e rm rv sm sd) l
-    (if train
+    (if (and train (not (eq 1 ($ndim x))) (not (eq 3 ($ndim x))) (not (eq 1 ($size x 0))))
         ($bn x g e rm rv sm sd)
-        ($bn (if ($parameterp x) ($data x) x) g e rm rv))))
+        (if (and (not (eq 1 ($ndim x))) (not (eq 3 ($ndim x))) (not (eq 1 ($size x 0))))
+            ($bn (if ($parameterp x) ($data x) x) ($data g) ($data e) rm rv)
+            ($bnorm (if ($parameterp x) ($data x) x) ($data g) ($data e) rm rv)))))
 
 (defclass affine-layer (layer)
   ((w :initform nil)
