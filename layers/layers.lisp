@@ -8,11 +8,12 @@
            #:$parameters
            #:sequence-layer
            #:affine-layer
-           #:batch-normalization-layer))
+           #:batch-normalization-layer
+           #:convolution-2d-layer))
 
 (in-package :th.layers)
 
-(defgeneric $execute (layer x &key train))
+(defgeneric $execute (layer x &key trainp))
 
 (defgeneric $train-parameters (layer))
 (defgeneric $evaluation-parameters (layer))
@@ -24,8 +25,8 @@
 
 (defmethod $parameters ((l layer)) ($train-parameters l))
 
-(defmethod $execute ((l layer) x &key (train t))
-  (declare (ignore x train))
+(defmethod $execute ((l layer) x &key (trainp t))
+  (declare (ignore x trainp))
   nil)
 
 (defmethod $gd! ((l layer) &optional (learning-rate 0.01))
@@ -62,11 +63,11 @@
     (loop :for e :in ls
           :appending ($train-parameters e))))
 
-(defmethod $execute ((l sequence-layer) x &key (train t))
+(defmethod $execute ((l sequence-layer) x &key (trainp t))
   (with-slots (ls) l
-    (let ((r ($execute (car ls) x :train train)))
+    (let ((r ($execute (car ls) x :trainp trainp)))
       (loop :for e :in (cdr ls)
-            :do (let ((nr ($execute e r :train train)))
+            :do (let ((nr ($execute e r :trainp trainp)))
                   (setf r nr)))
       r)))
 
@@ -93,9 +94,9 @@
   (with-slots (g e) l
     (list g e)))
 
-(defmethod $execute ((l batch-normalization-layer) x &key (train t))
+(defmethod $execute ((l batch-normalization-layer) x &key (trainp t))
   (with-slots (g e rm rv sm sd) l
-    (if (and train (not (eq 1 ($ndim x))) (not (eq 3 ($ndim x))) (not (eq 1 ($size x 0))))
+    (if (and trainp (not (eq 1 ($ndim x))) (not (eq 3 ($ndim x))) (not (eq 1 ($size x 0))))
         ($bn x g e rm rv sm sd)
         (if (and (not (eq 1 ($ndim x))) (not (eq 3 ($ndim x))) (not (eq 1 ($size x 0))))
             ($bn (if ($parameterp x) ($data x) x) ($data g) ($data e) rm rv)
@@ -145,22 +146,108 @@
         (append (list w b) ($train-parameters bn))
         (list w b))))
 
-(defmethod $execute ((l affine-layer) x &key (train t))
+(defmethod $execute ((l affine-layer) x &key (trainp t))
   (with-slots (w b a bn ) l
     (if a
-        (if train
+        (if trainp
             (if bn
-                (funcall a ($execute bn ($affine x w b) :train train))
+                (funcall a ($execute bn ($affine x w b) :trainp trainp))
                 (funcall a ($affine x w b)))
             (if bn
                 (funcall a ($execute bn ($affine (if ($parameterp x) ($data x) x)
-                                                 ($data w) ($data b)) :train train))
+                                                 ($data w) ($data b)) :trainp trainp))
                 (funcall a ($affine (if ($parameterp x) ($data x) x) ($data w) ($data b)))))
-        (if train
+        (if trainp
             (if bn
-                ($execute bn ($affine x w b) :train train)
+                ($execute bn ($affine x w b) :trainp trainp)
                 ($affine x w b))
             (if bn
                 ($execute bn ($affine (if ($parameterp x) ($data x) x)
-                                      ($data w) ($data b)) :train train)
+                                      ($data w) ($data b)) :trainp trainp)
                 ($affine (if ($parameterp x) ($data x) x) ($data w) ($data b)))))))
+
+(defclass convolution-2d-layer (layer)
+  ((w :initform nil)
+   (b :initform nil)
+   (dw :initform 1)
+   (dh :initform 1)
+   (pw :initform 0)
+   (ph :initform 0)
+   (a :initform nil)
+   (bn :initform nil)))
+
+(defun convolution-2d-output-size (l x)
+  (cond ((eq 4 ($ndim x))
+         (let* ((sz ($size x))
+                (nbatch ($ sz 0))
+                (input-channel-size ($ sz 1))
+                (input-height ($ sz 2))
+                (input-width ($ sz 3)))
+           (with-slots (w dw dh pw ph) l
+             (when (eq input-channel-size ($size w 1))
+               (let ((output-width (1+ (/ (+ input-width (- ($size w 3)) (* 2 pw)) dw)))
+                     (output-height (1+ (/ (+ input-height (- ($size w 2)) (* 2 ph)) dh))))
+                 (list nbatch ($size w 0) output-height output-width))))))
+        ((eq 3 ($ndim x))
+         (let* ((sz ($size x))
+                (nbatch 1)
+                (input-channel-size ($ sz 0))
+                (input-height ($ sz 1))
+                (input-width ($ sz 2)))
+           (with-slots (w dw dh pw ph) l
+             (when (eq input-channel-size ($size w 1))
+               (let ((output-width (1+ (/ (+ input-width (- ($size w 3)) (* 2 pw)) dw)))
+                     (output-height (1+ (/ (+ input-height (- ($size w 2)) (* 2 ph)) dh))))
+                 (list nbatch ($size w 0) output-height output-width))))))))
+
+(defun convolution-2d-layer (input-channel-size output-channel-size
+                             filter-width filter-height
+                             &key (stride-width 1) (stride-height 1)
+                               (padding-width 0) (padding-height 0)
+                               (activation :sigmoid) (weight-initializer :he-normal)
+                               batch-normalization-p)
+  (let ((n (make-instance 'convolution-2d-layer)))
+    (with-slots (w b dw dh pw ph a bn) n
+      (setf dw stride-width
+            dh stride-height
+            pw padding-width
+            ph padding-height)
+      (setf a (cond ((eq activation :sigmoid) #'$sigmoid)
+                    ((eq activation :tanh) #'$tanh)
+                    ((eq activation :relu) #'$relu)
+                    ((eq activation :selu) #'$selu)
+                    ((eq activation :swish) #'$swish)
+                    ((eq activation :mish) #'$mish)
+                    ((eq activation :softmax) #'$softmax)
+                    ((eq activation :nil) nil)
+                    (t #'$sigmoid)))
+      (setf b ($parameter (zeros output-channel-size)))
+      (setf w (let ((sz (list output-channel-size input-channel-size
+                              filter-height filter-width)))
+                (cond ((eq weight-initializer :random-uniform) (vru sz))
+                      ((eq weight-initializer :random-normal) (vrn sz))
+                      ((eq weight-initializer :random-normal-truncated) (vrnt sz))
+                      ((eq weight-initializer :xavier-uniform) (vxavier sz :uniform))
+                      ((eq weight-initializer :xavier-normal) (vxavier sz :normal))
+                      ((eq weight-initializer :he-uniform) (vhe sz :uniform))
+                      ((eq weight-initializer :he-normal) (vhe sz :normal))
+                      ((eq weight-initializer :lecun-uniform) (vlecun sz :uniform))
+                      ((eq weight-initializer :lecun-normal) (vlecun sz :normal))
+                      ((eq weight-initializer :selu-uniform) (vselu sz :uniform))
+                      ((eq weight-initializer :selu-normal) (vselu sz :normal))
+                      (t (vru sz)))))
+      (when batch-normalization-p
+        (setf bn (batch-normalization-layer output-channel-size))))
+    n))
+
+(defmethod $train-parameters ((l convolution-2d-layer))
+  (with-slots (w b bn) l
+    (if bn
+        (append (list w b) ($train-parameters bn))
+        (list w b))))
+
+(defmethod $execute ((l convolution-2d-layer) x &key (trainp t))
+  (with-slots (w b dw dh pw ph a) l
+    (if trainp
+        (funcall a ($conv2d x w b dw ph pw ph))
+        (funcall a ($conv2d (if ($parameterp x) ($data x) x) ($data w) ($data b) dw dh pw ph)))))

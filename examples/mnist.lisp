@@ -31,7 +31,7 @@
 (defparameter *l2-output* 100)
 (defparameter *l3-output* 10)
 (defparameter *k* (-> (mkfilter *filter-number* *channel-number*
-                                *filter-width* *filter-height*)
+                                *filter-height* *filter-width*)
                       ($uniform! 0 0.01)
                       ($parameter)))
 (defparameter *kb* (-> (mkfbias *filter-number*)
