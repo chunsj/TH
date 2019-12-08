@@ -1,4 +1,4 @@
-(defpackage :mnist-bn
+(defpackage :bn
   (:use #:common-lisp
         #:mu
         #:th
@@ -6,7 +6,7 @@
         #:th.db.mnist
         #:th.db.fashion))
 
-(in-package :mnist-bn)
+(in-package :bn)
 
 ;; use one of following
 (defparameter *mnist* (read-mnist-data))
