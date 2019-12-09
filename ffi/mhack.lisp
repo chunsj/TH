@@ -51,7 +51,7 @@
   (sb-ext:gc)
   (gcf))
 
-(defmacro with-foreign-memory-limit (&body body)
+(defmacro with-foreign-memory-limit (() &body body)
   #+sbcl
   (limit-memory)
   `(let ((___r___ ,@body))

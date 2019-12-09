@@ -117,14 +117,14 @@
 
 ($cg! *network*)
 (time
- (with-foreign-memory-limit
-     (loop :for epoch :from 1 :to *epoch*
-           :do (loop :for i :from 0 :below *batch-count*
-                     :for x = ($ *mnist-train-image-batches* i)
-                     :for y = ($ *mnist-train-label-batches* i)
-                     :for y* = (mnist-predict x)
-                     :for loss = ($cee y* y)
-                     :do (progn
-                           (when (zerop (rem i 10))
-                             (prn (format nil "[~A|~A]: ~A" (1+ i) epoch ($data loss))))
-                           ($adgd! *network*))))))
+ (with-foreign-memory-limit ()
+   (loop :for epoch :from 1 :to *epoch*
+         :do (loop :for i :from 0 :below *batch-count*
+                   :for x = ($ *mnist-train-image-batches* i)
+                   :for y = ($ *mnist-train-label-batches* i)
+                   :for y* = (mnist-predict x)
+                   :for loss = ($cee y* y)
+                   :do (progn
+                         (when (zerop (rem i 10))
+                           (prn (format nil "[~A|~A]: ~A" (1+ i) epoch ($data loss))))
+                         ($adgd! *network*))))))
