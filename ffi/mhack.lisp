@@ -13,20 +13,48 @@
 (th-set-gc-handler (cffi:callback thgc) +nil+)
 
 #+sbcl
-(setf (sb-ext:bytes-consed-between-gcs) (* 128 1024))
+(defun current-gc-configs ()
+  (list (sb-ext:bytes-consed-between-gcs)
+        (sb-ext:generation-bytes-consed-between-gcs 0)
+        (sb-ext:generation-bytes-consed-between-gcs 1)
+        (sb-ext:generation-bytes-consed-between-gcs 2)
+        (sb-ext:generation-bytes-consed-between-gcs 3)
+        (sb-ext:generation-bytes-consed-between-gcs 4)
+        (sb-ext:generation-bytes-consed-between-gcs 5)
+        (sb-ext:generation-bytes-consed-between-gcs 6)))
+
+(defparameter *original-gc-configs* (current-gc-configs))
+
 #+sbcl
-(setf (sb-ext:generation-bytes-consed-between-gcs 0) (* 128 1024))
+(defun limit-memory ()
+  (setf (sb-ext:bytes-consed-between-gcs) (* 32 1024)
+        (sb-ext:generation-bytes-consed-between-gcs 0) (* 32 1024)
+        (sb-ext:generation-bytes-consed-between-gcs 1) (* 32 1024)
+        (sb-ext:generation-bytes-consed-between-gcs 2) (* 32 1024)
+        (sb-ext:generation-bytes-consed-between-gcs 3) (* 32 1024)
+        (sb-ext:generation-bytes-consed-between-gcs 4) (* 32 1024)
+        (sb-ext:generation-bytes-consed-between-gcs 5) (* 32 1024)
+        (sb-ext:generation-bytes-consed-between-gcs 6) (* 32 1024))
+  (sb-ext:gc)
+  (gcf))
+
 #+sbcl
-(setf (sb-ext:generation-bytes-consed-between-gcs 1) (* 128 1024))
-#+sbcl
-(setf (sb-ext:generation-bytes-consed-between-gcs 2) (* 128 1024))
-#+sbcl
-(setf (sb-ext:generation-bytes-consed-between-gcs 3) (* 256 1024))
-#+sbcl
-(setf (sb-ext:generation-bytes-consed-between-gcs 4) (* 256 1024))
-#+sbcl
-(setf (sb-ext:generation-bytes-consed-between-gcs 5) (* 256 1024))
-#+sbcl
-(setf (sb-ext:generation-bytes-consed-between-gcs 6) (* 512 1024))
-#+sbcl
-(sb-ext:gc)
+(defun restore-config ()
+  (setf (sb-ext:bytes-consed-between-gcs) ($ *original-gc-configs* 0)
+        (sb-ext:generation-bytes-consed-between-gcs 0) ($ *original-gc-configs* 1)
+        (sb-ext:generation-bytes-consed-between-gcs 1) ($ *original-gc-configs* 2)
+        (sb-ext:generation-bytes-consed-between-gcs 2) ($ *original-gc-configs* 3)
+        (sb-ext:generation-bytes-consed-between-gcs 3) ($ *original-gc-configs* 4)
+        (sb-ext:generation-bytes-consed-between-gcs 4) ($ *original-gc-configs* 5)
+        (sb-ext:generation-bytes-consed-between-gcs 5) ($ *original-gc-configs* 6)
+        (sb-ext:generation-bytes-consed-between-gcs 6) ($ *original-gc-configs* 7))
+  (sb-ext:gc)
+  (gcf))
+
+(defmacro with-mhack (&body body)
+  #+sbcl
+  (limit-memory)
+  `(let ((___r___ ,@body))
+     #+sbcl
+     (restore-config)
+     ___r___))
