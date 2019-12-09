@@ -13,4 +13,20 @@
 (th-set-gc-handler (cffi:callback thgc) +nil+)
 
 #+sbcl
-(setf (sb-ext:bytes-consed-between-gcs) (* 12 1024 1024))
+(setf (sb-ext:bytes-consed-between-gcs) (* 128 1024))
+#+sbcl
+(setf (sb-ext:generation-bytes-consed-between-gcs 0) (* 128 1024))
+#+sbcl
+(setf (sb-ext:generation-bytes-consed-between-gcs 1) (* 128 1024))
+#+sbcl
+(setf (sb-ext:generation-bytes-consed-between-gcs 2) (* 128 1024))
+#+sbcl
+(setf (sb-ext:generation-bytes-consed-between-gcs 3) (* 256 1024))
+#+sbcl
+(setf (sb-ext:generation-bytes-consed-between-gcs 4) (* 256 1024))
+#+sbcl
+(setf (sb-ext:generation-bytes-consed-between-gcs 5) (* 256 1024))
+#+sbcl
+(setf (sb-ext:generation-bytes-consed-between-gcs 6) (* 512 1024))
+#+sbcl
+(sb-ext:gc)
