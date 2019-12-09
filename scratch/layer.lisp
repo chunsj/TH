@@ -40,6 +40,12 @@
                          :collect k)
         :collect ($contiguous! ($index ($ *mnist* :train-labels) 0 rng))))
 
+(defparameter *mnist-test-images*
+  (let ((xt ($ *mnist* :test-images)))
+    ($reshape xt ($size xt 0) *channel-number* *image-width* *image-height*)))
+
+(defparameter *mnist-test-labels* ($ *mnist* :test-labels))
+
 
 ;; network parameters - copied from mnist example
 (defparameter *filter-number* 30)
@@ -85,16 +91,12 @@
     (mnist-read-weight-from ($ ws 4) "examples/weights/mnist/mnist-cnn-w3.dat")
     (mnist-read-weight-from ($ ws 5) "examples/weights/mnist/mnist-cnn-b3.dat")))
 
-(mnist-cnn-read-weights)
-
 (defun mnist-predict (x &optional (trainp t)) ($execute *network* x :trainp trainp))
 
 (defun mnist-test-stat (&optional verbose)
-  (let* ((xt ($ *mnist* :test-images))
-         (yt (-> ($ *mnist* :test-labels)
+  (let* ((yt (-> *mnist-test-labels*
                  (tensor.byte)))
-         (yt* (-> ($reshape xt ($size xt 0) *channel-number* *image-width* *image-height*)
-                  (mnist-predict nil)
+         (yt* (-> (mnist-predict *mnist-test-images* nil)
                   ($round)
                   (tensor.byte)))
          (errors ($ne ($sum ($eq yt* yt) 1)
@@ -106,6 +108,7 @@
     ($sum errors)))
 
 ($cg! *network*)
+(mnist-cnn-read-weights)
 (mnist-test-stat)
 
 ;; if you want to train again, run following code
