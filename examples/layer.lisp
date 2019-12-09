@@ -117,7 +117,7 @@
 
 ($cg! *network*)
 (time
- (with-mhack
+ (with-foreign-memory-limit
      (loop :for epoch :from 1 :to *epoch*
            :do (loop :for i :from 0 :below *batch-count*
                      :for x = ($ *mnist-train-image-batches* i)
