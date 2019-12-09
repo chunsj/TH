@@ -99,3 +99,8 @@
   memory is used - I've modified the garbage collector settings for more frequent gc to prevent
   sbcl filling memory without knowing it actually using external objects. Refer mhack.lisp for
   detailed implementation; especially the limit-memory function.
+
+## TODOS
+  1. Check and update examples to use the with-foreign-memory-limit macro. Check performance as well.
+  2. Apply new layer based API, though I don't like it I cannot yet find better alternative.
+  3. More application examples, especially other machine learning algorithms than neural network.
