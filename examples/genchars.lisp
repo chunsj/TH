@@ -166,7 +166,6 @@
            :do (progn
                  (loop :for input :in *inputs*
                        :for target :in *targets*
-                       :for ll :from 0 :below 1
                        :do (let ((ph (zeros 1 *hidden-size*))
                                  (tloss 0))
                              (loop :for i :from 0 :below ($size input 0)
