@@ -251,9 +251,14 @@
 
 (defmethod $execute ((l convolution-2d-layer) x &key (trainp t))
   (with-slots (w b dw dh pw ph a) l
-    (if trainp
-        (funcall a ($conv2d x w b dw ph pw ph))
-        (funcall a ($conv2d (if ($parameterp x) ($data x) x) ($data w) ($data b) dw dh pw ph)))))
+    (if a
+        (if trainp
+            (funcall a ($conv2d x w b dw dh pw ph))
+            (funcall a ($conv2d (if ($parameterp x) ($data x) x) ($data w) ($data b)
+                                dw dh pw ph)))
+        (if trainp
+            ($conv2d x w b dw dh pw ph)
+            ($conv2d (if ($parameterp x) ($data x) x) ($data w) ($data b) dw dh pw ph)))))
 
 (defclass maxpool-2d-layer (layer)
   ((kw :initform nil)

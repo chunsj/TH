@@ -107,3 +107,18 @@
 
 ($cg! *network*)
 (mnist-test-stat)
+
+;; if you want to train again, run following code
+(defparameter *epoch* 30)
+
+($cg! *network*)
+(time
+ (loop :for epoch :from 1 :to *epoch*
+       :do (loop :for i :from 0 :below *batch-count*
+                 :for x = ($ *mnist-train-image-batches* i)
+                 :for y = ($ *mnist-train-label-batches* i)
+                 :for y* = (mnist-predict x)
+                 :for loss = ($cee y* y)
+                 :do (progn
+                       (prn (format nil "[~A|~A]: ~A" (1+ i) epoch ($data loss)))
+                       ($adgd! *network*)))))
