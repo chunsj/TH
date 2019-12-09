@@ -113,9 +113,6 @@
 
 (gcf)
 
-;; better performance than default 2Gb
-(set-gc-threshold (* 4 1024 1024 1024))
-
 ;; the actual training
 (time
  (loop :for epoch :from 1 :to *epoch*
