@@ -9,7 +9,10 @@
            #:sequence-layer
            #:affine-layer
            #:batch-normalization-layer
-           #:convolution-2d-layer))
+           #:convolution-2d-layer
+           #:maxpool-2d-layer
+           #:avgpool-2d-layer
+           #:flatten-layer))
 
 (in-package :th.layers)
 
@@ -251,3 +254,76 @@
     (if trainp
         (funcall a ($conv2d x w b dw ph pw ph))
         (funcall a ($conv2d (if ($parameterp x) ($data x) x) ($data w) ($data b) dw dh pw ph)))))
+
+(defclass maxpool-2d-layer (layer)
+  ((kw :initform nil)
+   (kh :initform nil)
+   (dw :initform nil)
+   (dh :initform nil)
+   (pw :initform nil)
+   (ph :initform nil)
+   (ceil-p :initform nil)))
+
+(defun maxpool-2d-layer (pool-width pool-height
+                         &key (stride-width 1) (stride-height 1)
+                           (padding-width 0) (padding-height 0)
+                           ceilp)
+  (let ((n (make-instance 'maxpool-2d-layer)))
+    (with-slots (kw kh dw dh pw ph ceil-p) n
+      (setf kw pool-width
+            kh pool-height
+            dw stride-width
+            dh stride-height
+            pw padding-width
+            ph padding-height
+            ceil-p ceilp))
+    n))
+
+(defmethod $execute ((l maxpool-2d-layer) x &key (trainp t))
+  (with-slots (kw kh dw dh pw ph ceil-p) l
+    (if trainp
+        ($maxpool2d x kw kh dw dh pw ph ceil-p)
+        ($maxpool2d (if ($parameterp x) ($data x) x) kw kh dw dh pw ph ceil-p))))
+
+(defclass avgpool-2d-layer (layer)
+  ((kw :initform nil)
+   (kh :initform nil)
+   (dw :initform nil)
+   (dh :initform nil)
+   (pw :initform nil)
+   (ph :initform nil)
+   (ceil-p :initform nil)
+   (count-p :initform nil)))
+
+(defun avgpool-2d-layer (pool-width pool-height
+                         &key (stride-width 1) (stride-height 1)
+                           (padding-width 0) (padding-height 0)
+                           ceilp count-pad-p)
+  (let ((n (make-instance 'avgpool-2d-layer)))
+    (with-slots (kw kh dw dh pw ph ceil-p count-p) n
+      (setf kw pool-width
+            kh pool-height
+            dw stride-width
+            dh stride-height
+            pw padding-width
+            ph padding-height
+            ceil-p ceilp
+            count-p count-pad-p))
+    n))
+
+(defmethod $execute ((l avgpool-2d-layer) x &key (trainp t))
+  (with-slots (kw kh dw dh pw ph ceil-p count-p) l
+    (if trainp
+        ($avgpool2d x kw kh dw dh pw ph ceil-p)
+        ($avgpool2d (if ($parameterp x) ($data x) x) kw kh dw dh pw ph ceil-p count-p))))
+
+(defclass flatten-layer (layer) ())
+
+(defun flatten-layer () (make-instance 'flatten-layer))
+
+(defmethod $execute ((l flatten-layer) x &key (trainp t))
+  (let ((sz0 ($size x 0))
+        (rsz (reduce #'* ($size x) :start 1)))
+    (if trainp
+        ($reshape x sz0 rsz)
+        ($reshape (if ($parameterp x) ($data x) x) sz0 rsz))))
