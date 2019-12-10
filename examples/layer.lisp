@@ -89,7 +89,8 @@
     (mnist-read-weight-from ($ ws 2) "examples/weights/mnist/mnist-cnn-w2.dat")
     (mnist-read-weight-from ($ ws 3) "examples/weights/mnist/mnist-cnn-b2.dat")
     (mnist-read-weight-from ($ ws 4) "examples/weights/mnist/mnist-cnn-w3.dat")
-    (mnist-read-weight-from ($ ws 5) "examples/weights/mnist/mnist-cnn-b3.dat")))
+    (mnist-read-weight-from ($ ws 5) "examples/weights/mnist/mnist-cnn-b3.dat"))
+  (gcf))
 
 (defun mnist-predict (x &optional (trainp t)) ($execute *network* x :trainp trainp))
 
