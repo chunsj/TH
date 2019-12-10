@@ -110,7 +110,8 @@
   ((w :initform nil)
    (b :initform nil)
    (a :initform nil)
-   (bn :initform nil)))
+   (bn :initform nil)
+   (os :initform #{})))
 
 (defun affine-layer (input-size output-size
                      &key (activation :sigmoid) (weight-initializer :he-normal)
@@ -150,25 +151,39 @@
         (append (list w b) ($train-parameters bn))
         (list w b))))
 
+(defun affine-ones (l x)
+  (when (eq 2 ($ndim x))
+    (with-slots (os) l
+      (let* ((n ($size x 0))
+             (o ($ os n)))
+        (unless o
+          (setf ($ os n) (ones n))
+          (setf o ($ os n)))
+        o))))
+
 (defmethod $execute ((l affine-layer) x &key (trainp t))
-  (with-slots (w b a bn ) l
+  (with-slots (w b a bn) l
     (if a
         (if trainp
             (if bn
-                (funcall a ($execute bn ($affine x w b) :trainp trainp))
-                (funcall a ($affine x w b)))
+                (funcall a ($execute bn ($affine x w b (affine-ones l x)) :trainp trainp))
+                (funcall a ($affine x w b (affine-ones l x))))
             (if bn
                 (funcall a ($execute bn ($affine (if ($parameterp x) ($data x) x)
-                                                 ($data w) ($data b)) :trainp trainp))
-                (funcall a ($affine (if ($parameterp x) ($data x) x) ($data w) ($data b)))))
+                                                 ($data w) ($data b) (affine-ones l x))
+                                     :trainp trainp))
+                (funcall a ($affine (if ($parameterp x) ($data x) x) ($data w) ($data b)
+                                    (affine-ones l x)))))
         (if trainp
             (if bn
-                ($execute bn ($affine x w b) :trainp trainp)
+                ($execute bn ($affine x w b (affine-ones l x)) :trainp trainp)
                 ($affine x w b))
             (if bn
                 ($execute bn ($affine (if ($parameterp x) ($data x) x)
-                                      ($data w) ($data b)) :trainp trainp)
-                ($affine (if ($parameterp x) ($data x) x) ($data w) ($data b)))))))
+                                      ($data w) ($data b) (affine-ones l x))
+                          :trainp trainp)
+                ($affine (if ($parameterp x) ($data x) x) ($data w) ($data b)
+                         (affine-ones l x)))))))
 
 (defclass convolution-2d-layer (layer)
   ((w :initform nil)
