@@ -108,7 +108,7 @@
                               (prn i))))
     ($sum errors)))
 
-($cg! *network*)
+($reset! *network*)
 (mnist-cnn-read-weights)
 (mnist-test-stat)
 
@@ -116,7 +116,7 @@
 (defparameter *epoch* 30)
 (setf *epoch* 2)
 
-($cg! *network*)
+($reset! *network*)
 (time
  (with-foreign-memory-limit ()
    (loop :for epoch :from 1 :to *epoch*

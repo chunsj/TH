@@ -51,6 +51,7 @@
   ($adgd! ($train-parameters l) decay-rate))
 
 (defmethod $cg! ((l layer)) ($cg! ($train-parameters l)))
+(defmethod $reset! ((l layer)) ($reset! ($train-parameters l)))
 
 (defclass sequence-layer (layer)
   ((ls :initform nil)))

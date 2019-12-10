@@ -339,6 +339,7 @@
            #:$kcols
            #:$gs!
            #:$cg!
+           #:$reset!
            #:$gd!
            #:$mgd!
            #:$agd!

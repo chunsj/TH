@@ -8,6 +8,7 @@
 (defgeneric $attr (node key &optional default) (:documentation "An attribute for key in node."))
 
 (defgeneric $cg! (node) (:documentation "Clear gradient value."))
+(defgeneric $reset! (node) (:documentation "Clear gradient value and attributes."))
 
 (defclass node ()
   ((nm :initform :parameter :accessor $name)
@@ -57,6 +58,10 @@
 (defmethod $cg! ((node node))
   (setf ($fns node) nil
         ($gradientv node) nil))
+
+(defmethod $reset! ((node node))
+  ($cg! node)
+  (setf ($attrs node) #{}))
 
 (defmethod $parameter ((node node)) (node ($data node)))
 (defmethod $parameter ((data list)) (node (tensor data)))
@@ -121,8 +126,14 @@
 (defmethod $cg! ((parameters list))
   (loop :for p :in parameters :do ($cg! p)))
 
+(defmethod $reset! ((parameters list))
+  (loop :for p :in parameters :do ($reset! p)))
+
 (defmethod $cg! ((parameters parameters))
   (loop :for p :in ($parameters parameters) :do ($cg! p)))
+
+(defmethod $reset! ((parameters parameters))
+  (loop :for p :in ($parameters parameters) :do ($reset! p)))
 
 (defmacro with-node ((self) &body body)
   `(lambda ()
