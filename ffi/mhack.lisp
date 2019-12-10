@@ -22,6 +22,8 @@
         (sb-ext:generation-bytes-consed-between-gcs 4)
         (sb-ext:generation-bytes-consed-between-gcs 5)
         (sb-ext:generation-bytes-consed-between-gcs 6)))
+#-sbcl
+(defun current-gc-configs ())
 
 (defparameter *original-gc-configs* (current-gc-configs))
 
@@ -38,6 +40,8 @@
         (sb-ext:generation-bytes-consed-between-gcs 6) (* 8 1024))
   (sb-ext:gc)
   (gcf))
+#-sbcl
+(defun limit-memory () (gcf))
 
 #+sbcl
 (defun restore-config ()
@@ -52,11 +56,10 @@
         (sb-ext:generation-bytes-consed-between-gcs 6) ($ *original-gc-configs* 7))
   (sb-ext:gc)
   (gcf))
+#-sbcl
+(defun restore-config () (gcf))
 
 (defmacro with-foreign-memory-limit (() &body body)
-  #+sbcl
   (limit-memory)
-  `(let ((___r___ ,@body))
-     #+sbcl
-     (restore-config)
-     ___r___))
+  `(unwind-protect (progn ,@body)
+     (restore-config)))
