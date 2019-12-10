@@ -46,6 +46,8 @@
 
 (defparameter *mnist-test-labels* ($ *mnist* :test-labels))
 
+;; data is set up so free the original data
+(setf *mnist* nil)
 
 ;; network parameters - copied from mnist example
 (defparameter *filter-number* 30)
