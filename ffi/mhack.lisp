@@ -32,10 +32,10 @@
                                  '(:struct th-allocator) 'realloc)
         *original-realloc*))
 
-(defvar *custom-alloc-counts* 0)
+(defvar *custom-alloc-counts* (list 0))
 (defvar *custom-alloc-slots* (make-hash-table :synchronized t))
 
-(defun allocated-counts () *custom-alloc-counts*)
+(defun allocated-counts () (car *custom-alloc-counts*))
 (defun allocated-slot-counts () ($count (hash-table-keys *custom-alloc-slots*)))
 
 (defun allocated-foreign-memory-size ()
@@ -59,7 +59,7 @@
 (cffi:defcallback malloc (:pointer :void) ((ctx :pointer) (size :long-long))
   (declare (ignore ctx))
   (let ((p (cffi:foreign-alloc :char :count size)))
-    (sb-ext:atomic-update *custom-alloc-counts* (lambda (x) (incf x)))
+    (sb-ext:atomic-incf (car *custom-alloc-counts*))
     (setf ($ *custom-alloc-slots* (cffi:pointer-address p)) size)
     p))
 
@@ -67,7 +67,7 @@
 (cffi:defcallback free :void ((ctx :pointer) (ptr :pointer))
   (declare (ignore ctx))
   (remhash (cffi:pointer-address ptr) *custom-alloc-slots*)
-  (sb-ext:atomic-update *custom-alloc-counts* (lambda (x) (decf x)))
+  (sb-ext:atomic-decf (car *custom-alloc-counts*))
   (cffi:foreign-free ptr))
 
 #+sbcl
