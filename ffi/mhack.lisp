@@ -27,14 +27,14 @@
 
 #+sbcl
 (defun limit-memory ()
-  (setf (sb-ext:bytes-consed-between-gcs) (* 32 1024)
-        (sb-ext:generation-bytes-consed-between-gcs 0) (* 32 1024)
-        (sb-ext:generation-bytes-consed-between-gcs 1) (* 32 1024)
-        (sb-ext:generation-bytes-consed-between-gcs 2) (* 32 1024)
-        (sb-ext:generation-bytes-consed-between-gcs 3) (* 32 1024)
-        (sb-ext:generation-bytes-consed-between-gcs 4) (* 32 1024)
-        (sb-ext:generation-bytes-consed-between-gcs 5) (* 32 1024)
-        (sb-ext:generation-bytes-consed-between-gcs 6) (* 32 1024))
+  (setf (sb-ext:bytes-consed-between-gcs) (* 64 1024)
+        (sb-ext:generation-bytes-consed-between-gcs 0) (* 64 1024)
+        (sb-ext:generation-bytes-consed-between-gcs 1) (* 64 1024)
+        (sb-ext:generation-bytes-consed-between-gcs 2) (* 64 1024)
+        (sb-ext:generation-bytes-consed-between-gcs 3) (* 64 1024)
+        (sb-ext:generation-bytes-consed-between-gcs 4) (* 64 1024)
+        (sb-ext:generation-bytes-consed-between-gcs 5) (* 64 1024)
+        (sb-ext:generation-bytes-consed-between-gcs 6) (* 64 1024))
   (sb-ext:gc)
   (gcf))
 
