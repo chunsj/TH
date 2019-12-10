@@ -35,9 +35,19 @@
 (defvar *custom-alloc-counts* 0)
 (defvar *custom-alloc-slots* (make-hash-table :synchronized t))
 
+(defun allocated-counts () *custom-alloc-counts*)
+(defun allocated-slot-counts () ($count (hash-table-keys *custom-alloc-slots*)))
+
 (defun allocated-foreign-memory-size ()
   (loop :for k :in (hash-table-keys *custom-alloc-slots*)
         :summing ($ *custom-alloc-slots* k)))
+
+(defun report-foreign-memory-allocation ()
+  (prn "")
+  (prn "COUNT:" (allocated-counts))
+  (prn "COUNT[SLOT]:" (allocated-slot-counts))
+  (prn "ALLOCATED MEMORY:" (round (/ (allocated-foreign-memory-size) (* 1024 1024D0))) "MB")
+  (prn ""))
 
 (defun tensor-data-address (tensor)
   (cffi:pointer-address ($handle ($pointer tensor))))
