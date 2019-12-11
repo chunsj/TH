@@ -13,7 +13,7 @@
 
 (defun get-emission (hmm iobs)
   (let ((nr ($size (emission-matrix hmm) 0)))
-    ($ (emission-matrix *hmm*) (list 0 nr) (list iobs 1))))
+    ($ (emission-matrix hmm) (list 0 nr) (list iobs 1))))
 
 (defun forward-init (hmm iobs)
   (let ((pobs (get-emission hmm iobs)))
