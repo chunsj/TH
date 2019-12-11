@@ -35,8 +35,8 @@
 ;;(write-rgb-png-file (read-train-cat-file 10 64 64) "cat10.png")
 ;;(write-gray-png-file (read-train-dog-file 20 64 64) "dog20.png")
 
-(defparameter *batch-size* 50)
-(defparameter *batch-count* 10)
+(defparameter *batch-size* 10)
+(defparameter *batch-count* 50)
 (defparameter *test-count* 2)
 (defparameter *img-size* 64)
 
@@ -145,24 +145,25 @@
 
 (setf *epoch* 10)
 (time
- (loop :for epoch :from 1 :to *epoch*
-       :do (progn
-             (loop :for data :in (subseq *train-data* 0 *train-size*)
-                   :for labels :in (subseq *train-labels* 0 *train-size*)
-                   :for bidx :from 1
-                   :do (let* ((y* (network data))
-                              (loss ($bce y* labels)))
-                         (prn epoch "|" bidx ($data loss))
-                         (opt! *cnd*)))
-             (when (zerop (rem epoch 5))
-               (let* ((idx (random *test-count*))
-                      (tdata (nth idx *test-data*))
-                      (tlbl (nth idx *test-labels*))
-                      (res ($data (network tdata nil)))
-                      (fres (tensor.float ($ge res 0.5)))
-                      (d ($- ($reshape fres (* 2 *batch-size*)) tlbl)))
-                 (prn "IDX:" idx "ERROR:" (/ ($dot d d) (* 2 *batch-size*)))
-                 ($cg! *cnd*))))))
+ (with-foreign-memory-limit ()
+   (loop :for epoch :from 1 :to *epoch*
+         :do (progn
+               (loop :for data :in (subseq *train-data* 0 *train-size*)
+                     :for labels :in (subseq *train-labels* 0 *train-size*)
+                     :for bidx :from 1
+                     :do (let* ((y* (network data))
+                                (loss ($bce y* labels)))
+                           (prn epoch "|" bidx ($data loss))
+                           (opt! *cnd*)))
+               (when (zerop (rem epoch 5))
+                 (let* ((idx (random *test-count*))
+                        (tdata (nth idx *test-data*))
+                        (tlbl (nth idx *test-labels*))
+                        (res ($data (network tdata nil)))
+                        (fres (tensor.float ($ge res 0.5)))
+                        (d ($- ($reshape fres (* 2 *batch-size*)) tlbl)))
+                   (prn "IDX:" idx "ERROR:" (/ ($dot d d) (* 2 *batch-size*)))
+                   ($cg! *cnd*)))))))
 
 ;; train check
 (let* ((idx (random *train-size*))
