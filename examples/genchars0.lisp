@@ -187,8 +187,7 @@
                              (when (and (< *smooth-loss* 45D0) (< *smooth-loss* ml))
                                (prn "updating weights")
                                (setf ml *smooth-loss*)
-                               ;;(mrnn-write-weights)
-                               )
+                               (mrnn-write-weights))
                              (prn ""))
                            (incf n)))))))
 
