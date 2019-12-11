@@ -132,51 +132,50 @@
 
 (gcf)
 
-(setf *epoch* 1)
-
 (time
- (loop :for epoch :from 1 :to *epoch*
-       :for dloss = 0
-       :for gloss = 0
-       :do (progn
-             ($cg! *generator*)
-             ($cg! *discriminator*)
-             (prn "*****")
-             (prn "EPOCH:" epoch)
-             (loop :for data :in *train-data-batches*
-                   :for bidx :from 0
-                   :for x = ($reshape data *batch-size* 1 *imgh* *imgw*)
-                   :for z = (samplez)
-                   :do (let ((dlv nil)
-                             (dgv nil))
-                         ;; discriminator
-                         (dotimes (k *k*)
-                           (let* ((dr (discriminate x))
-                                  (df (discriminate (generate z)))
-                                  (l ($data (lossd dr df))))
-                             (incf dloss l)
-                             (setf dlv l)
-                             (optm *discriminator*)
-                             ($cg! *generator*)
-                             ($cg! *discriminator*)))
-                         ;; generator
-                         (let* ((df (discriminate (generate z)))
-                                (l ($data (lossg df))))
-                           (incf gloss l)
-                           (setf dgv l)
-                           (optm *generator*)
-                           ($cg! *generator*)
-                           ($cg! *discriminator*))
-                         (when (zerop (rem bidx 10))
-                           (prn "  D/G:" bidx dlv dgv))))
-             ;; output at every epoch
-             (prn " LOSS:" epoch (/ dloss *train-count* *k*) (/ gloss *train-count*))
-             (let ((generated (generate (samplez))))
-               (outpngs (loop :for i :from 0 :below 49
-                              :collect ($index ($data generated) 0 (random *batch-size*)))
-                        (format nil "~A/samples-~A.png" *output* epoch))
+ (with-foreign-memory-limit ()
+   (loop :for epoch :from 1 :to *epoch*
+         :for dloss = 0
+         :for gloss = 0
+         :do (progn
                ($cg! *generator*)
-               ($cg! *discriminator*)))))
+               ($cg! *discriminator*)
+               (prn "*****")
+               (prn "EPOCH:" epoch)
+               (loop :for data :in *train-data-batches*
+                     :for bidx :from 0
+                     :for x = ($reshape data *batch-size* 1 *imgh* *imgw*)
+                     :for z = (samplez)
+                     :do (let ((dlv nil)
+                               (dgv nil))
+                           ;; discriminator
+                           (dotimes (k *k*)
+                             (let* ((dr (discriminate x))
+                                    (df (discriminate (generate z)))
+                                    (l ($data (lossd dr df))))
+                               (incf dloss l)
+                               (setf dlv l)
+                               (optm *discriminator*)
+                               ($cg! *generator*)
+                               ($cg! *discriminator*)))
+                           ;; generator
+                           (let* ((df (discriminate (generate z)))
+                                  (l ($data (lossg df))))
+                             (incf gloss l)
+                             (setf dgv l)
+                             (optm *generator*)
+                             ($cg! *generator*)
+                             ($cg! *discriminator*))
+                           (when (zerop (rem bidx 10))
+                             (prn "  D/G:" bidx dlv dgv))))
+               ;; output at every epoch
+               (prn " LOSS:" epoch (/ dloss *train-count* *k*) (/ gloss *train-count*))
+               (let ((generated (generate (samplez))))
+                 (outpngs (loop :for i :from 0 :below 49
+                                :collect ($index ($data generated) 0 (random *batch-size*)))
+                          (format nil "~A/samples-~A.png" *output* epoch))
+                 ($cg! *generator*)
+                 ($cg! *discriminator*))))))
 
 ;; generate samples
 (let ((generated (generate (samplez))))
