@@ -110,14 +110,12 @@
                               (prn i))))
     ($sum errors)))
 
-($reset! *network*)
 (mnist-cnn-read-weights)
 (with-foreign-memory-limit ()
   (mnist-test-stat))
 
 ;; if you want to train again, run following code
 (defparameter *epoch* 30)
-(setf *epoch* 10)
 
 ($reset! *network*)
 (time
