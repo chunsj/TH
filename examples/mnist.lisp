@@ -115,17 +115,18 @@
 
 ;; the actual training
 (time
- (loop :for epoch :from 1 :to *epoch*
-       :do (loop :for i :from 0 :below *batch-count*
-                 :for xi = ($ *mnist-train-image-batches* i)
-                 :for x = (-> xi
-                              ($reshape ($size xi 0) *channel-number* 28 28))
-                 :for y = (-> ($ *mnist-train-label-batches* i))
-                 :for y* = (mnist-predict x)
-                 :for loss = ($cee y* y)
-                 :do (progn
-                       (prn (format nil "[~A|~A]: ~A" (1+ i) epoch ($data loss)))
-                       ($adgd! (list *k* *kb* *w2* *b2* *w3* *b3*))))))
+ (with-foreign-memory-limit ()
+   (loop :for epoch :from 1 :to *epoch*
+         :do (loop :for i :from 0 :below *batch-count*
+                   :for xi = ($ *mnist-train-image-batches* i)
+                   :for x = (-> xi
+                                ($reshape ($size xi 0) *channel-number* 28 28))
+                   :for y = (-> ($ *mnist-train-label-batches* i))
+                   :for y* = (mnist-predict x)
+                   :for loss = ($cee y* y)
+                   :do (progn
+                         (prn (format nil "[~A|~A]: ~A" (1+ i) epoch ($data loss)))
+                         ($adgd! (list *k* *kb* *w2* *b2* *w3* *b3*)))))))
 
 ;; test stats
 (defun mnist-test-stat (&optional verbose)
