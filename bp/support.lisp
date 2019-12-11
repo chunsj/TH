@@ -163,7 +163,7 @@
         (node ($mul mask xd)
               :name :dropout
               :link (link (to x ($mul mask gv)))))
-      (node ($data p)
+      (node ($data x)
             :name :dropout
             :link (link (to x gv)))))
 
