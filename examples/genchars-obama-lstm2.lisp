@@ -349,7 +349,9 @@
 (setf *min-mloss* 103.3212) ;; updated
 (setf *mloss* *min-mloss*)
 
-(time (with-mhack (train 40)))
+(time
+ (with-foreign-memory-limit ()
+   (train 40)))
 
 (prn (sample "This is not correct." 200 0.5))
 (prn (sample "I" 200 0.5))

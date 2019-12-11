@@ -9,9 +9,6 @@
 
 (in-package :genchars-obama-lstm)
 
-(th::th-set-num-threads 12)
-(th::th-set-gc-hard-max (* 8 1024 1024 1024))
-
 (defparameter *data-lines* (remove-if (lambda (line) (< ($count line) 1)) (text-lines :obama)))
 (defparameter *data* (format nil "~{~A~^~%~}" *data-lines*))
 (defparameter *chars* (remove-duplicates (coerce *data* 'list)))
@@ -209,46 +206,51 @@
 (defparameter *mloss* (* (- (log (/ 1 *vocab-size*))) *sequence-length*))
 (defparameter *min-mloss* *mloss*)
 
+(defparameter *epochs* 50)
+
 ($cg! *lstm*)
 (gcf)
 
 (time
- (loop :for iter :from 1 :to 50
-       :for n = 0
-       :for maxloss = 0
-       :for maxloss-pos = -1
-       :for max-mloss = 0
-       :do (progn
-             (loop :for input :in *inputs*
-                   :for target :in *targets*
-                   :do (let ((ph (zeros 1 *hidden-size*))
-                             (pc (zeros 1 *hidden-size*))
-                             (tloss 0))
-                         (loop :for i :from 0 :below ($size input 0)
-                               :for xt = ($index input 0 i)
-                               :for (ht ct) = ($lstm xt ph pc *wi* *ui* *wf* *uf* *wo* *uo* *wa* *ua*
-                                                     *bi* *bf* *bo* *ba*)
-                               :for yt = ($affine ht *wy* *by*)
-                               :for ps = ($softmax yt)
-                               :for y = ($index target 0 i)
-                               :for l = ($cee ps y)
-                               :do (progn
-                                     (setf ph ht
-                                           pc ct)
-                                     (incf tloss ($data l))))
-                         (when (> tloss maxloss)
-                           (setf maxloss-pos n)
-                           (setf maxloss tloss))
-                         ($rmgd! *lstm*)
-                         (setf *mloss* (+ (* 0.999 *mloss*) (* 0.001 tloss)))
-                         (when (> *mloss* max-mloss) (setf max-mloss *mloss*))
-                         (when (zerop (rem n 200))
-                           (prn "[ITER]" iter n *mloss* maxloss maxloss-pos))
-                         (incf n)))
-             (when (< max-mloss *min-mloss*)
-               (prn "*** BETTER MLOSS - WRITE WEIGHTS: FROM" *min-mloss* "TO" max-mloss)
-               (setf *min-mloss* max-mloss)
-               (lstm-write-weights)))))
+ (with-foreign-memory-limit ()
+   (loop :for iter :from 1 :to *epochs*
+         :for n = 0
+         :for maxloss = 0
+         :for maxloss-pos = -1
+         :for max-mloss = 0
+         :do (progn
+               (loop :for input :in *inputs*
+                     :for target :in *targets*
+                     :do (let ((ph (zeros 1 *hidden-size*))
+                               (pc (zeros 1 *hidden-size*))
+                               (tloss 0))
+                           (loop :for i :from 0 :below ($size input 0)
+                                 :for xt = ($index input 0 i)
+                                 :for (ht ct) = ($lstm xt ph pc
+                                                       *wi* *ui* *wf* *uf*
+                                                       *wo* *uo* *wa* *ua*
+                                                       *bi* *bf* *bo* *ba*)
+                                 :for yt = ($affine ht *wy* *by*)
+                                 :for ps = ($softmax yt)
+                                 :for y = ($index target 0 i)
+                                 :for l = ($cee ps y)
+                                 :do (progn
+                                       (setf ph ht
+                                             pc ct)
+                                       (incf tloss ($data l))))
+                           (when (> tloss maxloss)
+                             (setf maxloss-pos n)
+                             (setf maxloss tloss))
+                           ($rmgd! *lstm*)
+                           (setf *mloss* (+ (* 0.999 *mloss*) (* 0.001 tloss)))
+                           (when (> *mloss* max-mloss) (setf max-mloss *mloss*))
+                           (when (zerop (rem n 200))
+                             (prn "[ITER]" iter n *mloss* maxloss maxloss-pos))
+                           (incf n)))
+               (when (< max-mloss *min-mloss*)
+                 (prn "*** BETTER MLOSS - WRITE WEIGHTS: FROM" *min-mloss* "TO" max-mloss)
+                 (setf *min-mloss* max-mloss)
+                 (lstm-write-weights))))))
 
 (prn (sample "This is not correct." 200 0.5))
 (prn (sample "I" 200 0.5))
