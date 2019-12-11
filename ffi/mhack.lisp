@@ -40,7 +40,8 @@
 
 (defun allocated-foreign-memory-size ()
   (loop :for k :in (hash-table-keys *custom-alloc-slots*)
-        :summing ($ *custom-alloc-slots* k)))
+        :for sz = (or ($ *custom-alloc-slots* k) 0)
+        :summing sz))
 
 (defun report-foreign-memory-allocation ()
   (prn "")
