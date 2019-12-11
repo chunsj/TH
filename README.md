@@ -99,6 +99,8 @@
   memory is used - I've modified the garbage collector settings for more frequent gc to prevent
   sbcl filling memory without knowing it actually using external objects. Refer mhack.lisp for
   detailed implementation; especially the limit-memory function.
+  Current hack for foreign memory management is simply make garbage collector do its job more
+  frequently.
 
 ## TODOS
   1. Check and update examples to use the with-foreign-memory-limit macro. Check performance as well.
