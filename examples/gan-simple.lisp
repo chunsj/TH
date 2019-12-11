@@ -42,11 +42,11 @@
 
 (defparameter *generator* (parameters))
 (defparameter *gw1* ($push *generator* (vxavier (list *g-input-size* *g-hidden-size*))))
-(defparameter *gb1* ($push *generator* (zeros 1 *g-hidden-size*)))
+(defparameter *gb1* ($push *generator* (zeros *g-hidden-size*)))
 (defparameter *gw2* ($push *generator* (vxavier (list *g-hidden-size* *g-hidden-size*))))
-(defparameter *gb2* ($push *generator* (zeros 1 *g-hidden-size*)))
+(defparameter *gb2* ($push *generator* (zeros *g-hidden-size*)))
 (defparameter *gw3* ($push *generator* (vxavier (list *g-hidden-size* *g-output-size*))))
-(defparameter *gb3* ($push *generator* (zeros 1 *g-output-size*)))
+(defparameter *gb3* ($push *generator* (zeros *g-output-size*)))
 
 (defun generate (x)
   (let* ((z1 ($affine x *gw1* *gb1*))
@@ -57,11 +57,11 @@
 
 (defparameter *discriminator* (parameters))
 (defparameter *dw1* ($push *discriminator* (vxavier (list *d-input-size* *d-hidden-size*))))
-(defparameter *db1* ($push *discriminator* (zeros 1 *d-hidden-size*)))
+(defparameter *db1* ($push *discriminator* (zeros *d-hidden-size*)))
 (defparameter *dw2* ($push *discriminator* (vxavier (list *d-hidden-size* *d-hidden-size*))))
-(defparameter *db2* ($push *discriminator* (zeros 1 *d-hidden-size*)))
+(defparameter *db2* ($push *discriminator* (zeros *d-hidden-size*)))
 (defparameter *dw3* ($push *discriminator* (vxavier (list *d-hidden-size* *d-output-size*))))
-(defparameter *db3* ($push *discriminator* (zeros 1 *d-output-size*)))
+(defparameter *db3* ($push *discriminator* (zeros *d-output-size*)))
 
 (defun discriminate (x)
   (let* ((z1 ($affine x *dw1* *db1*))
