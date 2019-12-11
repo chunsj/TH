@@ -60,35 +60,35 @@
 
 (defparameter *wa* ($push *lstm* ($- ($* 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
 (defparameter *ua* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *ba* ($push *lstm* ($- ($* 0.16 (rnd 1 *hidden-size*)) 0.08)))
+(defparameter *ba* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size*)) 0.08)))
 
 (defparameter *wi* ($push *lstm* ($- ($* 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
 (defparameter *ui* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *bi* ($push *lstm* ($- ($* 0.16 (rnd 1 *hidden-size*)) 0.08)))
+(defparameter *bi* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size*)) 0.08)))
 
 (defparameter *wf* ($push *lstm* ($- ($* 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
 (defparameter *uf* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *bf* ($push *lstm* (ones 1 *hidden-size*)))
+(defparameter *bf* ($push *lstm* (ones *hidden-size*)))
 
 (defparameter *wo* ($push *lstm* ($- ($* 0.16 (rnd *vocab-size* *hidden-size*)) 0.08)))
 (defparameter *uo* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size* *hidden-size*)) 0.08)))
-(defparameter *bo* ($push *lstm* ($- ($* 0.16 (rnd 1 *hidden-size*)) 0.08)))
+(defparameter *bo* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size*)) 0.08)))
 
 (defparameter *wy* ($push *lstm* ($- ($* 0.16 (rnd *hidden-size* *vocab-size*)) 0.08)))
-(defparameter *by* ($push *lstm* ($- ($* 0.16 (rnd 1 *vocab-size*)) 0.08)))
+(defparameter *by* ($push *lstm* ($- ($* 0.16 (rnd *vocab-size*)) 0.08)))
 
 (defun sample (ph pc seed-idx n &optional (temperature 1))
   (let ((x (zeros 1 *vocab-size*))
         (indices (list seed-idx)))
     (setf ($ x 0 seed-idx) 1)
     (loop :for i :from 0 :below n
-          :for it = ($sigmoid ($+ ($@ x *wi*) ($@ ph *ui*) *bi*))
-          :for ft = ($sigmoid ($+ ($@ x *wf*) ($@ ph *uf*) *bf*))
-          :for ot = ($sigmoid ($+ ($@ x *wo*) ($@ ph *uo*) *bo*))
-          :for at = ($tanh ($+ ($@ x *wa*) ($@ ph *ua*) *ba*))
+          :for it = ($sigmoid ($affine2 x *wi* ph *ui* *bi*))
+          :for ft = ($sigmoid ($affine2 x *wf* ph *uf* *bf*))
+          :for ot = ($sigmoid ($affine2 x *wo* ph *uo* *bo*))
+          :for at = ($tanh ($affine2 x *wa* ph *ua* *ba*))
           :for ct = ($+ ($* at it) ($* ft pc))
           :for ht = ($* ($tanh ct) ot)
-          :for yt = ($+ ($@ ht *wy*) *by*)
+          :for yt = ($affine ht *wy* *by*)
           :for ps = ($softmax ($/ yt temperature))
           :for nidx = (choose ($data ps))
           :do (progn
@@ -103,23 +103,12 @@
     (coerce (mapcar (lambda (i) ($ *idx-to-char* i)) (reverse indices)) 'string)))
 
 (defun sigmoid-gate (xt ph w u b)
-  (let* ((tx ($@ xt w))
-         (tp ($@ ph u))
-         (tb ($@ (ones ($size xt 0) 1) b))
-         (res ($sigmoid ($+ tx tp tb))))
-    res))
+  ($sigmoid ($affine2 xt w ph u b)))
 
 (defun tanh-gate (xt ph w u b)
-  (let* ((tx ($@ xt w))
-         (tp ($@ ph u))
-         (tb ($@ (ones ($size xt 0) 1) b))
-         (res ($tanh ($+ tx tp tb))))
-    res))
+  ($tanh ($affine2 xt w ph u b)))
 
-(defun affine (x w b)
-  (let* ((tx ($@ x w))
-         (tb ($@ (ones ($size x 0) 1) b)))
-    ($+ tx tb)))
+(defun affine (x w b) ($affine x w b))
 
 ($cg! *lstm*)
 
@@ -127,40 +116,41 @@
 (setf *max-epochs* 1)
 
 (time
- (loop :for epoch :from 1 :to *max-epochs*
-       :do (progn
-             (loop :for bidx :from 0
-                   :for input :in *input-batches*
-                   :for target :in *target-batches*
-                   :do (let ((ph (zeros ($size input 0) *hidden-size*))
-                             (pc (zeros ($size input 0) *hidden-size*))
-                             (loss 0))
-                         (loop :for time :from 0 :below ($size input 1)
-                               :for xt = (let ((m (zeros *batch-size* *vocab-size*)))
-                                           (loop :for i :from 0 :below *batch-size*
-                                                 :do (setf ($ m i ($ input i time)) 1))
-                                           m)
-                               :for it = (sigmoid-gate xt ph *wi* *ui* *bi*)
-                               :for ft = (sigmoid-gate xt ph *wf* *uf* *bf*)
-                               :for ot = (sigmoid-gate xt ph *wo* *uo* *bo*)
-                               :for at = (tanh-gate xt ph *wa* *ua* *ba*)
-                               :for ct = ($+ ($* at it) ($* ft pc))
-                               :for ht = ($* ($tanh ct) ot)
-                               :for yt = ($logsoftmax (affine ht *wy* *by*))
-                               :for y = (let ((m ($index target 1 time)))
-                                          ($reshape m *batch-size*))
-                               :for l = ($cnll yt y)
-                               :do (progn
-                                     (setf ph ht)
-                                     (setf pc ct)
-                                     (incf loss ($data l))))
-                         ($adgd! *lstm*)
-                         (when (zerop (rem bidx 10))
-                           (prn "")
-                           (prn "[BTCH/ITER]" bidx "/" epoch (* loss (/ 1.0 *sequence-length*)))
-                           (prn (sample ($index ($data ph) 0 0) ($index ($data pc) 0 0)
-                                        (random *vocab-size*) 72))
-                           (prn "")))))))
+ (with-foreign-memory-limit ()
+   (loop :for epoch :from 1 :to *max-epochs*
+         :do (progn
+               (loop :for bidx :from 0
+                     :for input :in *input-batches*
+                     :for target :in *target-batches*
+                     :do (let ((ph (zeros ($size input 0) *hidden-size*))
+                               (pc (zeros ($size input 0) *hidden-size*))
+                               (loss 0))
+                           (loop :for time :from 0 :below ($size input 1)
+                                 :for xt = (let ((m (zeros *batch-size* *vocab-size*)))
+                                             (loop :for i :from 0 :below *batch-size*
+                                                   :do (setf ($ m i ($ input i time)) 1))
+                                             m)
+                                 :for it = (sigmoid-gate xt ph *wi* *ui* *bi*)
+                                 :for ft = (sigmoid-gate xt ph *wf* *uf* *bf*)
+                                 :for ot = (sigmoid-gate xt ph *wo* *uo* *bo*)
+                                 :for at = (tanh-gate xt ph *wa* *ua* *ba*)
+                                 :for ct = ($+ ($* at it) ($* ft pc))
+                                 :for ht = ($* ($tanh ct) ot)
+                                 :for yt = ($logsoftmax (affine ht *wy* *by*))
+                                 :for y = (let ((m ($index target 1 time)))
+                                            ($reshape m *batch-size*))
+                                 :for l = ($cnll yt y)
+                                 :do (progn
+                                       (setf ph ht)
+                                       (setf pc ct)
+                                       (incf loss ($data l))))
+                           ($adgd! *lstm*)
+                           (when (zerop (rem bidx 10))
+                             (prn "")
+                             (prn "[BTCH/ITER]" bidx "/" epoch (* loss (/ 1.0 *sequence-length*)))
+                             (prn (sample ($index ($data ph) 0 0) ($index ($data pc) 0 0)
+                                          (random *vocab-size*) 72))
+                             (prn ""))))))))
 
 (gcf)
 
