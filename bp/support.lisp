@@ -17,28 +17,16 @@
   (let ((x (cond ((eq 1 ($ndim x)) (apply #'$reshape (append (list x 1) ($size x))))
                  ((eq 3 ($ndim x)) (apply #'$reshape (append (list x 1) ($size x))))
                  (t x))))
-    (if (eq 1 ($size x 0))
-        (let ((x ($repeat x 2 1)))
-          (let ((output ($empty x))
-                (n ($size x 1)))
-            (if (and sm sd)
-                (nn-batch-normalization-update-output x output gamma beta rm rv
-                                                      sm sd nil momentum eps)
-                (let ((sm (zeros n))
-                      (sd (ones n)))
-                  (nn-batch-normalization-update-output x output gamma beta rm rv
-                                                        sm sd nil momentum eps)))
-            ($index output 0 0)))
-        (let ((output ($empty x))
-              (n ($size x 1)))
-          (if (and sm sd)
-              (nn-batch-normalization-update-output x output gamma beta rm rv
-                                                    sm sd t momentum eps)
-              (let ((sm (zeros n))
-                    (sd (ones n)))
-                (nn-batch-normalization-update-output x output gamma beta rm rv
-                                                      sm sd nil momentum eps)))
-          output))))
+    (let ((output ($empty x))
+          (n ($size x 1)))
+      (if (and sm sd)
+          (nn-batch-normalization-update-output x output gamma beta rm rv
+                                                sm sd t momentum eps)
+          (let ((sm (zeros n))
+                (sd (ones n)))
+            (nn-batch-normalization-update-output x output gamma beta rm rv
+                                                  sm sd nil momentum eps)))
+      output)))
 
 (defmethod $bn ((x node) (gamma node) (beta node) (rm tensor) (rv tensor)
                 &optional sm sd (momentum 0.1) (eps 1E-5))
