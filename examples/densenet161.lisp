@@ -31,5 +31,3 @@
 (setf *densenet161-weights* nil)
 (setf *densenet161-function* nil)
 (gcf)
-
-(w :p0)
