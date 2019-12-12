@@ -22,7 +22,7 @@
 
 (defun read-text-weight-file (wn &optional (readp t))
   (when readp
-    (let ((f (file.disk (wfname wn) "r"))
+    (let ((f (file.disk (wfname-txt wn) "r"))
           (tx (tensor)))
       ($fread tx f)
       ($fclose f)

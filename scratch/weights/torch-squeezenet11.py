@@ -1,6 +1,9 @@
 import numpy as np
 from torchvision import models
 
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
 model = models.squeezenet1_1(pretrained=True)
 
 weights = []
@@ -13,7 +16,7 @@ dbpath = "/Users/Sungjin/Desktop/squeezenet11"
 
 for z in range(wlen):
   w = weights[z]
-  print z, ": ", w.shape
+  print(z, ": ", w.shape)
   dim = len(w.shape)
   if dim == 4:
     fname = dbpath + "/squeezenet11-p" + str(z) + ".txt"
@@ -47,4 +50,4 @@ for z in range(wlen):
       f.write(("%e" % w[i]) + " ")
     f.close()
   else:
-    print "INVALID WEIGHT AT ", z
+    print("INVALID WEIGHT AT ", z)
