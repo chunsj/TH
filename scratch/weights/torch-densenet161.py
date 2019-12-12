@@ -1,6 +1,9 @@
 import numpy as np
 from torchvision import models
 
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
 model = models.densenet161(pretrained=True)
 
 weights = []
@@ -14,7 +17,7 @@ dbpath = "/Users/Sungjin/Desktop/densenet161"
 
 for z in range(wlen):
   w = weights[z]
-  print z, ": ", w.shape
+  print(z, ": ", w.shape)
   dim = len(w.shape)
   if z < fcidx:
     if dim == 4:
@@ -49,7 +52,7 @@ for z in range(wlen):
         f.write(("%e" % w[i]) + " ")
       f.close()
     else:
-      print "INVALID WEIGHT AT ", z
+      print("INVALID WEIGHT AT ", z)
   else:
     if dim == 2:
       w = w.transpose()
@@ -69,9 +72,7 @@ for z in range(wlen):
     else:
       fname = dbpath + "/densenet161-f" + str(z) + ".txt"
       f = open(fname, "w")
-      f.write("2\n")
       f.write("1\n")
-      f.write(str(w.shape[0]) + "\n")
       f.write(str(w.shape[0]) + "\n")
       f.write("1\n")
       f.write("0\n")
