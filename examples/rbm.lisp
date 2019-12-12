@@ -32,24 +32,20 @@
 (defparameter *rbm* (parameters))
 
 (defparameter *w* ($push *rbm* ($* 1E-2 (rndn *n-vis* *n-hin*))))
-(defparameter *vb* ($push *rbm* (zeros 1 *n-vis*)))
-(defparameter *hb* ($push *rbm* (zeros 1 *n-hin*)))
+(defparameter *vb* ($push *rbm* (zeros *n-vis*)))
+(defparameter *hb* ($push *rbm* (zeros *n-hin*)))
 (defparameter *k* 1)
 
 (defun sample-from-p (p)
   ($relu ($sign ($- p (apply #'rnd ($size p))))))
 
 (defun v-to-h (v)
-  (let* ((nrow ($size v 0))
-         (os (ones nrow 1))
-         (ah ($+ ($@ v *w*) ($@ os *hb*)))
+  (let* ((ah ($affine v *w* *hb*))
          (ph ($sigmoid ah)))
     ph))
 
 (defun h-to-v (h)
-  (let* ((nrow ($size h 0))
-         (os (ones nrow 1))
-         (av ($+ ($@ h ($transpose *w*)) ($@ os *vb*)))
+  (let* ((av ($affine h ($transpose *w*) *vb*))
          (pv ($sigmoid av)))
     pv))
 
@@ -67,10 +63,8 @@
     vr))
 
 (defun free-energy (v)
-  (let* ((vbias ($@ v ($transpose *vb*)))
-         (nrow ($size v 0))
-         (os (ones nrow 1))
-         (wxb ($+ ($@ v *w*) ($@ os *hb*)))
+  (let* ((vbias ($mv v *vb*))
+         (wxb ($affine v *w* *hb*))
          (hidden ($sum ($log ($+ ($exp wxb) 1)) 1)))
     ($mean ($- ($neg hidden) vbias))))
 
@@ -82,19 +76,20 @@
 
 ($cg! *rbm*)
 
-(loop :for epoch :from 1 :to *epoch*
-      :for loss = nil
-      :do (progn
-            ($cg! *rbm*)
-            (loop :for input :in *mnist-train-image-batches*
-                  :for sample = ($bernoulli input input)
-                  :for v = sample
-                  :for v1 = (run v)
-                  :for l = ($- (free-energy v) (free-energy v1))
-                  :do (progn
-                        (push ($data l) loss)
-                        (opt!)))
-            (prn epoch (mean loss))))
+(with-foreign-memory-limit ()
+  (loop :for epoch :from 1 :to *epoch*
+        :for loss = nil
+        :do (progn
+              ($cg! *rbm*)
+              (loop :for input :in *mnist-train-image-batches*
+                    :for sample = ($bernoulli input input)
+                    :for v = sample
+                    :for v1 = (run v)
+                    :for l = ($- (free-energy v) (free-energy v1))
+                    :do (progn
+                          (push ($data l) loss)
+                          (opt!)))
+              (prn epoch (mean loss)))))
 
 (defparameter *output* (format nil "~A/Desktop" (user-homedir-pathname)))
 
@@ -107,6 +102,7 @@
                           (setf (aref img i j) (round (* 255 ($ d i j)))))))
     (opticl:write-png-file (format nil "~A/~A" *output* fname) img)))
 
+;; randomly selects an input and emits corresponding outputs
 (let* ((input (car *mnist-train-image-batches*))
        (sample ($bernoulli input input))
        (v sample)

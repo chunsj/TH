@@ -49,39 +49,41 @@
 ($cg! *nalu*)
 
 (time
- (loop :for epoch :from 1 :to *epochs*
-       :for iter = 1
-       :do (loop :for x :in *dataset*
-                 :for y :in *target*
-                 :for w = ($* ($tanh *w-hat*) ($sigmoid *m-hat*))
-                 :for m = ($exp ($@ ($log ($+ ($abs x) 1E-7)) w))
-                 :for g = ($sigmoid ($@ x *g*))
-                 :for a = ($@ x w)
-                 :for y* = ($+ ($* g a) ($* ($- 1 g) m))
-                 :for d = ($- y* y)
-                 :for l = ($/ ($dot d d) *batch-size*)
-                 :do (progn
-                       ($adgd! *nalu*)
-                       (when (zerop (rem iter 100))
-                         (prn "LOSS:" iter epoch ($data l))
-                         (prn ($sum ($- ($round ($data y*)) ($round y)))))
-                       (incf iter)))))
+ (with-foreign-memory-limit ()
+   (loop :for epoch :from 1 :to *epochs*
+         :for iter = 1
+         :do (loop :for x :in *dataset*
+                   :for y :in *target*
+                   :for w = ($* ($tanh *w-hat*) ($sigmoid *m-hat*))
+                   :for m = ($exp ($@ ($log ($+ ($abs x) 1E-7)) w))
+                   :for g = ($sigmoid ($@ x *g*))
+                   :for a = ($@ x w)
+                   :for y* = ($+ ($* g a) ($* ($- 1 g) m))
+                   :for d = ($- y* y)
+                   :for l = ($/ ($dot d d) *batch-size*)
+                   :do (progn
+                         ($adgd! *nalu*)
+                         (when (zerop (rem iter 100))
+                           (prn "LOSS:" iter epoch ($data l))
+                           (prn ($sum ($- ($round ($data y*)) ($round y)))))
+                         (incf iter))))))
 
 ;; check training accuracy
-(loop :for x :in *dataset*
-      :for y :in *target*
-      :for w = ($* ($tanh *w-hat*) ($sigmoid *m-hat*))
-      :for m = ($exp ($@ ($log ($+ ($abs x) 1E-7)) w))
-      :for g = ($sigmoid ($@ x *g*))
-      :for a = ($@ x w)
-      :for y* = ($+ ($* g a) ($* ($- 1 g) m))
-      :for d = ($- y* y)
-      :for l = ($/ ($dot d d) *batch-size*)
-      :do (progn
-            ($cg! *nalu*)
-            (when (> ($sum ($- ($round ($data y*)) y)) 1E-4)
-              (prn "Y*" y*)
-              (prn "Y" y))))
+(with-foreign-memory-limit ()
+  (loop :for x :in *dataset*
+        :for y :in *target*
+        :for w = ($* ($tanh *w-hat*) ($sigmoid *m-hat*))
+        :for m = ($exp ($@ ($log ($+ ($abs x) 1E-7)) w))
+        :for g = ($sigmoid ($@ x *g*))
+        :for a = ($@ x w)
+        :for y* = ($+ ($* g a) ($* ($- 1 g) m))
+        :for d = ($- y* y)
+        :for l = ($/ ($dot d d) *batch-size*)
+        :do (progn
+              ($cg! *nalu*)
+              (when (> ($sum ($- ($round ($data y*)) y)) 1E-4)
+                (prn "Y*" y*)
+                (prn "Y" y)))))
 
 ;; check test accuracy - generate new data
 (defparameter *dataset* nil)
@@ -101,19 +103,20 @@
             (push vals *target*)))
 
 ;; okay, check with new data -
-(loop :for x :in *dataset*
-      :for y :in *target*
-      :for w = ($* ($tanh *w-hat*) ($sigmoid *m-hat*))
-      :for m = ($exp ($@ ($log ($+ ($abs x) 1E-7)) w))
-      :for g = ($sigmoid ($@ x *g*))
-      :for a = ($@ x w)
-      :for y* = ($+ ($* g a) ($* ($- 1 g) m))
-      :for d = ($- y* y)
-      :for l = ($/ ($dot d d) *batch-size*)
-      :do (progn
-            ($cg! *nalu*)
-            (when (> ($sum ($- ($round ($data y*)) y)) 1E-4)
-              (prn "**DIFFERENT**")
-              (prn "X" x)
-              (prn "Y*" y*)
-              (prn "Y" y))))
+(with-foreign-memory-limit ()
+  (loop :for x :in *dataset*
+        :for y :in *target*
+        :for w = ($* ($tanh *w-hat*) ($sigmoid *m-hat*))
+        :for m = ($exp ($@ ($log ($+ ($abs x) 1E-7)) w))
+        :for g = ($sigmoid ($@ x *g*))
+        :for a = ($@ x w)
+        :for y* = ($+ ($* g a) ($* ($- 1 g) m))
+        :for d = ($- y* y)
+        :for l = ($/ ($dot d d) *batch-size*)
+        :do (progn
+              ($cg! *nalu*)
+              (when (> ($sum ($- ($round ($data y*)) y)) 1E-4)
+                (prn "**DIFFERENT**")
+                (prn "X" x)
+                (prn "Y*" y*)
+                (prn "Y" y)))))
