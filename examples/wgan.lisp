@@ -100,49 +100,50 @@
 (gcf)
 
 (time
- (loop :for epoch :from 1 :to *epoch*
-       :for dloss = 0
-       :for gloss = 0
-       :do (progn
-             ($cg! *discriminator*)
-             ($cg! *generator*)
-             (prn "*****")
-             (prn "EPOCH:" epoch)
-             (loop :for x :in *train-data-batches*
-                   :for bidx :from 0
-                   :for z = (samplez)
-                   :do (let ((dlv nil)
-                             (dgv nil))
-                         ;; discriminator
-                         (dotimes (k *k*)
-                           (let* ((dr (discriminate x))
-                                  (df (discriminate (generate z)))
-                                  (l ($data (lossd dr df))))
-                             (incf dloss l)
-                             (setf dlv l)
-                             (optm *discriminator*)
-                             (clipwv)
+ (with-foreign-memory-limit ()
+   (loop :for epoch :from 1 :to *epoch*
+         :for dloss = 0
+         :for gloss = 0
+         :do (progn
+               ($cg! *discriminator*)
+               ($cg! *generator*)
+               (prn "*****")
+               (prn "EPOCH:" epoch)
+               (loop :for x :in *train-data-batches*
+                     :for bidx :from 0
+                     :for z = (samplez)
+                     :do (let ((dlv nil)
+                               (dgv nil))
+                           ;; discriminator
+                           (dotimes (k *k*)
+                             (let* ((dr (discriminate x))
+                                    (df (discriminate (generate z)))
+                                    (l ($data (lossd dr df))))
+                               (incf dloss l)
+                               (setf dlv l)
+                               (optm *discriminator*)
+                               (clipwv)
+                               ($cg! *discriminator*)
+                               ($cg! *generator*)))
+                           ;; generator
+                           (let* ((df (discriminate (generate z)))
+                                  (l ($data (lossg df))))
+                             (incf gloss l)
+                             (setf dgv l)
+                             (optm *generator*)
                              ($cg! *discriminator*)
-                             ($cg! *generator*)))
-                         ;; generator
-                         (let* ((df (discriminate (generate z)))
-                                (l ($data (lossg df))))
-                           (incf gloss l)
-                           (setf dgv l)
-                           (optm *generator*)
-                           ($cg! *discriminator*)
-                           ($cg! *generator*))
-                         (when (zerop (rem bidx 100))
-                           (prn "  D/L:" bidx dlv dgv))))
-             (when (zerop (rem epoch 1))
-               (let ((g (generate (samplez))))
-                 ($cg! *discriminator*)
-                 ($cg! *generator*)
-                 (loop :for i :from 1 :to 1
-                       :for s = (random *batch-size*)
-                       :for fname = (format nil "~A/i~A-~A.png" *output* epoch i)
-                       :do (outpng ($index ($data g) 0 s) fname))))
-             (prn " LOSS:" epoch (/ dloss *train-count* *k*) (/ gloss *train-count*)))))
+                             ($cg! *generator*))
+                           (when (zerop (rem bidx 100))
+                             (prn "  D/L:" bidx dlv dgv))))
+               (when (zerop (rem epoch 1))
+                 (let ((g (generate (samplez))))
+                   ($cg! *discriminator*)
+                   ($cg! *generator*)
+                   (loop :for i :from 1 :to 1
+                         :for s = (random *batch-size*)
+                         :for fname = (format nil "~A/i~A-~A.png" *output* epoch i)
+                         :do (outpng ($index ($data g) 0 s) fname))))
+               (prn " LOSS:" epoch (/ dloss *train-count* *k*) (/ gloss *train-count*))))))
 
 (defun outpngs25 (data81 fname &optional (w 28) (h 28))
   (let* ((n 5)
