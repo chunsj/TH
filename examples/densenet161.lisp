@@ -15,25 +15,21 @@
 ;; cat categorizing - input should be 3x224x224 RGB image
 (let* ((rgb (tensor-from-png-file "data/cat.vgg16.png"))
        (x (imagenet-input rgb)))
-  (prn x)
   (let ((densenet161-result (funcall *densenet161-function* x)))
-    (prn "DENSENET161 RESULT:" densenet161-result)
     (prn "TOP-5 MATCHES:" (imagenet-top5-matches densenet161-result))))
 
 (let* ((rgb (tensor-from-jpeg-file "data/cat.vgg16.jpg" :resize-dimension '(224 224)))
        (x (imagenet-input rgb)))
-  (prn x)
   (let ((densenet161-result (funcall *densenet161-function* x)))
-    (prn "DENSENET161 RESULT:" densenet161-result)
     (prn "TOP-5 MATCHES:" (imagenet-top5-matches densenet161-result))))
 
 (let* ((rgb (tensor-from-jpeg-file "data/dog.vgg16.jpg" :resize-dimension '(224 224)))
        (x (imagenet-input rgb)))
-  (prn x)
   (let ((densenet161-result (funcall *densenet161-function* x)))
-    (prn "DENSENET161 RESULT:" densenet161-result)
     (prn "TOP-5 MATCHES:" (imagenet-top5-matches densenet161-result))))
 
 (setf *densenet161-weights* nil)
 (setf *densenet161-function* nil)
 (gcf)
+
+(w :p0)

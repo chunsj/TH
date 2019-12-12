@@ -91,7 +91,7 @@
       ($conv2d (w ws :p0) nil 2 2 3 3)
       ($bn (w ws :p1) (w ws :p2) (w ws :m1) (w ws :v1))
       ($relu)
-      ($dlmaxpool2d 3 3 2 2 1 1 1 1)))
+      ($maxpool2d 3 3 2 2 1 1)))
 
 ;; p = p + 6, n = n + 2
 (defun dense-layer (x ws p n)
@@ -232,9 +232,10 @@
 (defun densenet161 (&optional (flat :all) weights)
   (let ((ws (or weights (read-densenet161-weights (not (eq flat :none))))))
     (lambda (x)
+      (prn x)
       (when (and x (>= ($ndim x) 3) (equal (last ($size x) 3) (list 3 224 224)))
         (let ((x (if (eq ($ndim x) 3)
-                     ($reshape x 1 3 224 224)
+                     ($unsqueeze x 0)
                      x)))
           (-> x
               (input-blk ws)
