@@ -11,7 +11,8 @@
 ;; creates an empty tensor of default tensor class (float)
 (prn (tensor))
 
-;; creates a tensor of default tensor class type with specified sizes; elements are not initialized.
+;; creates a tensor of default tensor class type with specified sizes;
+;; elements are not initialized.
 (prn (tensor 2 2))
 
 ;; creates a tensor with contents
