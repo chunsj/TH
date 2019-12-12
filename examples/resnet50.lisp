@@ -15,7 +15,6 @@
 ;; cat categorizing - input should be 3x224x224 RGB image
 (let* ((rgb (tensor-from-png-file "data/cat.vgg16.png"))
        (x (imagenet-input rgb)))
-  (prn x)
   (let* ((resnet50-result (funcall *resnet50-function* x))
          (max-val-idx ($max resnet50-result 1))
          (category-val ($ (car max-val-idx) 0 0))
@@ -27,7 +26,6 @@
 
 (let* ((rgb (tensor-from-jpeg-file "data/cat.vgg16.jpg" :resize-dimension '(224 224)))
        (x (imagenet-input rgb)))
-  (prn x)
   (let* ((resnet50-result (funcall *resnet50-function* x))
          (max-val-idx ($max resnet50-result 1))
          (category-val ($ (car max-val-idx) 0 0))
@@ -39,7 +37,6 @@
 
 (let* ((rgb (tensor-from-jpeg-file "data/dog.vgg16.jpg" :resize-dimension '(224 224)))
        (x (imagenet-input rgb)))
-  (prn x)
   (let* ((resnet50-result (funcall *resnet50-function* x))
          (max-val-idx ($max resnet50-result 1))
          (category-val ($ (car max-val-idx) 0 0))

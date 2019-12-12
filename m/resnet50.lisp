@@ -336,7 +336,7 @@
     (loop :for wk :in *wparams* :by #'cddr
           :for wn = (getf *wparams* wk)
           :for w = (getf weights wk)
-          :do (write-binary-weight-file w (wfname-bin wk)))))
+          :do (write-binary-weight-file w (wfname-bin wn)))))
 
 (defun w (w wn) (getf w wn))
 
