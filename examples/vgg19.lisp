@@ -15,7 +15,6 @@
 ;; cat categorizing - input should be 3x224x224 BGR image
 (let* ((rgb (tensor-from-png-file "data/cat.vgg16.png"))
        (bgr (imagenet-input rgb)))
-  (prn bgr)
   (let* ((vgg19-result (funcall *vgg19-function* bgr))
          (max-val-idx ($max vgg19-result 1))
          (category-val ($ (car max-val-idx) 0 0))
@@ -27,7 +26,6 @@
 
 (let* ((rgb (tensor-from-jpeg-file "data/cat.vgg16.jpg" :resize-dimension '(224 224)))
        (bgr (imagenet-input rgb)))
-  (prn bgr)
   (let* ((vgg19-result (funcall *vgg19-function* bgr))
          (max-val-idx ($max vgg19-result 1))
          (category-val ($ (car max-val-idx) 0 0))
@@ -39,7 +37,6 @@
 
 (let* ((rgb (tensor-from-jpeg-file "data/dog.vgg16.jpg" :resize-dimension '(224 224)))
        (bgr (imagenet-input rgb)))
-  (prn bgr)
   (let* ((vgg19-result (funcall *vgg19-function* bgr))
          (max-val-idx ($max vgg19-result 1))
          (category-val ($ (car max-val-idx) 0 0))
