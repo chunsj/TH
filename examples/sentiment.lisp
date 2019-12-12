@@ -91,27 +91,29 @@
 
 ;; train using autograd, however, this is very slow compared to direct implementation
 (reset-weights)
-(loop :for iter :from 1 :to *iterations*
-      :do (let ((total 0)
-                (correct 0))
-            (loop :for i :from 0 :below ($count *train-dataset*)
-                  :for x :in *train-dataset*
-                  :for y = ($ *train-targets* i)
-                  :for y* = (predict-sentiment x)
-                  :for d = ($sub y* y)
-                  :for er = ($dot d d)
-                  :do (progn
-                        ($gs! er 1)
-                        ($adgd! (list *w01* *w12*))
-                        (incf total)
-                        (when (< (abs ($data d)) 0.5)
-                          (incf correct))
-                        (when (zerop (rem i 100))
-                          (prn iter total correct))))
-            (when (zerop (rem iter 1))
-              (print-test-perf))))
+(time
+ (with-foreign-memory-limit ()
+   (loop :for iter :from 1 :to *iterations*
+         :do (let ((total 0)
+                   (correct 0))
+               (loop :for i :from 0 :below ($count *train-dataset*)
+                     :for x :in *train-dataset*
+                     :for y = ($ *train-targets* i)
+                     :for y* = (predict-sentiment x)
+                     :for d = ($sub y* y)
+                     :for er = ($dot d d)
+                     :do (progn
+                           ($gs! er 1)
+                           ($adgd! (list *w01* *w12*))
+                           (incf total)
+                           (when (< (abs ($data d)) 0.5)
+                             (incf correct))
+                           (when (zerop (rem i 100))
+                             (prn iter total correct))))
+               (when (zerop (rem iter 1))
+                 (print-test-perf))))))
 
-;; direct implementation, faster than above
+;; direct implementation without using autodiff, faster than above
 ;; (XXX, there're differences in backpropagation in this code and the book has no explanation)
 (defparameter *w01* ($- ($* 0.2 (rnd ($count *words*) *hidden-size*)) 0.1))
 (defparameter *w12* ($- ($* 0.2 (rnd *hidden-size* 1)) 0.1))
@@ -166,8 +168,7 @@
                             (incf correct))))
               (when (zerop (rem iter 1))
                 (prn iter total correct)
-                (print-test-perf)
-                (gcf)))))
+                (print-test-perf)))))
 
 ;; execute training
 (reset-weights)
@@ -196,7 +197,7 @@
               :for weight = ($ *w01* ($ *w2i* w))
               :for difference = ($sub weight weight-target)
               :for wdiff = ($dot difference difference)
-              :do (let ((score (sqrt wdiff)))
+              :do (let ((score (sqrt (if ($parameterp wdiff) ($data wdiff) wdiff))))
                     (push (cons w score) scores)))
         (subseq (sort scores (lambda (a b) (< (cdr a) (cdr b)))) 0 (min 10 ($count scores)))))))
 
