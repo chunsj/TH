@@ -1,7 +1,11 @@
 # My Deep Learning Library for Common Lisp using libTH/libTHNN
 
-## NEWS
-  Now, this code runs on Clozure CL as well as SBCL.
+## NEWS (2019-12-13)
+  Version 1.44 of TH runs all the code under examples without problem; codes under dlfs and gdl has not
+  been checked but you could easily fix problems if you'd been encountered some.
+
+## OLD NEWS
+  This code runs on Clozure CL as well as SBCL; however, SBCL shows much better performance.
 
 ## What is this?
   Common Lisp Deep Learning Library which supports automatic backpropagation. I'd like to learn how
