@@ -232,7 +232,6 @@
 (defun densenet161 (&optional (flat :all) weights)
   (let ((ws (or weights (read-densenet161-weights (not (eq flat :none))))))
     (lambda (x)
-      (prn x)
       (when (and x (>= ($ndim x) 3) (equal (last ($size x) 3) (list 3 224 224)))
         (let ((x (if (eq ($ndim x) 3)
                      ($unsqueeze x 0)
