@@ -49,5 +49,6 @@
                                        (:file "vgg19")
                                        (:file "resnet50")
                                        (:file "resnet101")
+                                       (:file "resnet152")
                                        (:file "densenet161")
                                        (:file "squeezenet11")))))
