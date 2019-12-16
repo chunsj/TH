@@ -42,6 +42,7 @@
                (:module layers :components ((:file "layers")))
                (:module db :components ((:file "mnist-original")
                                         (:file "mnist")
+                                        (:file "fashion-original")
                                         (:file "fashion")
                                         (:file "imdb")
                                         (:file "exdata")))
