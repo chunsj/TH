@@ -88,7 +88,8 @@
   2. Grokking Deep Learning: gdl
 
 ## Test Data Support - data should be copied under ~/.th/datasets/[datasetname]
-  1. MNIST: db/mnist.lisp
+  1. MNIST: db/mnist.lisp, you need to download original mnist data, unpack them, and generate.
+            Refer generate-mnist-data function in db/mnist.lisp file.
   2. Fashion MNIST: db/fashion.lisp
   3. IMDB: db/imdb.lisp
   4. Misc CSV Files: data
