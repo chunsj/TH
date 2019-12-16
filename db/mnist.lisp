@@ -4,101 +4,66 @@
   (:use #:common-lisp
         #:mu
         #:th)
-  (:export #:read-mnist-train-images
-           #:read-mnist-train-labels
-           #:read-mnist-t10k-images
-           #:read-mnist-t10k-labels
-           #:read-mnist-data))
+  (:export #:read-mnist-data))
 
 (in-package :th.db.mnist)
 
-(defparameter +idx-types+
-  '((#x08 (unsigned-byte 8) 1)
-    (#x09 (signed-byte 8) 1)
-    ;;(#x0B (unsigned-byte 4))
-    (#x0C (signed-byte 32) 4)
-    (#x0D single-float 4)
-    (#x0E double-float 8)))
-
 (defparameter +mnist-location+ ($concat (namestring (user-homedir-pathname)) ".th/datasets/mnist"))
 
-(defun read-nbyte (n str)
-  (let ((ret 0))
-    (loop :repeat n :do (setf ret (logior (ash ret 8) (read-byte str))))
-    ret))
+(defun mfn (n &key (loc +mnist-location+)) (strcat loc "/" n))
 
-(defun read-single-image-into-m (m idx s nrow ncol &optional (normalize nil))
-  (let* ((sz (* nrow ncol)))
-    (dotimes (i sz)
-      (let* ((v (read-byte s))
-             (rv (if normalize (/ v 255.0) (* 1.0 v))))
-        (setf ($ m idx i) rv)))))
+(defun generate-mnist-data (&key (loc +mnist-location+))
+  (let ((orig-mnist (th.db.mnist-original::read-mnist-data :normalize nil :onehot nil)))
+    (let ((train-images ($ orig-mnist :train-images))
+          (train-labels ($ orig-mnist :train-labels))
+          (test-images ($ orig-mnist :test-images))
+          (test-labels ($ orig-mnist :test-labels)))
+      (let ((f (file.disk (mfn "mnist-train-images.tensor" :loc loc) "w")))
+        (setf ($fbinaryp f) t)
+        ($fwrite (tensor.byte train-images) f)
+        ($fclose f))
+      (let ((f (file.disk (mfn "mnist-train-labels.tensor" :loc loc) "w")))
+        (setf ($fbinaryp f) t)
+        ($fwrite (tensor.byte train-labels) f)
+        ($fclose f))
+      (let ((f (file.disk (mfn "mnist-test-images.tensor" :loc loc) "w")))
+        (setf ($fbinaryp f) t)
+        ($fwrite (tensor.byte test-images) f)
+        ($fclose f))
+      (let ((f (file.disk (mfn "mnist-test-labels.tensor" :loc loc) "w")))
+        (setf ($fbinaryp f) t)
+        ($fwrite (tensor.byte test-labels) f)
+        ($fclose f)))))
 
-(defun read-single-label-into-m (m idx byte onehot?)
-  (if onehot?
-      (setf ($ m idx byte) 1.0)
-      (setf ($ m idx 0) (coerce byte 'single-float))))
+(defun read-mnist-images-tensor (n &key (loc +mnist-location+) (normalize T))
+  (let ((f (file.disk (mfn n :loc loc) "r"))
+        (m (tensor.byte)))
+    (setf ($fbinaryp f) t)
+    ($fread m f)
+    ($fclose f)
+    (if normalize
+        ($div! (tensor.float m) 255)
+        (tensor.float m))))
 
-(defun read-mnist-images (fname &key (normalize nil) (verbose nil))
-  (with-open-file (str fname :element-type '(unsigned-byte 8))
-    (assert (loop :repeat 2 :always (= #x00 (read-byte str)))
-            nil
-            "magic numbers not matched")
-    (let* ((type-tag (read-byte str))
-           (tagdata (cdr (assoc type-tag +idx-types+)))
-           (dtype (car tagdata))
-           (nbytes (cadr tagdata))
-           (metadata (loop :repeat (read-byte str) :collect (read-nbyte 4 str)))
-           (ndata (car metadata))
-           (nrow (cadr metadata))
-           (ncol (caddr metadata))
-           (m (zeros ndata (* nrow ncol))))
-      (when verbose
-        (format T "~%TYPE: ~A NBYTES: ~A~%" dtype nbytes)
-        (format T "NDATA: ~A NROW: ~A NCOL: ~A~%" ndata nrow ncol))
-      (loop :for i :from 0 :below ndata
-            :do (read-single-image-into-m m i str nrow ncol normalize))
-      m)))
-
-(defun read-mnist-labels (fname &key (verbose nil) (onehot nil))
-  (with-open-file (str fname :element-type '(unsigned-byte 8))
-    (assert (loop :repeat 2 :always (= #x00 (read-byte str)))
-            nil
-            "magic numbers not matched")
-    (let* ((type-tag (read-byte str))
-           (tagdata (cdr (assoc type-tag +idx-types+)))
-           (dtype (car tagdata))
-           (nbytes (cadr tagdata))
-           (metadata (loop :repeat (read-byte str) :collect (read-nbyte 4 str)))
-           (ndata (car metadata))
-           (m (if onehot (zeros ndata 10) (zeros ndata 1))))
-      (when verbose
-        (format T "~%TYPE: ~A NBYTES: ~A~%" dtype nbytes)
-        (format T "NDATA: ~A~%" ndata))
-      (loop :for i :from 0 :below ndata
-            :do (read-single-label-into-m m i (read-byte str) onehot))
-      m)))
-
-(defun read-mnist-train-images (&key (path +mnist-location+) (normalize nil) (verbose nil))
-  (read-mnist-images (strcat path "/train-images-idx3-ubyte")
-                     :normalize normalize :verbose verbose))
-
-(defun read-mnist-train-labels (&key (path +mnist-location+) (verbose nil) (onehot nil))
-  (read-mnist-labels (strcat path "/train-labels-idx1-ubyte")
-                     :onehot onehot
-                     :verbose verbose))
-
-(defun read-mnist-t10k-images (&key (path +mnist-location+) (normalize nil) (verbose nil))
-  (read-mnist-images (strcat path "/t10k-images-idx3-ubyte")
-                     :normalize normalize :verbose verbose))
-
-(defun read-mnist-t10k-labels (&key (path +mnist-location+) (onehot nil) (verbose nil))
-  (read-mnist-labels (strcat path "/t10k-labels-idx1-ubyte")
-                     :onehot onehot
-                     :verbose verbose))
+(defun read-mnist-labels-tensor (n &key (loc +mnist-location+) (onehot T))
+  (let ((f (file.disk (mfn n :loc loc) "r"))
+        (m (tensor.byte)))
+    (setf ($fbinaryp f) t)
+    ($fread m f)
+    ($fclose f)
+    (if onehot
+        (let ((z (zeros ($size m 0) 10)))
+          (loop :for i :from 0 :below ($size m 0)
+                :do (setf ($ z i ($ m i 0)) 1))
+          z)
+        (tensor.float m))))
 
 (defun read-mnist-data (&key (path +mnist-location+) (normalize T) (onehot T))
-  #{:train-images (read-mnist-train-images :path path :normalize normalize)
-    :train-labels (read-mnist-train-labels :path path :onehot onehot)
-    :test-images (read-mnist-t10k-images :path path :normalize normalize)
-    :test-labels (read-mnist-t10k-labels :path path :onehot onehot)})
+  #{:train-images (read-mnist-images-tensor "mnist-train-images.tensor"
+                   :loc path :normalize normalize)
+    :train-labels (read-mnist-labels-tensor "mnist-train-labels.tensor"
+                   :loc path :onehot onehot)
+    :test-images (read-mnist-images-tensor "mnist-test-images.tensor"
+                  :loc path :normalize normalize)
+    :test-labels (read-mnist-labels-tensor "mnist-test-labels.tensor"
+                  :loc path :onehot onehot)})

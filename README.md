@@ -60,12 +60,12 @@
   14. Neural Arithmetic Logic Unit or NALU: examples/nalu.lisp
   15. VGG16, pretrained model: examples/vgg16.lisp (refer torch-vgg16.py under scratch/weights)
   16. VGG19, pretrained model: examples/vgg19.lisp (refer torch-vgg16.py under scratch/weights)
-  17. ResNet50, pretrained model: examples/resnet50.lisp (refer torch-resnet50.py)
+  17. ResNet50,101,152 pretrained model: examples/resnet50.lisp (refer torch-resnet50.py)
   18. DenseNet161, pretrained model: examples/densenet161.lisp (refer torch-densenet161.py)
   19. SqueezeNet1.1, pretrained model: examples/squeezenet11.lisp (refer torch-squeezenet11.py)
   20. Fully convolutional network: examples/fcn.lisp
   21. Hidden Markov model: examples/hmm.lisp (from the Machine Learning with Tensorflow book)
-  22. Reinforcement learning example: examples/rl.lisp (ditto)
+  22. Reinforcement learning example: examples/rl.lisp (ditto above)
 
 ## Pretrained Models
   Though there's currently 5 models, VGG16, VGG19, ResNet50, DenseNet161 and SqueezeNet1.1 are

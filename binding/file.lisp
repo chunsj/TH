@@ -86,44 +86,39 @@
 (defmethod $fread ((storage storage.byte) (file file))
   (let ((size ($freadlong file)))
     ($resize! storage size)
-    (loop :for i :from 0 :below size
-          :do (setf ($ storage i) ($freadbyte file)))
+    (th-file-read-byte ($handle file) ($handle storage))
     storage))
 (defmethod $fread ((storage storage.char) (file file))
   (let ((size ($freadlong file)))
     ($resize! storage size)
-    (loop :for i :from 0 :below size
-          :do (setf ($ storage i) ($freadchar file)))
+    ;; (loop :for i :from 0 :below size
+    ;;       :do (setf ($ storage i) ($freadchar file)))
+    (th-file-read-char ($handle file) ($handle storage))
     storage))
 (defmethod $fread ((storage storage.short) (file file))
   (let ((size ($freadlong file)))
     ($resize! storage size)
-    (loop :for i :from 0 :below size
-          :do (setf ($ storage i) ($freadshort file)))
+    (th-file-read-short ($handle file) ($handle storage))
     storage))
 (defmethod $fread ((storage storage.int) (file file))
   (let ((size ($freadlong file)))
     ($resize! storage size)
-    (loop :for i :from 0 :below size
-          :do (setf ($ storage i) ($freadint file)))
+    (th-file-read-int ($handle file) ($handle storage))
     storage))
 (defmethod $fread ((storage storage.long) (file file))
   (let ((size ($freadlong file)))
     ($resize! storage size)
-    (loop :for i :from 0 :below size
-          :do (setf ($ storage i) ($freadlong file)))
+    (th-file-read-long ($handle file) ($handle storage))
     storage))
 (defmethod $fread ((storage storage.float) (file file))
   (let ((size ($freadlong file)))
     ($resize! storage size)
-    (loop :for i :from 0 :below size
-          :do (setf ($ storage i) ($freadfloat file)))
+    (th-file-read-float ($handle file) ($handle storage))
     storage))
 (defmethod $fread ((storage storage.double) (file file))
   (let ((size ($freadlong file)))
     ($resize! storage size)
-    (loop :for i :from 0 :below size
-          :do (setf ($ storage i) ($freaddouble file)))
+    (th-file-read-double ($handle file) ($handle storage))
     storage))
 
 (defun read-tensor (tensor storage file)
