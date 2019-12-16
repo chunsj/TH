@@ -1,8 +1,7 @@
 # My Deep Learning Library for Common Lisp using libTH/libTHNN
 
-## NEWS (2019-12-13)
-  Version 1.44 of TH runs all the code under examples without problem; codes under dlfs and gdl has not
-  been checked but you could easily fix problems if you'd been encountered some.
+## NEWS (2019-12-16)
+  Version 1.44 of TH runs all the code under examples without problem; including dlfs and gdl.
 
 ## OLD NEWS
   This code runs on Clozure CL as well as SBCL; however, SBCL shows much better performance.
