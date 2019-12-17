@@ -96,6 +96,7 @@
                               (prn i))))
     ($sum errors)))
 
+;; load trained weights
 ($load-weights "./examples/weights/layers-mnist" *network*)
 (with-foreign-memory-limit ()
   (mnist-test-stat))
@@ -117,4 +118,5 @@
                            (prn (format nil "[~A|~A]: ~A" (1+ i) epoch ($data loss))))
                          ($adgd! *network*))))))
 
+;; save your new weights
 ($save-weights "./examples/weights/layers-mnist" *network*)
