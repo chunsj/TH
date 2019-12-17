@@ -6,6 +6,8 @@
         #:th)
   (:export #:$execute
            #:$parameters
+           #:$save-weights
+           #:$load-weights
            #:sequence-layer
            #:affine-layer
            #:batch-normalization-layer
@@ -19,12 +21,10 @@
 (defgeneric $execute (layer x &key trainp))
 
 (defgeneric $train-parameters (layer))
-(defgeneric $evaluation-parameters (layer))
 
 (defclass layer () ())
 
 (defmethod $train-parameters ((l layer)) nil)
-(defmethod $evaluation-parameters ((l layer)) (mapcar #'$data ($train-parameters l)))
 
 (defmethod $parameters ((l layer)) ($train-parameters l))
 
@@ -53,6 +53,26 @@
 (defmethod $cg! ((l layer)) ($cg! ($train-parameters l)))
 (defmethod $reset! ((l layer)) ($reset! ($train-parameters l)))
 
+(defun $save-weights (filename network)
+  (ensure-directories-exist (strcat filename "/"))
+  (loop :for p :in ($parameters network)
+        :for i :from 0
+        :for tensor = (if ($parameterp p) ($data p) p)
+        :do (let* ((tfn (strcat filename "/" (format nil "~A" i) ".dat"))
+                   (f (file.disk tfn "w")))
+              (setf ($fbinaryp f) t)
+              ($fwrite tensor f)
+              ($fclose f))))
+
+(defun $load-weights (filename network)
+  (loop :for p :in ($parameters network)
+        :for i :from 0
+        :do (let* ((tfn (strcat filename "/" (format nil "~A" i) ".dat"))
+                   (f (file.disk tfn "r")))
+              (setf ($fbinaryp f) t)
+              ($fread (if ($parameterp p) ($data p) p) f)
+              ($fclose f))))
+
 (defclass sequence-layer (layer)
   ((ls :initform nil)))
 
@@ -66,6 +86,11 @@
   (with-slots (ls) l
     (loop :for e :in ls
           :appending ($train-parameters e))))
+
+(defmethod $parameters ((l sequence-layer))
+  (with-slots (ls) l
+    (loop :for e :in ls
+          :appending ($parameters e))))
 
 (defmethod $execute ((l sequence-layer) x &key (trainp t))
   (with-slots (ls) l
@@ -97,6 +122,10 @@
 (defmethod $train-parameters ((l batch-normalization-layer))
   (with-slots (g e) l
     (list g e)))
+
+(defmethod $parameters ((l batch-normalization-layer))
+  (with-slots (g e rm rv) l
+    (list g e rm rv)))
 
 (defmethod $execute ((l batch-normalization-layer) x &key (trainp t))
   (with-slots (g e rm rv sm sd) l
@@ -149,6 +178,12 @@
   (with-slots (w b bn) l
     (if bn
         (append (list w b) ($train-parameters bn))
+        (list w b))))
+
+(defmethod $parameters ((l affine-layer))
+  (with-slots (w b bn) l
+    (if bn
+        (append (list w b) ($parameters bn))
         (list w b))))
 
 (defun affine-ones (l x)
@@ -263,6 +298,12 @@
   (with-slots (w b bn) l
     (if bn
         (append (list w b) ($train-parameters bn))
+        (list w b))))
+
+(defmethod $parameters ((l convolution-2d-layer))
+  (with-slots (w b bn) l
+    (if bn
+        (append (list w b) ($parameters bn))
         (list w b))))
 
 (defmethod $execute ((l convolution-2d-layer) x &key (trainp t))

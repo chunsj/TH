@@ -67,32 +67,18 @@
                                                *filter-number*
                                                *filter-width*
                                                *filter-height*
-                                               :activation :relu)
+                                               :activation :relu
+                                               :batch-normalization-p t)
                          (maxpool-2d-layer *pool-width* *pool-height*
                                            :stride-width *pool-stride-width*
                                            :stride-height *pool-stride-height*)
                          (flatten-layer)
                          (affine-layer (* *filter-number* *pool-out-width* *pool-out-height*)
                                        *l2-output*
-                                       :activation :relu)
+                                       :activation :relu
+                                       :batch-normalization-p t)
                          (affine-layer *l2-output* *l3-output*
                                        :activation :softmax)))
-
-(defun mnist-read-weight-from (w fname)
-  (let ((f (file.disk fname "r")))
-    (setf ($fbinaryp f) t)
-    ($fread ($data w) f)
-    ($fclose f)))
-
-(defun mnist-cnn-read-weights ()
-  (let ((ws (th.layers::$train-parameters *network*)))
-    (mnist-read-weight-from ($ ws 0) "examples/weights/mnist/mnist-cnn-k.dat")
-    (mnist-read-weight-from ($ ws 1) "examples/weights/mnist/mnist-cnn-kb.dat")
-    (mnist-read-weight-from ($ ws 2) "examples/weights/mnist/mnist-cnn-w2.dat")
-    (mnist-read-weight-from ($ ws 3) "examples/weights/mnist/mnist-cnn-b2.dat")
-    (mnist-read-weight-from ($ ws 4) "examples/weights/mnist/mnist-cnn-w3.dat")
-    (mnist-read-weight-from ($ ws 5) "examples/weights/mnist/mnist-cnn-b3.dat"))
-  (gcf))
 
 (defun mnist-predict (x &optional (trainp t)) ($execute *network* x :trainp trainp))
 
@@ -110,7 +96,7 @@
                               (prn i))))
     ($sum errors)))
 
-(mnist-cnn-read-weights)
+($load-weights "./examples/weights/layers-mnist" *network*)
 (with-foreign-memory-limit ()
   (mnist-test-stat))
 
@@ -130,3 +116,5 @@
                          (when (zerop (rem i 10))
                            (prn (format nil "[~A|~A]: ~A" (1+ i) epoch ($data loss))))
                          ($adgd! *network*))))))
+
+($save-weights "./examples/weights/layers-mnist" *network*)
