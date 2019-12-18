@@ -277,7 +277,7 @@
   (let ((out ($empty x))
         (f ($empty x))
         (df ($empty x)))
-    (nn-spatial-convolution-mm-update-output x out k b f df ($size k 2) ($size k 3)
+    (nn-spatial-convolution-mm-update-output x out k b f df ($size k 3) ($size k 2)
                                              dw dh pw ph)
     out))
 
@@ -288,7 +288,7 @@
          (out ($empty xd))
          (f ($empty xd))
          (df ($empty xd)))
-    (nn-spatial-convolution-mm-update-output xd out kd bd f df ($size k 2) ($size k 3)
+    (nn-spatial-convolution-mm-update-output xd out kd bd f df ($size k 3) ($size k 2)
                                              dw dh pw ph)
     (node out
           :name :conv2d
@@ -307,8 +307,8 @@
                                                                                    kd
                                                                                    f
                                                                                    df
-                                                                                   ($size k 2)
                                                                                    ($size k 3)
+                                                                                   ($size k 2)
                                                                                    dw dh pw ph)
                                       (nn-spatial-convolution-mm-acc-grad-parameters xd
                                                                                      gv
@@ -316,8 +316,8 @@
                                                                                      db
                                                                                      f
                                                                                      df
-                                                                                     ($size k 2)
                                                                                      ($size k 3)
+                                                                                     ($size k 2)
                                                                                      dw dh pw ph
                                                                                      1)))))
                         (when xp (to x (funcall gfn dv gv) dx))
@@ -347,8 +347,8 @@
                                                                                    kd
                                                                                    f
                                                                                    df
-                                                                                   ($size k 2)
                                                                                    ($size k 3)
+                                                                                   ($size k 2)
                                                                                    dw dh pw ph)
                                       (nn-spatial-convolution-mm-acc-grad-parameters xd
                                                                                      gv
@@ -356,8 +356,8 @@
                                                                                      nil
                                                                                      f
                                                                                      df
-                                                                                     ($size k 2)
                                                                                      ($size k 3)
+                                                                                     ($size k 2)
                                                                                      dw dh pw ph
                                                                                      1)))))
                         (when xp (to x (funcall gfn dv gv) dx))
@@ -418,31 +418,6 @@
                                                                             count-pad-p)
                               dx))))))
 
-(defmethod $dlconv2d ((x tensor) (k tensor) &optional b (dw 1) (dh 1) (pw 0) (ph 0) (dlw 0) (dlh 0))
-  (let ((out ($empty x))
-        (f ($empty x))
-        (df ($empty x)))
-    (nn-spatial-dilated-convolution-update-output x out k b f df ($size k 2) ($size k 3)
-                                                  dw dh pw ph dlw dlh)
-    out))
-
-(defmethod $dlconv2d ((x node) (k node) &optional b (dw 1) (dh 1) (pw 0) (ph 0)
-                                          (dlw 0) (dlh 0))
-  (declare (ignore b dw dh pw ph dlw dlh))
-  (error "not implemented yet"))
-
-(defmethod $dlmaxpool2d ((x tensor) kw kh &optional (dw 1) (dh 1) (pw 0) (ph 0) (dlw 0) (dlh 0)
-                                            ceilp)
-  (let ((out ($empty x))
-        (indices (tensor.long)))
-    (nn-spatial-dilated-max-pooling-update-output x out indices kw kh dw dh pw ph dlw dlh ceilp)
-    out))
-
-(defmethod $dlmaxpool2d ((x node) kw kh &optional (dw 1) (dh 1) (pw 0) (ph 0) (dlw 0) (dlh 0)
-                                          ceilp)
-  (declare (ignore kw kh dw dh pw ph dlw dlh ceilp))
-  (error "not implemented yet"))
-
 (defmethod $conv2 ((x node) (k node) &optional (type :valid))
   (node ($conv2 ($data x) ($data k) type)
         :name :conv2
@@ -460,12 +435,150 @@
         :name :conv2
         :link (link (to k ($conv2 x gv)))))
 
+(defmethod $dlconv2d ((x tensor) (k tensor) &optional b (dw 1) (dh 1) (pw 0) (ph 0) (dlw 0) (dlh 0))
+  (let ((out ($empty x))
+        (f ($empty x))
+        (df ($empty x)))
+    (nn-spatial-dilated-convolution-update-output x out k b f df ($size k 3) ($size k 2)
+                                                  dw dh pw ph dlw dlh)
+    out))
+
+(defun dlconv2d-with-b (x xp k kp b bp dw dh pw ph dlw dlh)
+  (let* ((xd (if xp ($data x) x))
+         (kd (if kp ($data k) k))
+         (bd (if bp ($data b) b))
+         (kw ($size kd 3))
+         (kh ($size kd 2))
+         (out ($empty xd))
+         (f ($empty xd))
+         (df ($empty xd)))
+    (nn-spatial-dilated-convolution-update-output xd out kd bd f df ($size kd 3) ($size kd 2)
+                                                  dw dh pw ph dlw dlh)
+    (node out
+          :name :dlconv2d
+          :link (link (let* ((dx nil)
+                             (dk nil)
+                             (db nil)
+                             (gfn (lambda (dv gv)
+                                    (declare (ignore dv))
+                                    (unless (and dx dk db)
+                                      (setf dx ($zero xd))
+                                      (setf dk ($zero kd))
+                                      (setf db ($zero bd))
+                                      (nn-spatial-dilated-convolution-update-grad-input xd
+                                                                                        gv
+                                                                                        dx
+                                                                                        kd
+                                                                                        f
+                                                                                        kw kh
+                                                                                        dw dh
+                                                                                        pw ph
+                                                                                        dlw dlh)
+                                      (nn-spatial-dilated-convolution-acc-grad-parameters xd
+                                                                                          gv
+                                                                                          dk
+                                                                                          db
+                                                                                          f
+                                                                                          df
+                                                                                          kw kh
+                                                                                          dw dh
+                                                                                          pw ph
+                                                                                          dlw dlh
+                                                                                          1)))))
+                        (when xp (to x (funcall gfn dv gv) dx))
+                        (when kp (to k (funcall gfn dv gv) dk))
+                        (when bp (to b (funcall gfn dv gv) db)))))))
+
+(defun dlconv2d-without-b (x xp k kp dw dh pw ph dlw dlh)
+  (let* ((xd (if xp ($data x) x))
+         (kd (if kp ($data k) k))
+         (kw ($size kd 3))
+         (kh ($size kd 2))
+         (out ($empty xd))
+         (f ($empty xd))
+         (df ($empty xd)))
+    (nn-spatial-dilated-convolution-update-output xd out kd nil f df ($size kd 3) ($size kd 2)
+                                                  dw dh pw ph dlw dlh)
+    (node out
+          :name :dlconv2d
+          :link (link (let* ((dx nil)
+                             (dk nil)
+                             (gfn (lambda (dv gv)
+                                    (declare (ignore dv))
+                                    (unless (and dx dk)
+                                      (setf dx ($zero xd))
+                                      (setf dk ($zero kd))
+                                      (nn-spatial-dilated-convolution-update-grad-input xd
+                                                                                        gv
+                                                                                        dx
+                                                                                        kd
+                                                                                        f
+                                                                                        kw kh
+                                                                                        dw dh
+                                                                                        pw ph
+                                                                                        dlw dlh)
+                                      (nn-spatial-dilated-convolution-acc-grad-parameters xd
+                                                                                          gv
+                                                                                          dk
+                                                                                          nil
+                                                                                          f
+                                                                                          df
+                                                                                          kw kh
+                                                                                          dw dh
+                                                                                          pw ph
+                                                                                          dlw dlh
+                                                                                          1)))))
+                        (when xp (to x (funcall gfn dv gv) dx))
+                        (when kp (to k (funcall gfn dv gv) dk)))))))
+
+(defmethod $dlconv2d ((x node) (k node) &optional b (dw 1) (dh 1) (pw 0) (ph 0)
+                                          (dlw 0) (dlh 0))
+  (if b
+      (dlconv2d-with-b x T k T b (typep b 'node) dw dh pw ph dlw dlh)
+      (dlconv2d-without-b x T k T dw dh pw ph dlw dlh)))
+
+(defmethod $dlconv2d ((x tensor) (k node) &optional b (dw 1) (dh 1) (pw 0) (ph 0)
+                                            (dlw 0) (dlh 0))
+  (if b
+      (dlconv2d-with-b x nil k T b (typep b 'node) dw dh pw ph dlw dlh)
+      (dlconv2d-without-b x nil k T dw dh pw ph dlw dlh)))
+
+(defmethod $dlconv2d ((x node) (k tensor) &optional b (dw 1) (dh 1) (pw 0) (ph 0)
+                                            (dlw 0) (dlh 0))
+  (if b
+      (dlconv2d-with-b x T k nil b (typep b 'node) dw dh pw ph dlw dlh)
+      (dlconv2d-without-b x T k nil dw dh pw ph dlw dlh)))
+
+(defmethod $dlmaxpool2d ((x tensor) kw kh &optional (dw 1) (dh 1) (pw 0) (ph 0) (dlw 0) (dlh 0)
+                                            ceilp)
+  (let ((out ($empty x))
+        (indices (tensor.long)))
+    (nn-spatial-dilated-max-pooling-update-output x out indices kw kh dw dh pw ph dlw dlh ceilp)
+    out))
+
+(defmethod $dlmaxpool2d ((x node) kw kh &optional (dw 1) (dh 1) (pw 0) (ph 0) (dlw 0) (dlh 0)
+                                          ceilp)
+  (let ((out ($empty ($data x)))
+        (indices (tensor.long)))
+    (nn-spatial-dilated-max-pooling-update-output ($data x) out indices kw kh dw dh pw ph
+                                                  dlw dlh ceilp)
+    (node out
+          :name :dlmaxpool2d
+          :link (link (to x (let ((dx ($empty ($data x))))
+                              (nn-spatial-dilated-max-pooling-update-grad-input ($data x)
+                                                                                gv
+                                                                                dx
+                                                                                indices
+                                                                                kw kh dw dh pw ph
+                                                                                dlw dlh ceilp)
+                              dx))))))
+
 ;; w should have the shape of (input-planes, output-planes, kh, kw)
 ;; b should have the shape of (output-planes)
 (defmethod $dconv2d ((x tensor) (w tensor) &optional b (dw 1) (dh 1) (pw 0) (ph 0) (aw 0) (ah 0))
   (let* ((wsz ($size w))
-         (kw ($ wsz 2))
-         (kh ($ wsz 3))
+         (kw ($ wsz 3))
+         (kh ($ wsz 2))
          (out ($empty x))
          (f ($empty x))
          (df ($empty x)))
@@ -477,8 +590,8 @@
          (kd (if kp ($data k) k))
          (bd (if bp ($data b) b))
          (ksz ($size kd))
-         (kw ($ ksz 2))
-         (kh ($ ksz 3))
+         (kw ($ ksz 3))
+         (kh ($ ksz 2))
          (f ($empty xd))
          (df ($empty xd))
          (out ($empty xd)))
