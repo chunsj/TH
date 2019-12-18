@@ -15,7 +15,8 @@
            #:maxpool-2d-layer
            #:avgpool-2d-layer
            #:flatten-layer
-           #:full-convolution-2d-layer))
+           #:full-convolution-2d-layer
+           #:reshape-layer))
 
 (in-package :th.layers)
 
@@ -466,7 +467,7 @@
                     ((eq activation :nil) nil)
                     (t #'$sigmoid)))
       (setf b ($parameter (zeros output-channel-size)))
-      (setf w (let ((sz (list output-channel-size input-channel-size
+      (setf w (let ((sz (list input-channel-size output-channel-size
                               filter-height filter-width)))
                 (cond ((eq weight-initializer :random-uniform) (vru sz))
                       ((eq weight-initializer :random-normal) (vrn sz))
@@ -521,3 +522,18 @@
                           :trainp nil)
                 ($dconv2d (if ($parameterp x) ($data x) x) ($data w) ($data b)
                           dw dh pw ph aw ah))))))
+
+(defclass reshape-layer (layer)
+  ((rsizes :initform nil)))
+
+(defun reshape-layer (&rest sizes)
+  (let ((n (make-instance 'reshape-layer)))
+    (with-slots (rsizes) n
+      (setf rsizes sizes))
+    n))
+
+(defmethod $execute ((l reshape-layer) x &key (trainp t))
+  (with-slots (rsizes) l
+    (if trainp
+        (apply #'$reshape x (cons ($size x 0) rsizes))
+        (apply #'$reshape (if ($parameterp x) ($data x) x) (cons ($size x 0) rsizes)))))
