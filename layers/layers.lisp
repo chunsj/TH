@@ -14,7 +14,8 @@
            #:convolution-2d-layer
            #:maxpool-2d-layer
            #:avgpool-2d-layer
-           #:flatten-layer))
+           #:flatten-layer
+           #:full-convolution-2d-layer))
 
 (in-package :th.layers)
 
@@ -403,3 +404,120 @@
     (if trainp
         ($reshape x sz0 rsz)
         ($reshape (if ($parameterp x) ($data x) x) sz0 rsz))))
+
+(defclass full-convolution-2d-layer (layer)
+  ((w :initform nil)
+   (b :initform nil)
+   (dw :initform 1)
+   (dh :initform 1)
+   (pw :initform 0)
+   (ph :initform 0)
+   (aw :initform 0)
+   (ah :initform 0)
+   (a :initform nil)
+   (bn :initform nil)))
+
+(defun full-convolution-2d-output-size (l x)
+  (cond ((eq 4 ($ndim x))
+         (let* ((sz ($size x))
+                (nbatch ($ sz 0))
+                (input-channel-size ($ sz 1))
+                (input-height ($ sz 2))
+                (input-width ($ sz 3)))
+           (with-slots (w dw dh pw ph aw ah) l
+             (when (eq input-channel-size ($size w 1))
+               (let ((output-w (+ (* (- input-width 1) dw) (* -2 pw) ($size w 3) aw))
+                     (output-h (+ (* (- input-height 1) dh) (* -2 ph) ($size w 2) ah)))
+                 (list nbatch ($size w 0) output-h output-w))))))
+        ((eq 3 ($ndim x))
+         (let* ((sz ($size x))
+                (nbatch 1)
+                (input-channel-size ($ sz 0))
+                (input-height ($ sz 1))
+                (input-width ($ sz 2)))
+           (with-slots (w dw dh pw ph aw ah) l
+             (when (eq input-channel-size ($size w 1))
+               (let ((output-w (+ (* (- input-width 1) dw) (* -2 pw) ($size w 3) aw))
+                     (output-h (+ (* (- input-height 1) dh) (* -2 ph) ($size w 2) ah)))
+                 (list nbatch ($size w 0) output-h output-w))))))))
+
+(defun full-convolution-2d-layer (input-channel-size output-channel-size
+                                  filter-width filter-height
+                                  &key (stride-width 1) (stride-height 1)
+                                    (padding-width 0) (padding-height 0)
+                                    (adjust-width 0) (adjust-height 0)
+                                    (activation :sigmoid) (weight-initializer :he-normal)
+                                    batch-normalization-p)
+  (let ((n (make-instance 'full-convolution-2d-layer)))
+    (with-slots (w b dw dh pw ph aw ah a bn) n
+      (setf dw stride-width
+            dh stride-height
+            pw padding-width
+            ph padding-height
+            aw adjust-width
+            ah adjust-height)
+      (setf a (cond ((eq activation :sigmoid) #'$sigmoid)
+                    ((eq activation :tanh) #'$tanh)
+                    ((eq activation :relu) #'$relu)
+                    ((eq activation :selu) #'$selu)
+                    ((eq activation :swish) #'$swish)
+                    ((eq activation :mish) #'$mish)
+                    ((eq activation :softmax) #'$softmax)
+                    ((eq activation :nil) nil)
+                    (t #'$sigmoid)))
+      (setf b ($parameter (zeros output-channel-size)))
+      (setf w (let ((sz (list output-channel-size input-channel-size
+                              filter-height filter-width)))
+                (cond ((eq weight-initializer :random-uniform) (vru sz))
+                      ((eq weight-initializer :random-normal) (vrn sz))
+                      ((eq weight-initializer :random-normal-truncated) (vrnt sz))
+                      ((eq weight-initializer :xavier-uniform) (vxavier sz :uniform))
+                      ((eq weight-initializer :xavier-normal) (vxavier sz :normal))
+                      ((eq weight-initializer :he-uniform) (vhe sz :uniform))
+                      ((eq weight-initializer :he-normal) (vhe sz :normal))
+                      ((eq weight-initializer :lecun-uniform) (vlecun sz :uniform))
+                      ((eq weight-initializer :lecun-normal) (vlecun sz :normal))
+                      ((eq weight-initializer :selu-uniform) (vselu sz :uniform))
+                      ((eq weight-initializer :selu-normal) (vselu sz :normal))
+                      (t (vru sz)))))
+      (when batch-normalization-p
+        (setf bn (batch-normalization-layer output-channel-size))))
+    n))
+
+(defmethod $train-parameters ((l full-convolution-2d-layer))
+  (with-slots (w b bn) l
+    (if bn
+        (append (list w b) ($train-parameters bn))
+        (list w b))))
+
+(defmethod $parameters ((l full-convolution-2d-layer))
+  (with-slots (w b bn) l
+    (if bn
+        (append (list w b) ($parameters bn))
+        (list w b))))
+
+(defmethod $execute ((l full-convolution-2d-layer) x &key (trainp t))
+  (with-slots (w b dw dh pw ph aw ah a bn) l
+    (if a
+        (if trainp
+            (if bn
+                (funcall a ($execute bn ($dconv2d x w b dw dh pw ph aw ah)))
+                (funcall a ($dconv2d x w b dw dh pw ph aw ah)))
+            (if bn
+                (funcall a ($execute bn
+                                     ($dconv2d (if ($parameterp x) ($data x) x) ($data w) ($data b)
+                                               dw dh pw ph aw ah)
+                                     :trainp nil))
+                (funcall a ($dconv2d (if ($parameterp x) ($data x) x) ($data w) ($data b)
+                                     dw dh pw ph aw ah))))
+        (if trainp
+            (if bn
+                ($execute bn ($dconv2d x w b dw dh pw ph aw ah))
+                ($dconv2d x w b dw dh pw ph aw ah))
+            (if bn
+                ($execute bn
+                          ($dconv2d (if ($parameterp x) ($data x) x) ($data w) ($data b)
+                                    dw dh pw ph aw ah)
+                          :trainp nil)
+                ($dconv2d (if ($parameterp x) ($data x) x) ($data w) ($data b)
+                          dw dh pw ph aw ah))))))
