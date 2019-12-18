@@ -90,8 +90,9 @@
   1. MNIST: db/mnist.lisp, you need to download original mnist data, unpack them, and generate.
             Refer generate-mnist-data function in db/mnist.lisp file.
   2. Fashion MNIST: db/fashion.lisp, same as above mnist data.
-  3. IMDB: db/imdb.lisp
-  4. Misc CSV Files: data
+  3. CIFAR-10/CIFAR-100: db/cifar.lisp, same as above mnist data.
+  4. IMDB: db/imdb.lisp
+  5. Misc CSV Files: data
 
 ## On Scratch
   1. Most of the code in this folder is just for testing, teasing, or random trashing.
