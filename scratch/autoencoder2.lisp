@@ -55,7 +55,6 @@
                                                     :activation :selu)
                          (full-convolution-2d-layer 32 1 3 3
                                                     :padding-width 1 :padding-height 1
-                                                    :batch-normalization-p t
                                                     :activation :sigmoid)))
 
 (defparameter *model* (sequence-layer *encoder* *decoder*))
