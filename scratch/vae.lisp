@@ -89,7 +89,7 @@
 ($reset! *model*)
 (time
  (with-foreign-memory-limit ()
-   (loop :for epoch :from 0 :below *epochs*
+   (loop :for epoch :from 1 :to *epochs*
          :do (loop :for xs :in *mnist-train-image-batches*
                    :for idx :from 1
                    :do (let* ((ys ($execute *model* xs))
@@ -98,4 +98,15 @@
                            (prn idx "/" epoch "-" ($data l)))
                          ($adgd! *model*))))))
 
-(setf *epochs* 1)
+(setf *epochs* 3) ;; 13
+
+;; XXX for analysis
+(prn ($execute *encoder* ($0 *mnist-train-image-batches*) :trainp nil))
+(let ((res ($execute *decoder* ($execute *encoder* ($0 *mnist-train-image-batches*) :trainp nil)
+                     :trainp nil)))
+  (th.image:write-tensor-png-file ($reshape ($ res 2) 1 28 28) "/Users/Sungjin/Desktop/hello.png"))
+
+;; XXX need to fix batch normalization input shape problem
+(let ((res ($execute *decoder* (tensor '((-11 -3.8) (0 0)))
+                     :trainp nil)))
+  (th.image:write-tensor-png-file ($reshape ($ res 0) 1 28 28) "/Users/Sungjin/Desktop/hello.png"))
