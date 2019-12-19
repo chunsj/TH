@@ -21,36 +21,13 @@
 
 (setf *mnist* nil)
 
-(defclass sampling-layer (th.layers::layer)
-  ((mu-layer :initform nil)
-   (log-var-layer :initform nil)))
-
-(defun sampling-layer (input-size output-size)
-  (let ((n (make-instance 'sampling-layer)))
-    (with-slots (mu-layer log-var-layer) n
-      (setf mu-layer (affine-layer input-size output-size :activation :nil)
-            log-var-layer (affine-layer input-size output-size :activation nil)))
-    n))
-
-(defmethod th.layers::$train-parameters ((l sampling-layer))
-  (with-slots (mu-layer log-var-layer) l
-    (append (th.layers::$train-parameters mu-layer)
-            (th.layers::$train-parameters log-var-layer))))
-
-(defmethod th.layers::$parameters ((l sampling-layer))
-  (with-slots (mu-layer log-var-layer) l
-    (append (th.layers::$parameters mu-layer)
-            (th.layers::$parameters log-var-layer))))
-
-(defmethod th.layers::$execute ((l sampling-layer) x &key (trainp t))
-  (with-slots (mu-layer log-var-layer) l
-    (let* ((mu ($execute mu-layer x :trainp trainp))
-           (log-var ($execute log-var-layer x :trainp trainp))
-           (epsilon (apply #'rndn ($size mu))))
-      ($+ mu ($* ($exp ($/ log-var 2)) epsilon)))))
+(defun sample-function (mu log-var &key (trainp t))
+  (declare (ignore trainp))
+  (let ((epsilon (apply #'rndn ($size mu))))
+    ($+ mu ($* ($exp ($/ log-var 2)) epsilon))))
 
 ;; define autoencoder = encoder + decoder
-(defparameter *encoder* (sequence-layer
+(defparameter *encoder* (sequential-layer
                          (convolution-2d-layer 1 32 3 3
                                                :padding-width 1 :padding-height 1
                                                :batch-normalization-p t
@@ -70,9 +47,11 @@
                                                :batch-normalization-p t
                                                :activation :lrelu)
                          (flatten-layer)
-                         (sampling-layer 3136 2)))
+                         (parallel-layer (affine-layer 3136 2 :activation :nil)
+                                         (affine-layer 3136 2 :activation :nil))
+                         (functional-layer #'sample-function)))
 
-(defparameter *decoder* (sequence-layer
+(defparameter *decoder* (sequential-layer
                          (affine-layer 2 3136 :activation :nil)
                          (reshape-layer 64 7 7)
                          (full-convolution-2d-layer 64 64 3 3
@@ -96,7 +75,7 @@
                                                     :batch-normalization-p t
                                                     :activation :sigmoid)))
 
-(defparameter *model* (sequence-layer *encoder* *decoder*))
+(defparameter *model* (sequential-layer *encoder* *decoder*))
 
 ;; test model
 ($execute *model* (car *mnist-train-image-batches*) :trainp nil)
