@@ -8,7 +8,8 @@
            #:$parameters
            #:$save-weights
            #:$load-weights
-           #:sequence-layer
+           #:sequential-layer
+           #:parallel-layer
            #:affine-layer
            #:batch-normalization-layer
            #:convolution-2d-layer
@@ -16,7 +17,8 @@
            #:avgpool-2d-layer
            #:flatten-layer
            #:full-convolution-2d-layer
-           #:reshape-layer))
+           #:reshape-layer
+           #:function-layer))
 
 (in-package :th.layers)
 
@@ -75,32 +77,44 @@
               ($fread (if ($parameterp p) ($data p) p) f)
               ($fclose f))))
 
-(defclass sequence-layer (layer)
+(defclass sequential-layer (layer)
   ((ls :initform nil)))
 
-(defun sequence-layer (&rest layers)
-  (let ((n (make-instance 'sequence-layer)))
+(defun sequential-layer (&rest layers)
+  (let ((n (make-instance 'sequential-layer)))
     (with-slots (ls) n
       (setf ls layers))
     n))
 
-(defmethod $train-parameters ((l sequence-layer))
+(defmethod $train-parameters ((l sequential-layer))
   (with-slots (ls) l
     (loop :for e :in ls
           :appending ($train-parameters e))))
 
-(defmethod $parameters ((l sequence-layer))
+(defmethod $parameters ((l sequential-layer))
   (with-slots (ls) l
     (loop :for e :in ls
           :appending ($parameters e))))
 
-(defmethod $execute ((l sequence-layer) x &key (trainp t))
+(defmethod $execute ((l sequential-layer) x &key (trainp t))
   (with-slots (ls) l
     (let ((r ($execute (car ls) x :trainp trainp)))
       (loop :for e :in (cdr ls)
             :do (let ((nr ($execute e r :trainp trainp)))
                   (setf r nr)))
       r)))
+
+(defclass parallel-layer (sequential-layer) ())
+
+(defun parallel-layer (&rest layers)
+  (let ((n (make-instance 'parallel-layer)))
+    (with-slots (ls) n
+      (setf ls layers))
+    n))
+
+(defmethod $execute ((l parallel-layer) x &key (trainp t))
+  (with-slots (ls) l
+    (mapcar (lambda (l) ($execute l x :trainp trainp)) ls)))
 
 (defclass batch-normalization-layer (layer)
   ((g :initform nil)
@@ -540,3 +554,19 @@
     (if trainp
         (apply #'$reshape x (cons ($size x 0) rsizes))
         (apply #'$reshape (if ($parameterp x) ($data x) x) (cons ($size x 0) rsizes)))))
+
+(defclass function-layer (layer)
+  ((f :initform nil)))
+
+(defun function-layer (function)
+  (let ((n (make-instance 'function-layer)))
+    (with-slots (f) n
+      (setf f function))
+    n))
+
+(defmethod $execute ((l function-layer) x &key (trainp t))
+  (with-slots (f) l
+    (if f
+        (cond ((listp x) (apply f (append x (list :trainp trainp))))
+              (t (apply f (list x :trainp trainp))))
+        x)))

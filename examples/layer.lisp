@@ -62,7 +62,7 @@
 (defparameter *l2-output* 100)
 (defparameter *l3-output* 10)
 
-(defparameter *network* (sequence-layer
+(defparameter *network* (sequential-layer
                          (convolution-2d-layer *channel-number*
                                                *filter-number*
                                                *filter-width*

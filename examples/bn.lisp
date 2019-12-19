@@ -35,7 +35,7 @@
 (defparameter *weight-size* 100)
 (defparameter *output-size* 10)
 
-(defparameter *net01* (sequence-layer
+(defparameter *net01* (sequential-layer
                        (affine-layer *input-size* *weight-size*
                                      :activation :relu
                                      :weight-initializer :he-normal)
@@ -46,7 +46,7 @@
                                      :activation :softmax
                                      :weight-initializer :he-normal)))
 
-(defparameter *net02* (sequence-layer
+(defparameter *net02* (sequential-layer
                        (affine-layer *input-size* *weight-size*
                                      :activation :relu
                                      :weight-initializer :he-normal
@@ -59,7 +59,7 @@
                                      :activation :softmax
                                      :weight-initializer :he-normal)))
 
-(defparameter *net03* (sequence-layer
+(defparameter *net03* (sequential-layer
                        (affine-layer *input-size* *weight-size*
                                      :activation :selu
                                      :weight-initializer :he-normal)
@@ -70,7 +70,7 @@
                                      :activation :softmax
                                      :weight-initializer :he-normal)))
 
-(defparameter *net04* (sequence-layer
+(defparameter *net04* (sequential-layer
                        (affine-layer *input-size* *weight-size*
                                      :activation :selu
                                      :weight-initializer :selu-normal)
@@ -81,7 +81,7 @@
                                      :activation :softmax
                                      :weight-initializer :he-normal)))
 
-(defparameter *net05* (sequence-layer
+(defparameter *net05* (sequential-layer
                        (affine-layer *input-size* *weight-size*
                                      :activation :swish
                                      :weight-initializer :he-normal)
@@ -92,7 +92,7 @@
                                      :activation :softmax
                                      :weight-initializer :he-normal)))
 
-(defparameter *net06* (sequence-layer
+(defparameter *net06* (sequential-layer
                        (affine-layer *input-size* *weight-size*
                                      :activation :mish
                                      :weight-initializer :he-normal)
