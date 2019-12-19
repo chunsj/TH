@@ -58,6 +58,7 @@
                                                     :activation :lrelu)
                          (full-convolution-2d-layer 32 1 3 3
                                                     :padding-width 1 :padding-height 1
+                                                    :batch-normalization-p t
                                                     :activation :sigmoid)))
 
 (defparameter *model* (sequence-layer *encoder* *decoder*))
@@ -69,7 +70,7 @@
   (let ((d ($- y x)))
     ($/ ($dot d d) ($size y 0))))
 
-(defparameter *epochs* 90)
+(defparameter *epochs* 1)
 
 ($reset! *model*)
 (time
@@ -80,5 +81,5 @@
                    :do (let* ((ys ($execute *model* xs))
                               (l (loss ys xs)))
                          (when (zerop (rem idx 20))
-                           (prn "LOSS[" idx "/" epoch "]" ($data l)))
+                           (prn idx "/" epoch "-" ($data l)))
                          ($amgd! *model* 0.005))))))
