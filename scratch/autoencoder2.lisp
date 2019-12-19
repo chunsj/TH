@@ -25,17 +25,21 @@
 (defparameter *encoder* (sequence-layer
                          (convolution-2d-layer 1 32 3 3
                                                :padding-width 1 :padding-height 1
+                                               :batch-normalization-p t
                                                :activation :lrelu)
                          (convolution-2d-layer 32 64 3 3
                                                :stride-width 2 :stride-height 2
                                                :padding-width 1 :padding-height 1
+                                               :batch-normalization-p t
                                                :activation :lrelu)
                          (convolution-2d-layer 64 64 3 3
                                                :stride-width 2 :stride-height 2
                                                :padding-width 1 :padding-height 1
+                                               :batch-normalization-p t
                                                :activation :lrelu)
                          (convolution-2d-layer 64 64 3 3
                                                :padding-width 1 :padding-height 1
+                                               :batch-normalization-p t
                                                :activation :lrelu)
                          (flatten-layer)
                          (affine-layer 3136 2)))
@@ -45,16 +49,19 @@
                          (reshape-layer 64 7 7)
                          (full-convolution-2d-layer 64 64 3 3
                                                     :padding-width 1 :padding-height 1
+                                                    :batch-normalization-p t
                                                     :activation :lrelu)
                          (full-convolution-2d-layer 64 64 3 3
                                                     :stride-width 2 :stride-height 2
                                                     :padding-width 1 :padding-height 1
                                                     :adjust-width 1 :adjust-height 1
+                                                    :batch-normalization-p t
                                                     :activation :lrelu)
                          (full-convolution-2d-layer 64 32 3 3
                                                     :stride-width 2 :stride-height 2
                                                     :padding-width 1 :padding-height 1
                                                     :adjust-width 1 :adjust-height 1
+                                                    :batch-normalization-p t
                                                     :activation :lrelu)
                          (full-convolution-2d-layer 32 1 3 3
                                                     :padding-width 1 :padding-height 1
@@ -70,7 +77,7 @@
   (let ((d ($- y x)))
     ($/ ($dot d d) ($size y 0))))
 
-(defparameter *epochs* 1)
+(defparameter *epochs* 30)
 
 ($reset! *model*)
 (time
