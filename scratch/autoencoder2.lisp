@@ -42,10 +42,10 @@
                                                :batch-normalization-p t
                                                :activation :lrelu)
                          (flatten-layer)
-                         (affine-layer 3136 2)))
+                         (affine-layer 3136 2 :activation :nil)))
 
 (defparameter *decoder* (sequence-layer
-                         (affine-layer 2 3136)
+                         (affine-layer 2 3136 :activation :nil)
                          (reshape-layer 64 7 7)
                          (full-convolution-2d-layer 64 64 3 3
                                                     :padding-width 1 :padding-height 1
