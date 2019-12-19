@@ -89,4 +89,6 @@
                               (l (loss ys xs)))
                          (when (zerop (rem idx 20))
                            (prn idx "/" epoch "-" ($data l)))
-                         ($amgd! *model* 0.005))))))
+                         ($adgd! *model*))))))
+
+(setf *epochs* 1)
