@@ -18,7 +18,7 @@
            #:flatten-layer
            #:full-convolution-2d-layer
            #:reshape-layer
-           #:function-layer))
+           #:functional-layer))
 
 (in-package :th.layers)
 
@@ -555,16 +555,16 @@
         (apply #'$reshape x (cons ($size x 0) rsizes))
         (apply #'$reshape (if ($parameterp x) ($data x) x) (cons ($size x 0) rsizes)))))
 
-(defclass function-layer (layer)
+(defclass functional-layer (layer)
   ((f :initform nil)))
 
-(defun function-layer (function)
-  (let ((n (make-instance 'function-layer)))
+(defun functional-layer (function)
+  (let ((n (make-instance 'functional-layer)))
     (with-slots (f) n
       (setf f function))
     n))
 
-(defmethod $execute ((l function-layer) x &key (trainp t))
+(defmethod $execute ((l functional-layer) x &key (trainp t))
   (with-slots (f) l
     (if f
         (cond ((listp x) (apply f (append x (list :trainp trainp))))
