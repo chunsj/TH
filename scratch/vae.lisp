@@ -82,27 +82,28 @@
 
 (defparameter *epochs* 30)
 
-(defun vae-loss (model xs &optional (rf 1000))
-  (let* ((ys ($execute model xs))
+(defun vae-loss (model xs &optional (rf 1) (trainp t) verbose)
+  (let* ((ys ($execute model xs :trainp trainp))
          (recon-loss ($bce ys xs))
          (args ($function-arguments ($ ($ model 0) 6)))
          (mu ($ args 0))
          (log-var ($ args 1))
          (kl ($* 0.5 ($sum ($+ ($exp log-var) ($* mu mu) -1 ($- log-var))))))
+    (when verbose (prn "RECON/KL:" recon-loss kl))
     ($+ ($* rf recon-loss) kl)))
 
-($reset! (list *encoder* *decoder*))
+($reset! *model*)
 (time
  (with-foreign-memory-limit ()
    (loop :for epoch :from 1 :to *epochs*
          :do (loop :for xs :in *mnist-train-image-batches*
                    :for idx :from 1
-                   :do (let ((l (vae-loss *model* xs)))
+                   :do (let ((l (vae-loss *model* xs 1)))
                          (when (zerop (rem idx 10))
                            (prn idx "/" epoch ":" ($data l)))
                          ($adgd! (list *encoder* *decoder*)))))))
 
-(setf *epochs* 3)
+(setf *epochs* 1)
 
 ;; XXX for analysis
 (prn ($execute *encoder* ($0 *mnist-train-image-batches*) :trainp nil))
@@ -114,3 +115,5 @@
 (let ((res ($execute *decoder* (tensor '((0 0) (0 0)))
                      :trainp nil)))
   (th.image:write-tensor-png-file ($reshape ($ res 0) 1 28 28) "/Users/Sungjin/Desktop/hello.png"))
+
+(prn (vae-loss *model* ($0 *mnist-train-image-batches*) 1 nil t))
