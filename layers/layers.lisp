@@ -4,7 +4,8 @@
   (:use #:common-lisp
         #:mu
         #:th)
-  (:export #:$execute
+  (:export #:$initialize
+           #:$execute
            #:$parameters
            #:$save-weights
            #:$load-weights
@@ -18,10 +19,12 @@
            #:flatten-layer
            #:full-convolution-2d-layer
            #:reshape-layer
-           #:functional-layer))
+           #:functional-layer
+           #:$function-arguments))
 
 (in-package :th.layers)
 
+(defgeneric $initialize (layer))
 (defgeneric $execute (layer x &key trainp))
 
 (defgeneric $train-parameters (layer))
@@ -31,6 +34,8 @@
 (defmethod $train-parameters ((l layer)) nil)
 
 (defmethod $parameters ((l layer)) ($train-parameters l))
+
+(defmethod $initialize ((l layer)))
 
 (defmethod $execute ((l layer) x &key (trainp t))
   (declare (ignore x trainp))
@@ -80,6 +85,11 @@
 (defclass sequential-layer (layer)
   ((ls :initform nil)))
 
+(defmethod $ ((l sequential-layer) location &rest others-and-default)
+  (declare (ignore others-and-default))
+  (with-slots (ls) l
+    ($ ls location)))
+
 (defun sequential-layer (&rest layers)
   (let ((n (make-instance 'sequential-layer)))
     (with-slots (ls) n
@@ -95,6 +105,10 @@
   (with-slots (ls) l
     (loop :for e :in ls
           :appending ($parameters e))))
+
+(defmethod $initialize ((l sequential-layer))
+  (with-slots (ls) l
+    (loop :for e :in ls :do ($initialize e))))
 
 (defmethod $execute ((l sequential-layer) x &key (trainp t))
   (with-slots (ls) l
@@ -143,6 +157,16 @@
   (with-slots (g e rm rv) l
     (list g e rm rv)))
 
+(defmethod $initialize ((l batch-normalization-layer))
+  (with-slots (g e rm rv sm sd) l
+    (let ((input-size ($size g 0)))
+      (setf g ($parameter (ones input-size))
+            e ($parameter (zeros input-size))
+            rm (zeros input-size)
+            rv (ones input-size)
+            sm (zeros input-size)
+            sd (zeros input-size)))))
+
 (defmethod $execute ((l batch-normalization-layer) x &key (trainp t))
   (with-slots (g e rm rv sm sd) l
     (if (and trainp (not (eq 1 ($ndim x))) (not (eq 3 ($ndim x))) (not (eq 1 ($size x 0))))
@@ -156,17 +180,19 @@
    (b :initform nil)
    (a :initform nil)
    (bn :initform nil)
-   (os :initform #{})))
+   (os :initform #{})
+   (wi :initform nil)))
 
 (defun affine-layer (input-size output-size
                      &key (activation :sigmoid) (weight-initializer :he-normal)
                        batch-normalization-p)
   (let ((n (make-instance 'affine-layer)))
-    (with-slots (w b a bn) n
+    (with-slots (w b a bn wi) n
+      (setf wi weight-initializer)
       (setf a (cond ((eq activation :sigmoid) #'$sigmoid)
                     ((eq activation :tanh) #'$tanh)
                     ((eq activation :relu) #'$relu)
-                    ((eq activation :relu) #'$lrelu)
+                    ((eq activation :lrelu) #'$lrelu)
                     ((eq activation :selu) #'$selu)
                     ((eq activation :swish) #'$swish)
                     ((eq activation :mish) #'$mish)
@@ -213,6 +239,27 @@
           (setf o ($ os n)))
         o))))
 
+(defmethod $initialize ((l affine-layer))
+  (with-slots (w b bn wi) l
+    (let ((weight-initializer wi)
+          (input-size ($size w 0))
+          (output-size ($size w 1)))
+      (setf b ($parameter (zeros output-size)))
+      (setf w (let ((sz (list input-size output-size)))
+                (cond ((eq weight-initializer :random-uniform) (vru sz))
+                      ((eq weight-initializer :random-normal) (vrn sz))
+                      ((eq weight-initializer :random-normal-truncated) (vrnt sz))
+                      ((eq weight-initializer :xavier-uniform) (vxavier sz :uniform))
+                      ((eq weight-initializer :xavier-normal) (vxavier sz :normal))
+                      ((eq weight-initializer :he-uniform) (vhe sz :uniform))
+                      ((eq weight-initializer :he-normal) (vhe sz :normal))
+                      ((eq weight-initializer :lecun-uniform) (vlecun sz :uniform))
+                      ((eq weight-initializer :lecun-normal) (vlecun sz :normal))
+                      ((eq weight-initializer :selu-uniform) (vselu sz :uniform))
+                      ((eq weight-initializer :selu-normal) (vselu sz :normal))
+                      (t (vru sz)))))
+      (when bn ($initialize bn)))))
+
 (defmethod $execute ((l affine-layer) x &key (trainp t))
   (with-slots (w b a bn) l
     (if a
@@ -245,7 +292,8 @@
    (pw :initform 0)
    (ph :initform 0)
    (a :initform nil)
-   (bn :initform nil)))
+   (bn :initform nil)
+   (wi :initform nil)))
 
 (defun convolution-2d-output-size (l x)
   (cond ((eq 4 ($ndim x))
@@ -278,7 +326,8 @@
                                (activation :sigmoid) (weight-initializer :he-normal)
                                batch-normalization-p)
   (let ((n (make-instance 'convolution-2d-layer)))
-    (with-slots (w b dw dh pw ph a bn) n
+    (with-slots (w b dw dh pw ph a bn wi) n
+      (setf wi weight-initializer)
       (setf dw stride-width
             dh stride-height
             pw padding-width
@@ -286,7 +335,7 @@
       (setf a (cond ((eq activation :sigmoid) #'$sigmoid)
                     ((eq activation :tanh) #'$tanh)
                     ((eq activation :relu) #'$relu)
-                    ((eq activation :relu) #'$lrelu)
+                    ((eq activation :lrelu) #'$lrelu)
                     ((eq activation :selu) #'$selu)
                     ((eq activation :swish) #'$swish)
                     ((eq activation :mish) #'$mish)
@@ -323,6 +372,30 @@
     (if bn
         (append (list w b) ($parameters bn))
         (list w b))))
+
+(defmethod $initialize ((l convolution-2d-layer))
+  (with-slots (w b bn wi) l
+    (let ((weight-initializer wi)
+          (output-channel-size ($size w 0))
+          (input-channel-size ($size w 1))
+          (filter-height ($size w 2))
+          (filter-width ($size w 3)))
+      (setf b ($parameter (zeros output-channel-size)))
+      (setf w (let ((sz (list output-channel-size input-channel-size
+                              filter-height filter-width)))
+                (cond ((eq weight-initializer :random-uniform) (vru sz))
+                      ((eq weight-initializer :random-normal) (vrn sz))
+                      ((eq weight-initializer :random-normal-truncated) (vrnt sz))
+                      ((eq weight-initializer :xavier-uniform) (vxavier sz :uniform))
+                      ((eq weight-initializer :xavier-normal) (vxavier sz :normal))
+                      ((eq weight-initializer :he-uniform) (vhe sz :uniform))
+                      ((eq weight-initializer :he-normal) (vhe sz :normal))
+                      ((eq weight-initializer :lecun-uniform) (vlecun sz :uniform))
+                      ((eq weight-initializer :lecun-normal) (vlecun sz :normal))
+                      ((eq weight-initializer :selu-uniform) (vselu sz :uniform))
+                      ((eq weight-initializer :selu-normal) (vselu sz :normal))
+                      (t (vru sz)))))
+      (when bn ($initialize bn)))))
 
 (defmethod $execute ((l convolution-2d-layer) x &key (trainp t))
   (with-slots (w b dw dh pw ph a bn) l
@@ -432,7 +505,8 @@
    (aw :initform 0)
    (ah :initform 0)
    (a :initform nil)
-   (bn :initform nil)))
+   (bn :initform nil)
+   (wi :initform nil)))
 
 (defun full-convolution-2d-output-size (l x)
   (cond ((eq 4 ($ndim x))
@@ -466,7 +540,8 @@
                                     (activation :sigmoid) (weight-initializer :he-normal)
                                     batch-normalization-p)
   (let ((n (make-instance 'full-convolution-2d-layer)))
-    (with-slots (w b dw dh pw ph aw ah a bn) n
+    (with-slots (w b dw dh pw ph aw ah a bn wi) n
+      (setf wi weight-initializer)
       (setf dw stride-width
             dh stride-height
             pw padding-width
@@ -476,7 +551,7 @@
       (setf a (cond ((eq activation :sigmoid) #'$sigmoid)
                     ((eq activation :tanh) #'$tanh)
                     ((eq activation :relu) #'$relu)
-                    ((eq activation :relu) #'$lrelu)
+                    ((eq activation :lrelu) #'$lrelu)
                     ((eq activation :selu) #'$selu)
                     ((eq activation :swish) #'$swish)
                     ((eq activation :mish) #'$mish)
@@ -513,6 +588,30 @@
     (if bn
         (append (list w b) ($parameters bn))
         (list w b))))
+
+(defmethod $initialize ((l full-convolution-2d-layer))
+  (with-slots (w b bn wi) l
+    (let ((weight-initializer wi)
+          (output-channel-size ($size w 1))
+          (input-channel-size ($size w 0))
+          (filter-height ($size w 2))
+          (filter-width ($size w 3)))
+      (setf b ($parameter (zeros output-channel-size)))
+      (setf w (let ((sz (list input-channel-size output-channel-size
+                              filter-height filter-width)))
+                (cond ((eq weight-initializer :random-uniform) (vru sz))
+                      ((eq weight-initializer :random-normal) (vrn sz))
+                      ((eq weight-initializer :random-normal-truncated) (vrnt sz))
+                      ((eq weight-initializer :xavier-uniform) (vxavier sz :uniform))
+                      ((eq weight-initializer :xavier-normal) (vxavier sz :normal))
+                      ((eq weight-initializer :he-uniform) (vhe sz :uniform))
+                      ((eq weight-initializer :he-normal) (vhe sz :normal))
+                      ((eq weight-initializer :lecun-uniform) (vlecun sz :uniform))
+                      ((eq weight-initializer :lecun-normal) (vlecun sz :normal))
+                      ((eq weight-initializer :selu-uniform) (vselu sz :uniform))
+                      ((eq weight-initializer :selu-normal) (vselu sz :normal))
+                      (t (vru sz)))))
+      (when bn ($initialize bn)))))
 
 (defmethod $execute ((l full-convolution-2d-layer) x &key (trainp t))
   (with-slots (w b dw dh pw ph aw ah a bn) l
@@ -556,7 +655,8 @@
         (apply #'$reshape (if ($parameterp x) ($data x) x) (cons ($size x 0) rsizes)))))
 
 (defclass functional-layer (layer)
-  ((f :initform nil)))
+  ((f :initform nil)
+   (args :initform nil :reader $function-arguments)))
 
 (defun functional-layer (function)
   (let ((n (make-instance 'functional-layer)))
@@ -565,7 +665,8 @@
     n))
 
 (defmethod $execute ((l functional-layer) x &key (trainp t))
-  (with-slots (f) l
+  (with-slots (f args) l
+    (setf args x)
     (if f
         (cond ((listp x) (apply f (append x (list :trainp trainp))))
               (t (apply f (list x :trainp trainp))))
