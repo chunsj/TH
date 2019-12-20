@@ -80,25 +80,29 @@
 ;; test model
 ($execute *model* (car *mnist-train-image-batches*) :trainp nil)
 
-(defun loss (y x)
-  (let ((d ($- y x)))
-    ($/ ($dot d d) ($size y 0))))
-
 (defparameter *epochs* 30)
 
-($reset! *model*)
+(defun vae-loss (model xs &optional (rf 1000))
+  (let* ((ys ($execute model xs))
+         (recon-loss ($bce ys xs))
+         (args ($function-arguments ($ ($ model 0) 6)))
+         (mu ($ args 0))
+         (log-var ($ args 1))
+         (kl ($* 0.5 ($sum ($+ ($exp log-var) ($* mu mu) -1 ($- log-var))))))
+    ($+ ($* rf recon-loss) kl)))
+
+($reset! (list *encoder* *decoder*))
 (time
  (with-foreign-memory-limit ()
    (loop :for epoch :from 1 :to *epochs*
          :do (loop :for xs :in *mnist-train-image-batches*
                    :for idx :from 1
-                   :do (let* ((ys ($execute *model* xs))
-                              (l (loss ys xs)))
-                         (when (zerop (rem idx 20))
-                           (prn idx "/" epoch "-" ($data l)))
-                         ($adgd! *model*))))))
+                   :do (let ((l (vae-loss *model* xs)))
+                         (when (zerop (rem idx 10))
+                           (prn idx "/" epoch ":" ($data l)))
+                         ($adgd! (list *encoder* *decoder*)))))))
 
-(setf *epochs* 3) ;; 13
+(setf *epochs* 3)
 
 ;; XXX for analysis
 (prn ($execute *encoder* ($0 *mnist-train-image-batches*) :trainp nil))
@@ -107,6 +111,6 @@
   (th.image:write-tensor-png-file ($reshape ($ res 2) 1 28 28) "/Users/Sungjin/Desktop/hello.png"))
 
 ;; XXX need to fix batch normalization input shape problem
-(let ((res ($execute *decoder* (tensor '((-11 -3.8) (0 0)))
+(let ((res ($execute *decoder* (tensor '((0 0) (0 0)))
                      :trainp nil)))
   (th.image:write-tensor-png-file ($reshape ($ res 0) 1 28 28) "/Users/Sungjin/Desktop/hello.png"))
