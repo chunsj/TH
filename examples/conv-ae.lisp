@@ -70,8 +70,6 @@
 
 (defparameter *model* (sequential-layer *encoder* *decoder*))
 
-($save-weights "cae" *model*)
-
 ;; test model
 ($execute *model* (car *mnist-train-image-batches*) :trainp nil)
 
@@ -92,15 +90,21 @@
                          ($adgd! *model*))))))
 
 ;; XXX for analysis
-(prn ($execute *encoder* ($0 *mnist-train-image-batches*) :trainp nil))
-(let* ((xs ($0 *mnist-train-image-batches*))
-       (res ($execute *decoder* ($execute *encoder* xs :trainp nil)
-                      :trainp nil))
-       (idx (random ($size xs 0))))
-  (th.image:write-tensor-png-file ($ xs idx) "/Users/Sungjin/Desktop/input.png")
-  (th.image:write-tensor-png-file ($reshape ($ res idx) 1 28 28) "/Users/Sungjin/Desktop/output.png"))
+(defun compare-xy (encoder decoder xs)
+  (let* ((bn ($size xs 0))
+         (es ($execute encoder xs :trainp nil))
+         (ds ($execute decoder es :trainp nil))
+         (ys ($reshape! ds bn 1 28 28))
+         (idx (random bn))
+         (x ($ xs idx))
+         (y ($ ys idx))
+         (inf "/Users/Sungjin/Desktop/input.png")
+         (ouf "/Users/Sungjin/Desktop/output.png"))
+    (prn "ENCODED:" es)
+    (prn "INDEX:" idx)
+    (th.image:write-tensor-png-file x inf)
+    (th.image:write-tensor-png-file y ouf)))
 
-;; XXX need to fix batch normalization input shape problem
-[(let ((res ($execute *decoder* (tensor '((0 0) (0 0)))
-                      :trainp nil)))
-   (th.image:write-tensor-png-file ($reshape ($ res 0) 1 28 28) "/Users/Sungjin/Desktop/hello.png"))]
+(compare-xy *encoder* *decoder* ($0 *mnist-train-image-batches*))
+
+($save-weights "examples/weights/cae" *model*)
