@@ -70,14 +70,14 @@
 
 (defparameter *model* (sequential-layer *encoder* *decoder*))
 
+($save-weights "cae" *model*)
+
 ;; test model
 ($execute *model* (car *mnist-train-image-batches*) :trainp nil)
 
-(defun loss (y x)
-  (let ((d ($- y x)))
-    ($/ ($dot d d) ($size y 0))))
+(defun loss (y x) ($bce y x))
 
-(defparameter *epochs* 30)
+(defparameter *epochs* 200)
 
 ($reset! *model*)
 (time
@@ -91,4 +91,16 @@
                            (prn idx "/" epoch "-" ($data l)))
                          ($adgd! *model*))))))
 
-(setf *epochs* 1)
+;; XXX for analysis
+(prn ($execute *encoder* ($0 *mnist-train-image-batches*) :trainp nil))
+(let* ((xs ($0 *mnist-train-image-batches*))
+       (res ($execute *decoder* ($execute *encoder* xs :trainp nil)
+                      :trainp nil))
+       (idx (random ($size xs 0))))
+  (th.image:write-tensor-png-file ($ xs idx) "/Users/Sungjin/Desktop/input.png")
+  (th.image:write-tensor-png-file ($reshape ($ res idx) 1 28 28) "/Users/Sungjin/Desktop/output.png"))
+
+;; XXX need to fix batch normalization input shape problem
+[(let ((res ($execute *decoder* (tensor '((0 0) (0 0)))
+                      :trainp nil)))
+   (th.image:write-tensor-png-file ($reshape ($ res 0) 1 28 28) "/Users/Sungjin/Desktop/hello.png"))]
