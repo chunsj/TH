@@ -80,40 +80,55 @@
 ;; test model
 ($execute *model* (car *mnist-train-image-batches*) :trainp nil)
 
-(defparameter *epochs* 30)
+(defparameter *epochs* 36000)
 
-(defun vae-loss (model xs &optional (rf 1) (trainp t) verbose)
+(defun vae-loss (model xs &optional (usekl t) (rf 1) (trainp t) verbose)
   (let* ((ys ($execute model xs :trainp trainp))
-         (recon-loss ($bce ys xs))
-         (args ($function-arguments ($ ($ model 0) 6)))
-         (mu ($ args 0))
-         (log-var ($ args 1))
-         (kl ($* 0.5 ($sum ($+ ($exp log-var) ($* mu mu) -1 ($- log-var))))))
-    (when verbose (prn "RECON/KL:" recon-loss kl))
-    ($+ ($* rf recon-loss) kl)))
+         (recon-loss ($bce ys xs)))
+    (if usekl
+        (let* ((args ($function-arguments ($ ($ model 0) 6)))
+               (m ($size xs 0))
+               (mu ($ args 0))
+               (log-var ($ args 1))
+               (kl ($* ($sum ($+ ($exp log-var) ($* mu mu) -1 ($- log-var)))
+                       (/ 1 m)
+                       0.5)))
+          (when verbose (prn "RECON/KL:" recon-loss kl))
+          (if (eq rf 1)
+              ($+ recon-loss kl)
+              ($+ ($* rf recon-loss) kl)))
+        recon-loss)))
 
 ($reset! *model*)
 (time
  (with-foreign-memory-limit ()
-   (loop :for epoch :from 1 :to *epochs*
-         :do (loop :for xs :in *mnist-train-image-batches*
-                   :for idx :from 1
-                   :do (let ((l (vae-loss *model* xs 1)))
-                         (when (zerop (rem idx 10))
-                           (prn idx "/" epoch ":" ($data l)))
-                         ($adgd! (list *encoder* *decoder*)))))))
+   (let ((pstep 2))
+     (loop :for epoch :from 1 :to *epochs*
+           :do (loop :for xs :in (subseq *mnist-train-image-batches* 0 2)
+                     :for idx :from 1
+                     :do (let ((l (vae-loss *model* xs t 1 t (zerop (rem idx pstep)))))
+                           (when (zerop (rem idx pstep))
+                             (prn idx "/" epoch ":" ($data l)))
+                           ($amgd! *model* 1E-4)))))))
 
 (setf *epochs* 1)
 
 ;; XXX for analysis
-(prn ($execute *encoder* ($0 *mnist-train-image-batches*) :trainp nil))
-(let ((res ($execute *decoder* ($execute *encoder* ($0 *mnist-train-image-batches*) :trainp nil)
-                     :trainp nil)))
-  (th.image:write-tensor-png-file ($reshape ($ res 2) 1 28 28) "/Users/Sungjin/Desktop/hello.png"))
+(defun compare-xy (encoder decoder xs)
+  (let* ((bn ($size xs 0))
+         (es ($execute encoder xs :trainp nil))
+         (ds ($execute decoder es :trainp nil))
+         (ys ($reshape! ds bn 1 28 28))
+         (idx (random bn))
+         (x ($ xs idx))
+         (y ($ ys idx))
+         (inf "/Users/Sungjin/Desktop/input.png")
+         (ouf "/Users/Sungjin/Desktop/output.png"))
+    (prn "ENCODED:" es)
+    (prn "INDEX:" idx)
+    (th.image:write-tensor-png-file x inf)
+    (th.image:write-tensor-png-file y ouf)))
 
-;; XXX need to fix batch normalization input shape problem
-(let ((res ($execute *decoder* (tensor '((0 0) (0 0)))
-                     :trainp nil)))
-  (th.image:write-tensor-png-file ($reshape ($ res 0) 1 28 28) "/Users/Sungjin/Desktop/hello.png"))
+(compare-xy *encoder* *decoder* ($0 *mnist-train-image-batches*))
 
-(prn (vae-loss *model* ($0 *mnist-train-image-batches*) 1 nil t))
+($save-weights "./scratch/vae" *model*)
