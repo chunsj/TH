@@ -9,7 +9,7 @@
 
 (defparameter *mnist* (read-mnist-data))
 
-(defparameter *batch-size* 32)
+(defparameter *batch-size* 50)
 (defparameter *batch-count* (/ ($size ($ *mnist* :train-images) 0) *batch-size*))
 
 (defparameter *mnist-train-image-batches*
@@ -77,10 +77,7 @@
 
 (defparameter *model* (sequential-layer *encoder* *decoder*))
 
-;; test model
-($execute *model* (car *mnist-train-image-batches*) :trainp nil)
-
-(defparameter *epochs* 144000)
+(defparameter *epochs* 10)
 
 (defun vae-loss (model xs &optional (usekl t) (beta 1) (trainp t) verbose)
   (let* ((ys ($execute model xs :trainp trainp))
@@ -92,24 +89,28 @@
                (log-var ($ args 1))
                (kl ($* ($sum ($+ ($exp log-var) ($* mu mu) -1 ($- log-var)))
                        (/ 1 m)
-                       beta
                        0.5)))
           (when verbose (prn "RECON/KL:" recon-loss kl))
-          ($+ recon-loss kl))
+          ($+ recon-loss ($* beta kl)))
         recon-loss)))
+
+(defun vae-train (model xs epoch idx)
+  (let* ((beta 0.048)
+         (pstep 10)
+         (l (vae-loss model xs t beta t (zerop (rem idx pstep)))))
+    (when (zerop (rem idx pstep)) (prn idx "/" epoch ":" ($data l)))
+    ($amgd! model 1E-3)))
 
 ($reset! *model*)
 (time
  (with-foreign-memory-limit ()
-   (let ((pstep 1)
-         (estep 10))
-     (loop :for epoch :from 1 :to *epochs*
-           :do (loop :for xs :in (subseq *mnist-train-image-batches* 0 1)
-                     :for idx :from 1
-                     :do (let ((l (vae-loss *model* xs t 1 t (zerop (rem epoch estep)))))
-                           (when (zerop (rem idx pstep))
-                             (prn idx "/" epoch ":" ($data l)))
-                           ($amgd! *model* 1E-4)))))))
+   (loop :for epoch :from 1 :to *epochs*
+         :do (loop :for xs :in (subseq *mnist-train-image-batches* 0 100)
+                   :for idx :from 1
+                   :do (vae-train *model* xs epoch idx)))))
+
+;; test model
+($execute *model* (car *mnist-train-image-batches*) :trainp nil)
 
 ;; XXX for analysis
 (defun compare-xy (encoder decoder xs)
