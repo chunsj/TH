@@ -51,7 +51,7 @@
   6. IMDB sentiment analysis: examples/sentiment.lisp (cl-ppcre is required)
   7. Binary number addition using vanilla RNN: examples/binadd.lisp
   8. Karpathy's character generation using RNN/LSTM: examples/gench{ars,-lstm,-lstm2}.lisp
-  9. Sparse autoencoder: examples/autoenc.lisp
+  9. Autoencoder: examples/autoenc.lisp, examples/cae.lisp
   10. Restricted Boltzmann Machine: examples/rbm.lisp
   11. Simple GAN (Fitting normal distribution): gan-simple.lisp
   12. Generative Adversarial Network: examples/{ls,c,info,w}gan[2].lisp (opticl is required)
