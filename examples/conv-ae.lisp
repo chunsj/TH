@@ -75,7 +75,16 @@
 
 (defun loss (y x) ($bce y x))
 
-(defparameter *epochs* 200)
+(defun train (model xs epoch idx)
+  (let* ((pstep 50)
+         (ys ($execute model xs))
+         (l (loss ys xs)))
+    (when (zerop (rem idx pstep))
+      (prn (format nil "~5,D" idx) "/" (format nil "~5,D" epoch) ":" ($data l)))
+    ;;($adgd! *model*)
+    ($amgd! *model* 1E-3)))
+
+(defparameter *epochs* 4)
 
 ($reset! *model*)
 (time
@@ -83,11 +92,7 @@
    (loop :for epoch :from 0 :below *epochs*
          :do (loop :for xs :in *mnist-train-image-batches*
                    :for idx :from 1
-                   :do (let* ((ys ($execute *model* xs))
-                              (l (loss ys xs)))
-                         (when (zerop (rem idx 20))
-                           (prn idx "/" epoch "-" ($data l)))
-                         ($adgd! *model*))))))
+                   :do (train *model* xs epoch idx)))))
 
 ;; XXX for analysis
 (defun compare-xy (encoder decoder xs)
@@ -108,3 +113,4 @@
 (compare-xy *encoder* *decoder* ($0 *mnist-train-image-batches*))
 
 ($save-weights "examples/weights/cae" *model*)
+($load-weights "examples/weights/cae" *model*)
