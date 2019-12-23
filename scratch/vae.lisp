@@ -9,7 +9,7 @@
 
 (defparameter *mnist* (read-mnist-data))
 
-(defparameter *batch-size* 32)
+(defparameter *batch-size* 50)
 (defparameter *batch-count* (/ ($size ($ *mnist* :train-images) 0) *batch-size*))
 
 (defparameter *mnist-train-image-batches*
@@ -77,12 +77,9 @@
 
 (defparameter *model* (sequential-layer *encoder* *decoder*))
 
-;; test model
-($execute *model* (car *mnist-train-image-batches*) :trainp nil)
+(defparameter *epochs* 10)
 
-(defparameter *epochs* 36000)
-
-(defun vae-loss (model xs &optional (usekl t) (rf 1) (trainp t) verbose)
+(defun vae-loss (model xs &optional (usekl t) (beta 1) (trainp t) verbose)
   (let* ((ys ($execute model xs :trainp trainp))
          (recon-loss ($bce ys xs)))
     (if usekl
@@ -94,24 +91,26 @@
                        (/ 1 m)
                        0.5)))
           (when verbose (prn "RECON/KL:" recon-loss kl))
-          (if (eq rf 1)
-              ($+ recon-loss kl)
-              ($+ ($* rf recon-loss) kl)))
+          ($+ recon-loss ($* beta kl)))
         recon-loss)))
+
+(defun vae-train (model xs epoch idx)
+  (let* ((beta 0.048)
+         (pstep 10)
+         (l (vae-loss model xs t beta t (zerop (rem idx pstep)))))
+    (when (zerop (rem idx pstep)) (prn idx "/" epoch ":" ($data l)))
+    ($amgd! model 1E-3)))
 
 ($reset! *model*)
 (time
  (with-foreign-memory-limit ()
-   (let ((pstep 2))
-     (loop :for epoch :from 1 :to *epochs*
-           :do (loop :for xs :in (subseq *mnist-train-image-batches* 0 2)
-                     :for idx :from 1
-                     :do (let ((l (vae-loss *model* xs t 1 t (zerop (rem idx pstep)))))
-                           (when (zerop (rem idx pstep))
-                             (prn idx "/" epoch ":" ($data l)))
-                           ($amgd! *model* 1E-4)))))))
+   (loop :for epoch :from 1 :to *epochs*
+         :do (loop :for xs :in (subseq *mnist-train-image-batches* 0 100)
+                   :for idx :from 1
+                   :do (vae-train *model* xs epoch idx)))))
 
-(setf *epochs* 1)
+;; test model
+($execute *model* (car *mnist-train-image-batches*) :trainp nil)
 
 ;; XXX for analysis
 (defun compare-xy (encoder decoder xs)
@@ -132,3 +131,4 @@
 (compare-xy *encoder* *decoder* ($0 *mnist-train-image-batches*))
 
 ($save-weights "./scratch/vae" *model*)
+($load-weights "./scratch/vae" *model*)
