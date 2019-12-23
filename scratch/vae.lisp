@@ -85,7 +85,7 @@
           ((eq gd :rmsprop) ($rmgd! model))
           (t ($adgd! model)))))
 
-(defparameter *epochs* 4000)
+(defparameter *epochs* 80000)
 
 ($reset! *model*)
 
