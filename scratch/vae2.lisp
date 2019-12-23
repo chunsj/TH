@@ -9,7 +9,7 @@
 
 (defparameter *mnist* (read-mnist-data))
 
-(defparameter *batch-size* 50)
+(defparameter *batch-size* 32)
 (defparameter *batch-count* (/ ($size ($ *mnist* :train-images) 0) *batch-size*))
 
 (defparameter *mnist-train-image-batches*
@@ -30,60 +30,42 @@
 (defparameter *encoder* (sequential-layer
                          (convolution-2d-layer 1 32 3 3
                                                :padding-width 1 :padding-height 1
-                                               :batch-normalization-p t
-                                               :activation :lrelu)
+                                               :stride-width 2 :stride-height 2
+                                               :activation :relu)
                          (convolution-2d-layer 32 64 3 3
+                                               :padding-width 1 :padding-height 1
                                                :stride-width 2 :stride-height 2
-                                               :padding-width 1 :padding-height 1
-                                               :batch-normalization-p t
-                                               :activation :lrelu)
-                         (convolution-2d-layer 64 64 3 3
-                                               :stride-width 2 :stride-height 2
-                                               :padding-width 1 :padding-height 1
-                                               :batch-normalization-p t
-                                               :activation :lrelu)
-                         (convolution-2d-layer 64 64 3 3
-                                               :padding-width 1 :padding-height 1
-                                               :batch-normalization-p t
-                                               :activation :lrelu)
+                                               :activation :relu)
                          (flatten-layer)
-                         (parallel-layer (affine-layer 3136 2 :activation :nil)
-                                         (affine-layer 3136 2 :activation :nil))
+                         (affine-layer 3136 16 :activation :nil)
+                         (parallel-layer (affine-layer 16 2 :activation :nil)
+                                         (affine-layer 16 2 :activation :nil))
                          (functional-layer #'sample-function)))
 
 (defparameter *decoder* (sequential-layer
-                         (affine-layer 2 3136 :activation :nil)
+                         (affine-layer 2 3136 :activation :relu)
                          (reshape-layer 64 7 7)
                          (full-convolution-2d-layer 64 64 3 3
                                                     :padding-width 1 :padding-height 1
-                                                    :batch-normalization-p t
-                                                    :activation :lrelu)
-                         (full-convolution-2d-layer 64 64 3 3
                                                     :stride-width 2 :stride-height 2
-                                                    :padding-width 1 :padding-height 1
                                                     :adjust-width 1 :adjust-height 1
-                                                    :batch-normalization-p t
-                                                    :activation :lrelu)
+                                                    :activation :relu)
                          (full-convolution-2d-layer 64 32 3 3
                                                     :stride-width 2 :stride-height 2
                                                     :padding-width 1 :padding-height 1
                                                     :adjust-width 1 :adjust-height 1
-                                                    :batch-normalization-p t
-                                                    :activation :lrelu)
+                                                    :activation :relu)
                          (full-convolution-2d-layer 32 1 3 3
                                                     :padding-width 1 :padding-height 1
-                                                    :batch-normalization-p t
                                                     :activation :sigmoid)))
 
 (defparameter *model* (sequential-layer *encoder* *decoder*))
-
-(defparameter *epochs* 10)
 
 (defun vae-loss (model xs &optional (usekl t) (beta 1) (trainp t) verbose)
   (let* ((ys ($execute model xs :trainp trainp))
          (recon-loss ($bce ys xs)))
     (if usekl
-        (let* ((args ($function-arguments ($ ($ model 0) 6)))
+        (let* ((args ($function-arguments ($ ($ model 0) 5)))
                (m ($size xs 0))
                (mu ($ args 0))
                (log-var ($ args 1))
@@ -94,20 +76,24 @@
           ($+ recon-loss ($* beta kl)))
         recon-loss)))
 
-(defun vae-train (model xs epoch idx)
+(defun vae-train (model xs epoch gd)
   (let* ((beta 0.048)
-         (pstep 10)
-         (l (vae-loss model xs t beta t (zerop (rem idx pstep)))))
-    (when (zerop (rem idx pstep)) (prn idx "/" epoch ":" ($data l)))
-    ($amgd! model 1E-3)))
+         (pstep 50)
+         (l (vae-loss model xs t beta t (zerop (rem epoch pstep)))))
+    (when (zerop (rem epoch pstep)) (prn epoch ":" ($data l)))
+    (cond ((eq gd :adam) ($amgd! model 1E-3))
+          ((eq gd :rmsprop) ($rmgd! model))
+          (t ($adgd! model)))))
+
+(defparameter *epochs* 4000)
 
 ($reset! *model*)
+
 (time
  (with-foreign-memory-limit ()
-   (loop :for epoch :from 1 :to *epochs*
-         :do (loop :for xs :in (subseq *mnist-train-image-batches* 0 100)
-                   :for idx :from 1
-                   :do (vae-train *model* xs epoch idx)))))
+   (let ((xs ($ *mnist-train-image-batches* 7)))
+     (loop :for epoch :from 1 :to *epochs*
+           :do (vae-train *model* xs epoch :rmsprop)))))
 
 ;; test model
 ($execute *model* (car *mnist-train-image-batches*) :trainp nil)
@@ -130,5 +116,27 @@
 
 (compare-xy *encoder* *decoder* ($0 *mnist-train-image-batches*))
 
+(defun genimg (decoder)
+  (let* ((bn 10)
+         (xs (rndn bn 2))
+         (ds ($execute decoder xs :trainp nil))
+         (ys ($reshape! ds bn 1 28 28))
+         (fs "/Users/Sungjin/Desktop/gen~A.png"))
+    (prn "XS:" xs)
+    (loop :for i :from 1 :to bn
+          :for filename = (format nil fs i)
+          :do (th.image:write-tensor-png-file ($ ys (1- i)) filename))))
+
+(genimg *decoder*)
+
 ($save-weights "./scratch/vae" *model*)
 ($load-weights "./scratch/vae" *model*)
+
+(defun saveimg (xs)
+  (let* ((bn ($size xs 0))
+         (fs "/Users/Sungjin/Desktop/in~A.png"))
+    (loop :for i :from 1 :to (min bn 100)
+          :for filename = (format nil fs i)
+          :do (th.image:write-tensor-png-file ($ xs (1- i)) filename))))
+
+(saveimg ($ *mnist-train-image-batches* 7))
