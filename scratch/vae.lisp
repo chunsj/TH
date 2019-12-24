@@ -111,7 +111,7 @@
 
 ($reset! *model*)
 
-(time (vae-train *epochs* *model* (subseq *mnist-train-image-batches* 0 1)))
+(time (vae-train *epochs* *model* (subseq *mnist-train-image-batches* 0 10)))
 
 ;; test model
 ($execute *model* (car *mnist-train-image-batches*) :trainp nil)
