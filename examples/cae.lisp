@@ -10,7 +10,9 @@
 (defparameter *mnist* (read-mnist-data))
 
 (defparameter *batch-size* 32)
-(defparameter *batch-count* (floor (/ ($size ($ *mnist* :train-images) 0) *batch-size*)))
+(defparameter *max-batch-count* 100)
+(defparameter *batch-count* (min *max-batch-count*
+                                 (/ ($size ($ *mnist* :train-images) 0) *batch-size*)))
 
 (defparameter *mnist-train-image-batches*
   (loop :for i :from 0 :below *batch-count*
@@ -55,23 +57,29 @@
 
 (defun loss (y x) ($bce y x))
 
-(defun train (model xs epoch idx)
-  (let* ((pstep 2)
+(defun update-params (model gd)
+  (cond ((eq gd :adam) ($amgd! model 1E-3))
+        ((eq gd :rmsprop) ($rmgd! model))
+        (t ($adgd! model))))
+
+(defun train (model xs epoch idx gd)
+  (let* ((pstep 20)
          (ys ($execute model xs))
          (l (loss ys xs)))
     (when (zerop (rem idx pstep))
       (prn (format nil "~5,D" idx) "/" (format nil "~5,D" epoch) ":" ($data l)))
-    ($amgd! *model* 1E-3)))
+    (update-params model gd)))
 
-(defparameter *epochs* 1000)
+(defparameter *epochs* 100)
 
 ($reset! *model*)
+
 (time
  (with-foreign-memory-limit ()
-   (loop :for epoch :from 1 :below *epochs*
-         :do (loop :for xs :in (subseq *mnist-train-image-batches* 0 2)
+   (loop :for epoch :from 1 :to *epochs*
+         :do (loop :for xs :in *mnist-train-image-batches*
                    :for idx :from 1
-                   :do (train *model* xs epoch idx)))))
+                   :do (train *model* xs epoch idx :rmsprop)))))
 
 ;; check results
 (defun compare-xy (encoder decoder xs)

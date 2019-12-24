@@ -153,8 +153,8 @@
 
 (genimg *decoder*)
 
-($save-weights "./scratch/vae" *model*)
-($load-weights "./scratch/vae" *model*)
+($save-weights "./examples/weights/vae" *model*)
+($load-weights "./examples/weights/vae" *model*)
 
 (defun showimg (xs)
   (let* ((bn ($size xs 0))
