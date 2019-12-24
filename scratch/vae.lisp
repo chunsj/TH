@@ -94,9 +94,9 @@
            (l ($+ lr ($* beta lkl))))
       (when (zerop (rem epoch pstep))
         (prn epoch ":"
-             (if ($parameterp l) ($data l) l)
-             (if ($parameterp lr) ($data lr) lr)
-             (if ($parameterp lkl) ($data lkl) lkl)))
+             (format nil "~,4E" (if ($parameterp l) ($data l) l))
+             (format nil "~,4E" (if ($parameterp lr) ($data lr) lr))
+             (format nil "~,4E" (if ($parameterp lkl) ($data lkl) lkl))))
       (update-params model gd))))
 
 (defun vae-train (epochs model batches)
@@ -107,7 +107,7 @@
                       :for idx :from 1
                       :do (vae-train-step model xs (+ idx (* nbs (1- epoch))) :rmsprop))))))
 
-(defparameter *epochs* 10) ;; 120
+(defparameter *epochs* 120) ;; 120
 
 ($reset! *model*)
 
