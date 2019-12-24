@@ -61,7 +61,7 @@
 
 (defparameter *model* (sequential-layer *encoder* *decoder*))
 
-(defun vae-loss (model xs &optional (usekl t) (beta 1) (trainp t) verbose)
+(defun vae-loss (model xs &optional (usekl t) (trainp t))
   (let* ((ys ($execute model xs :trainp trainp))
          (recon-loss ($bce ys xs)))
     (if usekl
@@ -72,28 +72,46 @@
                (kl ($* ($sum ($+ ($exp log-var) ($* mu mu) -1 ($- log-var)))
                        (/ 1 m)
                        0.5)))
-          (when verbose (prn "RECON/KL:" recon-loss kl))
-          ($+ recon-loss ($* beta kl)))
-        recon-loss)))
+          (list recon-loss kl))
+        (list recon-loss 0))))
 
-(defun vae-train (model xs epoch gd)
-  (let* ((beta 0.048)
-         (pstep 50)
-         (l (vae-loss model xs t beta t (zerop (rem epoch pstep)))))
-    (when (zerop (rem epoch pstep)) (prn epoch ":" ($data l)))
-    (cond ((eq gd :adam) ($amgd! model 1E-3))
-          ((eq gd :rmsprop) ($rmgd! model))
-          (t ($adgd! model)))))
+(defun update-params (model gd)
+  (cond ((eq gd :adam) ($amgd! model 1E-3))
+        ((eq gd :rmsprop) ($rmgd! model))
+        (t ($adgd! model))))
 
-(defparameter *epochs* 80000)
+(defun vae-train-step (model xs epoch gd)
+  (let* ((ntr 10)
+         (beta 0.1)
+         (pstep 10))
+    (loop :for i :from 0 :to ntr
+          :do (progn
+                (vae-loss model xs nil)
+                (update-params model gd)))
+    (let* ((losses (vae-loss model xs t))
+           (lr (car losses))
+           (lkl (cadr losses))
+           (l ($+ lr ($* beta lkl))))
+      (when (zerop (rem epoch pstep))
+        (prn epoch ":"
+             (if ($parameterp l) ($data l) l)
+             (if ($parameterp lr) ($data lr) lr)
+             (if ($parameterp lkl) ($data lkl) lkl)))
+      (update-params model gd))))
+
+(defun vae-train (epochs model batches)
+  (with-foreign-memory-limit ()
+    (let ((nbs ($count batches)))
+      (loop :for epoch :from 1 :to epochs
+            :do (loop :for xs :in batches
+                      :for idx :from 1
+                      :do (vae-train-step model xs (+ idx (* nbs (1- epoch))) :rmsprop))))))
+
+(defparameter *epochs* 10) ;; 120
 
 ($reset! *model*)
 
-(time
- (with-foreign-memory-limit ()
-   (let ((xs ($ *mnist-train-image-batches* 7)))
-     (loop :for epoch :from 1 :to *epochs*
-           :do (vae-train *model* xs epoch :rmsprop)))))
+(time (vae-train *epochs* *model* (subseq *mnist-train-image-batches* 0 1)))
 
 ;; test model
 ($execute *model* (car *mnist-train-image-batches*) :trainp nil)
@@ -114,7 +132,7 @@
     (th.image:write-tensor-png-file x inf)
     (th.image:write-tensor-png-file y ouf)))
 
-(compare-xy *encoder* *decoder* ($0 *mnist-train-image-batches*))
+(compare-xy *encoder* *decoder* ($ *mnist-train-image-batches* 0))
 
 (defun genimg (decoder)
   (let* ((bn 10)
@@ -132,11 +150,11 @@
 ($save-weights "./scratch/vae" *model*)
 ($load-weights "./scratch/vae" *model*)
 
-(defun saveimg (xs)
+(defun showimg (xs)
   (let* ((bn ($size xs 0))
          (fs "/Users/Sungjin/Desktop/in~A.png"))
-    (loop :for i :from 1 :to (min bn 100)
+    (loop :for i :from 1 :to (min bn 40)
           :for filename = (format nil fs i)
           :do (th.image:write-tensor-png-file ($ xs (1- i)) filename))))
 
-(saveimg ($ *mnist-train-image-batches* 7))
+(showimg ($ *mnist-train-image-batches* 0))
