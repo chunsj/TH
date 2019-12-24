@@ -80,9 +80,9 @@
         ((eq gd :rmsprop) ($rmgd! model))
         (t ($adgd! model))))
 
-(defun vae-train-step (model xs epoch gd)
+(defun vae-train-step (model xs st gd)
   (let* ((ntr 10)
-         (beta 0.1)
+         (beta 0.2)
          (pstep 10))
     (loop :for i :from 0 :to ntr
           :do (progn
@@ -92,8 +92,8 @@
            (lr (car losses))
            (lkl (cadr losses))
            (l ($+ lr ($* beta lkl))))
-      (when (zerop (rem epoch pstep))
-        (prn epoch ":"
+      (when (zerop (rem st pstep))
+        (prn st ":"
              (format nil "~,4E" (if ($parameterp l) ($data l) l))
              (format nil "~,4E" (if ($parameterp lr) ($data lr) lr))
              (format nil "~,4E" (if ($parameterp lkl) ($data lkl) lkl))))
@@ -111,7 +111,8 @@
 
 ($reset! *model*)
 
-(time (vae-train *epochs* *model* (subseq *mnist-train-image-batches* 0 10)))
+;; train
+(time (vae-train *epochs* *model* (subseq *mnist-train-image-batches* 0 100)))
 
 ;; test model
 ($execute *model* (car *mnist-train-image-batches*) :trainp nil)
@@ -137,10 +138,11 @@
 (defun genimg (decoder)
   (let* ((bn 10)
          (xs (rndn bn 2))
+         (mn ($mean xs 0))
          (ds ($execute decoder xs :trainp nil))
          (ys ($reshape! ds bn 1 28 28))
          (fs "/Users/Sungjin/Desktop/gen~A.png"))
-    (prn "XS:" xs)
+    (prn "XS:" ($ mn 0 0) ($exp ($ mn 0 1)))
     (loop :for i :from 1 :to bn
           :for filename = (format nil fs i)
           :do (th.image:write-tensor-png-file ($ ys (1- i)) filename))))
