@@ -10,7 +10,7 @@
 (defparameter *mnist* (read-mnist-data))
 
 (defparameter *batch-size* 32)
-(defparameter *max-batch-count* 100)
+(defparameter *max-batch-count* 10)
 (defparameter *batch-count* (min *max-batch-count*
                                  (/ ($size ($ *mnist* :train-images) 0) *batch-size*)))
 
@@ -33,10 +33,12 @@
                          (convolution-2d-layer 1 32 3 3
                                                :padding-width 1 :padding-height 1
                                                :stride-width 2 :stride-height 2
+                                               :batch-normalization-p t
                                                :activation :relu)
                          (convolution-2d-layer 32 64 3 3
                                                :padding-width 1 :padding-height 1
                                                :stride-width 2 :stride-height 2
+                                               :batch-normalization-p t
                                                :activation :relu)
                          (flatten-layer)
                          (affine-layer 3136 16
@@ -53,14 +55,17 @@
                                                     :padding-width 1 :padding-height 1
                                                     :stride-width 2 :stride-height 2
                                                     :adjust-width 1 :adjust-height 1
+                                                    :batch-normalization-p t
                                                     :activation :relu)
                          (full-convolution-2d-layer 64 32 3 3
                                                     :stride-width 2 :stride-height 2
                                                     :padding-width 1 :padding-height 1
                                                     :adjust-width 1 :adjust-height 1
+                                                    :batch-normalization-p t
                                                     :activation :relu)
                          (full-convolution-2d-layer 32 1 3 3
                                                     :padding-width 1 :padding-height 1
+                                                    :batch-normalization-p t
                                                     :activation :sigmoid)))
 
 (defparameter *model* (sequential-layer *encoder* *decoder*))
@@ -84,6 +89,12 @@
         ((eq gd :rmsprop) ($rmgd! model))
         (t ($adgd! model))))
 
+(defun update-kl-params (model gd)
+  (cond ((eq gd :adam) ($amgd! ($ model 0) 1E-3))
+        ((eq gd :rmsprop) ($rmgd! ($ model 0)))
+        (t ($adgd! ($ model 0))))
+  ($cg! model))
+
 (defun vae-train-step (model xs st gd)
   (let* ((ntr 10)
          (beta 0.01)
@@ -103,14 +114,33 @@
              (format nil "~,4E" (if ($parameterp lkl) ($data lkl) lkl))))
       (update-params model gd))))
 
+(defun vae-train-step-2 (model xs st gd)
+  (let* ((ntr 10)
+         (beta 0.05)
+         (pstep 10))
+    (loop :for i :from 0 :to ntr
+          :do (progn
+                (vae-loss model xs nil)
+                (update-params model gd)))
+    (let* ((losses (vae-loss model xs t))
+           (lr (car losses))
+           (lkl (cadr losses))
+           (l ($+ lr ($* beta lkl))))
+      (when (zerop (rem st pstep))
+        (prn st ":"
+             (format nil "~,4E" (if ($parameterp l) ($data l) l))
+             (format nil "~,4E" (if ($parameterp lr) ($data lr) lr))
+             (format nil "~,4E" (if ($parameterp lkl) ($data lkl) lkl))))
+      (update-kl-params model gd))))
+
 (defun vae-train (epochs model batches)
   (let ((nbs ($count batches)))
     (loop :for epoch :from 1 :to epochs
           :do (loop :for xs :in batches
                     :for idx :from 1
-                    :do (vae-train-step model xs (+ idx (* nbs (1- epoch))) :rmsprop)))))
+                    :do (vae-train-step-2 model xs (+ idx (* nbs (1- epoch))) :rmsprop)))))
 
-(defparameter *epochs* 1)
+(defparameter *epochs* 1000)
 
 ($reset! *model*)
 
@@ -124,7 +154,9 @@
 
 ;; check results
 (defun compare-xy (encoder decoder bs)
-  (let* ((xs ($ bs (random ($count bs))))
+  (let* ((nb ($count bs))
+         (bidx (random nb))
+         (xs ($ bs bidx))
          (bn ($size xs 0))
          (es ($execute encoder xs :trainp nil))
          (ds ($execute decoder es :trainp nil))
@@ -134,6 +166,7 @@
          (y ($ ys idx))
          (inf "/Users/Sungjin/Desktop/input.png")
          (ouf "/Users/Sungjin/Desktop/output.png"))
+    (prn "BIDX:" bidx)
     (prn "ENCODED:" es)
     (prn "INDEX:" idx)
     (th.image:write-tensor-png-file x inf)
