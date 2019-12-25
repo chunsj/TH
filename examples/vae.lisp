@@ -111,7 +111,7 @@
                       :for idx :from 1
                       :do (vae-train-step model xs (+ idx (* nbs (1- epoch))) :rmsprop))))))
 
-(defparameter *epochs* 20)
+(defparameter *epochs* 50)
 
 ($reset! *model*)
 
