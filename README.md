@@ -99,6 +99,8 @@
   2. They may not work at all.
 
 ## On Memory Hack
+  TLDR; you can safely use Clozure CL and forget memory problem or you want to get speed of
+  SBCL, then you might encounter some memory trashing problem which I cannot yet solve.
   To avoid work around thrashing of system due to foreign allocated memory - it is freed when
   referencing CLOS object is garbage collected, but the gc does not know how much external
   memory is used - I've modified the garbage collector settings for more frequent gc to prevent
