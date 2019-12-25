@@ -39,7 +39,9 @@
                                                :stride-width 2 :stride-height 2
                                                :activation :relu)
                          (flatten-layer)
-                         (affine-layer 3136 16 :activation :nil)
+                         (affine-layer 3136 16
+                                       :batch-normalization-p t
+                                       :activation :nil)
                          (parallel-layer (affine-layer 16 2 :activation :nil)
                                          (affine-layer 16 2 :activation :nil))
                          (functional-layer #'sample-function)))
@@ -109,7 +111,7 @@
                       :for idx :from 1
                       :do (vae-train-step model xs (+ idx (* nbs (1- epoch))) :rmsprop))))))
 
-(defparameter *epochs* 10)
+(defparameter *epochs* 20)
 
 ($reset! *model*)
 
@@ -119,25 +121,26 @@
 ;; test model
 ($execute *model* (car *mnist-train-image-batches*) :trainp nil)
 
-;; XXX for analysis
-(defun compare-xy (encoder decoder xs)
-  (with-foreign-memory-limit ()
-    (let* ((bn ($size xs 0))
-           (es ($execute encoder xs :trainp nil))
-           (ds ($execute decoder es :trainp nil))
-           (ys ($reshape! ds bn 1 28 28))
-           (idx (random bn))
-           (x ($ xs idx))
-           (y ($ ys idx))
-           (inf "/Users/Sungjin/Desktop/input.png")
-           (ouf "/Users/Sungjin/Desktop/output.png"))
-      (prn "ENCODED:" es)
-      (prn "INDEX:" idx)
-      (th.image:write-tensor-png-file x inf)
-      (th.image:write-tensor-png-file y ouf))))
+;; check results
+(defun compare-xy (encoder decoder bs)
+  (let* ((xs ($ bs (random ($count bs))))
+         (bn ($size xs 0))
+         (es ($execute encoder xs :trainp nil))
+         (ds ($execute decoder es :trainp nil))
+         (ys ($reshape! ds bn 1 28 28))
+         (idx (random bn))
+         (x ($ xs idx))
+         (y ($ ys idx))
+         (inf "/Users/Sungjin/Desktop/input.png")
+         (ouf "/Users/Sungjin/Desktop/output.png"))
+    (prn "ENCODED:" es)
+    (prn "INDEX:" idx)
+    (th.image:write-tensor-png-file x inf)
+    (th.image:write-tensor-png-file y ouf)))
 
-(compare-xy *encoder* *decoder* ($ *mnist-train-image-batches* 0))
+(compare-xy *encoder* *decoder* *mnist-train-image-batches*)
 
+;; generate images
 (defun genimg (decoder)
   (with-foreign-memory-limit ()
     (let* ((bn 10)
@@ -147,9 +150,9 @@
            (ys ($reshape! ds bn 1 28 28))
            (fs "/Users/Sungjin/Desktop/gen~A.png"))
       (prn "XS:" ($ mn 0 0) ($exp ($ mn 0 1)))
-      (loop :for i :from 1 :to bn
-            :for filename = (format nil fs i)
-            :do (th.image:write-tensor-png-file ($ ys (1- i)) filename)))))
+      (loop :for i :from 0 :below bn
+            :for filename = (format nil fs (1+ i))
+            :do (th.image:write-tensor-png-file ($ ys i) filename)))))
 
 (genimg *decoder*)
 
