@@ -86,7 +86,7 @@
 
 (defun vae-train-step (model xs st gd)
   (let* ((ntr 10)
-         (beta 0.1)
+         (beta 0.01)
          (pstep 10))
     (loop :for i :from 0 :to ntr
           :do (progn
@@ -104,19 +104,20 @@
       (update-params model gd))))
 
 (defun vae-train (epochs model batches)
-  (with-foreign-memory-limit ()
-    (let ((nbs ($count batches)))
-      (loop :for epoch :from 1 :to epochs
-            :do (loop :for xs :in batches
-                      :for idx :from 1
-                      :do (vae-train-step model xs (+ idx (* nbs (1- epoch))) :rmsprop))))))
+  (let ((nbs ($count batches)))
+    (loop :for epoch :from 1 :to epochs
+          :do (loop :for xs :in batches
+                    :for idx :from 1
+                    :do (vae-train-step model xs (+ idx (* nbs (1- epoch))) :rmsprop)))))
 
-(defparameter *epochs* 50)
+(defparameter *epochs* 1)
 
 ($reset! *model*)
 
 ;; train
-(time (vae-train *epochs* *model* *mnist-train-image-batches*))
+(time
+ (with-foreign-memory-limit ()
+   (vae-train *epochs* *model* *mnist-train-image-batches*)))
 
 ;; test model
 ($execute *model* (car *mnist-train-image-batches*) :trainp nil)
@@ -142,17 +143,16 @@
 
 ;; generate images
 (defun genimg (decoder)
-  (with-foreign-memory-limit ()
-    (let* ((bn 10)
-           (xs (rndn bn 2))
-           (mn ($mean xs 0))
-           (ds ($execute decoder xs :trainp nil))
-           (ys ($reshape! ds bn 1 28 28))
-           (fs "/Users/Sungjin/Desktop/gen~A.png"))
-      (prn "XS:" ($ mn 0 0) ($exp ($ mn 0 1)))
-      (loop :for i :from 0 :below bn
-            :for filename = (format nil fs (1+ i))
-            :do (th.image:write-tensor-png-file ($ ys i) filename)))))
+  (let* ((bn *batch-size*)
+         (xs (rndn bn 2))
+         (mn ($mean xs 0))
+         (ds ($execute decoder xs :trainp nil))
+         (ys ($reshape! ds bn 1 28 28))
+         (fs "/Users/Sungjin/Desktop/gen~A.png"))
+    (prn "XS:" ($ mn 0 0) ($exp ($ mn 0 1)))
+    (loop :for i :from 0 :below (min 10 bn)
+          :for filename = (format nil fs (1+ i))
+          :do (th.image:write-tensor-png-file ($ ys i) filename))))
 
 (genimg *decoder*)
 
