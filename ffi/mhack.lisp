@@ -32,17 +32,23 @@
                                  '(:struct th-allocator) 'realloc)
         *original-realloc*))
 
+#+sbcl
 (defvar *custom-alloc-counts* (list 0))
+#+sbcl
 (defvar *custom-alloc-slots* (make-hash-table :synchronized t))
 
+#+sbcl
 (defun allocated-counts () (car *custom-alloc-counts*))
+#+sbcl
 (defun allocated-slot-counts () ($count (hash-table-keys *custom-alloc-slots*)))
 
+#+sbcl
 (defun allocated-foreign-memory-size ()
   (loop :for k :in (hash-table-keys *custom-alloc-slots*)
         :for sz = (or ($ *custom-alloc-slots* k) 0)
         :summing sz))
 
+#+sbcl
 (defun report-foreign-memory-allocation ()
   (prn "")
   (prn "COUNT:" (allocated-counts))
@@ -53,6 +59,7 @@
 (defun tensor-data-address (tensor)
   (cffi:pointer-address ($handle ($pointer tensor))))
 
+#+sbcl
 (defun tensor-data-size (tensor)
   ($ *custom-alloc-slots* (tensor-data-address tensor)))
 
@@ -99,6 +106,7 @@
 #-sbcl
 (defun current-gc-configs ())
 
+#+sbcl
 (defparameter *original-gc-configs* (current-gc-configs))
 
 #+sbcl
