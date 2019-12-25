@@ -34,7 +34,9 @@
                                                :stride-width 2 :stride-height 2
                                                :activation :relu)
                          (flatten-layer)
-                         (affine-layer 3136 2 :activation :nil)))
+                         (affine-layer 3136 2
+                                       :batch-normalization-p t
+                                       :activation :nil)))
 
 (defparameter *decoder* (sequential-layer
                          (affine-layer 2 3136 :activation :relu)
@@ -51,6 +53,7 @@
                                                     :activation :relu)
                          (full-convolution-2d-layer 32 1 3 3
                                                     :padding-width 1 :padding-height 1
+                                                    :batch-normalization-p t
                                                     :activation :sigmoid)))
 
 (defparameter *model* (sequential-layer *encoder* *decoder*))
@@ -82,8 +85,9 @@
                    :do (train *model* xs epoch idx :rmsprop)))))
 
 ;; check results
-(defun compare-xy (encoder decoder xs)
-  (let* ((bn ($size xs 0))
+(defun compare-xy (encoder decoder bs)
+  (let* ((xs ($ bs (random ($count bs))))
+         (bn ($size xs 0))
          (es ($execute encoder xs :trainp nil))
          (ds ($execute decoder es :trainp nil))
          (ys ($reshape! ds bn 1 28 28))
@@ -97,7 +101,7 @@
     (th.image:write-tensor-png-file x inf)
     (th.image:write-tensor-png-file y ouf)))
 
-(compare-xy *encoder* *decoder* ($0 *mnist-train-image-batches*))
+(compare-xy *encoder* *decoder* *mnist-train-image-batches*)
 
 ;; test model
 ($execute *model* (car *mnist-train-image-batches*) :trainp nil)
