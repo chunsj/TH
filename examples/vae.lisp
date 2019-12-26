@@ -189,6 +189,37 @@
 
 (genimg *decoder*)
 
+(let* ((n 21)
+       (minv -1E0)
+       (maxv 1E0)
+       (sv (/ (- maxv minv) n))
+       (xs (tensor (1+ n) (1+ n) 2)))
+  (loop :for i :from 0 :to n
+        :for vi = (- maxv (* i sv))
+        :do (loop :for j :from 0 :to n
+                  :for vj = (+ minv (* j sv))
+                  :do (setf ($ xs i j 0) vj
+                            ($ xs i j 1) vi)))
+  (let* ((xs ($reshape! xs (* (1+ n) (1+ n)) 2))
+         (mn ($mean xs 0))
+         (ds ($execute *decoder* xs :trainp nil))
+         (ys ($reshape! ds (1+ n) (1+ n) 1 28 28))
+         (img (opticl:make-8-bit-gray-image (* (1+ n) 28) (* (1+ n) 28)))
+         (fs "/Users/Sungjin/Desktop/patch.png"))
+    (prn xs)
+    (prn "MN:" ($ mn 0 0) ($exp ($ mn 0 1)))
+    (loop :for ti :from 0 :to n
+          :for sy = (* ti 28)
+          :do (loop :for tj :from 0 :to n
+                    :for tx = ($ ys ti tj)
+                    :for sx = (* tj 28)
+                    :do (loop :for ii :from 0 :below 28
+                              :do (loop :for ij :from 0 :below 28
+                                        :do (setf (aref img (+ sy ii) (+ sx ij))
+                                                  (round (* 255 ($ tx 0 ii ij))))))))
+    (prn ys)
+    (opticl:write-png-file fs img)))
+
 ($save-weights "./examples/weights/vae" *model*)
 ($load-weights "./examples/weights/vae" *model*)
 
