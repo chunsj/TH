@@ -84,8 +84,8 @@
   8. For easy construction: th.layers api such as sequential-layer, affine-layer, ...
 
 ## Selected Book Follow Ups
-  1. Deep Learning from Scratch: dlfs
-  2. Grokking Deep Learning: gdl
+  1. Deep Learning from Scratch: examples/books/dlfs
+  2. Grokking Deep Learning: examples/books/gdl
 
 ## Test Data Support - data should be copied under ~/.th/datasets/[datasetname]
   1. MNIST: db/mnist.lisp, you need to download original mnist data, unpack them, and generate.
