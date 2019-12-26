@@ -193,7 +193,8 @@
 
 (genimg *decoder*)
 
-(defun patchimg (&optional (n 21))
+;; generate a patch image for latent space
+(defun genpatch (&optional (n 21))
   (let* ((minv -1E0)
          (maxv 1E0)
          (sv (/ (- maxv minv) n))
@@ -223,6 +224,8 @@
                                                     (round (* 255 ($ tx 0 ii ij))))))))
       (prn ys)
       (opticl:write-png-file fs img))))
+
+(genpatch)
 
 (defun showimg (xs)
   (let* ((bn ($size xs 0))
