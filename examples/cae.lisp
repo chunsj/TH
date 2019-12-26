@@ -84,6 +84,10 @@
                    :for idx :from 1
                    :do (train *model* xs epoch idx :rmsprop)))))
 
+;; save/load trained weights
+;; ($save-weights "examples/weights/cae" *model*)
+($load-weights "examples/weights/cae" *model*)
+
 ;; check results
 (defun compare-xy (encoder decoder bs)
   (let* ((xs ($ bs (random ($count bs))))
@@ -94,8 +98,8 @@
          (idx (random bn))
          (x ($ xs idx))
          (y ($ ys idx))
-         (inf "/Users/Sungjin/Desktop/input.png")
-         (ouf "/Users/Sungjin/Desktop/output.png"))
+         (inf ($concat (namestring (user-homedir-pathname)) "Desktop/input.png"))
+         (ouf ($concat (namestring (user-homedir-pathname)) "Desktop/output.png")))
     (prn "ENCODED:" es)
     (prn "INDEX:" idx)
     (th.image:write-tensor-png-file x inf)
@@ -105,7 +109,3 @@
 
 ;; test model
 ($execute *model* (car *mnist-train-image-batches*) :trainp nil)
-
-;; save/load trained weights
-($save-weights "examples/weights/cae" *model*)
-($load-weights "examples/weights/cae" *model*)
