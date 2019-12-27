@@ -1,6 +1,6 @@
 ;; from
 ;; https://github.com/soumith/dcgan.torch
-;; https://towardsdatascience.com.having-fun-with-deep-convolutional-gans-f4f8393686ed
+;; https://towardsdatascience.com/having-fun-with-deep-convolutional-gans-f4f8393686ed
 
 (defpackage :dcgan
   (:use #:common-lisp
