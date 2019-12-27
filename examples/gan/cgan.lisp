@@ -11,8 +11,6 @@
 
 (in-package :cgan)
 
-(setf th::*default-tensor-class* 'tensor.double)
-
 ;; load mnist data, takes ~22 secs in macbook 2017
 (defparameter *mnist* (read-mnist-data))
 
@@ -148,8 +146,7 @@
                          :for s = (random *batch-size*)
                          :for fname = (format nil "~A/i~A-~A.png" *output* epoch i)
                          :do (outpng ($index ($data g) 0 s) fname))))
-               (prn " LOSS:" epoch (/ dloss *train-count*) (/ gloss *train-count*))
-               (gcf)))))
+               (prn " LOSS:" epoch (/ dloss *train-count*) (/ gloss *train-count*))))))
 
 (defun outpngs49 (data81 fname &optional (w 28) (h 28))
   (let* ((n 7)
@@ -186,5 +183,3 @@
       *train-data-batches* nil
       *train-data-labels* nil)
 (gcf)
-
-(setf th::*default-tensor-class* 'tensor.float)
