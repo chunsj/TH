@@ -22,7 +22,7 @@
 (defun lossd (dr df) ($neg ($- ($mean dr) ($mean df))))
 (defun lossg (df) ($neg ($mean df)))
 
-(defun optm (params) ($rmgd! params 1E-4))
+(defun optm (params) ($rmgd! params 5E-5))
 
 (defun outpng (data fname &optional (w 28) (h 28))
   (let ((img (opticl:make-8-bit-gray-image w h))
@@ -84,7 +84,7 @@
 
 (defun samplez () (rndn *batch-size* *gen-size*))
 
-(defparameter *epoch* 20)
+(defparameter *epoch* 100)
 (defparameter *k* 5)
 
 ($cg! *discriminator*)
