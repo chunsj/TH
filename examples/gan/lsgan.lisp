@@ -44,6 +44,8 @@
                            :collect k)
         :collect ($contiguous! ($index ($ *mnist* :train-images) 0 range))))
 
+(setf *mnist* nil)
+
 (defparameter *discriminator* (parameters))
 (defparameter *generator* (parameters))
 
@@ -84,15 +86,13 @@
 (defun samplez () (rndn *batch-size* *gen-size*))
 
 (defparameter *epoch* 50)
-(defparameter *k* 3)
+(defparameter *k* 5)
 
 ($cg! *discriminator*)
 ($cg! *generator*)
 
 (defparameter *train-data-batches* (subseq *mnist-train-image-batches* 0))
 (defparameter *train-count* ($count *train-data-batches*))
-
-(gcf)
 
 (time
  (with-foreign-memory-limit ()
