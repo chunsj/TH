@@ -59,9 +59,9 @@
   13. Deep Convolutional GAN: examples/gan/dcgan.lisp
   14. Neural Arithmetic Logic Unit or NALU: examples/nalu/nalu.lisp
   15. VGG16, pretrained model: examples/pretrained/vgg16.lisp
-                               (refer torch-vgg16.py under scratch/weights)
+                               (refer torch-vgg16.py under scratch/python)
   16. VGG19, pretrained model: examples/pretrained/vgg19.lisp
-                               (refer torch-vgg16.py under scratch/weights)
+                               (refer torch-vgg16.py under scratch/python)
   17. ResNet50,101,152 pretrained model: examples/pretrained/resnet50.lisp (refer torch-resnet50.py)
   18. DenseNet161, pretrained model: examples/pretrained/densenet161.lisp (refer torch-densenet161.py)
   19. SqueezeNet1.1, pretrained model: examples/pretrained/squeezenet11.lisp
