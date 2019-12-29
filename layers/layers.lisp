@@ -185,7 +185,7 @@
 
 (defun affine-layer (input-size output-size
                      &key (activation :sigmoid) (weight-initializer :he-normal)
-                       batch-normalization-p)
+                       batch-normalization-p (biasp t))
   (let ((n (make-instance 'affine-layer)))
     (with-slots (w b a bn wi) n
       (setf wi weight-initializer)
@@ -199,7 +199,7 @@
                     ((eq activation :softmax) #'$softmax)
                     ((eq activation :nil) nil)
                     (t #'$sigmoid)))
-      (setf b ($parameter (zeros output-size)))
+      (when biasp (setf b ($parameter (zeros output-size))))
       (setf w (let ((sz (list input-size output-size)))
                 (cond ((eq weight-initializer :random-uniform) (vru sz))
                       ((eq weight-initializer :random-normal) (vrn sz))
@@ -220,14 +220,14 @@
 (defmethod $train-parameters ((l affine-layer))
   (with-slots (w b bn) l
     (if bn
-        (append (list w b) ($train-parameters bn))
-        (list w b))))
+        (append (if b (list w b) (list w)) ($train-parameters bn))
+        (if (list w b) (list w)))))
 
 (defmethod $parameters ((l affine-layer))
   (with-slots (w b bn) l
     (if bn
-        (append (list w b) ($parameters bn))
-        (list w b))))
+        (append (if b (list w b) (list w)) ($parameters bn))
+        (if b (list w b) (list w)))))
 
 (defun affine-ones (l x)
   (when (eq 2 ($ndim x))
@@ -244,7 +244,7 @@
     (let ((weight-initializer wi)
           (input-size ($size w 0))
           (output-size ($size w 1)))
-      (setf b ($parameter (zeros output-size)))
+      (when b (setf b ($parameter (zeros output-size))))
       (setf w (let ((sz (list input-size output-size)))
                 (cond ((eq weight-initializer :random-uniform) (vru sz))
                       ((eq weight-initializer :random-normal) (vrn sz))
@@ -269,20 +269,22 @@
                 (funcall a ($affine x w b (affine-ones l x))))
             (if bn
                 (funcall a ($execute bn ($affine (if ($parameterp x) ($data x) x)
-                                                 ($data w) ($data b) (affine-ones l x))
+                                                 ($data w) (when b ($data b))
+                                                 (when b (affine-ones l x)))
                                      :trainp trainp))
-                (funcall a ($affine (if ($parameterp x) ($data x) x) ($data w) ($data b)
-                                    (affine-ones l x)))))
+                (funcall a ($affine (if ($parameterp x) ($data x) x) ($data w)
+                                    (when b ($data b))
+                                    (when b (affine-ones l x))))))
         (if trainp
             (if bn
                 ($execute bn ($affine x w b (affine-ones l x)) :trainp trainp)
                 ($affine x w b))
             (if bn
                 ($execute bn ($affine (if ($parameterp x) ($data x) x)
-                                      ($data w) ($data b) (affine-ones l x))
+                                      ($data w) (when  b ($data b)) (when b (affine-ones l x)))
                           :trainp trainp)
-                ($affine (if ($parameterp x) ($data x) x) ($data w) ($data b)
-                         (affine-ones l x)))))))
+                ($affine (if ($parameterp x) ($data x) x) ($data w) (when b ($data b))
+                         (when b (affine-ones l x))))))))
 
 (defclass convolution-2d-layer (layer)
   ((w :initform nil)
@@ -324,7 +326,8 @@
                              &key (stride-width 1) (stride-height 1)
                                (padding-width 0) (padding-height 0)
                                (activation :sigmoid) (weight-initializer :he-normal)
-                               batch-normalization-p)
+                               batch-normalization-p
+                               (biasp t))
   (let ((n (make-instance 'convolution-2d-layer)))
     (with-slots (w b dw dh pw ph a bn wi) n
       (setf wi weight-initializer)
@@ -342,7 +345,7 @@
                     ((eq activation :softmax) #'$softmax)
                     ((eq activation :nil) nil)
                     (t #'$sigmoid)))
-      (setf b ($parameter (zeros output-channel-size)))
+      (when biasp (setf b ($parameter (zeros output-channel-size))))
       (setf w (let ((sz (list output-channel-size input-channel-size
                               filter-height filter-width)))
                 (cond ((eq weight-initializer :random-uniform) (vru sz))
@@ -364,14 +367,14 @@
 (defmethod $train-parameters ((l convolution-2d-layer))
   (with-slots (w b bn) l
     (if bn
-        (append (list w b) ($train-parameters bn))
-        (list w b))))
+        (append (if b (list w b) (list w)) ($train-parameters bn))
+        (if b (list w b) (list w)))))
 
 (defmethod $parameters ((l convolution-2d-layer))
   (with-slots (w b bn) l
     (if bn
-        (append (list w b) ($parameters bn))
-        (list w b))))
+        (append (if b (list w b) (list w)) ($parameters bn))
+        (if b (list w b) (list w)))))
 
 (defmethod $initialize ((l convolution-2d-layer))
   (with-slots (w b bn wi) l
@@ -380,7 +383,7 @@
           (input-channel-size ($size w 1))
           (filter-height ($size w 2))
           (filter-width ($size w 3)))
-      (setf b ($parameter (zeros output-channel-size)))
+      (when b (setf b ($parameter (zeros output-channel-size))))
       (setf w (let ((sz (list output-channel-size input-channel-size
                               filter-height filter-width)))
                 (cond ((eq weight-initializer :random-uniform) (vru sz))
@@ -406,10 +409,12 @@
                 (funcall a ($conv2d x w b dw dh pw ph)))
             (if bn
                 (funcall a ($execute bn
-                                     ($conv2d (if ($parameterp x) ($data x) x) ($data w) ($data b)
+                                     ($conv2d (if ($parameterp x) ($data x) x) ($data w)
+                                              (when b ($data b))
                                               dw dh pw ph)
                                      :trainp nil))
-                (funcall a ($conv2d (if ($parameterp x) ($data x) x) ($data w) ($data b)
+                (funcall a ($conv2d (if ($parameterp x) ($data x) x) ($data w)
+                                    (when b ($data b))
                                     dw dh pw ph))))
         (if trainp
             (if bn
@@ -417,10 +422,13 @@
                 ($conv2d x w b dw dh pw ph))
             (if bn
                 ($execute bn
-                          ($conv2d (if ($parameterp x) ($data x) x) ($data w) ($data b)
+                          ($conv2d (if ($parameterp x) ($data x) x) ($data w)
+                                   (when b ($data b))
                                    dw dh pw ph)
                           :trainp nil)
-                ($conv2d (if ($parameterp x) ($data x) x) ($data w) ($data b) dw dh pw ph))))))
+                ($conv2d (if ($parameterp x) ($data x) x) ($data w)
+                         (when b ($data b))
+                         dw dh pw ph))))))
 
 (defclass maxpool-2d-layer (layer)
   ((kw :initform nil)
@@ -538,7 +546,8 @@
                                     (padding-width 0) (padding-height 0)
                                     (adjust-width 0) (adjust-height 0)
                                     (activation :sigmoid) (weight-initializer :he-normal)
-                                    batch-normalization-p)
+                                    batch-normalization-p
+                                    (biasp t))
   (let ((n (make-instance 'full-convolution-2d-layer)))
     (with-slots (w b dw dh pw ph aw ah a bn wi) n
       (setf wi weight-initializer)
@@ -558,7 +567,7 @@
                     ((eq activation :softmax) #'$softmax)
                     ((eq activation :nil) nil)
                     (t #'$sigmoid)))
-      (setf b ($parameter (zeros output-channel-size)))
+      (when biasp (setf b ($parameter (zeros output-channel-size))))
       (setf w (let ((sz (list input-channel-size output-channel-size
                               filter-height filter-width)))
                 (cond ((eq weight-initializer :random-uniform) (vru sz))
@@ -580,14 +589,14 @@
 (defmethod $train-parameters ((l full-convolution-2d-layer))
   (with-slots (w b bn) l
     (if bn
-        (append (list w b) ($train-parameters bn))
-        (list w b))))
+        (append (if b (list w b) (list w)) ($train-parameters bn))
+        (if b (list w b) (list w)))))
 
 (defmethod $parameters ((l full-convolution-2d-layer))
   (with-slots (w b bn) l
     (if bn
-        (append (list w b) ($parameters bn))
-        (list w b))))
+        (append (if b (list w b) (list w)) ($parameters bn))
+        (if b (list w b) (list w)))))
 
 (defmethod $initialize ((l full-convolution-2d-layer))
   (with-slots (w b bn wi) l
@@ -596,7 +605,7 @@
           (input-channel-size ($size w 0))
           (filter-height ($size w 2))
           (filter-width ($size w 3)))
-      (setf b ($parameter (zeros output-channel-size)))
+      (when b (setf b ($parameter (zeros output-channel-size))))
       (setf w (let ((sz (list input-channel-size output-channel-size
                               filter-height filter-width)))
                 (cond ((eq weight-initializer :random-uniform) (vru sz))
@@ -622,10 +631,12 @@
                 (funcall a ($dconv2d x w b dw dh pw ph aw ah)))
             (if bn
                 (funcall a ($execute bn
-                                     ($dconv2d (if ($parameterp x) ($data x) x) ($data w) ($data b)
+                                     ($dconv2d (if ($parameterp x) ($data x) x) ($data w)
+                                               (when b ($data b))
                                                dw dh pw ph aw ah)
                                      :trainp nil))
-                (funcall a ($dconv2d (if ($parameterp x) ($data x) x) ($data w) ($data b)
+                (funcall a ($dconv2d (if ($parameterp x) ($data x) x) ($data w)
+                                     (when b ($data b))
                                      dw dh pw ph aw ah))))
         (if trainp
             (if bn
@@ -633,10 +644,12 @@
                 ($dconv2d x w b dw dh pw ph aw ah))
             (if bn
                 ($execute bn
-                          ($dconv2d (if ($parameterp x) ($data x) x) ($data w) ($data b)
+                          ($dconv2d (if ($parameterp x) ($data x) x) ($data w)
+                                    (when b ($data b))
                                     dw dh pw ph aw ah)
                           :trainp nil)
-                ($dconv2d (if ($parameterp x) ($data x) x) ($data w) ($data b)
+                ($dconv2d (if ($parameterp x) ($data x) x) ($data w)
+                          (when b ($data b))
                           dw dh pw ph aw ah))))))
 
 (defclass reshape-layer (layer)
