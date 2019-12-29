@@ -17,11 +17,11 @@
           :collect ($contiguous! ($reshape! ($index ($ mnist :train-images) 0 r)
                                             batch-size 1 28 28)))))
 
-(defparameter *batch-size* 60)
+(defparameter *batch-size* 100)
 (defparameter *batch-count* (/ 60000 *batch-size*))
 
 (defparameter *mnist-batches* (build-batches *batch-size* *batch-count*))
-(defparameter *mnist-batches* (build-batches *batch-size* 10))
+(defparameter *mnist-batches* (build-batches *batch-size* 2))
 
 (defparameter *latent-dim* 100)
 
@@ -91,6 +91,8 @@
 (defparameter *real-labels* (ones *batch-size*))
 (defparameter *fake-labels* (zeros *batch-size*))
 
+(th.layers::$train-parameters *discriminator*)
+
 (defun train-discriminator (xs &optional verbose)
   (let* ((z (rndn *batch-size* 100))
          (fake-images ($execute *generator* z))
@@ -115,24 +117,6 @@
     ($cg! *generator*)
     ($cg! *discriminator*)))
 
-(defun train (xs epoch idx)
-  (let ((verbose (zerop (rem idx 5))))
-    (when verbose (prn epoch ":" idx))
-    (train-discriminator xs verbose)
-    (train-generator verbose)))
-
-(defparameter *epochs* 100)
-
-($reset! *generator*)
-($reset! *discriminator*)
-
-(time
- (with-foreign-memory-limit ()
-   (loop :for epoch :from 1 :to *epochs*
-         :do (loop :for xs :in *mnist-batches*
-                   :for idx :from 0
-                   :do (train xs epoch idx)))))
-
 (defun outpngs (data81 fname &optional (w 28) (h 28))
   (let* ((n 9)
          (img (opticl:make-8-bit-gray-image (* n w) (* n h))))
@@ -147,6 +131,28 @@
                                               (setf (aref img (+ sx i) (+ sy j))
                                                     (round (* 255 ($ d 0 i j)))))))))
     (opticl:write-png-file fname img)))
+
+(defun train (xs epoch idx)
+  (let ((verbose (zerop (rem idx 5))))
+    (when verbose (prn epoch ":" idx))
+    (train-discriminator xs verbose)
+    (train-generator verbose)
+    (when (zerop (rem epoch 10))
+      (let ((generated ($execute *generator* (rndn 81 100) :trainp nil))
+            (fname (format nil "~A/Desktop/81.png" (namestring (user-homedir-pathname)))))
+        (outpngs generated fname)))))
+
+(defparameter *epochs* 200)
+
+($reset! *generator*)
+($reset! *discriminator*)
+
+(time
+ (with-foreign-memory-limit ()
+   (loop :for epoch :from 1 :to *epochs*
+         :do (loop :for xs :in *mnist-batches*
+                   :for idx :from 0
+                   :do (train xs epoch idx)))))
 
 (let ((generated ($execute *generator* (rndn 81 100) :trainp nil))
       (fname (format nil "~A/Desktop/81.png" (namestring (user-homedir-pathname)))))
