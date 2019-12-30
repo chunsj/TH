@@ -91,7 +91,10 @@
 (defparameter *real-labels* (ones *batch-size*))
 (defparameter *fake-labels* (zeros *batch-size*))
 
-(th.layers::$train-parameters *discriminator*)
+(defun optim (model)
+  ($rmgd! model *lr*)
+  ($cg! *generator*)
+  ($cg! *discriminator*))
 
 (defun train-discriminator (xs &optional verbose)
   (let* ((z (rndn *batch-size* 100))
@@ -103,9 +106,7 @@
          (real-loss ($bce real-scores *real-labels*))
          (dloss ($+ fake-loss real-loss)))
     (when verbose (prn "  DL:" (if ($parameterp dloss) ($data dloss) dloss)))
-    ($amgd! *discriminator* *lr* 0.5 0.999)
-    ($cg! *generator*)
-    ($cg! *discriminator*)))
+    (optim *discriminator*)))
 
 (defun train-generator (&optional verbose)
   (let* ((z (rndn *batch-size* 100))
@@ -113,33 +114,44 @@
          (fake-scores ($execute *discriminator* fake-images))
          (gloss ($bce fake-scores *real-labels*)))
     (when verbose (prn "  GL:" (if ($parameterp gloss) ($data gloss) gloss)))
-    ($amgd! *generator* *lr* 0.5 0.999)
-    ($cg! *generator*)
-    ($cg! *discriminator*)))
+    (optim *generator*)))
 
-(defun outpngs (data81 fname &optional (w 28) (h 28))
-  (let* ((n 9)
-         (img (opticl:make-8-bit-gray-image (* n w) (* n h))))
-    (loop :for i :from 0 :below n
-          :do (loop :for j :from 0 :below n
-                    :for sx = (* j w)
-                    :for sy = (* i h)
-                    :for d = ($ data81 (+ (* j n) i))
-                    :do (loop :for i :from 0 :below h
-                              :do (loop :for j :from 0 :below w
-                                        :do (progn
-                                              (setf (aref img (+ sx i) (+ sy j))
-                                                    (round (* 255 ($ d 0 i j)))))))))
+(defun write-tensor-at (img x y tx)
+  (let* ((h ($size tx 1))
+         (w ($size tx 2))
+         (sx (* x w))
+         (sy (* y h)))
+    (loop :for j :from 0 :below h
+          :do (loop :for i :from 0 :below w
+                    :for px = ($ tx 0 j i)
+                    :do (setf (aref img (+ sy j) (+ sx i)) (round (* 255 px)))))))
+
+(defun outpngs (data fname)
+  (let* ((h ($size ($ data 0) 1))
+         (w ($size ($ data 0) 2))
+         (dn ($size data 0))
+         (n (ceiling (sqrt dn)))
+         (nc n)
+         (nr (ceiling (/ dn n)))
+         (img (opticl:make-8-bit-gray-image (* nr h) (* nc w))))
+    (loop :for sy :from 0 :below nr
+          :do (loop :for sx :from 0 :below nc
+                    :for idx = (+ (* sy nr) sx)
+                    :for tx = (when (< idx dn) ($ data idx))
+                    :when tx
+                      :do (write-tensor-at img sx sy tx)))
     (opticl:write-png-file fname img)))
 
 (defun train (xs epoch idx)
   (let ((verbose (zerop (rem idx 5))))
     (when verbose (prn epoch ":" idx))
-    (train-discriminator xs verbose)
+    (loop :for k :from 0 :below 5
+          :do (train-discriminator xs verbose))
     (train-generator verbose)
     (when (zerop (rem epoch 10))
-      (let ((generated ($execute *generator* (rndn 81 100) :trainp nil))
-            (fname (format nil "~A/Desktop/81.png" (namestring (user-homedir-pathname)))))
+      (let ((generated ($execute *generator* (rndn *batch-size* *latent-dim*) :trainp nil))
+            (fname (format nil "~A/Desktop/~A-~A.png" (namestring (user-homedir-pathname))
+                           epoch idx)))
         (outpngs generated fname)))))
 
 (defparameter *epochs* 200)
@@ -154,6 +166,6 @@
                    :for idx :from 0
                    :do (train xs epoch idx)))))
 
-(let ((generated ($execute *generator* (rndn 81 100) :trainp nil))
-      (fname (format nil "~A/Desktop/81.png" (namestring (user-homedir-pathname)))))
+(let ((generated ($execute *generator* (rndn *batch-size* *latent-dim*) :trainp nil))
+      (fname (format nil "~A/Desktop/images.png" (namestring (user-homedir-pathname)))))
   (outpngs generated fname))
