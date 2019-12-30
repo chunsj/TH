@@ -221,7 +221,7 @@
   (with-slots (w b bn) l
     (if bn
         (append (if b (list w b) (list w)) ($train-parameters bn))
-        (if (list w b) (list w)))))
+        (if b (list w b) (list w)))))
 
 (defmethod $parameters ((l affine-layer))
   (with-slots (w b bn) l
@@ -281,7 +281,7 @@
                 ($affine x w b))
             (if bn
                 ($execute bn ($affine (if ($parameterp x) ($data x) x)
-                                      ($data w) (when  b ($data b)) (when b (affine-ones l x)))
+                                      ($data w) (when b ($data b)) (when b (affine-ones l x)))
                           :trainp trainp)
                 ($affine (if ($parameterp x) ($data x) x) ($data w) (when b ($data b))
                          (when b (affine-ones l x))))))))
