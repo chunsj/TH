@@ -17,82 +17,55 @@
           :collect ($contiguous! ($reshape! ($index ($ mnist :train-images) 0 r)
                                             batch-size 1 28 28)))))
 
-(defparameter *batch-size* 100)
+(defparameter *batch-size* 120)
 (defparameter *batch-count* (/ 60000 *batch-size*))
 
 (defparameter *mnist-batches* (build-batches *batch-size* *batch-count*))
-(defparameter *mnist-batches* (build-batches *batch-size* 2))
+;;(defparameter *mnist-batches* (build-batches *batch-size* 2))
 
 (defparameter *latent-dim* 100)
+(defparameter *imgsz* (* 28 28))
+(defparameter *hidden-size* 128)
 
 (defparameter *generator* (sequential-layer
-                           (reshape-layer *latent-dim* 1 1)
-                           (full-convolution-2d-layer *latent-dim* 512 4 4
+                           (affine-layer *latent-dim* *imgsz* :activation :nil)
+                           (reshape-layer 16 7 7)
+                           (full-convolution-2d-layer 16 32 4 4
                                                       :stride-width 2 :stride-height 2
                                                       :padding-width 1 :padding-height 1
-                                                      :activation :relu
                                                       :batch-normalization-p t
-                                                      :biasp nil)
-                           (full-convolution-2d-layer 512 256 4 4
+                                                      :activation :lrelu)
+                           (full-convolution-2d-layer 32 1 4 4
                                                       :stride-width 2 :stride-height 2
                                                       :padding-width 1 :padding-height 1
-                                                      :activation :relu
                                                       :batch-normalization-p t
-                                                      :biasp nil)
-                           (full-convolution-2d-layer 256 128 4 4
-                                                      :stride-width 2 :stride-height 2
-                                                      :padding-width 1 :padding-height 1
-                                                      :activation :relu
-                                                      :batch-normalization-p t
-                                                      :biasp nil)
-                           (full-convolution-2d-layer 128 64 3 3
-                                                      :stride-width 2 :stride-height 2
-                                                      :padding-width 1 :padding-height 1
-                                                      :activation :relu
-                                                      :batch-normalization-p t
-                                                      :biasp nil)
-                           (full-convolution-2d-layer 64 1 2 2
-                                                      :stride-width 2 :stride-height 2
-                                                      :padding-width 1 :padding-height 1
-                                                      :activation :sigmoid
-                                                      :batch-normalization-p t
-                                                      :biasp nil)))
+                                                      :activation :sigmoid)))
 
 (defparameter *discriminator* (sequential-layer
-                               (convolution-2d-layer 1 64 4 4
+                               (convolution-2d-layer 1 32 4 4
                                                      :stride-width 2 :stride-height 2
                                                      :padding-width 1 :padding-height 1
-                                                     :activation :lrelu
-                                                     :biasp nil)
-                               (convolution-2d-layer 64 128 4 4
+                                                     :activation :lrelu)
+                               (convolution-2d-layer 32 16 4 4
                                                      :stride-width 2 :stride-height 2
                                                      :padding-width 1 :padding-height 1
-                                                     :activation :lrelu
                                                      :batch-normalization-p t
-                                                     :biasp nil)
-                               (convolution-2d-layer 128 256 4 4
-                                                     :stride-width 2 :stride-height 2
-                                                     :padding-width 1 :padding-height 1
-                                                     :activation :lrelu
-                                                     :batch-normalization-p t
-                                                     :biasp nil)
-                               (convolution-2d-layer 256 512 4 4
-                                                     :stride-width 2 :stride-height 2
-                                                     :padding-width 1 :padding-height 1
-                                                     :activation :lrelu
-                                                     :batch-normalization-p t
-                                                     :biasp nil)
-                               (convolution-2d-layer 512 1 1 1
-                                                     :stride-width 1 :stride-height 1
-                                                     :activation :sigmoid)
-                               (flatten-layer)))
+                                                     :activation :lrelu)
+                               (reshape-layer *imgsz*)
+                               (affine-layer *imgsz* *hidden-size*
+                                             :batch-normalization-p t
+                                             :activation :lrelu)
+                               (affine-layer *hidden-size* 1
+                                             :batch-normalization-p t
+                                             :activation :sigmoid)))
 
-(defparameter *lr* 0.0002)
+(defparameter *lr* 0.001)
 (defparameter *real-labels* (ones *batch-size*))
 (defparameter *fake-labels* (zeros *batch-size*))
 
 (defun optim (model)
-  ($rmgd! model *lr*)
+  ;;($amgd! model *lr* 0.5 0.999)
+  ($gd! model *lr*)
   ($cg! *generator*)
   ($cg! *discriminator*))
 
@@ -104,15 +77,15 @@
          (real-scores ($execute *discriminator* real-images))
          (fake-loss ($bce fake-scores *fake-labels*))
          (real-loss ($bce real-scores *real-labels*))
-         (dloss ($+ fake-loss real-loss)))
+         (dloss ($* 0.5 ($+ fake-loss real-loss))))
     (when verbose (prn "  DL:" (if ($parameterp dloss) ($data dloss) dloss)))
     (optim *discriminator*)))
 
 (defun train-generator (&optional verbose)
   (let* ((z (rndn *batch-size* 100))
-         (fake-images ($execute *generator* z))
-         (fake-scores ($execute *discriminator* fake-images))
-         (gloss ($bce fake-scores *real-labels*)))
+         (gen-images ($execute *generator* z))
+         (gen-scores ($execute *discriminator* gen-images))
+         (gloss ($bce gen-scores *real-labels*)))
     (when verbose (prn "  GL:" (if ($parameterp gloss) ($data gloss) gloss)))
     (optim *generator*)))
 
@@ -140,7 +113,8 @@
                     :for tx = (when (< idx dn) ($ data idx))
                     :when tx
                       :do (write-tensor-at img sx sy tx)))
-    (opticl:write-png-file fname img)))
+    (opticl:write-png-file fname img)
+    (setf img nil)))
 
 (defun train (xs epoch idx)
   (let ((verbose (zerop (rem idx 5))))
@@ -148,13 +122,15 @@
     (loop :for k :from 0 :below 1
           :do (train-discriminator xs verbose))
     (train-generator verbose)
-    (when (zerop (rem epoch 10))
+    (when (zerop (rem idx 100))
       (let ((generated ($execute *generator* (rndn *batch-size* *latent-dim*) :trainp nil))
             (fname (format nil "~A/Desktop/~A-~A.png" (namestring (user-homedir-pathname))
                            epoch idx)))
-        (outpngs generated fname)))))
+        (outpngs generated fname)
+        (setf generated nil)))
+    (when verbose (th::report-foreign-memory-allocation))))
 
-(defparameter *epochs* 200)
+(defparameter *epochs* 10)
 
 ($reset! *generator*)
 ($reset! *discriminator*)
@@ -169,3 +145,11 @@
 (let ((generated ($execute *generator* (rndn *batch-size* *latent-dim*) :trainp nil))
       (fname (format nil "~A/Desktop/images.png" (namestring (user-homedir-pathname)))))
   (outpngs generated fname))
+
+(gcf)
+
+($load-weights "./scratch/gen" *generator*)
+($load-weights "./scratch/dsc" *discriminator*)
+
+($save-weights "./scratch/gen" *generator*)
+($save-weights "./scratch/dsc" *discriminator*)
