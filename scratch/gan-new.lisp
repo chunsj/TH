@@ -61,7 +61,7 @@
                                              :batch-normalization-p t
                                              :activation :sigmoid)))
 
-(defparameter *lr* 0.001)
+(defparameter *lr* 1E-3)
 (defparameter *real-labels* (ones *batch-size*))
 (defparameter *fake-labels* (zeros *batch-size*))
 
