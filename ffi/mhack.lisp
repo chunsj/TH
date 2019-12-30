@@ -49,12 +49,20 @@
         :summing sz))
 
 #+sbcl
+(defun foreign-memory-stats ()
+  (let ((acount (allocated-counts))
+        (scount (allocated-slot-counts))
+        (amsz (allocated-foreign-memory-size)))
+    (list amsz acount scount)))
+
+#+sbcl
 (defun report-foreign-memory-allocation ()
-  (prn "")
-  (prn "COUNT:" (allocated-counts))
-  (prn "COUNT[SLOT]:" (allocated-slot-counts))
-  (prn "ALLOCATED MEMORY:" (round (/ (allocated-foreign-memory-size) (* 1024 1024D0))) "MB")
-  (prn ""))
+  (let ((acount (allocated-counts))
+        (scount (allocated-slot-counts))
+        (amsz (allocated-foreign-memory-size)))
+    (if (eq acount scount)
+        (prn "* ALLOCATED:" (round (/ amsz (* 1024 1024D0))) "MB" "/" "COUNT:" acount)
+        (prn "* ALLOCATED:" (round (/ amsz (* 1024 1024D0))) "MB" "/" "ERROR:" acount "vs" scount))))
 
 (defun tensor-data-address (tensor)
   (cffi:pointer-address ($handle ($pointer tensor))))
