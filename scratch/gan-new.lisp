@@ -17,11 +17,10 @@
           :collect ($contiguous! ($reshape! ($index ($ mnist :train-images) 0 r)
                                             batch-size 1 28 28)))))
 
-(defparameter *batch-size* 120)
+(defparameter *batch-size* 60)
 (defparameter *batch-count* (/ 60000 *batch-size*))
 
 (defparameter *mnist-batches* (build-batches *batch-size* *batch-count*))
-;;(defparameter *mnist-batches* (build-batches *batch-size* 2))
 
 (defparameter *latent-dim* 100)
 (defparameter *imgsz* (* 28 28))
@@ -34,11 +33,13 @@
                                                       :stride-width 2 :stride-height 2
                                                       :padding-width 1 :padding-height 1
                                                       :batch-normalization-p t
+                                                      :biasp nil
                                                       :activation :lrelu)
                            (full-convolution-2d-layer 32 1 4 4
                                                       :stride-width 2 :stride-height 2
                                                       :padding-width 1 :padding-height 1
                                                       :batch-normalization-p t
+                                                      :biasp nil
                                                       :activation :sigmoid)))
 
 (defparameter *discriminator* (sequential-layer
@@ -50,6 +51,7 @@
                                                      :stride-width 2 :stride-height 2
                                                      :padding-width 1 :padding-height 1
                                                      :batch-normalization-p t
+                                                     :biasp nil
                                                      :activation :lrelu)
                                (reshape-layer *imgsz*)
                                (affine-layer *imgsz* *hidden-size*
@@ -64,8 +66,7 @@
 (defparameter *fake-labels* (zeros *batch-size*))
 
 (defun optim (model)
-  ;;($amgd! model *lr* 0.5 0.999)
-  ($gd! model *lr*)
+  ($amgd! model *lr* 0.5 0.999)
   ($cg! *generator*)
   ($cg! *discriminator*))
 
@@ -113,21 +114,19 @@
                     :for tx = (when (< idx dn) ($ data idx))
                     :when tx
                       :do (write-tensor-at img sx sy tx)))
-    (opticl:write-png-file fname img)
-    (setf img nil)))
+    (opticl:write-png-file fname img)))
 
 (defun train (xs epoch idx)
-  (let ((verbose (zerop (rem idx 5))))
-    (when verbose (prn epoch ":" idx))
+  (let ((verbose (zerop (rem idx 50))))
+    (when verbose (prn "EPOCH/IDX>" epoch ":" idx))
     (loop :for k :from 0 :below 1
           :do (train-discriminator xs verbose))
     (train-generator verbose)
-    (when (zerop (rem idx 100))
+    (when (zerop (rem idx 500))
       (let ((generated ($execute *generator* (rndn *batch-size* *latent-dim*) :trainp nil))
             (fname (format nil "~A/Desktop/~A-~A.png" (namestring (user-homedir-pathname))
                            epoch idx)))
-        (outpngs generated fname)
-        (setf generated nil)))
+        (outpngs generated fname)))
     (when verbose (th::report-foreign-memory-allocation))))
 
 (defparameter *epochs* 10)
@@ -147,9 +146,3 @@
   (outpngs generated fname))
 
 (gcf)
-
-($load-weights "./scratch/gen" *generator*)
-($load-weights "./scratch/dsc" *discriminator*)
-
-($save-weights "./scratch/gen" *generator*)
-($save-weights "./scratch/dsc" *discriminator*)
