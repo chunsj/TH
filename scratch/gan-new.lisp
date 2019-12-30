@@ -145,7 +145,7 @@
 (defun train (xs epoch idx)
   (let ((verbose (zerop (rem idx 5))))
     (when verbose (prn epoch ":" idx))
-    (loop :for k :from 0 :below 5
+    (loop :for k :from 0 :below 1
           :do (train-discriminator xs verbose))
     (train-generator verbose)
     (when (zerop (rem epoch 10))
