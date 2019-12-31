@@ -1,4 +1,4 @@
-(defpackage :gan-new
+(defpackage :dcgan-layers
   (:use #:common-lisp
         #:mu
         #:th
@@ -6,7 +6,7 @@
         #:th.layers
         #:th.db.mnist))
 
-(in-package :gan-new)
+(in-package :dcgan-layers)
 
 (defun build-batches (batch-size batch-count)
   (let ((mnist (read-mnist-data)))
