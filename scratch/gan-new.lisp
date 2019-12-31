@@ -14,10 +14,10 @@
           :for s = (* i batch-size)
           :for e = (* (1+ i) batch-size)
           :for r = (loop :for k :from s :below e :collect k)
-          :collect ($contiguous! ($reshape! ($index ($ mnist :train-images) 0 r)
+          :collect ($contiguous! ($reshape! ($- ($* 2 ($index ($ mnist :train-images) 0 r)) 1)
                                             batch-size 1 28 28)))))
 
-(defparameter *batch-size* 60)
+(defparameter *batch-size* 120)
 (defparameter *batch-count* (/ 60000 *batch-size*))
 
 (defparameter *mnist-batches* (build-batches *batch-size* *batch-count*))
@@ -27,38 +27,44 @@
 (defparameter *hidden-size* 128)
 
 (defparameter *generator* (sequential-layer
-                           (affine-layer *latent-dim* *imgsz* :activation :nil)
+                           (affine-layer *latent-dim* *imgsz*
+                                         :weight-initializer :xavier-normal
+                                         :activation :selu)
                            (reshape-layer 16 7 7)
                            (full-convolution-2d-layer 16 32 4 4
                                                       :stride-width 2 :stride-height 2
                                                       :padding-width 1 :padding-height 1
-                                                      :batch-normalization-p t
-                                                      :biasp nil
-                                                      :activation :lrelu)
+                                                      :weight-initializer :random-normal
+                                                      :weight-initialization '(0 0.01)
+                                                      :activation :selu)
                            (full-convolution-2d-layer 32 1 4 4
                                                       :stride-width 2 :stride-height 2
                                                       :padding-width 1 :padding-height 1
-                                                      :batch-normalization-p t
-                                                      :biasp nil
-                                                      :activation :sigmoid)))
+                                                      :weight-initializer :random-normal
+                                                      :weight-initialization '(0 0.04)
+                                                      :activation :tanh)))
 
 (defparameter *discriminator* (sequential-layer
                                (convolution-2d-layer 1 32 4 4
                                                      :stride-width 2 :stride-height 2
                                                      :padding-width 1 :padding-height 1
+                                                     :weight-initializer :random-normal
+                                                     :weight-initialization '(0 0.04)
                                                      :activation :lrelu)
                                (convolution-2d-layer 32 16 4 4
                                                      :stride-width 2 :stride-height 2
                                                      :padding-width 1 :padding-height 1
-                                                     :batch-normalization-p t
-                                                     :biasp nil
-                                                     :activation :lrelu)
+                                                     :weight-initializer :random-normal
+                                                     :weight-initialization '(0 0.01)
+                                                     :activation :selu)
                                (reshape-layer *imgsz*)
                                (affine-layer *imgsz* *hidden-size*
-                                             :batch-normalization-p t
-                                             :activation :lrelu)
+                                             :weight-initializer :random-normal
+                                             :weight-initialization '(0 0.03)
+                                             :activation :selu)
                                (affine-layer *hidden-size* 1
-                                             :batch-normalization-p t
+                                             :weight-initializer :random-normal
+                                             :weight-initialization '(0 0.04)
                                              :activation :sigmoid)))
 
 (defparameter *lr* 1E-3)
@@ -67,26 +73,32 @@
 
 (defun optim (model)
   ($amgd! model *lr* 0.5 0.999)
+  ;;($amgd! model *lr*)
   ($cg! *generator*)
   ($cg! *discriminator*))
 
+(defun generate (&key (trainp t))
+  "generates fake images from random normal inputs"
+  ($execute *generator* (rndn *batch-size* *latent-dim*) :trainp trainp))
+
+(defun discriminate (xs &key (trainp t))
+  "check whether inputs are real or fake"
+  ($execute *discriminator* xs :trainp trainp))
+
 (defun train-discriminator (xs &optional verbose)
-  (let* ((z (rndn *batch-size* 100))
-         (fake-images ($execute *generator* z))
-         (real-images xs)
-         (fake-scores ($execute *discriminator* fake-images))
-         (real-scores ($execute *discriminator* real-images))
+  "teaching discriminator how to discriminate reals from fakes"
+  (let* ((fake-scores (discriminate (generate)))
+         (real-scores (discriminate xs))
          (fake-loss ($bce fake-scores *fake-labels*))
          (real-loss ($bce real-scores *real-labels*))
-         (dloss ($* 0.5 ($+ fake-loss real-loss))))
+         (dloss ($+ fake-loss real-loss)))
     (when verbose (prn "  DL:" (if ($parameterp dloss) ($data dloss) dloss)))
     (optim *discriminator*)))
 
 (defun train-generator (&optional verbose)
-  (let* ((z (rndn *batch-size* 100))
-         (gen-images ($execute *generator* z))
-         (gen-scores ($execute *discriminator* gen-images))
-         (gloss ($bce gen-scores *real-labels*)))
+  "teaching generator how to create more real fakes"
+  (let* ((fake-scores (discriminate (generate)))
+         (gloss ($bce fake-scores *real-labels*)))
     (when verbose (prn "  GL:" (if ($parameterp gloss) ($data gloss) gloss)))
     (optim *generator*)))
 
@@ -97,8 +109,9 @@
          (sy (* y h)))
     (loop :for j :from 0 :below h
           :do (loop :for i :from 0 :below w
-                    :for px = ($ tx 0 j i)
-                    :do (setf (aref img (+ sy j) (+ sx i)) (round (* 255 px)))))))
+                    :for v = ($ tx 0 j i)
+                    :for px = (round (* 255 (* 0.5 (1+ v))))
+                    :do (setf (aref img (+ sy j) (+ sx i)) px)))))
 
 (defun outpngs (data fname)
   (let* ((h ($size ($ data 0) 1))
@@ -123,13 +136,13 @@
           :do (train-discriminator xs verbose))
     (train-generator verbose)
     (when (zerop (rem idx 500))
-      (let ((generated ($execute *generator* (rndn *batch-size* *latent-dim*) :trainp nil))
+      (let ((generated (generate :trainp nil))
             (fname (format nil "~A/Desktop/~A-~A.png" (namestring (user-homedir-pathname))
                            epoch idx)))
         (outpngs generated fname)))
     (when verbose (th::report-foreign-memory-allocation))))
 
-(defparameter *epochs* 10)
+(defparameter *epochs* 20)
 
 ($reset! *generator*)
 ($reset! *discriminator*)
@@ -141,8 +154,12 @@
                    :for idx :from 0
                    :do (train xs epoch idx)))))
 
-(let ((generated ($execute *generator* (rndn *batch-size* *latent-dim*) :trainp nil))
+(let ((generated (generate :trainp nil))
       (fname (format nil "~A/Desktop/images.png" (namestring (user-homedir-pathname)))))
   (outpngs generated fname))
+
+(let ((xs (car *mnist-batches*))
+      (fname (format nil "~A/Desktop/ixs.png" (namestring (user-homedir-pathname)))))
+  (outpngs xs fname))
 
 (gcf)
