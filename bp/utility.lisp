@@ -174,7 +174,7 @@
         (t (affine-with-bias x w b ones))))
 
 (defmethod $xwpb ((x node) (w node) (b node) &optional ones)
-  (node ($xwpb ($data x) ($data w) (when b ($data b)) ones)
+  (node ($xwpb ($data x) ($data w) ($data b) ones)
         :name :xwpb
         :link (link
                 (to x (daffine-output ($data x) ($data w) gv))
@@ -182,104 +182,160 @@
                 (when b (to b (daffine-bias ($data x) ($data b) gv ones))))))
 
 (defmethod $xwpb ((x tensor) (w node) (b node) &optional ones)
-  (node ($xwpb x ($data w) (when b ($data b)) ones)
+  (node ($xwpb x ($data w) ($data b) ones)
         :name :xwpb
         :link (link
                 (to w (daffine-weight x ($data w) gv))
                 (when b (to b (daffine-bias x ($data b) gv ones))))))
 
 (defmethod $xwpb ((x tensor) (w tensor) (b node) &optional ones)
-  (node ($xwpb x w (when b ($data b)) ones)
+  (node ($xwpb x w ($data b) ones)
         :name :xwpb
         :link (link
                 (when b (to b (daffine-bias x ($data b) gv ones))))))
 
 (defmethod $affine ((x tensor) (w tensor) (b tensor) &optional ones)
-  (cond ((null b) (affine-without-bias x w))
-        (t (affine-with-bias x w b ones))))
+  (affine-with-bias x w b ones))
+
+(defmethod $affine ((x tensor) (w tensor) (b null) &optional ones)
+  (declare (ignore ones))
+  (affine-without-bias x w))
 
 (defmethod $affine ((x node) (w node) (b node) &optional ones)
-  (node ($affine ($data x) ($data w) (when b ($data b)) ones)
+  (node ($affine ($data x) ($data w) ($data b) ones)
         :name :affine
         :link (link
                 (to x (daffine-output ($data x) ($data w) gv))
                 (to w (daffine-weight ($data x) ($data w) gv))
-                (when b (to b (daffine-bias ($data x) ($data b) gv ones))))))
+                (to b (daffine-bias ($data x) ($data b) gv ones)))))
+
+(defmethod $affine ((x node) (w node) (b null) &optional ones)
+  (node ($affine ($data x) ($data w) b ones)
+        :name :affine
+        :link (link
+                (to x (daffine-output ($data x) ($data w) gv))
+                (to w (daffine-weight ($data x) ($data w) gv)))))
 
 (defmethod $affine ((x tensor) (w node) (b node) &optional ones)
-  (node ($affine x ($data w) (when b ($data b)) ones)
+  (node ($affine x ($data w) ($data b) ones)
         :name :affine
         :link (link
                 (to w (daffine-weight x ($data w) gv))
-                (when b (to b (daffine-bias x ($data b) gv ones))))))
+                (to b (daffine-bias x ($data b) gv ones)))))
 
-(defmethod $affine ((x tensor) (w tensor) (b node) &optional ones)
-  (node ($affine x w (when b ($data b)) ones)
+(defmethod $affine ((x tensor) (w node) (b null) &optional ones)
+  (node ($affine x ($data w) b ones)
         :name :affine
         :link (link
-                (when b (to b (daffine-bias x ($data b) gv ones))))))
+                (to w (daffine-weight x ($data w) gv)))))
+
+(defmethod $affine ((x tensor) (w tensor) (b node) &optional ones)
+  (node ($affine x w ($data b) ones)
+        :name :affine
+        :link (link (to b (daffine-bias x ($data b) gv ones)))))
 
 (defmethod $affine2 ((x1 tensor) (w1 tensor) (x2 tensor) (w2 tensor) (b tensor) &optional ones)
-  (cond ((null b) (affine2-without-bias x1 w1 x2 w2))
-        (t (affine2-with-bias x1 w1 x2 w2 b ones))))
+  (affine2-with-bias x1 w1 x2 w2 b ones))
+
+(defmethod $affine2 ((x1 tensor) (w1 tensor) (x2 tensor) (w2 tensor) (b null) &optional ones)
+  (declare (ignore ones))
+  (affine2-without-bias x1 w1 x2 w2))
 
 (defmethod $affine2 ((x1 node) (w1 node) (x2 node) (w2 node) (b node) &optional ones)
-  (node ($affine2 ($data x1) ($data w1) ($data x2) ($data w2) (when b ($data b)) ones)
+  (node ($affine2 ($data x1) ($data w1) ($data x2) ($data w2) ($data b) ones)
         :name :affine2
         :link (link
                 (to x1 (daffine-output ($data x1) ($data w1) gv))
                 (to w1 (daffine-weight ($data x1) ($data w1) gv))
                 (to x2 (daffine-output ($data x2) ($data w2) gv))
                 (to w2 (daffine-weight ($data x2) ($data w2) gv))
-                (when b (to b (daffine-bias ($data x1) ($data b) gv ones))))))
+                (to b (daffine-bias ($data x1) ($data b) gv ones)))))
+
+(defmethod $affine2 ((x1 node) (w1 node) (x2 node) (w2 node) (b null) &optional ones)
+  (node ($affine2 ($data x1) ($data w1) ($data x2) ($data w2) b ones)
+        :name :affine2
+        :link (link
+                (to x1 (daffine-output ($data x1) ($data w1) gv))
+                (to w1 (daffine-weight ($data x1) ($data w1) gv))
+                (to x2 (daffine-output ($data x2) ($data w2) gv))
+                (to w2 (daffine-weight ($data x2) ($data w2) gv)))))
 
 (defmethod $affine2 ((x1 tensor) (w1 node) (x2 node) (w2 node) (b node) &optional ones)
-  (node ($affine2 x1 ($data w1) ($data x2) ($data w2) (when b ($data b)) ones)
+  (node ($affine2 x1 ($data w1) ($data x2) ($data w2) ($data b) ones)
         :name :affine2
         :link (link
                 (to w1 (daffine-weight x1 ($data w1) gv))
                 (to x2 (daffine-output ($data x2) ($data w2) gv))
                 (to w2 (daffine-weight ($data x2) ($data w2) gv))
-                (when b (to b (daffine-bias x1 ($data b) gv ones))))))
+                (to b (daffine-bias x1 ($data b) gv ones)))))
+
+(defmethod $affine2 ((x1 tensor) (w1 node) (x2 node) (w2 node) (b null) &optional ones)
+  (node ($affine2 x1 ($data w1) ($data x2) ($data w2) b ones)
+        :name :affine2
+        :link (link
+                (to w1 (daffine-weight x1 ($data w1) gv))
+                (to x2 (daffine-output ($data x2) ($data w2) gv))
+                (to w2 (daffine-weight ($data x2) ($data w2) gv)))))
 
 (defmethod $affine2 ((x1 node) (w1 node) (x2 tensor) (w2 node) (b node) &optional ones)
-  (node ($affine2 ($data x1) ($data w1) x2 ($data w2) (when b ($data b)) ones)
+  (node ($affine2 ($data x1) ($data w1) x2 ($data w2) ($data b) ones)
         :name :affine2
         :link (link
                 (to x1 (daffine-output ($data x1) ($data w1) gv))
                 (to w1 (daffine-weight ($data x1) ($data w1) gv))
                 (to w2 (daffine-weight x2 ($data w2) gv))
-                (when b (to b (daffine-bias ($data x1) ($data b) gv ones))))))
+                (to b (daffine-bias ($data x1) ($data b) gv ones)))))
+
+(defmethod $affine2 ((x1 node) (w1 node) (x2 tensor) (w2 node) (b null) &optional ones)
+  (node ($affine2 ($data x1) ($data w1) x2 ($data w2) b ones)
+        :name :affine2
+        :link (link
+                (to x1 (daffine-output ($data x1) ($data w1) gv))
+                (to w1 (daffine-weight ($data x1) ($data w1) gv))
+                (to w2 (daffine-weight x2 ($data w2) gv)))))
 
 (defmethod $affine2 ((x1 tensor) (w1 node) (x2 tensor) (w2 node) (b node) &optional ones)
-  (node ($affine2 x1 ($data w1) x2 ($data w2) (when b ($data b)) ones)
+  (node ($affine2 x1 ($data w1) x2 ($data w2) ($data b) ones)
         :name :affine2
         :link (link
                 (to w1 (daffine-weight x1 ($data w1) gv))
                 (to w2 (daffine-weight x2 ($data w2) gv))
-                (when b (to b (daffine-bias x1 ($data b) gv ones))))))
+                (to b (daffine-bias x1 ($data b) gv ones)))))
+
+(defmethod $affine2 ((x1 tensor) (w1 node) (x2 tensor) (w2 node) (b null) &optional ones)
+  (node ($affine2 x1 ($data w1) x2 ($data w2) b ones)
+        :name :affine2
+        :link (link
+                (to w1 (daffine-weight x1 ($data w1) gv))
+                (to w2 (daffine-weight x2 ($data w2) gv)))))
 
 (defmethod $affine2 ((x1 tensor) (w1 tensor) (x2 node) (w2 node) (b node) &optional ones)
-  (node ($affine2 x1 w1 ($data x2) ($data w2) (when b ($data b)) ones)
+  (node ($affine2 x1 w1 ($data x2) ($data w2) ($data b) ones)
         :name :affine2
         :link (link
                 (to x2 (daffine-output ($data x2) ($data w2) gv))
                 (to w2 (daffine-weight ($data x2) ($data w2) gv))
-                (when b (to b (daffine-bias x1 ($data b) gv ones))))))
+                (to b (daffine-bias x1 ($data b) gv ones)))))
+
+(defmethod $affine2 ((x1 tensor) (w1 tensor) (x2 node) (w2 node) (b null) &optional ones)
+  (node ($affine2 x1 w1 ($data x2) ($data w2) b ones)
+        :name :affine2
+        :link (link
+                (to x2 (daffine-output ($data x2) ($data w2) gv))
+                (to w2 (daffine-weight ($data x2) ($data w2) gv)))))
 
 (defmethod $affine2 ((x1 node) (w1 node) (x2 tensor) (w2 tensor) (b node) &optional ones)
-  (node ($affine2 ($data x1) ($data w1) x2 w2 (when b ($data b)) ones)
+  (node ($affine2 ($data x1) ($data w1) x2 w2 ($data b) ones)
         :name :affine2
         :link (link
                 (to x1 (daffine-output ($data x1) ($data w1) gv))
                 (to w1 (daffine-weight ($data x1) ($data w1) gv))
-                (when b (to b (daffine-bias ($data x1) ($data b) gv ones))))))
+                (to b (daffine-bias ($data x1) ($data b) gv ones)))))
 
 (defmethod $affine2 ((x1 tensor) (w1 tensor) (x2 tensor) (w2 tensor) (b node) &optional ones)
-  (node ($affine2 x1 w1 x2 w2 (when b ($data b)) ones)
+  (node ($affine2 x1 w1 x2 w2 ($data b) ones)
         :name :affine2
-        :link (link
-                (when b (to b (daffine-bias x1 ($data b) gv ones))))))
+        :link (link (to b (daffine-bias x1 ($data b) gv ones)))))
 
 (defmethod $wimb ((xwi list) (w tensor)) ($sum ($index w 0 xwi) 0))
 (defmethod $wimb ((xwi tensor.int) (w tensor)) ($sum ($index w 0 xwi) 0))
