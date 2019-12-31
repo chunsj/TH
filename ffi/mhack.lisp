@@ -33,14 +33,10 @@
         *original-realloc*))
 
 #+sbcl
-(defvar *custom-alloc-counts* (list 0))
-#+sbcl
 (defvar *custom-alloc-slots* (make-hash-table :synchronized t))
 #+ccl
 (defvar *custom-alloc-slots* (make-hash-table))
 
-#+sbcl
-(defun allocated-counts () (car *custom-alloc-counts*))
 #+sbcl
 (defun allocated-slot-counts () ($count (hash-table-keys *custom-alloc-slots*)))
 #+ccl
@@ -59,10 +55,9 @@
 
 #+sbcl
 (defun foreign-memory-stats ()
-  (let ((acount (allocated-counts))
-        (scount (allocated-slot-counts))
+  (let ((scount (allocated-slot-counts))
         (amsz (allocated-foreign-memory-size)))
-    (list amsz acount scount)))
+    (list amsz scount)))
 
 #+ccl
 (defun foreign-memory-stats ()
@@ -72,12 +67,9 @@
 
 #+sbcl
 (defun report-foreign-memory-allocation ()
-  (let ((acount (allocated-counts))
-        (scount (allocated-slot-counts))
+  (let ((scount (allocated-slot-counts))
         (amsz (allocated-foreign-memory-size)))
-    (if (eq acount scount)
-        (prn "* ALLOCATED:" (round (/ amsz (* 1024 1024D0))) "MB" "/" "COUNT:" acount)
-        (prn "* ALLOCATED:" (round (/ amsz (* 1024 1024D0))) "MB" "/" "ERROR:" acount "vs" scount))))
+    (prn "* ALLOCATED:" (round (/ amsz (* 1024 1024D0))) "MB" "/" "COUNT:" scount)))
 #+ccl
 (defun report-foreign-memory-allocation ()
   (let ((scount (allocated-slot-counts))
@@ -98,7 +90,6 @@
 (cffi:defcallback malloc (:pointer :void) ((ctx :pointer) (size :long-long))
   (declare (ignore ctx))
   (let ((p (cffi:foreign-alloc :char :count size)))
-    (sb-ext:atomic-incf (car *custom-alloc-counts*))
     (setf ($ *custom-alloc-slots* (cffi:pointer-address p)) size)
     p))
 #+ccl
@@ -112,7 +103,6 @@
 (cffi:defcallback free :void ((ctx :pointer) (ptr :pointer))
   (declare (ignore ctx))
   (remhash (cffi:pointer-address ptr) *custom-alloc-slots*)
-  (sb-ext:atomic-decf (car *custom-alloc-counts*))
   (cffi:foreign-free ptr))
 #+ccl
 (cffi:defcallback free :void ((ctx :pointer) (ptr :pointer))
