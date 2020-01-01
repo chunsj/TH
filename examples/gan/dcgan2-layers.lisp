@@ -1,4 +1,6 @@
-(defpackage :gan-test
+;; https://medium.com/@jonathan_hui/gan-dcgan-deep-convolutional-generative-adversarial-networks-df855c438f
+
+(defpackage :dcgan2-layers
   (:use #:common-lisp
         #:mu
         #:th
@@ -6,10 +8,7 @@
         #:th.layers
         #:th.db.mnist))
 
-;; https://medium.com/@jonathan_hui/gan-dcgan-deep-convolutional-generative-adversarial-networks-df855c438f
-;; refer above link and build a pure, connvolutional gan
-
-(in-package :gan-test)
+(in-package :dcgan2-layers)
 
 (defun build-batches (batch-size batch-count)
   (let ((mnist (read-mnist-data)))
@@ -26,49 +25,53 @@
 (defparameter *mnist-batches* (build-batches *batch-size* *batch-count*))
 
 (defparameter *latent-dim* 100)
-(defparameter *imgsz* (* 28 28))
-(defparameter *hidden-size* 128)
 
 (defparameter *generator* (sequential-layer
-                           (affine-layer *latent-dim* *imgsz*
-                                         :weight-initializer :xavier-normal
-                                         :activation :selu)
-                           (reshape-layer 16 7 7)
-                           (full-convolution-2d-layer 16 32 4 4
-                                                      :stride-width 2 :stride-height 2
-                                                      :padding-width 1 :padding-height 1
+                           (reshape-layer *latent-dim* 1 1)
+                           (full-convolution-2d-layer *latent-dim* 128 3 3
                                                       :weight-initializer :random-normal
-                                                      :weight-initialization '(0 0.01)
+                                                      :weight-initialization '(0 0.02)
                                                       :activation :selu)
-                           (full-convolution-2d-layer 32 1 4 4
+                           (full-convolution-2d-layer 128 64 3 3
                                                       :stride-width 2 :stride-height 2
-                                                      :padding-width 1 :padding-height 1
                                                       :weight-initializer :random-normal
-                                                      :weight-initialization '(0 0.04)
+                                                      :weight-initialization '(0 0.02)
+                                                      :activation :selu)
+                           (full-convolution-2d-layer 64 32 2 2
+                                                      :stride-width 2 :stride-height 2
+                                                      :weight-initializer :random-normal
+                                                      :weight-initialization '(0 0.02)
+                                                      :activation :selu)
+                           (full-convolution-2d-layer 32 1 2 2
+                                                      :stride-width 2 :stride-height 2
+                                                      :weight-initializer :random-normal
+                                                      :weight-initialization '(0 0.02)
                                                       :activation :tanh)))
 
 (defparameter *discriminator* (sequential-layer
-                               (convolution-2d-layer 1 32 4 4
+                               (convolution-2d-layer 1 64 4 4
                                                      :stride-width 2 :stride-height 2
                                                      :padding-width 1 :padding-height 1
                                                      :weight-initializer :random-normal
-                                                     :weight-initialization '(0 0.04)
-                                                     :activation :lrelu)
+                                                     :weight-initialization '(0 0.02)
+                                                     :activation :selu)
+                               (convolution-2d-layer 64 32 4 4
+                                                     :stride-width 2 :stride-height 2
+                                                     :padding-width 1 :padding-height 1
+                                                     :weight-initializer :random-normal
+                                                     :weight-initialization '(0 0.02)
+                                                     :activation :selu)
                                (convolution-2d-layer 32 16 4 4
                                                      :stride-width 2 :stride-height 2
                                                      :padding-width 1 :padding-height 1
                                                      :weight-initializer :random-normal
-                                                     :weight-initialization '(0 0.01)
+                                                     :weight-initialization '(0 0.02)
                                                      :activation :selu)
-                               (reshape-layer *imgsz*)
-                               (affine-layer *imgsz* *hidden-size*
-                                             :weight-initializer :random-normal
-                                             :weight-initialization '(0 0.03)
-                                             :activation :selu)
-                               (affine-layer *hidden-size* 1
-                                             :weight-initializer :random-normal
-                                             :weight-initialization '(0 0.04)
-                                             :activation :sigmoid)))
+                               (convolution-2d-layer 16 1 3 3
+                                                     :weight-initializer :random-normal
+                                                     :weight-initialization '(0 0.02)
+                                                     :activation :sigmoid)
+                               (reshape-layer 1)))
 
 (defparameter *lr* 1E-3)
 (defparameter *real-labels* (ones *batch-size*))
@@ -76,7 +79,6 @@
 
 (defun optim (model)
   ($amgd! model *lr* 0.5 0.999)
-  ;;($amgd! model *lr*)
   ($cg! *generator*)
   ($cg! *discriminator*))
 
@@ -166,3 +168,4 @@
   (outpngs xs fname))
 
 (gcf)
+(setf *epochs* 1)
