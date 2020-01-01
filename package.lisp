@@ -360,6 +360,7 @@
            #:$softplus
            #:$mish
            #:$swish
+           #:$gelu
            #:$bnorm
            #:$bn
            #:$dropout

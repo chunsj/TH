@@ -141,6 +141,7 @@
 (defgeneric $softplus (x) (:documentation "Softplus function."))
 (defgeneric $mish (x) (:documentation "self regularized non-monotonic activation function."))
 (defgeneric $swish (x) (:documentation "swish activation function."))
+(defgeneric $gelu (x) (:documentation "gaussian error linear units activation function."))
 
 (defmethod $relu ((x number)) (max 0 x))
 
@@ -281,3 +282,7 @@
     (node (swish2 ($data x) sx)
           :name :swish
           :link (link (to x (dswish ($data x) sx gv))))))
+
+(defmethod $gelu ((x number)) (* x ($sigmoid (* 1.702 x))))
+(defmethod $gelu ((x tensor)) ($* x ($sigmoid ($* 1.702 x))))
+(defmethod $gelu ((x node)) ($* x ($sigmoid ($* 1.702 x))))
