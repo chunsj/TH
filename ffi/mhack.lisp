@@ -136,6 +136,9 @@
 #+sbcl
 (use-custom-allocator)
 
+#+ccl
+(use-custom-allocator)
+
 #+sbcl
 (defun current-gc-configs ()
   (list (sb-ext:bytes-consed-between-gcs)
