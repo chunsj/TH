@@ -5,6 +5,7 @@
         #:mu
         #:th)
   (:export #:$execute
+           #:$evaluate
            #:$parameters
            #:$save-weights
            #:$load-weights
@@ -24,6 +25,7 @@
 (in-package :th.layers)
 
 (defgeneric $execute (layer x &key trainp))
+(defgeneric $evaluate (layer x))
 
 (defgeneric $train-parameters (layer))
 
@@ -36,6 +38,8 @@
 (defmethod $execute ((l layer) x &key (trainp t))
   (declare (ignore x trainp))
   nil)
+
+(defmethod $evaluate ((l layer) x) ($execute l x :trainp nil))
 
 (defmethod $gd! ((l layer) &optional (learning-rate 0.01))
   ($gd! ($train-parameters l) learning-rate))
