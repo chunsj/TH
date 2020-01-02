@@ -283,6 +283,8 @@
           :name :swish
           :link (link (to x (dswish ($data x) sx gv))))))
 
-(defmethod $gelu ((x number)) (* x ($sigmoid (* 1.702 x))))
-(defmethod $gelu ((x tensor)) ($* x ($sigmoid ($* 1.702 x))))
-(defmethod $gelu ((x node)) ($* x ($sigmoid ($* 1.702 x))))
+(defmethod $gelu ((x number)) (* 0.5 x (1+ (tanh (* (sqrt (/ 2 pi)) (+ x (* 0.044715 x x x)))))))
+(defmethod $gelu ((x tensor))
+  ($* 0.5 x ($+ 1 ($tanh ($* (sqrt (/ 2 pi)) ($+ x ($* 0.044715 x x x)))))))
+(defmethod $gelu ((x node))
+  ($* 0.5 x ($+ 1 ($tanh ($* (sqrt (/ 2 pi)) ($+ x ($* 0.044715 x x x)))))))
