@@ -158,7 +158,7 @@
 #+sbcl
 (defun limit-memory ()
   (sb-ext:gc :full t)
-  (setf (sb-ext:bytes-consed-between-gcs) (* 1024 1024) ;; was 8
+  (setf (sb-ext:bytes-consed-between-gcs) (* 512 1024) ;; was 8
         (sb-ext:generation-bytes-consed-between-gcs 0) (* 64 1024)
         (sb-ext:generation-bytes-consed-between-gcs 1) (* 64 1024)
         (sb-ext:generation-bytes-consed-between-gcs 2) (* 64 1024)
