@@ -25,7 +25,7 @@
   (when indices
     (if (eq 1 ($count indices))
         (read-celeba64-tensor (car indices) :loc loc :normalize normalize)
-        (apply #'$cat (append (mapcar (lambda (idx)
-                                        (read-celeba64-tensor idx :loc loc :normalize normalize))
-                                      indices)
-                              '(0))))))
+        (apply #'$concat (append (mapcar (lambda (idx)
+                                           (read-celeba64-tensor idx :loc loc :normalize normalize))
+                                         indices)
+                                 '(0))))))
