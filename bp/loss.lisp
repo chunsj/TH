@@ -36,13 +36,14 @@
         :link (link (to b (dbce ($data b) a)))))
 
 (defmethod $mse ((a tensor) (b tensor))
-  (let ((output ($empty a)))
+  (let ((output ($resize! ($empty a) '(1))))
     (nn-mse-criterion-update-output a b output t)
-    output))
+    ($ output 0)))
 
 (defun dmse (input target gradient)
-  (let ((dinput ($empty input)))
-    (nn-mse-criterion-update-grad-input input target gradient dinput t)
+  (let ((dinput ($resize! ($empty input) ($size input)))
+        (grad (if ($tensorp gradient) gradient (tensor (list gradient)))))
+    (nn-mse-criterion-update-grad-input input target grad dinput t)
     dinput))
 
 (defmethod $mse ((a node) (b node))
