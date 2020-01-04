@@ -158,8 +158,8 @@
     (if (and trainp (not (eq 1 ($ndim x))) (not (eq 3 ($ndim x))) (not (eq 1 ($size x 0))))
         ($bn x g e rm rv sm sd)
         (if (and (not (eq 1 ($ndim x))) (not (eq 3 ($ndim x))) (not (eq 1 ($size x 0))))
-            ($bn (if ($parameterp x) ($data x) x) ($data g) ($data e) rm rv)
-            ($bnorm (if ($parameterp x) ($data x) x) ($data g) ($data e) rm rv)))))
+            ($bn x ($data g) ($data e) rm rv)
+            ($bnorm x ($data g) ($data e) rm rv)))))
 
 (defclass affine-layer (layer)
   ((w :initform nil)
@@ -235,11 +235,11 @@
                 (funcall a ($execute bn ($affine x w b (affine-ones l x))))
                 (funcall a ($affine x w b (affine-ones l x))))
             (if bn
-                (funcall a ($execute bn ($affine (if ($parameterp x) ($data x) x)
-                                                 ($data w) (when b ($data b))
+                (funcall a ($execute bn ($affine x ($data w)
+                                                 (when b ($data b))
                                                  (when b (affine-ones l x)))
                                      :trainp trainp))
-                (funcall a ($affine (if ($parameterp x) ($data x) x) ($data w)
+                (funcall a ($affine x ($data w)
                                     (when b ($data b))
                                     (when b (affine-ones l x))))))
         (if trainp
@@ -247,10 +247,12 @@
                 ($execute bn ($affine x w b (affine-ones l x)) :trainp trainp)
                 ($affine x w b))
             (if bn
-                ($execute bn ($affine (if ($parameterp x) ($data x) x)
-                                      ($data w) (when b ($data b)) (when b (affine-ones l x)))
+                ($execute bn ($affine x ($data w)
+                                      (when b ($data b))
+                                      (when b (affine-ones l x)))
                           :trainp trainp)
-                ($affine (if ($parameterp x) ($data x) x) ($data w) (when b ($data b))
+                ($affine x ($data w)
+                         (when b ($data b))
                          (when b (affine-ones l x))))))))
 
 (defclass convolution-2d-layer (layer)
@@ -354,11 +356,11 @@
                 (funcall a ($conv2d x w b dw dh pw ph)))
             (if bn
                 (funcall a ($execute bn
-                                     ($conv2d (if ($parameterp x) ($data x) x) ($data w)
+                                     ($conv2d x ($data w)
                                               (when b ($data b))
                                               dw dh pw ph)
                                      :trainp nil))
-                (funcall a ($conv2d (if ($parameterp x) ($data x) x) ($data w)
+                (funcall a ($conv2d x ($data w)
                                     (when b ($data b))
                                     dw dh pw ph))))
         (if trainp
@@ -367,11 +369,11 @@
                 ($conv2d x w b dw dh pw ph))
             (if bn
                 ($execute bn
-                          ($conv2d (if ($parameterp x) ($data x) x) ($data w)
+                          ($conv2d x ($data w)
                                    (when b ($data b))
                                    dw dh pw ph)
                           :trainp nil)
-                ($conv2d (if ($parameterp x) ($data x) x) ($data w)
+                ($conv2d x ($data w)
                          (when b ($data b))
                          dw dh pw ph))))))
 
@@ -400,10 +402,9 @@
     n))
 
 (defmethod $execute ((l maxpool-2d-layer) x &key (trainp t))
+  (declare (ignore trainp))
   (with-slots (kw kh dw dh pw ph ceil-p) l
-    (if trainp
-        ($maxpool2d x kw kh dw dh pw ph ceil-p)
-        ($maxpool2d (if ($parameterp x) ($data x) x) kw kh dw dh pw ph ceil-p))))
+    ($maxpool2d x kw kh dw dh pw ph ceil-p)))
 
 (defclass avgpool-2d-layer (layer)
   ((kw :initform nil)
@@ -432,21 +433,19 @@
     n))
 
 (defmethod $execute ((l avgpool-2d-layer) x &key (trainp t))
+  (declare (ignore trainp))
   (with-slots (kw kh dw dh pw ph ceil-p count-p) l
-    (if trainp
-        ($avgpool2d x kw kh dw dh pw ph ceil-p)
-        ($avgpool2d (if ($parameterp x) ($data x) x) kw kh dw dh pw ph ceil-p count-p))))
+    ($avgpool2d x kw kh dw dh pw ph ceil-p)))
 
 (defclass flatten-layer (layer) ())
 
 (defun flatten-layer () (make-instance 'flatten-layer))
 
 (defmethod $execute ((l flatten-layer) x &key (trainp t))
+  (declare (ignore trainp))
   (let ((sz0 ($size x 0))
         (rsz (reduce #'* ($size x) :start 1)))
-    (if trainp
-        ($reshape x sz0 rsz)
-        ($reshape (if ($parameterp x) ($data x) x) sz0 rsz))))
+    ($reshape x sz0 rsz)))
 
 (defclass full-convolution-2d-layer (layer)
   ((w :initform nil)
@@ -554,11 +553,11 @@
                 (funcall a ($dconv2d x w b dw dh pw ph aw ah)))
             (if bn
                 (funcall a ($execute bn
-                                     ($dconv2d (if ($parameterp x) ($data x) x) ($data w)
+                                     ($dconv2d x ($data w)
                                                (when b ($data b))
                                                dw dh pw ph aw ah)
                                      :trainp nil))
-                (funcall a ($dconv2d (if ($parameterp x) ($data x) x) ($data w)
+                (funcall a ($dconv2d x ($data w)
                                      (when b ($data b))
                                      dw dh pw ph aw ah))))
         (if trainp
@@ -567,11 +566,11 @@
                 ($dconv2d x w b dw dh pw ph aw ah))
             (if bn
                 ($execute bn
-                          ($dconv2d (if ($parameterp x) ($data x) x) ($data w)
+                          ($dconv2d x ($data w)
                                     (when b ($data b))
                                     dw dh pw ph aw ah)
                           :trainp nil)
-                ($dconv2d (if ($parameterp x) ($data x) x) ($data w)
+                ($dconv2d x ($data w)
                           (when b ($data b))
                           dw dh pw ph aw ah))))))
 
@@ -585,10 +584,9 @@
     n))
 
 (defmethod $execute ((l reshape-layer) x &key (trainp t))
+  (declare (ignore trainp))
   (with-slots (rsizes) l
-    (if trainp
-        (apply #'$reshape x (cons ($size x 0) rsizes))
-        (apply #'$reshape (if ($parameterp x) ($data x) x) (cons ($size x 0) rsizes)))))
+    (apply #'$reshape x (cons ($size x 0) rsizes))))
 
 (defclass functional-layer (layer)
   ((f :initform nil)
