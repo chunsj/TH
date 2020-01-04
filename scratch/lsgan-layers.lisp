@@ -71,12 +71,9 @@
                                                      :activation :selu)
                                (reshape-layer 1)))
 
-(defparameter *lr* 1E-3)
+(defparameter *lr* 2E-4)
 
-(defun optim (model)
-  ($amgd! model *lr* 0.5 0.999)
-  ($cg! *generator*)
-  ($cg! *discriminator*))
+(defun optim (model) ($amgd! model *lr* 0.5 0.999))
 
 (defun generate (&key (trainp t))
   "generates fake images from random normal inputs"
@@ -92,7 +89,7 @@
 
 (defun train-discriminator (xs &optional verbose)
   "teaching discriminator how to discriminate reals from fakes"
-  (let* ((fake-scores (discriminate (generate)))
+  (let* ((fake-scores (discriminate (generate :trainp nil)))
          (real-scores (discriminate xs))
          (dloss (discriminator-loss fake-scores real-scores)))
     (when verbose (prn "  DL:" (if ($parameterp dloss) ($data dloss) dloss)))
@@ -103,7 +100,7 @@
 
 (defun train-generator (&optional verbose)
   "teaching generator how to create more real fakes"
-  (let* ((fake-scores (discriminate (generate)))
+  (let* ((fake-scores (discriminate (generate) :trainp nil))
          (gloss (generator-loss fake-scores)))
     (when verbose (prn "  GL:" (if ($parameterp gloss) ($data gloss) gloss)))
     (optim *generator*)))
@@ -135,7 +132,7 @@
                       :do (write-tensor-at img sx sy tx)))
     (opticl:write-png-file fname img)))
 
-(defun train (xs epoch idx)
+(defun train-batch (xs epoch idx)
   (let ((verbose (zerop (rem idx 50))))
     (when verbose (prn "EPOCH/IDX>" epoch ":" idx))
     (loop :for k :from 0 :below 1
@@ -148,17 +145,18 @@
         (outpngs generated fname)))
     (when verbose (th::report-foreign-memory-allocation))))
 
-(defparameter *epochs* 20)
+(defun train (epochs batches)
+  (with-foreign-memory-limit ()
+    (loop :for epoch :from 1 :to epochs
+          :do (loop :for xs :in batches
+                    :for idx :from 0
+                    :do (train-batch xs epoch idx)))))
 
-($reset! *generator*)
-($reset! *discriminator*)
+(defparameter *epochs* 40)
 
-(time
- (with-foreign-memory-limit ()
-   (loop :for epoch :from 1 :to *epochs*
-         :do (loop :for xs :in *mnist-batches*
-                   :for idx :from 0
-                   :do (train xs epoch idx)))))
+($reset! (list *generator* *discriminator*))
+
+(time (train *epochs* *mnist-batches*))
 
 (let ((generated (generate :trainp nil))
       (fname (format nil "~A/Desktop/images.png" (namestring (user-homedir-pathname)))))
