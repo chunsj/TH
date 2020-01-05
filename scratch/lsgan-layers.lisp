@@ -133,7 +133,7 @@
     (opticl:write-png-file fname img)))
 
 (defun train-batch (xs epoch idx)
-  (let ((verbose (zerop (rem idx 50))))
+  (let ((verbose (zerop (rem idx 100))))
     (when verbose (prn "EPOCH/IDX>" epoch ":" idx))
     (loop :for k :from 0 :below 1
           :do (train-discriminator xs verbose))
@@ -146,17 +146,18 @@
     (when verbose (th::report-foreign-memory-allocation))))
 
 (defun train (epochs batches)
-  (with-foreign-memory-limit ()
-    (loop :for epoch :from 1 :to epochs
-          :do (loop :for xs :in batches
-                    :for idx :from 0
-                    :do (train-batch xs epoch idx)))))
+  (loop :for epoch :from 1 :to epochs
+        :do (loop :for xs :in batches
+                  :for idx :from 0
+                  :do (train-batch xs epoch idx))))
 
 (defparameter *epochs* 40)
 
 ($reset! (list *generator* *discriminator*))
 
-(time (train *epochs* *mnist-batches*))
+(time
+ (with-foreign-memory-limit ()
+   (train *epochs* *mnist-batches*)))
 
 (let ((generated (generate :trainp nil))
       (fname (format nil "~A/Desktop/images.png" (namestring (user-homedir-pathname)))))
@@ -168,3 +169,4 @@
 
 (gcf)
 (setf *epochs* 1)
+(th::report-foreign-memory-allocation)
