@@ -36,6 +36,8 @@
 (defvar *custom-alloc-slots* (make-hash-table :synchronized t))
 #+ccl
 (defvar *custom-alloc-slots* (make-hash-table))
+#+ccl
+(defvar *custom-alloc-vectors* (make-hash-table))
 
 #+sbcl
 (defun allocated-slot-counts () ($count (hash-table-keys *custom-alloc-slots*)))
@@ -105,9 +107,10 @@
 #+ccl
 (cffi:defcallback malloc (:pointer :void) ((ctx :pointer) (size :long-long))
   (declare (ignore ctx))
-  (let ((p (cffi:foreign-alloc :char :count size)))
-    (setf ($ *custom-alloc-slots* (cffi:pointer-address p)) size)
-    p))
+  (multiple-value-bind (a ap) (ccl:make-heap-ivector size '(unsigned-byte 8))
+    (setf ($ *custom-alloc-slots* (cffi:pointer-address ap)) size)
+    (setf ($ *custom-alloc-vectors* (cffi:pointer-address ap)) a)
+    ap))
 
 #+sbcl
 (cffi:defcallback free :void ((ctx :pointer) (ptr :pointer))
@@ -118,7 +121,9 @@
 (cffi:defcallback free :void ((ctx :pointer) (ptr :pointer))
   (declare (ignore ctx))
   (remhash (cffi:pointer-address ptr) *custom-alloc-slots*)
-  (cffi:foreign-free ptr))
+  (let ((a ($ *custom-alloc-vectors* (cffi:pointer-address ptr))))
+    (remhash (cffi:pointer-address ptr) *custom-alloc-vectors*)
+    (ccl:dispose-heap-ivector a)))
 
 #+sbcl
 (defun use-custom-allocator ()
