@@ -71,7 +71,7 @@
                                                      :activation :selu)
                                (reshape-layer 1)))
 
-(defparameter *lr* 2E-4)
+(defparameter *lr* 4E-4)
 
 (defun optim (model) ($amgd! model *lr* 0.5 0.999))
 
