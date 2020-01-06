@@ -171,16 +171,16 @@
 (defparameter *original-gc-configs* (current-gc-configs))
 
 #+sbcl
-(defun limit-memory (&optional (l1 64))
+(defun limit-memory (&optional (l1 128))
   (sb-ext:gc :full t)
   (setf (sb-ext:bytes-consed-between-gcs) (* l1 1024) ;; was 8
-        (sb-ext:generation-bytes-consed-between-gcs 0) (* 32 1024)
-        (sb-ext:generation-bytes-consed-between-gcs 1) (* 16 1024)
-        (sb-ext:generation-bytes-consed-between-gcs 2) (* 8 1024)
-        (sb-ext:generation-bytes-consed-between-gcs 3) (* 4 1024)
-        (sb-ext:generation-bytes-consed-between-gcs 4) (* 2 1024)
-        (sb-ext:generation-bytes-consed-between-gcs 5) (* 1 1024)
-        (sb-ext:generation-bytes-consed-between-gcs 6) (* 1 512))
+        (sb-ext:generation-bytes-consed-between-gcs 0) (* 64 1024)
+        (sb-ext:generation-bytes-consed-between-gcs 1) (* 32 1024)
+        (sb-ext:generation-bytes-consed-between-gcs 2) (* 16 1024)
+        (sb-ext:generation-bytes-consed-between-gcs 3) (* 8 1024)
+        (sb-ext:generation-bytes-consed-between-gcs 4) (* 4 1024)
+        (sb-ext:generation-bytes-consed-between-gcs 5) (* 2 1024)
+        (sb-ext:generation-bytes-consed-between-gcs 6) (* 1 1024))
   (sb-ext:gc :full t))
 #-sbcl
 (defun limit-memory () (gcf))
@@ -200,7 +200,7 @@
 #-sbcl
 (defun restore-config () (gcf))
 
-(defmacro with-foreign-memory-limit ((&optional (l1 64)) &body body)
+(defmacro with-foreign-memory-limit ((&optional (l1 128)) &body body)
   (limit-memory l1)
   `(unwind-protect (progn ,@body)
      (restore-config)))
