@@ -142,6 +142,7 @@
 (defgeneric $mish (x) (:documentation "self regularized non-monotonic activation function."))
 (defgeneric $swish (x) (:documentation "swish activation function."))
 (defgeneric $gelu (x) (:documentation "gaussian error linear units activation function."))
+(defgeneric $celu (x &optional α) (:documentation "continuously differentiable exponential LU."))
 
 (defmethod $relu ((x number)) (max 0 x))
 
@@ -288,3 +289,8 @@
   ($* 0.5 x ($+ 1 ($tanh ($* (sqrt (/ 2 pi)) ($+ x ($* 0.044715 x x x)))))))
 (defmethod $gelu ((x node))
   ($* 0.5 x ($+ 1 ($tanh ($* (sqrt (/ 2 pi)) ($+ x ($* 0.044715 x x x)))))))
+
+(defmethod $celu ((x number) &optional (α 1))
+  (cond ((>= x 0) x)
+        (* α (- (exp (/ x α)) 1))))
+;; XXX for tensor we need C implementation for efficiency

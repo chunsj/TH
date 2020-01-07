@@ -361,6 +361,7 @@
            #:$mish
            #:$swish
            #:$gelu
+           #:$celu
            #:$bnorm
            #:$bn
            #:$dropout
