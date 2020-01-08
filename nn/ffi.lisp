@@ -931,6 +931,42 @@
   (train :char)
   (inplace :char))
 
+;; [OUT] output
+(cffi:defcfun ("THNN_FloatSELU_updateOutput" thnn-float-selu-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (alpha :double)
+  (lmbda :double)
+  (in-place :char))
+(cffi:defcfun ("THNN_DoubleSELU_updateOutput" thnn-double-selu-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (alpha :double)
+  (lmbda :double)
+  (in-place :char))
+
+;; [OUT] grad-input
+(cffi:defcfun ("THNN_FloatSELU_updateGradInput" thnn-float-selu-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (alpha :double)
+  (lmbda :double)
+  (in-place :char))
+(cffi:defcfun ("THNN_DoubleSELU_updateGradInput" thnn-double-selu-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (alpha :double)
+  (lmbda :double)
+  (in-place :char))
+
 ;; [BUFFER] buffer
 (cffi:defcfun ("THNN_FloatSigmoid_updateOutput" thnn-float-sigmoid-update-output) :void
   (state thnn-state-ptr)

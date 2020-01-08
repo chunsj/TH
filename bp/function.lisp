@@ -205,13 +205,22 @@
 
 (defmethod $selu ((x tensor))
   (let ((alpha 1.6732632423543772848170429916717)
-        (scale 1.0507009873554804934193349852946))
-    ($* ($elu x alpha) scale)))
+        (scale 1.0507009873554804934193349852946)
+        (output ($clear x)))
+    (nn-selu-update-output x output alpha scale nil)
+    output))
+
+(defun dselu (input output gradient &optional (alpha 1) (scale 1))
+  (let ((dinput ($clear output)))
+    (nn-selu-update-grad-input input gradient dinput output alpha scale nil)
+    dinput))
 
 (defmethod $selu ((x node))
   (let ((alpha 1.6732632423543772848170429916717)
         (scale 1.0507009873554804934193349852946))
-    ($* ($elu x alpha) scale)))
+    (node ($selu ($data x))
+          :name :selu
+          :link (link (to x (dselu ($data x) dv gv alpha scale))))))
 
 (defmethod $softmax ((x tensor))
   (let ((output ($clear x)))
