@@ -264,6 +264,38 @@
   (alpha :double)
   (in-place :char))
 
+;; [OUT] output
+(cffi:defcfun ("THNN_FloatCELU_updateOutput" thnn-float-celu-update-output) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (alpha :double)
+  (in-place :char))
+(cffi:defcfun ("THNN_DoubleCELU_updateOutput" thnn-double-celu-update-output) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (alpha :double)
+  (in-place :char))
+
+;; [OUT] grad-input
+(cffi:defcfun ("THNN_FloatCELU_updateGradInput" thnn-float-celu-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-float-tensor-ptr)
+  (grad-output th-float-tensor-ptr)
+  (grad-input th-float-tensor-ptr)
+  (output th-float-tensor-ptr)
+  (alpha :double)
+  (in-place :char))
+(cffi:defcfun ("THNN_DoubleCELU_updateGradInput" thnn-double-celu-update-grad-input) :void
+  (state thnn-state-ptr)
+  (input th-double-tensor-ptr)
+  (grad-output th-double-tensor-ptr)
+  (grad-input th-double-tensor-ptr)
+  (output th-double-tensor-ptr)
+  (alpha :double)
+  (in-place :char))
+
 (cffi:defcfun ("THNN_FloatGatedLinear_updateOutput"
                thnn-float-gated-linear-update-output) :void
   (state thnn-state-ptr)

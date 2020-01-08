@@ -293,4 +293,18 @@
 (defmethod $celu ((x number) &optional (α 1))
   (cond ((>= x 0) x)
         (* α (- (exp (/ x α)) 1))))
-;; XXX for tensor we need C implementation for efficiency
+
+(defmethod $celu ((x tensor) &optional (α 1))
+  (let ((output ($clear x)))
+    (nn-celu-update-output x output α nil)
+    output))
+
+(defun dcelu (input output gradient &optional (alpha 1))
+  (let ((dinput ($clear output)))
+    (nn-celu-update-grad-input input gradient dinput output alpha nil)
+    dinput))
+
+(defmethod $celu ((x node) &optional (α 1))
+  (node ($celu ($data x) α)
+        :name :celu
+        :link (link (to x (dcelu ($data x) dv gv α)))))
