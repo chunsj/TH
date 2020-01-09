@@ -67,16 +67,16 @@
                                                *filter-number*
                                                *filter-width*
                                                *filter-height*
-                                               :activation :relu
-                                               :batch-normalization-p t)
+                                               :activation :selu
+                                               :batch-normalization-p nil)
                          (maxpool-2d-layer *pool-width* *pool-height*
                                            :stride-width *pool-stride-width*
                                            :stride-height *pool-stride-height*)
                          (flatten-layer)
                          (affine-layer (* *filter-number* *pool-out-width* *pool-out-height*)
                                        *l2-output*
-                                       :activation :relu
-                                       :batch-normalization-p t)
+                                       :activation :selu
+                                       :batch-normalization-p nil)
                          (affine-layer *l2-output* *l3-output*
                                        :activation :softmax)))
 
