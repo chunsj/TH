@@ -6,7 +6,8 @@
   (:use #:common-lisp
         #:mu
         #:th
-        #:th.image))
+        #:th.image
+        #:th.db.cats-and-dogs))
 
 (in-package :cats-and-dogs)
 
