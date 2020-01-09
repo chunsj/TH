@@ -95,8 +95,10 @@
             Refer generate-mnist-data function in db/mnist.lisp file.
   2. Fashion MNIST: db/fashion.lisp, same as above mnist data.
   3. CIFAR-10/CIFAR-100: db/cifar.lisp, same as above mnist data.
-  4. IMDB: db/imdb.lisp
-  5. Misc CSV Files: data
+  4. CelebA: db/celeba.list, resized dataset for faster loading.
+  5. Cats and Dogs: db/cats-and-dogs.lisp, resized dataset for faster loading.
+  6. IMDB: db/imdb.lisp
+  7. Misc CSV Files: data
 
 ## On Scratch
   1. Most of the code in this folder is just for testing, teasing, or random trashing.
