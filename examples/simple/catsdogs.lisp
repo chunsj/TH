@@ -80,7 +80,7 @@
 
 (defun network (x &optional (trainp t)) ($execute *network* x :trainp trainp))
 
-($cg! *network*)
+($reset! *network*)
 (gcf)
 
 (defun opt! (parameters) ($amgd! parameters 1E-4))
@@ -99,20 +99,13 @@
                      :do (let* ((y* (network data))
                                 (loss ($bce y* labels)))
                            (prn epoch "|" bidx ($data loss))
-                           (opt! *network)))
+                           (opt! *network*)))
                (when (zerop (rem epoch 5))
                  (let* ((res (network *test-data* nil))
                         (fres (tensor.float ($ge res 0.5)))
                         (d ($- fres *test-labels*)))
-                   (prn "IDX:" idx "ERROR:" (/ ($dot d d) 1000))
+                   (prn "TEST ERROR:" (/ ($dot d d) 1000))
                    ($cg! *network*)))))))
-
-(let* ((idx (random *train-size*))
-       (data (nth idx *train-data*))
-       (lbl (nth idx *train-labels*))
-       (y (network data nil))
-       (res (tensor.float ($ge y 0.5))))
-  (prn res))
 
 ;; train check
 (let* ((idx (random *train-size*))
