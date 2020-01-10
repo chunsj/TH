@@ -84,7 +84,7 @@
 
 (defun opt! () ($amgd! *network* 1E-4))
 
-(defparameter *epoch* 60)
+(defparameter *epoch* 60) ;; at least 120
 (defparameter *train-size* ($count *train-data*))
 
 (time
