@@ -136,3 +136,4 @@
   (write-tensors-png-file xs fname))
 
 (gcf)
+(setf *epochs* 1)
