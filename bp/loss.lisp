@@ -4,7 +4,7 @@
 
 (defgeneric $bce (a b) (:documentation "Binary cross entropy loss function."))
 (defgeneric $mse (a b) (:documentation "Mean squared error loss function."))
-(defgeneric $cee (a b) (:documentation "Cross entroy loss function."))
+(defgeneric $cee (a b) (:documentation "Cross entropy loss function."))
 (defgeneric $cnll (a b) (:documentation "Class negative log likelihood loss function."))
 (defgeneric $cec (a b) (:documentation "Class negative log likelihood over log softmax."))
 
