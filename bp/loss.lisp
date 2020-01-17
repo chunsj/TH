@@ -2,11 +2,12 @@
 
 (in-package :th)
 
-(defgeneric $bce (a b) (:documentation "Binary cross entropy loss function."))
-(defgeneric $mse (a b) (:documentation "Mean squared error loss function."))
-(defgeneric $cee (a b) (:documentation "Cross entropy loss function."))
-(defgeneric $cnll (a b) (:documentation "Class negative log likelihood loss function."))
-(defgeneric $cec (a b) (:documentation "Class negative log likelihood over log softmax."))
+(defgeneric $bce (input target) (:documentation "Binary cross entropy loss function."))
+(defgeneric $bce* (input target) (:documentation "BCE with logit input."))
+(defgeneric $mse (input target) (:documentation "Mean squared error loss function."))
+(defgeneric $cee (input target) (:documentation "Cross entropy loss function."))
+(defgeneric $cnll (input target) (:documentation "Class negative log likelihood loss function."))
+(defgeneric $cec (input target) (:documentation "Class negative log likelihood over log softmax."))
 
 (defmethod $bce ((a tensor) (b tensor))
   (let ((output ($resize! ($empty a) '(1))))
@@ -34,6 +35,27 @@
   (node ($bce a ($data b))
         :name :bce
         :link (link (to b (dbce ($data b) a)))))
+
+(defmethod $bce* ((input tensor) (target tensor))
+  (let* ((neg-abs ($- ($abs input)))
+         (loss ($add! ($- ($clamp input 0 1E38)
+                          ($* input target))
+                      ($log1p ($exp neg-abs)))))
+    ($mean loss)))
+
+(defmethod $bce* ((input node) (target tensor))
+  (let* ((neg-abs ($- ($abs input)))
+         (loss ($+ ($- ($clamp input 0 1E38)
+                       ($* input target))
+                   ($log1p ($exp neg-abs)))))
+    ($mean loss)))
+
+(defmethod $bce* ((input node) (target node))
+  (let* ((neg-abs ($- ($abs input)))
+         (loss ($+ ($- ($clamp input 0 1E38)
+                       ($* input target))
+                   ($log1p ($exp neg-abs)))))
+    ($mean loss)))
 
 (defmethod $mse ((a tensor) (b tensor))
   (let ((output ($resize! ($empty a) '(1))))

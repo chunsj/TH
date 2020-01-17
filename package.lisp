@@ -347,6 +347,7 @@
            #:$rmgd!
            #:$adgd!
            #:$bce
+           #:$bce*
            #:$cee
            #:$mse
            #:$cnll
