@@ -89,6 +89,11 @@
         :name :log
         :link (link (to x ($mul! (dlog ($data x)) gv)))))
 
+(defmethod $log1p ((x node))
+  (node ($log1p ($data x))
+        :name :log1p
+        :link (link (to x ($mul! ($cinv ($+ ($data x) 1)) gv)))))
+
 (defmethod $sin ((x node))
   (node ($sin ($data x))
         :name :sin
