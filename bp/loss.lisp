@@ -36,6 +36,7 @@
         :name :bce
         :link (link (to b (dbce ($data b) a)))))
 
+;; this is bce with contained sigmoid, you don't have to process input with sigmoid
 (defmethod $bce* ((input tensor) (target tensor))
   (let* ((neg-abs ($- ($abs input)))
          (loss ($add! ($- ($clamp input 0 1E38)
