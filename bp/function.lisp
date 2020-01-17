@@ -132,6 +132,22 @@
         :name :sign
         :link (link (to x ($zero gv)))))
 
+(defgeneric $square (x) (:documentation "Square function."))
+
+(defmethod $square ((x number)) (* x x))
+
+(defmethod $square ((x tensor))
+  (let ((output ($clear x)))
+    (nn-square-update-output x output)
+    output))
+
+(defmethod $square ((x node))
+  (node ($square ($data x))
+        :name :square
+        :link (link (to x (let ((dx ($clear ($data x))))
+                            (nn-square-update-grad-input ($data x) gv dx)
+                            dx)))))
+
 (defgeneric $relu (x) (:documentation "RELU activation function."))
 (defgeneric $lrelu (x &optional nv) (:documentation "Leaky RELU activation function."))
 (defgeneric $elu (x &optional α) (:documentation "Exponential LU activation function."))

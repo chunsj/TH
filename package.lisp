@@ -351,6 +351,7 @@
            #:$mse
            #:$cnll
            #:$cec
+           #:$square
            #:$relu
            #:$lrelu
            #:$elu
