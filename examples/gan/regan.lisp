@@ -89,7 +89,6 @@
   "check whether inputs are real or fake"
   ($execute *discriminator* xs :trainp trainp))
 
-;; XXX from this, changes for ReGAN should be done
 (defun train-discriminator (xs &optional verbose)
   "teaching discriminator how to discriminate reals from fakes"
   (let* ((fake-scores (discriminate (generate)))
@@ -129,7 +128,7 @@
    (loop :for epoch :from 1 :to *epochs*
          :do (loop :for xs :in *mnist-batches*
                    :for idx :from 0
-                   :do (train xs fs epoch idx)))))
+                   :do (train xs epoch idx)))))
 
 (let ((generated (generate :trainp nil))
       (fname (format nil "~A/Desktop/images.png" (namestring (user-homedir-pathname)))))
