@@ -1,9 +1,10 @@
 # My Deep Learning Library for Common Lisp using libTH/libTHNN
 
-## NEWS (2019-12-26)
-  Clozure CL runs TH codes very well. Even more, CCL does not yet show memory trashing problems.
+## NEWS (2020-01-20)
+  I think current state of TH is generally usable. And yet, needs more examples.
 
 ## OLD NEWS
+  20191226: Clozure CL runs TH codes very well. Often, CCL does not yet show memory trashing problems.
   20191216: Version 1.44 of TH runs all the code under examples without problem; including dlfs and gdl.
   This code runs on Clozure CL as well as SBCL; however, SBCL shows much better performance.
 
