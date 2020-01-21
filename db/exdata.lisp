@@ -1,7 +1,8 @@
 (defpackage :th.ex.data
   (:use #:common-lisp
         #:mu)
-  (:export #:text-lines))
+  (:export #:text-lines
+           #:ptb))
 
 (in-package :th.ex.data)
 
@@ -13,3 +14,7 @@
         ((eq file :obama) (read-lines-from (data-filename "obama.txt")))
         ((eq file :pg) (read-lines-from (data-filename "pg.txt")))
         ((eq file :small-pg) (read-lines-from (data-filename "pgsmall.txt")))))
+
+(defun ptb ()
+  (mapcar (lambda (line) (strim (concatenate 'string line "<eos>")))
+          (read-lines-from (data-filename "ptb.txt"))))
