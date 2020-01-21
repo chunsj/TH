@@ -1,7 +1,9 @@
 (defpackage :dlfs2-ch2
   (:use #:common-lisp
         #:mu
-        #:th))
+        #:th
+        #:th.ex.data
+        #:mplot))
 
 (in-package :dlfs2-ch2)
 
@@ -160,4 +162,26 @@ is replaced with replacement."
                  :for xy = (list ($ *u* id 0) ($ *u* id 1))
                  :collect (cons word xy))))
   (prn dxy)
-  (mplot:plot-points (mapcar #'cdr dxy) :xrange '(-0.1 0.8) :yrange '(-0.7 0.1)))
+  (plot-points (mapcar #'cdr dxy) :xrange '(-0.1 0.8) :yrange '(-0.7 0.1)))
+
+(defparameter *word-to-id* #{})
+(defparameter *id-to-word* #{})
+
+(loop :for line :in (ptb)
+      :do (let ((words (split #\space line)))
+            (loop :for word :in words
+                  :when (null ($ *word-to-id* word nil))
+                    :do (let ((new-id ($count *word-to-id*)))
+                          (setf ($ *word-to-id* word) new-id
+                                ($ *id-to-word* new-id) word)))))
+
+(defparameter *corpus*
+  (loop :for line :in (ptb)
+        :for words = (split #\space line)
+        :appending (loop :for word :in words
+                         :collect ($ *word-to-id* word))))
+
+(defparameter *vocab-size* ($count *word-to-id*))
+
+;; too big or my create co-occurence matrix algorithm is bad
+(defparameter *c* (create-coccurence-matrix *corpus* *vocab-size* :window-size 2))
