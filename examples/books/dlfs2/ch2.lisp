@@ -118,3 +118,25 @@ is replaced with replacement."
               (getf *data* :id-to-word)
               *coccurence*
               :top 5)
+
+(defun ppmi (coccurrence &key verbose (eps 1E-8))
+  (let ((m ($zero coccurrence))
+        (n ($sum coccurrence))
+        (s ($sum coccurrence 0))
+        (total (* ($size coccurrence 0)
+                  ($size coccurrence 1)))
+        (cnt 0))
+    (loop :for i :from 0 :below ($size coccurrence 0)
+          :do (loop :for j :from 0 :below ($size coccurrence 1)
+                    :for pmi = (log (+ eps (/ (* ($ coccurrence i j) N)
+                                              (* ($ s 0 j) ($ s 0 i))))
+                                    2)
+                    :do (progn
+                          (setf ($ m i j) (max 0 pmi))
+                          (when verbose
+                            (incf cnt)
+                            (when (zerop (rem cnt (round (/ total 100))))
+                              (prn (format nil "~,1F% completed" (* 100 (/ cnt total)))))))))
+    m))
+
+(prn (ppmi *coccurence*))
