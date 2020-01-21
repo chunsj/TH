@@ -140,3 +140,24 @@ is replaced with replacement."
     m))
 
 (prn (ppmi *coccurence*))
+
+(defparameter *w* (ppmi *coccurence*))
+
+(prn ($svd *w*))
+
+(let ((usv ($svd *w*)))
+  (defparameter *u* (car usv))
+  (defparameter *s* (cadr usv))
+  (defparameter *v* (caddr usv)))
+
+(prn ($ *coccurence* 0))
+(prn ($ *w* 0))
+(prn ($ *u* 0))
+(prn ($index ($ *u* 0) 0 '(0 1)))
+
+(let ((dxy (loop :for word :in (hash-table-keys (getf *data* :word-to-id))
+                 :for id = ($ (getf *data* :word-to-id) word)
+                 :for xy = (list ($ *u* id 0) ($ *u* id 1))
+                 :collect (cons word xy))))
+  (prn dxy)
+  (mplot:plot-points (mapcar #'cdr dxy) :xrange '(-0.1 0.8) :yrange '(-0.7 0.1)))
