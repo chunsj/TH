@@ -70,7 +70,7 @@
                                (convolution-2d-layer 16 1 3 3
                                                      :weight-initializer :random-normal
                                                      :weight-initialization '(0 0.02)
-                                                     :activation :selu)
+                                                     :activation :nil)
                                (reshape-layer 1)))
 
 (defparameter *lr* 1E-3)
