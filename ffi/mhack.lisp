@@ -171,9 +171,9 @@
 (defparameter *original-gc-configs* (current-gc-configs))
 
 #+sbcl
-(defun limit-memory (&optional (l1 128))
+(defun limit-memory (l1)
   (sb-ext:gc :full t)
-  (setf (sb-ext:bytes-consed-between-gcs) (* l1 1024) ;; was 8
+  (setf (sb-ext:bytes-consed-between-gcs) (* l1 1024)
         (sb-ext:generation-bytes-consed-between-gcs 0) (* 64 1024)
         (sb-ext:generation-bytes-consed-between-gcs 1) (* 32 1024)
         (sb-ext:generation-bytes-consed-between-gcs 2) (* 16 1024)
