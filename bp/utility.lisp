@@ -8,6 +8,7 @@
 (defgeneric $addm2 (x1 w1 x2 w2) (:documentation "x1*w1 + x2*w2"))
 
 (defgeneric $wimb (xwi w) (:documentation "Computes word embedding."))
+(defgeneric $wemb (xoh w) (:documentation "Computes word embedding with one hot encoding."))
 
 (defgeneric $rn! (tensor &optional µ σ) (:documentation "Fills with random normal."))
 (defgeneric $rnt! (tensor &optional µ σ) (:documentation "Fills with truncated random normal."))
@@ -344,6 +345,9 @@
 (defmethod $wimb ((xwi list) (w node)) ($sum ($index w 0 xwi) 0))
 (defmethod $wimb ((xwi tensor.int) (w node)) ($sum ($index w 0 xwi) 0))
 (defmethod $wimb ((xwi tensor.long) (w node)) ($sum ($index w 0 xwi) 0))
+
+(defmethod $wemb ((xoh tensor) (w tensor)) ($wimb ($select ($nonzero xoh) 1 1) w))
+(defmethod $wemb ((xoh tensor) (w node)) ($wimb ($select ($nonzero xoh) 1 1) w))
 
 (defmethod $rn! ((tensor tensor) &optional (mean 0) (sd 0.05))
   ($add! ($mul! (tensor-randn tensor ($size tensor)) sd) mean)

@@ -381,6 +381,7 @@
            #:$addm2
            #:$xwpb
            #:$wimb
+           #:$wemb
            #:$rnn
            #:$lstm
            #:$rn!
