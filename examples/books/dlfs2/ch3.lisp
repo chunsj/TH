@@ -2,7 +2,8 @@
   (:use #:common-lisp
         #:mu
         #:th
-        #:th.ex.data))
+        #:th.ex.data
+        #:th.text))
 
 (in-package :dlfs-ch3)
 

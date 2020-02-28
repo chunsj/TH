@@ -1,5 +1,3 @@
-(ql:quickload :th.text)
-
 (defpackage :dlfs2-ch2
   (:use #:common-lisp
         #:mu
