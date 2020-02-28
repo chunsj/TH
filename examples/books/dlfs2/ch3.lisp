@@ -7,4 +7,9 @@
 
 (in-package :dlfs-ch3)
 
-;; maybe i need to create th.text package as th.image
+(let* ((c (tensor '((1 0 0 0 0 0 1))))
+       (c2 ($select ($nonzero c) 1 1))
+       (w (rndn 7 3)))
+  (prn ($@ c w))
+  (prn ($wimb c2 w))
+  (prn ($wemb c w)))
