@@ -286,6 +286,7 @@
            #:$ev!
            #:$svd
            #:$svd!
+           #:$rsvd
            #:$inverse
            #:$inverse!
            #:$qr

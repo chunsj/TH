@@ -503,6 +503,8 @@
 (defgeneric $svd (a &optional all) (:documentation "Returns (u, s, v) of a."))
 (defgeneric $svd! (u s v a &optional all) (:documentation "Returns (u, s, v) of a."))
 
+(defgeneric $rsvd (m &optional k) (:documentation "simple randomized svd"))
+
 (defgeneric $inverse (a) (:documentation "Returns inverse of a."))
 (defgeneric $inverse! (r a) (:documentation "Returns r = inverse of a."))
 
