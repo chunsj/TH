@@ -94,5 +94,5 @@
 
 (defparameter *w* (ppmi *c* :verbose t))
 
-;; XXX this should be done with randomized SVD
-(defparameter *trsvd-usv* ($svd *w*))
+;; this should be done with randomized SVD or very slow
+(defparameter *trsvd-usv* ($rsvd *w* 100))
