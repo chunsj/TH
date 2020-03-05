@@ -96,3 +96,4 @@
 
 ;; this should be done with randomized SVD or very slow
 (defparameter *trsvd-usv* ($rsvd *w* 100))
+(prn *trsvd-usv*)
