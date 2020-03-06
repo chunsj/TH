@@ -59,6 +59,8 @@
   (defparameter *s* (cadr usv))
   (defparameter *v* (caddr usv)))
 
+(prn *u* *s* *v*)
+
 (prn ($ *com* 0))
 (prn ($ *w* 0))
 (prn ($ *u* 0))
@@ -95,5 +97,9 @@
 (defparameter *w* (ppmi *c* :verbose t))
 
 ;; this should be done with randomized SVD or very slow
-(defparameter *trsvd-usv* ($rsvd *w* 100))
-(prn *trsvd-usv*)
+(let ((usv ($rsvd *w* 100)))
+  (defparameter *u* (car usv))
+  (defparameter *s* (cadr usv))
+  (defparameter *v* (caddr usv)))
+
+(prn *u*)
