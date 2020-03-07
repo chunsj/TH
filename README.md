@@ -35,6 +35,8 @@
   will need libTHCTensor and libTHCNeual under torch installation directory.
   For this recent changes in libraries, there might be still some problems due to the function
   signature changes between aten and TH/THNN, these problems are under investigation and fixing.
+  You'd better use MKL version of libTH on macOS; eigenvalue/vector related routines emits error
+  if libTH uses Accelerator.framework.
 
 ## How to Load
   1. Build https://bitbucket.org/chunsj/libth/src/master/ and install two libraries.
