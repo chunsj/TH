@@ -1271,7 +1271,7 @@
       hist)
     (defmethod tensor-mean-all ((tensor tensor.type)) (ft-tensor-mean-all ($handle tensor)))
     (defmethod tensor-var-all ((tensor tensor.type) &optional biased)
-      (ft-tensor-var-all ($handle tensor) (if biased 1 0)))
+      (ft-tensor-varall ($handle tensor) (if biased 1 0)))
     (defmethod tensor-sd-all ((tensor tensor.type) &optional biased)
       (ft-tensor-std-all ($handle tensor) (if biased 1 0)))
     (defmethod tensor-norm-all ((tensor tensor.type) value)

@@ -384,6 +384,7 @@
     ("mean" mean :void (result tensorptr) (tensor tensorptr) (dim :int) (keep-dim :int))
     ("std" std :void (result tensorptr) (tensor tensorptr) (dim :int) (biased :int) (keep-dim :int))
     ("var" var :void (result tensorptr) (tensor tensorptr) (dim :int) (biased :int) (keep-dim :int))
+    ("varall" varall :double (tensor tensorptr) (biased :int))
     ("norm" norm :void (res tensorptr) (tensor tensorptr) (value real) (dim :int) (keep-dim :int))
     ("renorm" renorm :void (res tensorptr) (tensor tensorptr) (value real) (dim :int) (maxnorm real))
     ("dist" dist acreal (a tensorptr) (b tensorptr) (value real))
