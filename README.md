@@ -120,3 +120,4 @@
   1. Check and update examples to use the with-foreign-memory-limit macro. Check performance as well.
   2. Apply new layer based API, though I don't like it I cannot yet find better alternative.
   3. More application examples, especially other machine learning algorithms than neural network.
+  4. Find why using Accelerator.framework makes geev emits floating point overflow error.
