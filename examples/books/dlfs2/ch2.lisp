@@ -103,3 +103,7 @@
   (defparameter *v* (caddr usv)))
 
 (prn *u*)
+
+(let ((qry '("you" "year" "car" "toyota")))
+  (loop :for w :in qry
+        :do (prn (most-similar w *ptb-wm* *c* :top 5))))
