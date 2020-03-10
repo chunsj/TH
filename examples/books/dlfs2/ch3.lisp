@@ -58,4 +58,56 @@
   (prn (getf ct :target))
   (prn ($ (getf ct :contexts) 0)))
 
-($wimb)
+(defparameter *ct* (create-contexts-target (getf *data* :corpus)))
+
+(defun convert-one-hot (x sz)
+  (cond ((eq ($ndim x) 1)
+         (let ((r (zeros ($size x 0) sz)))
+           (loop :for i :from 0 :below ($size x 0)
+                 :for v = ($ x i)
+                 :do (setf ($ r i (round v)) 1))
+           r))
+        ((eq ($ndim x) 2)
+         (let ((r (zeros ($size x 0) ($size x 1) sz)))
+           (loop :for i :from 0 :below ($size x 0)
+                 :for v = ($ x i)
+                 :do (loop :for j :from 0 :below ($size v 0)
+                           :for vv = ($ v j)
+                           :do (setf ($ r i j (round vv)) 1)))
+           r))
+        (T (error "cannot convert tensor of ~A dimension" ($ndim x)))))
+
+(let ((ct *ct*))
+  (prn (getf ct :target))
+  (prn (convert-one-hot (getf ct :target) (getf *data* :vocab-size)))
+  (prn (getf ct :contexts))
+  (prn (convert-one-hot (getf ct :contexts) (getf *data* :vocab-size))))
+
+(prn ($squeeze ($index (convert-one-hot (getf *ct* :contexts) (getf *data* :vocab-size)) 1 '(1))))
+
+(defparameter *hidden-size* 5)
+(defparameter *win* ($parameter (rndn (getf *data* :vocab-size) *hidden-size*)))
+(defparameter *wout* ($parameter (rndn *hidden-size* (getf *data* :vocab-size))))
+
+(defun forward (contexts)
+  (let ((h0 ($@ ($squeeze ($index contexts 1 '(0))) *win*))
+        (h1 ($@ ($squeeze ($index contexts 1 '(1))) *win*)))
+    ($@ ($* 0.5 ($+ h0 h1)) *wout*)))
+
+(defun loss (h target) ($cee ($softmax h) target))
+
+($cg! (list *win* *wout*))
+
+(let ((contexts (convert-one-hot (getf *ct* :contexts) (getf *data* :vocab-size)))
+      (target (convert-one-hot (getf *ct* :target) (getf *data* :vocab-size))))
+  (with-foreign-memory-limit ()
+    (loop :for epoch :from 0 :below 1000
+          :do (let ((loss (loss (forward contexts) target)))
+                (prn loss)
+                ($amgd! (list *win* *wout*))))))
+
+(gcf)
+
+(loop :for wid :being :the :hash-keys :of (getf *data* :index-to-word)
+      :for word = ($ (getf *data* :index-to-word) wid)
+      :do (format T "~A~%~A~%" word ($ ($data  *win*) wid)))
