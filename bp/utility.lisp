@@ -9,6 +9,7 @@
 
 (defgeneric $wimb (xwi w) (:documentation "Computes word embedding."))
 (defgeneric $wemb (xoh w) (:documentation "Computes word embedding with one hot encoding."))
+(defgeneric $embedding (indices weight) (:documentation "Embedding operation using indices."))
 
 (defgeneric $rn! (tensor &optional µ σ) (:documentation "Fills with random normal."))
 (defgeneric $rnt! (tensor &optional µ σ) (:documentation "Fills with truncated random normal."))
@@ -348,6 +349,40 @@
 
 (defmethod $wemb ((xoh tensor) (w tensor)) ($wimb ($select ($nonzero xoh) 1 1) w))
 (defmethod $wemb ((xoh tensor) (w node)) ($wimb ($select ($nonzero xoh) 1 1) w))
+
+(defmethod $embedding ((indices tensor.long) (weight tensor))
+  (cond ((eq 1 ($ndim indices)) ($index weight 0 indices))
+        (T (let* ((sz ($size indices))
+                  (nz ($count indices))
+                  (nsz (append sz (list ($size weight 1)))))
+             (apply #'$view ($index weight 0 ($reshape indices nz)) nsz)))))
+
+(defmethod $embedding ((indices tensor.int) (weight tensor))
+  (cond ((eq 1 ($ndim indices)) ($index weight 0 indices))
+        (T (let* ((sz ($size indices))
+                  (nz ($count indices))
+                  (nsz (append sz (list ($size weight 1)))))
+             (apply #'$view ($index weight 0 ($reshape indices nz)) nsz)))))
+
+(defmethod $embedding ((indices list) (weight tensor))
+  ($embedding (tensor.long indices) weight))
+
+(defmethod $embedding ((indices tensor.long) (weight node))
+  (cond ((eq 1 ($ndim indices)) ($index weight 0 indices))
+        (T (let* ((sz ($size indices))
+                  (nz ($count indices))
+                  (nsz (append sz (list ($size weight 1)))))
+             (apply #'$view ($index weight 0 ($reshape indices nz)) nsz)))))
+
+(defmethod $embedding ((indices tensor.int) (weight node))
+  (cond ((eq 1 ($ndim indices)) ($index weight 0 indices))
+        (T (let* ((sz ($size indices))
+                  (nz ($count indices))
+                  (nsz (append sz (list ($size weight 1)))))
+             (apply #'$view ($index weight 0 ($reshape indices nz)) nsz)))))
+
+(defmethod $embedding ((indices list) (weight node))
+  ($embedding (tensor.long indices) weight))
 
 (defmethod $rn! ((tensor tensor) &optional (mean 0) (sd 0.05))
   ($add! ($mul! (tensor-randn tensor ($size tensor)) sd) mean)

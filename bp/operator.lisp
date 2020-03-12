@@ -387,6 +387,24 @@
                                   (apply #'$reshape gv ($size gs)))
                             g)))))
 
+(defmethod $index ((x node) dimension (indices tensor.long))
+  (node ($index ($data x) dimension indices)
+        :name :index
+        :link (link (to x (let* ((g ($zero ($data x)))
+                                 (gs ($index g dimension indices)))
+                            (setf ($index g dimension indices)
+                                  (apply #'$reshape gv ($size gs)))
+                            g)))))
+
+(defmethod $index ((x node) dimension (indices tensor.int))
+  (node ($index ($data x) dimension indices)
+        :name :index
+        :link (link (to x (let* ((g ($zero ($data x)))
+                                 (gs ($index g dimension indices)))
+                            (setf ($index g dimension indices)
+                                  (apply #'$reshape gv ($size gs)))
+                            g)))))
+
 (defmethod $index ((x node) dimension (index number))
   (node ($index ($data x) dimension index)
         :name :index

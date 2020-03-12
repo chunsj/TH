@@ -383,6 +383,7 @@
            #:$xwpb
            #:$wimb
            #:$wemb
+           #:$embedding
            #:$rnn
            #:$lstm
            #:$rn!
