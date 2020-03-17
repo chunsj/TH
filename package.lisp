@@ -381,6 +381,7 @@
            #:$affine2
            #:$addm2
            #:$xwpb
+           #:$choice
            #:$wimb
            #:$wemb
            #:$embedding
