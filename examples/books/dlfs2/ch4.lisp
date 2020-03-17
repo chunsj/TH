@@ -7,14 +7,8 @@
 
 (in-package :dlfs-ch4)
 
-;; for choice
-(think-bayes::rand (think-bayes::pmf :histogram '(("a" . 10) ("b" . 20) ("c" . 70))))
-(defun choice (elements probs)
-  (let ((pmf (think-bayes::pmf :histogram (loop :for e :in elements
-                                                :for p :in probs
-                                                :collect (cons e p)))))
-    (think-bayes::rand pmf)))
-(prn (loop :for i :from 0 :below 10 :collect (choice '(:a :b :c) '(10 20 70))))
+;; choice
+(prn (loop :for i :from 0 :below 10 :collect (choice '(:a :b :c) '(0.1 0.2 0.7))))
 
 (defun wimb (x w)
   (cond ((atom (car x)) ($wimb x w))
