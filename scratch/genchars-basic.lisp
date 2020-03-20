@@ -5,6 +5,7 @@
   (:use #:common-lisp
         #:mu
         #:th
+        #:th.layers
         #:th.ex.data))
 
 (in-package :genchars-basic)
@@ -90,6 +91,96 @@
     m))
 
 (defun to-string (indices) (coerce (mapcar (lambda (i) ($ *idx-to-char* i)) indices) 'string))
+
+(prn (to-indices "hello, world."))
+
+(defclass rnncell-layer (th.layers::layer)
+  ((wx :initform nil)
+   (wh :initform nil)
+   (a :initform nil)
+   (bh :initform nil)
+   (ph :initform nil :reader rnncell-state)
+   (os :initform #{})
+   (wi :initform nil)))
+
+(defun rnncell-layer (input-size output-size
+                      &key (activation :tanh) (weight-initializer :he-normal)
+                        weight-initialization (biasp t))
+  (let ((n (make-instance 'rnncell-layer)))
+    (with-slots (wx wh bh ph wi a) n
+      (setf wi weight-initialization)
+      (setf a (th.layers::afn activation))
+      (when biasp (setf bh ($parameter (zeros output-size))))
+      (setf wx (th.layers::wif weight-initializer (list input-size output-size)
+                               weight-initialization)))
+    n))
+
+(defmethod $train-parameters ((l rnncell-layer))
+  (with-slots (wx wh bh) l
+    (if bh (list wx wh bh) (list wx wh))))
+
+(defmethod $parameters ((l rnncell-layer))
+  (with-slots (wx wh bh) l
+    (if bh (list wx wh bh) (list wx wh))))
+
+(defmethod $execute ((l rnn-layer) x &key (trainp t))
+  (with-slots (wx wh bh ph a) l
+    (let ((ones (th.layers::affine-ones l x))
+          (ph0 (if ph ph (zeros ($size x 0) *hidden-size*)))
+          (bh0 (when bh ($data bh))))
+      (let ((ph1 (if a
+                     (if trainp
+                         (funcall a ($affine2 x wx ph0 wh bh ones))
+                         (funcall a ($affine2 x ($data wx) ph0 ($data wh) bh0 ones)))
+                     (if trainp
+                         ($affine2 x wx ph0 wh bh ones)
+                         ($affine2 x ($data wx) ph0 ($data wh) bh0 ones)))))
+        (setf ph ph1)))))
+
+(prn (rnn-layer *vocab-size* *hidden-size*))
+
+(prn *wx*)
+(prn ($wimb (to-indices "hello, world.") ($data *wx*)))
+(prn ($sum ($affine (to-1-of-k "hello, world.") ($data *wx*) nil) 0))
+
+(defun rnni (xi ph wx wh b &optional ones)
+  (let ((xp ($index wx 0 xi))
+        (hp ($affine ph wh b ones)))
+    ($tanh ($+ xp hp))))
+
+(defun rnne (x ph wx wh b &optional ones)
+  ($tanh ($affine2 x wx ph wh b ones)))
+
+(let* ((str "hello, world.")
+       (xi (to-indices str))
+       (xe (to-1-of-k str))
+       (ph ($* 0.001 (ones 1 *hidden-size*)))
+       (wx ($data *wx*))
+       (wh ($data *wh*))
+       (bh ($data *bh*)))
+  (prn (rnni xi ph wx wh bh))
+  ;;(prn (rnne xe ph wx wh bh))
+  )
+
+(prn ($index ($data *wx*) 0 '(8 8 8)))
+
+(defun seedhi (str &optional (temperature 1))
+  (let ((input (to-indices str))
+        (ph (zeros 1 *hidden-size*))
+        (wx ($data *wx*))
+        (wh ($data *wh*))
+        (bh ($data *bh*))
+        (wy ($data *wy*))
+        (by ($data *by*))
+        (ncidx 0))
+    (loop :for xti :in input
+          :for ht = (rnni xti ph wx wh bh)
+          :for nidx = (next-idx ht wy by temperature)
+          :do (setf ph ht
+                    ncidx nidx))
+    (cons ncidx ph)))
+
+(prn (seedhi "hello"))
 
 (defun seedh (str &optional (temperature 1))
   (let ((input (to-1-of-k str))
