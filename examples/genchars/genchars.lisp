@@ -42,8 +42,8 @@
 (defparameter *rnn* (parameters))
 (defparameter *wx* ($push *rnn* ($* 0.01 (rndn *vocab-size* *hidden-size*))))
 (defparameter *wh* ($push *rnn* ($* 0.01 (rndn *hidden-size* *hidden-size*))))
-(defparameter *wy* ($push *rnn* ($* 0.01 (rndn *hidden-size* *vocab-size*))))
 (defparameter *bh* ($push *rnn* (zeros *hidden-size*)))
+(defparameter *wy* ($push *rnn* ($* 0.01 (rndn *hidden-size* *vocab-size*))))
 (defparameter *by* ($push *rnn* (zeros *vocab-size*)))
 
 (defun rnn-write-weight-to (w fname)
