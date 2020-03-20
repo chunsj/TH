@@ -11,7 +11,7 @@
 
 (defparameter *data-lines* (remove-if (lambda (line) (< ($count line) 1)) (text-lines :pg)))
 (defparameter *data* (format nil "~{~A~^~%~}" *data-lines*))
-(defparameter *chars* (remove-duplicates (coerce *data* 'list)))
+(defparameter *chars* ($array (remove-duplicates (coerce *data* 'list))))
 (defparameter *data-size* ($count *data*))
 (defparameter *vocab-size* ($count *chars*))
 
@@ -23,15 +23,18 @@
 (defparameter *idx-to-char* *chars*)
 
 (defun choose (probs)
-  (let* ((sprobs ($sum probs))
-         (probs ($div probs sprobs)))
+  "select one of the index by their given probabilities"
+  (let ((probs ($div probs ($sum probs))))
     ($ ($reshape! ($multinomial probs 1) ($count probs)) 0)))
 
 (defun outps (h wy by &optional (temperature 1) ones)
   (-> ($affine h wy by ones)
       ($/ temperature)
       ($softmax)))
-(defun next-idx (h wy by &optional (temperature 1) ones) (choose (outps h wy by temperature ones)))
+
+(defun next-idx (h wy by &optional (temperature 1) ones)
+  (choose (outps h wy by temperature ones)))
+
 ;;
 ;; vanilla rnn
 ;;
@@ -73,6 +76,7 @@
   (rnn-read-weight-from *by* "examples/weights/genchar/rnn-by.dat"))
 
 (defun cindices (str)
+  "XXX bad name. This function converts str to 1-of-K encoded matrix"
   (let ((m (zeros ($count str) *vocab-size*)))
     (loop :for i :from 0 :below ($count str)
           :for ch = ($ str i)
