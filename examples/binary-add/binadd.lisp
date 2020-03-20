@@ -54,11 +54,12 @@
     (loop :for position :from (1- *binary-dim*) :downto 0
           :for res = (binadd* ($ a position) ($ b position) ps)
           :for y* = ($0 res)
+          :for cs = ($1 res)
           :for y = (when c ($transpose (tensor (list (list ($ c position))))))
           :for l2e = (when c ($- y y*))
           :for l = (when c ($expt l2e 2))
           :do (progn
-                (setf ps ($1 res))
+                (setf ps cs)
                 (when c (push l losses))
                 (when c (incf overall-error (abs ($ ($data l2e) 0 0))))
                 (setf ($ d position) (round ($ ($data y*) 0 0)))))
