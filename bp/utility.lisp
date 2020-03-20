@@ -22,6 +22,8 @@
 (defgeneric $lecunu! (tensor) (:documentation "Fills with Lecun uniform."))
 (defgeneric $lecunn! (tensor) (:documentation "Fills with Lecun normal."))
 
+(defgeneric $array (collection) (:documentation "Converts collection into array."))
+
 (defun addmul (x1 w1 x2 w2) ($addmul! ($mul x1 w1) x2 w2))
 
 (defmethod $addm2 ((x1 node) (w1 node) (x2 node) (w2 node))
@@ -510,45 +512,37 @@
         ($parameter ($rn! tensor 0 (/ 1 (sqrt ($size tensor 0)))))
         ($parameter ($ru! tensor (/ -1 (sqrt ($size tensor 0))) (/ 1 (sqrt ($size tensor 0))))))))
 
-(defmethod $choice ((elements list) (probabilities list))
-  (when (eq ($count elements) ($count probabilities))
-    (let ((r (random 1D0))
-          (total 0D0))
-      (loop  :for e :in elements
-             :for p :in probabilities
-             :do (incf total p)
-             :when (>= total r)
-               :return e))))
+(defmethod $choice ((elements tensor) (probabilities tensor))
+  (when (and (eq 1 ($ndim probabilities)) (eq ($count elements) ($count probabilities)))
+    (let ((choice ($multinomial ($div probabilities ($sum probabilities)) 1)))
+      ($ elements ($ ($reshape! choice ($count probabilities)) 0)))))
 
 (defmethod $choice ((elements tensor) (probabilities list))
-  (when (eq ($count elements) ($count probabilities))
-    (let ((r (random 1D0))
-          (total 0D0))
-      (loop :for i :from 0 :below ($count elements)
-            :for e = ($ elements i)
-            :for p :in probabilities
-            :do (incf total p)
-            :when (>= total r)
-              :return e))))
-
-(defmethod $choice ((elements tensor) (probabilities tensor))
-  (when (eq ($count elements) ($count probabilities))
-    (let ((r (random 1D0))
-          (total 0D0))
-      (loop :for i :from 0 :below ($count elements)
-            :for e = ($ elements i)
-            :for p = ($ probabilities i)
-            :do (incf total p)
-            :when (>= total r)
-              :return e))))
+  ($choice elements (tensor probabilities)))
 
 (defmethod $choice ((elements tensor) (probabilities vector))
-  (when (eq ($count elements) ($count probabilities))
-    (let ((r (random 1D0))
-          (total 0D0))
-      (loop :for i :from 0 :below ($count elements)
-            :for e = ($ elements i)
-            :for p = ($ probabilities i)
-            :do (incf total p)
-            :when (>= total r)
-              :return e))))
+  ($choice elements (tensor (coerce probabilities 'list))))
+
+(defmethod $choice ((elements list) (probabilities tensor))
+  (when (and (eq 1 ($ndim probabilities)) (eq ($count elements) ($count probabilities)))
+    (let ((choice ($multinomial ($div probabilities ($sum probabilities)) 1)))
+      ($ elements ($ ($reshape! choice ($count probabilities)) 0)))))
+
+(defmethod $choice ((elements list) (probabilities list))
+  ($choice elements (tensor probabilities)))
+
+(defmethod $choice ((elements list) (probabilities vector))
+  ($choice elements (tensor (coerce probabilities 'list))))
+
+(defmethod $choice ((elements vector) (probabilities tensor))
+  (when (and (eq 1 ($ndim probabilities)) (eq ($count elements) ($count probabilities)))
+    (let ((choice ($multinomial ($div probabilities ($sum probabilities)) 1)))
+      ($ elements ($ ($reshape! choice ($count probabilities)) 0)))))
+
+(defmethod $choice ((elements vector) (probabilities list))
+  ($choice elements (tensor probabilities)))
+
+(defmethod $choice ((elements vector) (probabilities vector))
+  ($choice elements (tensor (coerce probabilities 'list))))
+
+(defmethod $array ((list list)) (coerce list 'vector))
