@@ -8,7 +8,7 @@
 (in-package :dlfs-ch4)
 
 ;; choice
-(prn (loop :for i :from 0 :below 10 :collect (choice '(:a :b :c) '(0.1 0.2 0.7))))
+(prn (loop :for i :from 0 :below 20 :collect ($choice '(:a :b :c) '(0.1 0.2 0.7))))
 
 (defun wimb (x w)
   (cond ((atom (car x)) ($wimb x w))
