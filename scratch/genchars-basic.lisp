@@ -137,11 +137,16 @@
                          ($affine2 x ($data wx) ph0 ($data wh) bh0 ones)))))
         (setf ph ph1)))))
 
-(prn (rnn-layer *vocab-size* *hidden-size*))
+(prn (rnncell-layer *vocab-size* *hidden-size*))
 
 (prn *wx*)
 (prn ($wimb (to-indices "hello, world.") ($data *wx*)))
 (prn ($sum ($affine (to-1-of-k "hello, world.") ($data *wx*) nil) 0))
+
+;; XXX
+;; create recurrent-layer which can use cell
+;; axes for indices are in order of sequence-batch-feature.
+;;
 
 (defun rnni (xi ph wx wh b &optional ones)
   (let ((xp ($index wx 0 xi))
@@ -181,6 +186,33 @@
     (cons ncidx ph)))
 
 (prn (seedhi "hello"))
+
+(defun sample (str n &optional (temperature 1))
+  (let ((x (zeros 1 *vocab-size*))
+        (indices nil)
+        (sh (when str (seedhi str temperature)))
+        (ph nil))
+    (if sh
+        (let ((idx0 (car sh))
+              (h (cdr sh)))
+          (setf ($ x 0 idx0) 1)
+          (setf ph h)
+          (push idx0 indices))
+        (let ((idx0 (random *vocab-size*))
+              (h (zeros 1 *hidden-size*)))
+          (setf ($ x 0 idx0) 1)
+          (setf ph h)
+          (push idx0 indices)))
+    (loop :for i :from 0 :below n
+          :for ht = ($rnn x ph wx wh bh)
+          :for nidx = (next-idx ht wy by temperature)
+          :do (progn
+                (setf ph ht)
+                (push nidx indices)
+                ($zero! x)
+                (setf ($ x 0 nidx) 1)))
+    (prn (to-string (reverse indices)))
+    (concatenate 'string str (to-string (reverse indices)))))
 
 (defun seedh (str &optional (temperature 1))
   (let ((input (to-1-of-k str))
