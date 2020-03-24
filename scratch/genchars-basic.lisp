@@ -43,7 +43,7 @@
 (defparameter *hidden-size* 100)
 (defparameter *sequence-length* 50)
 
-(defclass rnncell-layer (th.layers::layer)
+(defclass affine-cell (th.layers::layer)
   ((wx :initform nil)
    (wh :initform nil)
    (a :initform nil)
@@ -52,10 +52,10 @@
    (os :initform #{})
    (wi :initform nil)))
 
-(defun rnncell-layer (input-size output-size
-                      &key (activation :tanh) (weight-initializer :he-normal)
-                        weight-initialization (biasp t))
-  (let ((n (make-instance 'rnncell-layer)))
+(defun affine-cell (input-size output-size
+                    &key (activation :tanh) (weight-initializer :he-normal)
+                      weight-initialization (biasp t))
+  (let ((n (make-instance 'affine-cell)))
     (with-slots (wx wh bh ph wi a) n
       (setf wi weight-initialization)
       (setf a (th.layers::afn activation))
@@ -67,11 +67,11 @@
 
     n))
 
-(defmethod $train-parameters ((l rnncell-layer))
+(defmethod $train-parameters ((l affine-cell))
   (with-slots (wx wh bh) l
     (if bh (list wx wh bh) (list wx wh))))
 
-(defmethod $parameters ((l rnncell-layer))
+(defmethod $parameters ((l affine-cell))
   (with-slots (wx wh bh) l
     (if bh (list wx wh bh) (list wx wh))))
 
@@ -85,7 +85,7 @@
           (setf o ($ os n)))
         o))))
 
-(defmethod $execute ((l rnncell-layer) x &key (trainp t))
+(defmethod $execute ((l affine-cell) x &key (trainp t))
   (with-slots (wx wh bh ph a) l
     (let ((ones (affine-ones l x))
           (ph0 (if ph ph (zeros ($size x 0) *hidden-size*)))
@@ -104,16 +104,17 @@
    (cell :initform nil)))
 
 (defun rnn-layer (input-size output-size
-                  &key (activation :tanh) (weight-initializer :he-normal)
+                  &key (cellfn #'affine-cell) (activation :tanh) (weight-initializer :he-normal)
                     weight-initialization (biasp t) statefulp)
   (let ((n (make-instance 'rnn-layer)))
     (with-slots (stateful cell) n
       (setf stateful statefulp)
-      (setf cell (rnncell-layer input-size output-size
-                                :activation activation
-                                :weight-initializer weight-initializer
-                                :weight-initialization weight-initialization
-                                :biasp biasp)))
+      (setf cell (funcall cellfn
+                          input-size output-size
+                          :activation activation
+                          :weight-initializer weight-initializer
+                          :weight-initialization weight-initialization
+                          :biasp biasp)))
     n))
 
 (defmethod $train-parameters ((l rnn-layer))
@@ -150,14 +151,16 @@
                            :do (setf ($ m b ($ *char-to-idx* ch)) 1))
                      m))))
 
-(prn (rnncell-layer *vocab-size* *hidden-size*))
+;; XXX need to build encoding/decoding helper
+;; first, with character encoder/decoder
+
+(prn (affine-cell *vocab-size* *hidden-size*))
 
 (prn (to-1-of-k "hello, world."))
 (prn (to-1-of-ks '("hello, world." "hello, world.")))
 
 (let ((rnn (rnn-layer *vocab-size* *hidden-size*))
       (xs (to-1-of-ks '("hello, world." "hello, world."))))
-  (prn xs)
   (prn ($execute rnn xs)))
 
 ($cat (tensor '((1 2 3))) (tensor '((4 5 6))) 0)
