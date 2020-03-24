@@ -37,6 +37,10 @@
   (choose (outps h wy by temperature ones)))
 
 ;;
+;; building rnn with cells and layers
+;;
+
+;;
 ;; vanilla rnn
 ;;
 
