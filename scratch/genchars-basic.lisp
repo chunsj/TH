@@ -40,6 +40,132 @@
 ;; building rnn with cells and layers
 ;;
 
+(defparameter *hidden-size* 100)
+(defparameter *sequence-length* 50)
+
+(defclass rnncell-layer (th.layers::layer)
+  ((wx :initform nil)
+   (wh :initform nil)
+   (a :initform nil)
+   (bh :initform nil)
+   (ph :initform nil :accessor $cell-state)
+   (os :initform #{})
+   (wi :initform nil)))
+
+(defun rnncell-layer (input-size output-size
+                      &key (activation :tanh) (weight-initializer :he-normal)
+                        weight-initialization (biasp t))
+  (let ((n (make-instance 'rnncell-layer)))
+    (with-slots (wx wh bh ph wi a) n
+      (setf wi weight-initialization)
+      (setf a (th.layers::afn activation))
+      (when biasp (setf bh ($parameter (zeros output-size))))
+      (setf wx (th.layers::wif weight-initializer (list input-size output-size)
+                               weight-initialization))
+      (setf wh (th.layers::wif weight-initializer (list output-size output-size)
+                               weight-initialization)))
+
+    n))
+
+(defmethod $train-parameters ((l rnncell-layer))
+  (with-slots (wx wh bh) l
+    (if bh (list wx wh bh) (list wx wh))))
+
+(defmethod $parameters ((l rnncell-layer))
+  (with-slots (wx wh bh) l
+    (if bh (list wx wh bh) (list wx wh))))
+
+(defun affine-ones (l x)
+  (when (eq 2 ($ndim x))
+    (with-slots (os) l
+      (let* ((n ($size x 0))
+             (o ($ os n)))
+        (unless o
+          (setf ($ os n) (ones n))
+          (setf o ($ os n)))
+        o))))
+
+(defmethod $execute ((l rnncell-layer) x &key (trainp t))
+  (with-slots (wx wh bh ph a) l
+    (let ((ones (affine-ones l x))
+          (ph0 (if ph ph (zeros ($size x 0) *hidden-size*)))
+          (bh0 (when bh ($data bh))))
+      (let ((ph1 (if a
+                     (if trainp
+                         (funcall a ($affine2 x wx ph0 wh bh ones))
+                         (funcall a ($affine2 x ($data wx) ph0 ($data wh) bh0 ones)))
+                     (if trainp
+                         ($affine2 x wx ph0 wh bh ones)
+                         ($affine2 x ($data wx) ph0 ($data wh) bh0 ones)))))
+        (setf ph ph1)))))
+
+(defclass rnn-layer (th.layers::layer)
+  ((stateful :initform nil :accessor $recurrent-statefule-p)
+   (cell :initform nil)))
+
+(defun rnn-layer (input-size output-size
+                  &key (activation :tanh) (weight-initializer :he-normal)
+                    weight-initialization (biasp t) statefulp)
+  (let ((n (make-instance 'rnn-layer)))
+    (with-slots (stateful cell) n
+      (setf stateful statefulp)
+      (setf cell (rnncell-layer input-size output-size
+                                :activation activation
+                                :weight-initializer weight-initializer
+                                :weight-initialization weight-initialization
+                                :biasp biasp)))
+    n))
+
+(defmethod $train-parameters ((l rnn-layer))
+  (with-slots (cell) l
+    ($train-parameters cell)))
+
+(defmethod $parameters ((l rnn-layer))
+  (with-slots (cell) l
+    ($parameters cell)))
+
+(defmethod $execute ((l rnn-layer) xs &key (trainp t))
+  (with-slots (cell stateful) l
+    (unless stateful (setf ($cell-state cell) nil))
+    (let ((ntime ($count xs))
+          (outputs '()))
+      (loop :for tm :from 0 :below ntime
+            :for xt = ($ xs tm)
+            :do (push ($execute cell xt :trainp trainp) outputs))
+      (reverse outputs))))
+
+(defun to-1-of-k (str)
+  "string to 1-of-K encoded matrix"
+  (let ((m (zeros ($count str) *vocab-size*)))
+    (loop :for i :from 0 :below ($count str)
+          :for ch = ($ str i)
+          :do (setf ($ m i ($ *char-to-idx* ch)) 1))
+    m))
+
+(defun to-1-of-ks (strs)
+  "strings to 1-of-K encoded matrix, batched"
+  (let ((m (zeros ($count ($0 strs)) ($count strs) *vocab-size*)))
+    (loop :for str :in strs
+          :for j :from 0
+          :do (loop :for i :from 0 :below ($count str)
+                    :for ch = ($ str i)
+                    :do (setf ($ m i j ($ *char-to-idx* ch)) 1)))
+    m))
+
+(prn (rnncell-layer *vocab-size* *hidden-size*))
+
+(prn (to-1-of-k "hello, world."))
+(prn (to-1-of-ks '("hello, world." "hello, world.")))
+
+(let ((cell (rnncell-layer *vocab-size* *hidden-size*))
+      (rnn (rnn-layer *vocab-size* *hidden-size*))
+      (x (to-1-of-ks '("hello, world." "hello, world."))))
+  (prn x)
+  (prn ($execute rnn x)))
+
+($cat (tensor '((1 2 3))) (tensor '((4 5 6))) 0)
+
+
 ;;
 ;; vanilla rnn
 ;;
