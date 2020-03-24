@@ -127,12 +127,8 @@
 (defmethod $execute ((l rnn-layer) xs &key (trainp t))
   (with-slots (cell stateful) l
     (unless stateful (setf ($cell-state cell) nil))
-    (let ((ntime ($count xs))
-          (outputs '()))
-      (loop :for tm :from 0 :below ntime
-            :for xt = ($ xs tm)
-            :do (push ($execute cell xt :trainp trainp) outputs))
-      (reverse outputs))))
+    (loop :for x :in xs
+          :collect ($execute cell x :trainp trainp))))
 
 (defun to-1-of-k (str)
   "string to 1-of-K encoded matrix"
@@ -143,25 +139,26 @@
     m))
 
 (defun to-1-of-ks (strs)
-  "strings to 1-of-K encoded matrix, batched"
-  (let ((m (zeros ($count ($0 strs)) ($count strs) *vocab-size*)))
-    (loop :for str :in strs
-          :for j :from 0
-          :do (loop :for i :from 0 :below ($count str)
-                    :for ch = ($ str i)
-                    :do (setf ($ m i j ($ *char-to-idx* ch)) 1)))
-    m))
+  "strings to 1-of-K encoded matrix"
+  (let ((ntime ($count ($0 strs)))
+        (nbatch ($count strs)))
+    (loop :for time :from 0 :below ntime
+          :collect (let ((m (zeros nbatch *vocab-size*)))
+                     (loop :for str :in strs
+                           :for b :from 0
+                           :for ch = ($ str time)
+                           :do (setf ($ m b ($ *char-to-idx* ch)) 1))
+                     m))))
 
 (prn (rnncell-layer *vocab-size* *hidden-size*))
 
 (prn (to-1-of-k "hello, world."))
 (prn (to-1-of-ks '("hello, world." "hello, world.")))
 
-(let ((cell (rnncell-layer *vocab-size* *hidden-size*))
-      (rnn (rnn-layer *vocab-size* *hidden-size*))
-      (x (to-1-of-ks '("hello, world." "hello, world."))))
-  (prn x)
-  (prn ($execute rnn x)))
+(let ((rnn (rnn-layer *vocab-size* *hidden-size*))
+      (xs (to-1-of-ks '("hello, world." "hello, world."))))
+  (prn xs)
+  (prn ($execute rnn xs)))
 
 ($cat (tensor '((1 2 3))) (tensor '((4 5 6))) 0)
 
