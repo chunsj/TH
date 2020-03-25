@@ -131,28 +131,56 @@
     (loop :for x :in xs
           :collect ($execute cell x :trainp trainp))))
 
-(defun to-1-of-k (str)
-  "string to 1-of-K encoded matrix"
-  (let ((m (zeros ($count str) *vocab-size*)))
-    (loop :for i :from 0 :below ($count str)
-          :for ch = ($ str i)
-          :do (setf ($ m i ($ *char-to-idx* ch)) 1))
-    m))
+(defclass character-encoder ()
+  ((char-to-idx :initform #{})
+   (idx-to-char :initform nil)))
 
-(defun to-1-of-ks (strs)
-  "strings to 1-of-K encoded matrix"
-  (let ((ntime ($count ($0 strs)))
-        (nbatch ($count strs)))
-    (loop :for time :from 0 :below ntime
-          :collect (let ((m (zeros nbatch *vocab-size*)))
-                     (loop :for str :in strs
-                           :for b :from 0
-                           :for ch = ($ str time)
-                           :do (setf ($ m b ($ *char-to-idx* ch)) 1))
-                     m))))
+(defun character-encoder () (make-instance 'character-encoder))
+
+(defun build-encoder (encoder data)
+  (with-slots (char-to-idx idx-to-char) encoder
+    (setf idx-to-char ($array (remove-duplicates (coerce data 'list))))
+    (let ((vocab-size ($count idx-to-char)))
+      (loop :for i :from 0 :below vocab-size
+            :for ch = ($ idx-to-char i)
+            :do (setf ($ char-to-idx ch) i))))
+  encoder)
+
+(defun encoder-vocab-size (encoder)
+  (with-slots (idx-to-char) encoder
+    ($count idx-to-char)))
+
+(defun encoder-encode-strings-1-of-k (encoder strings)
+  "encode strings as 1-of-K encodings"
+  (let ((ntime ($count ($0 strings)))
+        (nbatch ($count strings))
+        (vocab-size (encoder-vocab-size encoder)))
+    (with-slots (char-to-idx) encoder
+      (loop :for time :from 0 :below ntime
+            :collect (let ((m (zeros nbatch vocab-size)))
+                       (loop :for str :in strings
+                             :for b :from 0
+                             :for ch = ($ str time)
+                             :do (setf ($ m b ($ char-to-idx ch)) 1))
+                       m)))))
+
+(defun encoder-decode-matrices-1-of-k (encoder matrics)
+  "decode matrics as strings")
+
+(let ((encoder (character-encoder)))
+  (build-encoder encoder *data*)
+  (prn (encoder-encode-strings-1-of-k encoder '("hello, world"))))
 
 ;; XXX need to build encoding/decoding helper
 ;; first, with character encoder/decoder
+;; input: strings
+;; output: encoder/decoder instance
+;; contains: char-to-idx, idx-to-char information
+;; offers indices encoding/decoding
+;; offers 1-of-K encoding/decoding
+;; represents sequence as a list
+;; takes a list input of indices/1-of-K matrices
+;; supports batch encoding/decoding
 
 (prn (affine-cell *vocab-size* *hidden-size*))
 
@@ -162,9 +190,6 @@
 (let ((rnn (rnn-layer *vocab-size* *hidden-size*))
       (xs (to-1-of-ks '("hello, world." "hello, world."))))
   (prn ($execute rnn xs)))
-
-($cat (tensor '((1 2 3))) (tensor '((4 5 6))) 0)
-
 
 ;;
 ;; vanilla rnn
