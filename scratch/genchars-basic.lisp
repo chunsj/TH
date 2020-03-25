@@ -10,31 +10,8 @@
 
 (in-package :genchars-basic)
 
-(defparameter *data-lines* (remove-if (lambda (line) (< ($count line) 1)) (text-lines :pg)))
-(defparameter *data* (format nil "~{~A~^~%~}" *data-lines*))
-(defparameter *chars* ($array (remove-duplicates (coerce *data* 'list))))
-(defparameter *data-size* ($count *data*))
-(defparameter *vocab-size* ($count *chars*))
-
-(defparameter *char-to-idx* (let ((ht #{}))
-                              (loop :for i :from 0 :below *vocab-size*
-                                    :for ch = ($ *chars* i)
-                                    :do (setf ($ ht ch) i))
-                              ht))
-(defparameter *idx-to-char* *chars*)
-
-(defun choose (probs)
-  "select one of the index by their given probabilities"
-  (let ((probs ($div probs ($sum probs))))
-    ($ ($reshape! ($multinomial probs 1) ($count probs)) 0)))
-
-(defun outps (h wy by &optional (temperature 1) ones)
-  (-> ($affine h wy by ones)
-      ($/ temperature)
-      ($softmax)))
-
-(defun next-idx (h wy by &optional (temperature 1) ones)
-  (choose (outps h wy by temperature ones)))
+(defparameter *data* (format nil "~{~A~^~%~}"
+                             (remove-if (lambda (line) (< ($count line) 1)) (text-lines :pg))))
 
 ;;
 ;; building rnn with cells and layers
@@ -237,6 +214,32 @@
 (let ((rnn (rnn-layer *vocab-size* *hidden-size*))
       (xs (to-1-of-ks '("hello, world." "hello, world."))))
   (prn ($execute rnn xs)))
+
+(defparameter *data-lines* (remove-if (lambda (line) (< ($count line) 1)) (text-lines :pg)))
+(defparameter *data* (format nil "~{~A~^~%~}" *data-lines*))
+(defparameter *chars* ($array (remove-duplicates (coerce *data* 'list))))
+(defparameter *data-size* ($count *data*))
+(defparameter *vocab-size* ($count *chars*))
+
+(defparameter *char-to-idx* (let ((ht #{}))
+                              (loop :for i :from 0 :below *vocab-size*
+                                    :for ch = ($ *chars* i)
+                                    :do (setf ($ ht ch) i))
+                              ht))
+(defparameter *idx-to-char* *chars*)
+
+(defun choose (probs)
+  "select one of the index by their given probabilities"
+  (let ((probs ($div probs ($sum probs))))
+    ($ ($reshape! ($multinomial probs 1) ($count probs)) 0)))
+
+(defun outps (h wy by &optional (temperature 1) ones)
+  (-> ($affine h wy by ones)
+      ($/ temperature)
+      ($softmax)))
+
+(defun next-idx (h wy by &optional (temperature 1) ones)
+  (choose (outps h wy by temperature ones)))
 
 ;;
 ;; vanilla rnn
