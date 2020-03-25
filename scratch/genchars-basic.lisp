@@ -150,6 +150,29 @@
   (with-slots (idx-to-char) encoder
     ($count idx-to-char)))
 
+(defun encoder-encode-strings (encoder strings)
+  "encode strings as indices"
+  (let ((ntime ($count ($0 strings)))
+        (nbatch ($count strings)))
+    (with-slots (char-to-idx) encoder
+      (loop :for time :from 0 :below ntime
+            :collect (let ((m (tensor.long (zeros nbatch))))
+                       (loop :for str :in strings
+                             :for b :from 0
+                             :for ch = ($ str time)
+                             :do (setf ($ m b) ($ char-to-idx ch)))
+                       m)))))
+
+(defun encoder-decode-matrices (encoder matrices)
+  "decode index matrics as strings"
+  (let ((nbatch ($size ($0 matrices) 0)))
+    (with-slots (idx-to-char) encoder
+      (loop :for b :from 0 :below nbatch
+            :collect (coerce (loop :for m :in matrices
+                                   :for idx = ($ m b)
+                                   :collect ($ idx-to-char idx))
+                             'string)))))
+
 (defun encoder-encode-strings-1-of-k (encoder strings)
   "encode strings as 1-of-K encodings"
   (let ((ntime ($count ($0 strings)))
@@ -164,12 +187,36 @@
                              :do (setf ($ m b ($ char-to-idx ch)) 1))
                        m)))))
 
-(defun encoder-decode-matrices-1-of-k (encoder matrics)
-  "decode matrics as strings")
+(defun encoder-decode-matrices-1-of-k (encoder matrices)
+  "decode 1-of-K matrics as strings"
+  (let ((nbatch ($size ($0 matrices) 0)))
+    (with-slots (idx-to-char) encoder
+      (loop :for b :from 0 :below nbatch
+            :collect (coerce (loop :for m :in matrices
+                                   :for mi = ($nonzero m)
+                                   :for idx = ($ mi b 1)
+                                   :collect ($ idx-to-char idx))
+                             'string)))))
 
 (let ((encoder (character-encoder)))
   (build-encoder encoder *data*)
-  (prn (encoder-encode-strings-1-of-k encoder '("hello, world"))))
+  (prn (encoder-encode-strings encoder '("hello, world" "hello, world"))))
+
+(let ((encoder (character-encoder)))
+  (build-encoder encoder *data*)
+  (let ((matrices (encoder-encode-strings encoder '("hello, world" "hello, world"))))
+    (prn matrices)
+    (prn (encoder-decode-matrices encoder matrices))))
+
+(let ((encoder (character-encoder)))
+  (build-encoder encoder *data*)
+  (prn (encoder-encode-strings-1-of-k encoder '("hello, world" "hello, world"))))
+
+(let ((encoder (character-encoder)))
+  (build-encoder encoder *data*)
+  (let ((matrices (encoder-encode-strings-1-of-k encoder '("hello, world" "hello, world"))))
+    (prn matrices)
+    (prn (encoder-decode-matrices-1-of-k encoder matrices))))
 
 ;; XXX need to build encoding/decoding helper
 ;; first, with character encoder/decoder
