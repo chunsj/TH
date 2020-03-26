@@ -610,7 +610,7 @@
 (defmethod $execute ((l affine-cell) x &key (trainp t))
   (with-slots (wx wh bh ph a) l
     (let ((ones (affine-ones l x))
-          (ph0 (if ph ph (zeros ($size x 0) *hidden-size*)))
+          (ph0 (if ph ph (zeros ($size x 0) ($size wx 1))))
           (bh0 (when bh ($data bh))))
       (let ((ph1 (if a
                      (if trainp
@@ -661,7 +661,7 @@
 (defmethod $execute ((l embedding-cell) x &key (trainp t))
   (with-slots (wx wh bh ph a) l
     (let ((ones (affine-ones l x))
-          (ph0 (if ph ph (zeros ($size x 0) *hidden-size*)))
+          (ph0 (if ph ph (zeros ($size x 0) ($size wx 1))))
           (bh0 (when bh ($data bh))))
       (let ((ph1 (if a
                      (if trainp
