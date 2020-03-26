@@ -28,22 +28,17 @@
 ;; recurrent-layer testing
 ;;
 
-(let* ((encoder (character-encoder *data*))
-       (vsize (encoder-vocabulary-size encoder))
-       (seq1 (encoder-encode encoder '("hello, world" "hello, world")))
-       (rnn (recurrent-layer vsize *hidden-size*
-                             :cellfn #'embedding-cell)))
+(let* ((vsize (encoder-vocabulary-size *encoder*))
+       (seq1 (encoder-encode *encoder* '("hello, world" "hello, world")))
+       (rnn (recurrent-layer vsize *hidden-size* :cellfn #'embedding-cell)))
   (prn ($execute rnn seq1)))
 
-(let* ((encoder (character-encoder *data*))
-       (vsize (encoder-vocabulary-size encoder))
-       (seq1 (encoder-encode encoder '("hello, world" "hello, world")))
+(let* ((vsize (encoder-vocabulary-size *encoder*))
+       (seq1 (encoder-encode *encoder* '("hello, world" "hello, world")))
        (rnn (sequential-layer
-             (recurrent-layer vsize *hidden-size*
-                              :cellfn #'embedding-cell)
-             (recurrent-layer *hidden-size* vsize
-                              :activation :softmax))))
-  (prn (encoder-decode encoder (mapcar #'$choose ($execute rnn seq1)))))
+             (recurrent-layer vsize *hidden-size* :cellfn #'embedding-cell)
+             (recurrent-layer *hidden-size* vsize :activation :softmax))))
+  (prn (encoder-decode *encoder* (mapcar #'$choose ($execute rnn seq1)))))
 
 ;; XXX need to build encoding/decoding helper
 ;; first, with character encoder/decoder
