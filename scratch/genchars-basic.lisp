@@ -40,6 +40,16 @@
              (recurrent-layer *hidden-size* vsize :activation :softmax))))
   (prn (encoder-decode *encoder* (mapcar #'$choose ($execute rnn seq1)))))
 
+(let* ((vsize (encoder-vocabulary-size *encoder*))
+       (seq1 (encoder-encode *encoder* '("hello, world" "hello, world")))
+       (seq2 (encoder-encode *encoder* '("hello, world" "hello, world") :type :1-of-K))
+       (rnn (sequential-layer
+             (recurrent-layer vsize *hidden-size* :cellfn #'embedding-cell)
+             (recurrent-layer *hidden-size* vsize :activation :softmax))))
+  (prn ($cnll (car ($execute rnn seq1)) (car seq1)))
+  (prn ($cee (car ($execute rnn seq1)) (car seq2)))
+  (prn ($cee (car seq2) (car seq2))))
+
 ;; XXX need to build encoding/decoding helper
 ;; first, with character encoder/decoder
 ;; input: strings
