@@ -37,6 +37,7 @@
        (seq1 (encoder-encode *encoder* '("hello, world" "hello, world")))
        (rnn (sequential-layer
              (recurrent-layer vsize *hidden-size* :cellfn #'embedding-cell)
+             (recurrent-layer *hidden-size* *hidden-size*)
              (recurrent-layer *hidden-size* vsize :activation :softmax))))
   (prn (encoder-decode *encoder* (mapcar #'$choose ($execute rnn seq1)))))
 
