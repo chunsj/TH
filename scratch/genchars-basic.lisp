@@ -11,23 +11,18 @@
 
 (in-package :genchars-basic)
 
+;;
+;; text data
+;;
 (defparameter *data* (format nil "~{~A~^~%~}"
                              (remove-if (lambda (line) (< ($count line) 1)) (text-lines :pg))))
+(defparameter *encoder* (character-encoder *data*))
 
+;;
+;; network parameters
+;;
 (defparameter *hidden-size* 100)
 (defparameter *sequence-length* 50)
-
-;;
-;; character-encoder testing
-;;
-
-(let* ((encoder (character-encoder *data*))
-       (seq1 (encoder-encode encoder '("hello, world" "hello, world")))
-       (seq2 (encoder-encode encoder '("hello, world" "hello, world") :type :1-of-K)))
-  (prn seq1)
-  (prn seq2)
-  (prn (encoder-decode encoder seq1))
-  (prn (encoder-decode encoder seq2 :type :1-of-K)))
 
 ;;
 ;; recurrent-layer testing
@@ -40,12 +35,6 @@
                              :cellfn #'embedding-cell)))
   (prn ($execute rnn seq1)))
 
-(defun choose (probabilities)
-  "select one of the index by their given probabilities"
-  (let ((probs (if ($parameterp probabilities) ($data probabilities) probabilities)))
-    (let ((probs ($div probs ($sum probs))))
-      ($reshape! ($multinomial probs 1) ($size probs 0)))))
-
 (let* ((encoder (character-encoder *data*))
        (vsize (encoder-vocabulary-size encoder))
        (seq1 (encoder-encode encoder '("hello, world" "hello, world")))
@@ -54,7 +43,7 @@
                               :cellfn #'embedding-cell)
              (recurrent-layer *hidden-size* vsize
                               :activation :softmax))))
-  (prn (encoder-decode encoder (mapcar #'choose ($execute rnn seq1)))))
+  (prn (encoder-decode encoder (mapcar #'$choose ($execute rnn seq1)))))
 
 ;; XXX need to build encoding/decoding helper
 ;; first, with character encoder/decoder
