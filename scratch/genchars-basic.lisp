@@ -28,11 +28,13 @@
 ;; recurrent-layer testing
 ;;
 
+;; simple recurrent layer operation testing
 (let* ((vsize (encoder-vocabulary-size *encoder*))
        (seq1 (encoder-encode *encoder* '("hello, world" "hello, world")))
        (rnn (recurrent-layer vsize *hidden-size* :cellfn #'embedding-cell)))
   (prn ($execute rnn seq1)))
 
+;; multiple layered rnn testing
 (let* ((vsize (encoder-vocabulary-size *encoder*))
        (seq1 (encoder-encode *encoder* '("hello, world" "hello, world")))
        (rnn (sequential-layer
@@ -41,6 +43,7 @@
              (recurrent-layer *hidden-size* vsize :activation :softmax))))
   (prn (encoder-decode *encoder* (mapcar #'$choose ($execute rnn seq1)))))
 
+;; loss function testing
 (let* ((vsize (encoder-vocabulary-size *encoder*))
        (seq1 (encoder-encode *encoder* '("hello, world" "hello, world")))
        (seq2 (encoder-encode *encoder* '("hello, world" "hello, world") :type :1-of-K))
@@ -50,6 +53,28 @@
   (prn ($cnll (car ($execute rnn seq1)) (car seq1)))
   (prn ($cee (car ($execute rnn seq1)) (car seq2)))
   (prn ($cee (car seq2) (car seq2))))
+
+;; test with backpropagation - check reductions of loss value
+(let* ((vsize (encoder-vocabulary-size *encoder*))
+       (seq1 (encoder-encode *encoder* '("hello, world" "hello, world")))
+       (seq2 (encoder-encode *encoder* '("hello, world" "hello, world") :type :1-of-K))
+       (rnn (sequential-layer
+             (recurrent-layer vsize *hidden-size* :cellfn #'embedding-cell)
+             (recurrent-layer *hidden-size* vsize :activation :softmax))))
+  (let* ((losses (mapcar (lambda (y c) ($cnll y c)) ($execute rnn seq1) seq1))
+         (loss ($div (apply #'$+ losses) ($count losses))))
+    (prn ($data loss)))
+  ($gd! rnn)
+  (let* ((losses (mapcar (lambda (y c) ($cnll y c)) ($execute rnn seq1) seq1))
+         (loss ($div (apply #'$+ losses) ($count losses))))
+    (prn ($data loss)))
+  (let* ((losses (mapcar (lambda (y c) ($cee y c)) ($execute rnn seq1) seq2))
+         (loss ($div (apply #'$+ losses) ($count losses))))
+    (prn ($data loss)))
+  ($gd! rnn)
+  (let* ((losses (mapcar (lambda (y c) ($cee y c)) ($execute rnn seq1) seq2))
+         (loss ($div (apply #'$+ losses) ($count losses))))
+    (prn ($data loss))))
 
 ;; XXX need to build encoding/decoding helper
 ;; first, with character encoder/decoder
