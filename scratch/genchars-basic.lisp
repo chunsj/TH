@@ -40,14 +40,21 @@
                              :cellfn #'embedding-cell)))
   (prn ($execute rnn seq1)))
 
-(let ((encoder (character-encoder)))
-  (build-encoder encoder *data*)
-  (let ((rnn (recurrent-layer (encoder-vocab-size encoder) *hidden-size*
-                              :cellfn #'embedding-cell))
-        (matrices (encoder-encode-strings encoder '("hello, world" "hello, world"))))
-    (prn matrices)
-    (prn (encoder-decode-matrices encoder matrices))
-    (prn ($execute rnn matrices))))
+(defun choose (probabilities)
+  "select one of the index by their given probabilities"
+  (let ((probs (if ($parameterp probabilities) ($data probabilities) probabilities)))
+    (let ((probs ($div probs ($sum probs))))
+      ($reshape! ($multinomial probs 1) ($size probs 0)))))
+
+(let* ((encoder (character-encoder *data*))
+       (vsize (encoder-vocabulary-size encoder))
+       (seq1 (encoder-encode encoder '("hello, world" "hello, world")))
+       (rnn (sequential-layer
+             (recurrent-layer vsize *hidden-size*
+                              :cellfn #'embedding-cell)
+             (recurrent-layer *hidden-size* vsize
+                              :activation :softmax))))
+  (prn (encoder-decode encoder (mapcar #'choose ($execute rnn seq1)))))
 
 ;; XXX need to build encoding/decoding helper
 ;; first, with character encoder/decoder
