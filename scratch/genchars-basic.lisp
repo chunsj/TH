@@ -5,6 +5,7 @@
   (:use #:common-lisp
         #:mu
         #:th
+        #:th.text
         #:th.layers
         #:th.ex.data))
 
@@ -13,258 +14,31 @@
 (defparameter *data* (format nil "~{~A~^~%~}"
                              (remove-if (lambda (line) (< ($count line) 1)) (text-lines :pg))))
 
-;;
-;; building rnn with cells and layers
-;;
-
 (defparameter *hidden-size* 100)
 (defparameter *sequence-length* 50)
 
-(defclass affine-cell (th.layers::layer)
-  ((wx :initform nil)
-   (wh :initform nil)
-   (a :initform nil)
-   (bh :initform nil)
-   (ph :initform nil :accessor $cell-state)
-   (os :initform #{})
-   (wi :initform nil)))
+;;
+;; character-encoder testing
+;;
 
-(defun affine-cell (input-size output-size
-                    &key (activation :tanh) (weight-initializer :he-normal)
-                      weight-initialization (biasp t))
-  (let ((n (make-instance 'affine-cell)))
-    (with-slots (wx wh bh ph wi a) n
-      (setf wi weight-initialization)
-      (setf a (th.layers::afn activation))
-      (when biasp (setf bh ($parameter (zeros output-size))))
-      (setf wx (th.layers::wif weight-initializer (list input-size output-size)
-                               weight-initialization))
-      (setf wh (th.layers::wif weight-initializer (list output-size output-size)
-                               weight-initialization)))
+(let* ((encoder (character-encoder *data*))
+       (seq1 (encoder-encode encoder '("hello, world" "hello, world")))
+       (seq2 (encoder-encode encoder '("hello, world" "hello, world") :type :1-of-K)))
+  (prn seq1)
+  (prn seq2)
+  (prn (encoder-decode encoder seq1))
+  (prn (encoder-decode encoder seq2 :type :1-of-K)))
 
-    n))
+;;
+;; recurrent-layer testing
+;;
 
-(defmethod $train-parameters ((l affine-cell))
-  (with-slots (wx wh bh) l
-    (if bh (list wx wh bh) (list wx wh))))
-
-(defmethod $parameters ((l affine-cell))
-  (with-slots (wx wh bh) l
-    (if bh (list wx wh bh) (list wx wh))))
-
-(defun affine-ones (l x)
-  (when (eq 2 ($ndim x))
-    (with-slots (os) l
-      (let* ((n ($size x 0))
-             (o ($ os n)))
-        (unless o
-          (setf ($ os n) (ones n))
-          (setf o ($ os n)))
-        o))))
-
-(defmethod $execute ((l affine-cell) x &key (trainp t))
-  (with-slots (wx wh bh ph a) l
-    (let ((ones (affine-ones l x))
-          (ph0 (if ph ph (zeros ($size x 0) *hidden-size*)))
-          (bh0 (when bh ($data bh))))
-      (let ((ph1 (if a
-                     (if trainp
-                         (funcall a ($affine2 x wx ph0 wh bh ones))
-                         (funcall a ($affine2 x ($data wx) ph0 ($data wh) bh0 ones)))
-                     (if trainp
-                         ($affine2 x wx ph0 wh bh ones)
-                         ($affine2 x ($data wx) ph0 ($data wh) bh0 ones)))))
-        (setf ph ph1)))))
-
-(defclass embedding-cell (th.layers::layer)
-  ((wx :initform nil)
-   (wh :initform nil)
-   (a :initform nil)
-   (bh :initform nil)
-   (ph :initform nil :accessor $cell-state)
-   (os :initform #{})
-   (wi :initform nil)))
-
-(defun embedding-cell (input-size output-size
-                       &key (activation :tanh) (weight-initializer :he-normal)
-                         weight-initialization (biasp t))
-  (prn input-size output-size)
-  (let ((n (make-instance 'embedding-cell)))
-    (with-slots (wx wh bh ph wi a) n
-      (setf wi weight-initialization)
-      (setf a (th.layers::afn activation))
-      (when biasp (setf bh ($parameter (zeros output-size))))
-      (setf wx (th.layers::wif weight-initializer (list input-size output-size)
-                               weight-initialization))
-      (setf wh (th.layers::wif weight-initializer (list output-size output-size)
-                               weight-initialization))
-      (prn wx))
-
-    n))
-
-(defmethod $train-parameters ((l embedding-cell))
-  (with-slots (wx wh bh) l
-    (if bh (list wx wh bh) (list wx wh))))
-
-(defmethod $parameters ((l embedding-cell))
-  (with-slots (wx wh bh) l
-    (if bh (list wx wh bh) (list wx wh))))
-
-(defun embedding-ones (l x)
-  (when (eq 2 ($ndim x))
-    (with-slots (os) l
-      (let* ((n ($size x 0))
-             (o ($ os n)))
-        (unless o
-          (setf ($ os n) (ones n))
-          (setf o ($ os n)))
-        o))))
-
-(defun embedding-forward (xi wx ph wh b &optional ones)
-  (let ((xp ($index wx 0 xi))
-        (hp ($affine ph wh b ones)))
-    ($tanh ($+ xp hp))))
-
-(defmethod $execute ((l embedding-cell) x &key (trainp t))
-  (with-slots (wx wh bh ph a) l
-    (let ((ones (embedding-ones l x))
-          (ph0 (if ph ph (zeros ($size x 0) *hidden-size*)))
-          (bh0 (when bh ($data bh))))
-      (let ((ph1 (if a
-                     (if trainp
-                         (funcall a (embedding-forward x wx ph0 wh bh ones))
-                         (funcall a (embedding-forward x ($data wx) ph0 ($data wh) bh0 ones)))
-                     (if trainp
-                         (embedding-forward x wx ph0 wh bh ones)
-                         (embedding-forward x ($data wx) ph0 ($data wh) bh0 ones)))))
-        (setf ph ph1)))))
-
-(defclass recurrent-layer (th.layers::layer)
-  ((stateful :initform nil :accessor $recurrent-statefule-p)
-   (cell :initform nil)))
-
-(defun recurrent-layer (input-size output-size
-                        &key (cellfn #'affine-cell) (activation :tanh) (weight-initializer :he-normal)
-                          weight-initialization (biasp t) statefulp)
-  (let ((n (make-instance 'recurrent-layer)))
-    (with-slots (stateful cell) n
-      (setf stateful statefulp)
-      (setf cell (funcall cellfn
-                          input-size output-size
-                          :activation activation
-                          :weight-initializer weight-initializer
-                          :weight-initialization weight-initialization
-                          :biasp biasp)))
-    n))
-
-(defmethod $train-parameters ((l recurrent-layer))
-  (with-slots (cell) l
-    ($train-parameters cell)))
-
-(defmethod $parameters ((l recurrent-layer))
-  (with-slots (cell) l
-    ($parameters cell)))
-
-(defmethod $execute ((l recurrent-layer) xs &key (trainp t))
-  (with-slots (cell stateful) l
-    (unless stateful (setf ($cell-state cell) nil))
-    (loop :for x :in xs
-          :collect ($execute cell x :trainp trainp))))
-
-(defclass character-encoder ()
-  ((char-to-idx :initform #{})
-   (idx-to-char :initform nil)))
-
-(defun character-encoder () (make-instance 'character-encoder))
-
-(defun build-encoder (encoder data)
-  (with-slots (char-to-idx idx-to-char) encoder
-    (setf idx-to-char ($array (remove-duplicates (coerce data 'list))))
-    (let ((vocab-size ($count idx-to-char)))
-      (loop :for i :from 0 :below vocab-size
-            :for ch = ($ idx-to-char i)
-            :do (setf ($ char-to-idx ch) i))))
-  encoder)
-
-(defun encoder-vocab-size (encoder)
-  (with-slots (idx-to-char) encoder
-    ($count idx-to-char)))
-
-(defun encoder-encode-strings (encoder strings)
-  "encode strings as indices"
-  (let ((ntime ($count ($0 strings)))
-        (nbatch ($count strings)))
-    (with-slots (char-to-idx) encoder
-      (loop :for time :from 0 :below ntime
-            :collect (let ((m (tensor.long (zeros nbatch))))
-                       (loop :for str :in strings
-                             :for b :from 0
-                             :for ch = ($ str time)
-                             :do (setf ($ m b) ($ char-to-idx ch)))
-                       m)))))
-
-(defun encoder-decode-matrices (encoder matrices)
-  "decode index matrics as strings"
-  (let ((nbatch ($size ($0 matrices) 0)))
-    (with-slots (idx-to-char) encoder
-      (loop :for b :from 0 :below nbatch
-            :collect (coerce (loop :for m :in matrices
-                                   :for idx = ($ m b)
-                                   :collect ($ idx-to-char idx))
-                             'string)))))
-
-(defun encoder-encode-strings-1-of-k (encoder strings)
-  "encode strings as 1-of-K encodings"
-  (let ((ntime ($count ($0 strings)))
-        (nbatch ($count strings))
-        (vocab-size (encoder-vocab-size encoder)))
-    (with-slots (char-to-idx) encoder
-      (loop :for time :from 0 :below ntime
-            :collect (let ((m (zeros nbatch vocab-size)))
-                       (loop :for str :in strings
-                             :for b :from 0
-                             :for ch = ($ str time)
-                             :do (setf ($ m b ($ char-to-idx ch)) 1))
-                       m)))))
-
-(defun encoder-decode-matrices-1-of-k (encoder matrices)
-  "decode 1-of-K matrics as strings"
-  (let ((nbatch ($size ($0 matrices) 0)))
-    (with-slots (idx-to-char) encoder
-      (loop :for b :from 0 :below nbatch
-            :collect (coerce (loop :for m :in matrices
-                                   :for mi = ($nonzero m)
-                                   :for idx = ($ mi b 1)
-                                   :collect ($ idx-to-char idx))
-                             'string)))))
-
-(let ((encoder (character-encoder)))
-  (build-encoder encoder *data*)
-  (prn (encoder-encode-strings encoder '("hello, world" "hello, world"))))
-
-(let ((encoder (character-encoder)))
-  (build-encoder encoder *data*)
-  (let ((matrices (encoder-encode-strings encoder '("hello, world" "hello, world"))))
-    (prn matrices)
-    (prn (encoder-decode-matrices encoder matrices))))
-
-(let ((encoder (character-encoder)))
-  (build-encoder encoder *data*)
-  (prn (encoder-encode-strings-1-of-k encoder '("hello, world" "hello, world"))))
-
-(let ((encoder (character-encoder)))
-  (build-encoder encoder *data*)
-  (let ((matrices (encoder-encode-strings-1-of-k encoder '("hello, world" "hello, world"))))
-    (prn matrices)
-    (prn (encoder-decode-matrices-1-of-k encoder matrices))))
-
-(let ((encoder (character-encoder)))
-  (build-encoder encoder *data*)
-  (let ((rnn (recurrent-layer (encoder-vocab-size encoder) *hidden-size*))
-        (matrices (encoder-encode-strings-1-of-k encoder '("hello, world" "hello, world"))))
-    (prn matrices)
-    (prn (encoder-decode-matrices-1-of-k encoder matrices))
-    (prn ($execute rnn matrices))))
+(let* ((encoder (character-encoder *data*))
+       (vsize (encoder-vocabulary-size encoder))
+       (seq1 (encoder-encode encoder '("hello, world" "hello, world")))
+       (rnn (recurrent-layer vsize *hidden-size*
+                             :cellfn #'embedding-cell)))
+  (prn ($execute rnn seq1)))
 
 (let ((encoder (character-encoder)))
   (build-encoder encoder *data*)

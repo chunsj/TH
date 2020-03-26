@@ -4,7 +4,8 @@
   (:use #:common-lisp
         #:mu
         #:th)
-  (:export #:$execute
+  (:export #:layer
+           #:$execute
            #:$evaluate
            #:$parameters
            #:$save-weights
@@ -20,7 +21,11 @@
            #:full-convolution-2d-layer
            #:reshape-layer
            #:functional-layer
-           #:$function-arguments))
+           #:$function-arguments
+           #:affine-cell
+           #:$cell-state
+           #:embedding-cell
+           #:recurrent-layer))
 
 (in-package :th.layers)
 
@@ -569,3 +574,133 @@
         (cond ((listp x) (apply f (append x (list :trainp trainp))))
               (t (apply f (list x :trainp trainp))))
         x)))
+
+(defclass affine-cell (layer)
+  ((wx :initform nil)
+   (wh :initform nil)
+   (a :initform nil)
+   (bh :initform nil)
+   (ph :initform nil :accessor $cell-state)
+   (os :initform #{})
+   (wi :initform nil)))
+
+(defun affine-cell (input-size output-size
+                    &key (activation :tanh) (weight-initializer :he-normal)
+                      weight-initialization (biasp t))
+  (let ((n (make-instance 'affine-cell)))
+    (with-slots (wx wh bh ph wi a) n
+      (setf wi weight-initialization)
+      (setf a (afn activation))
+      (when biasp (setf bh ($parameter (zeros output-size))))
+      (setf wx (wif weight-initializer (list input-size output-size)
+                    weight-initialization))
+      (setf wh (wif weight-initializer (list output-size output-size)
+                    weight-initialization)))
+
+    n))
+
+(defmethod $train-parameters ((l affine-cell))
+  (with-slots (wx wh bh) l
+    (if bh (list wx wh bh) (list wx wh))))
+
+(defmethod $parameters ((l affine-cell))
+  (with-slots (wx wh bh) l
+    (if bh (list wx wh bh) (list wx wh))))
+
+(defmethod $execute ((l affine-cell) x &key (trainp t))
+  (with-slots (wx wh bh ph a) l
+    (let ((ones (affine-ones l x))
+          (ph0 (if ph ph (zeros ($size x 0) *hidden-size*)))
+          (bh0 (when bh ($data bh))))
+      (let ((ph1 (if a
+                     (if trainp
+                         (funcall a ($affine2 x wx ph0 wh bh ones))
+                         (funcall a ($affine2 x ($data wx) ph0 ($data wh) bh0 ones)))
+                     (if trainp
+                         ($affine2 x wx ph0 wh bh ones)
+                         ($affine2 x ($data wx) ph0 ($data wh) bh0 ones)))))
+        (setf ph ph1)))))
+
+(defclass embedding-cell (layer)
+  ((wx :initform nil)
+   (wh :initform nil)
+   (a :initform nil)
+   (bh :initform nil)
+   (ph :initform nil :accessor $cell-state)
+   (os :initform #{})
+   (wi :initform nil)))
+
+(defun embedding-cell (input-size output-size
+                       &key (activation :tanh) (weight-initializer :he-normal)
+                         weight-initialization (biasp t))
+  (let ((n (make-instance 'embedding-cell)))
+    (with-slots (wx wh bh ph wi a) n
+      (setf wi weight-initialization)
+      (setf a (afn activation))
+      (when biasp (setf bh ($parameter (zeros output-size))))
+      (setf wx (wif weight-initializer (list input-size output-size)
+                    weight-initialization))
+      (setf wh (wif weight-initializer (list output-size output-size)
+                    weight-initialization)))
+
+    n))
+
+(defmethod $train-parameters ((l embedding-cell))
+  (with-slots (wx wh bh) l
+    (if bh (list wx wh bh) (list wx wh))))
+
+(defmethod $parameters ((l embedding-cell))
+  (with-slots (wx wh bh) l
+    (if bh (list wx wh bh) (list wx wh))))
+
+(defun embedding-forward (xi wx ph wh b &optional ones)
+  (let ((xp ($index wx 0 xi))
+        (hp ($affine ph wh b ones)))
+    ($tanh ($+ xp hp))))
+
+(defmethod $execute ((l embedding-cell) x &key (trainp t))
+  (with-slots (wx wh bh ph a) l
+    (let ((ones (affine-ones l x))
+          (ph0 (if ph ph (zeros ($size x 0) *hidden-size*)))
+          (bh0 (when bh ($data bh))))
+      (let ((ph1 (if a
+                     (if trainp
+                         (funcall a (embedding-forward x wx ph0 wh bh ones))
+                         (funcall a (embedding-forward x ($data wx) ph0 ($data wh) bh0 ones)))
+                     (if trainp
+                         (embedding-forward x wx ph0 wh bh ones)
+                         (embedding-forward x ($data wx) ph0 ($data wh) bh0 ones)))))
+        (setf ph ph1)))))
+
+(defclass recurrent-layer (layer)
+  ((stateful :initform nil :accessor $recurrent-statefule-p)
+   (cell :initform nil)))
+
+(defun recurrent-layer (input-size output-size
+                        &key (cellfn #'affine-cell) (activation :tanh)
+                          (weight-initializer :he-normal)
+                          weight-initialization (biasp t) statefulp)
+  (let ((n (make-instance 'recurrent-layer)))
+    (with-slots (stateful cell) n
+      (setf stateful statefulp)
+      (setf cell (funcall cellfn
+                          input-size output-size
+                          :activation activation
+                          :weight-initializer weight-initializer
+                          :weight-initialization weight-initialization
+                          :biasp biasp)))
+    n))
+
+(defmethod $train-parameters ((l recurrent-layer))
+  (with-slots (cell) l
+    ($train-parameters cell)))
+
+(defmethod $parameters ((l recurrent-layer))
+  (with-slots (cell) l
+    ($parameters cell)))
+
+(defmethod $execute ((l recurrent-layer) xs &key (trainp t))
+  (with-slots (cell stateful) l
+    (unless stateful (setf ($cell-state cell) nil))
+    (loop :for x :in xs
+          :collect ($execute cell x :trainp trainp))))
