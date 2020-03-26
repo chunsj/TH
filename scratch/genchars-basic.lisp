@@ -63,18 +63,18 @@
              (recurrent-layer *hidden-size* vsize :activation :softmax))))
   (let* ((losses (mapcar (lambda (y c) ($cnll y c)) ($execute rnn seq1) seq1))
          (loss ($div (apply #'$+ losses) ($count losses))))
-    (prn ($data loss)))
+    (prn "CNLL[0]:" ($data loss)))
   ($gd! rnn)
   (let* ((losses (mapcar (lambda (y c) ($cnll y c)) ($execute rnn seq1) seq1))
          (loss ($div (apply #'$+ losses) ($count losses))))
-    (prn ($data loss)))
+    (prn "CNLL[1]:" ($data loss)))
   (let* ((losses (mapcar (lambda (y c) ($cee y c)) ($execute rnn seq1) seq2))
          (loss ($div (apply #'$+ losses) ($count losses))))
-    (prn ($data loss)))
+    (prn "CEE[0]:" ($data loss)))
   ($gd! rnn)
   (let* ((losses (mapcar (lambda (y c) ($cee y c)) ($execute rnn seq1) seq2))
          (loss ($div (apply #'$+ losses) ($count losses))))
-    (prn ($data loss))))
+    (prn "CEE[1]" ($data loss))))
 
 ;; XXX need to build encoding/decoding helper
 ;; first, with character encoder/decoder
