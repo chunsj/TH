@@ -43,6 +43,11 @@
              (recurrent-layer *hidden-size* vsize :activation :softmax))))
   (prn (encoder-decode *encoder* (mapcar #'$choose ($execute rnn seq1)))))
 
+;; XXX
+;; (encoder-decode *encoder* (mapcar #'$choose ($execute rnn seq1)))
+;; this line could be changed to a method
+;; encoder can generate strings... is this a correct approach?
+
 ;; loss function testing
 (let* ((vsize (encoder-vocabulary-size *encoder*))
        (seq1 (encoder-encode *encoder* '("hello, world" "hello, world")))
