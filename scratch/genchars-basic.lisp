@@ -139,14 +139,14 @@
                          (embedding-forward x ($data wx) ph0 ($data wh) bh0 ones)))))
         (setf ph ph1)))))
 
-(defclass rnn-layer (th.layers::layer)
+(defclass recurrent-layer (th.layers::layer)
   ((stateful :initform nil :accessor $recurrent-statefule-p)
    (cell :initform nil)))
 
-(defun rnn-layer (input-size output-size
-                  &key (cellfn #'affine-cell) (activation :tanh) (weight-initializer :he-normal)
-                    weight-initialization (biasp t) statefulp)
-  (let ((n (make-instance 'rnn-layer)))
+(defun recurrent-layer (input-size output-size
+                        &key (cellfn #'affine-cell) (activation :tanh) (weight-initializer :he-normal)
+                          weight-initialization (biasp t) statefulp)
+  (let ((n (make-instance 'recurrent-layer)))
     (with-slots (stateful cell) n
       (setf stateful statefulp)
       (setf cell (funcall cellfn
@@ -157,15 +157,15 @@
                           :biasp biasp)))
     n))
 
-(defmethod $train-parameters ((l rnn-layer))
+(defmethod $train-parameters ((l recurrent-layer))
   (with-slots (cell) l
     ($train-parameters cell)))
 
-(defmethod $parameters ((l rnn-layer))
+(defmethod $parameters ((l recurrent-layer))
   (with-slots (cell) l
     ($parameters cell)))
 
-(defmethod $execute ((l rnn-layer) xs &key (trainp t))
+(defmethod $execute ((l recurrent-layer) xs &key (trainp t))
   (with-slots (cell stateful) l
     (unless stateful (setf ($cell-state cell) nil))
     (loop :for x :in xs
@@ -260,7 +260,7 @@
 
 (let ((encoder (character-encoder)))
   (build-encoder encoder *data*)
-  (let ((rnn (rnn-layer (encoder-vocab-size encoder) *hidden-size*))
+  (let ((rnn (recurrent-layer (encoder-vocab-size encoder) *hidden-size*))
         (matrices (encoder-encode-strings-1-of-k encoder '("hello, world" "hello, world"))))
     (prn matrices)
     (prn (encoder-decode-matrices-1-of-k encoder matrices))
@@ -268,8 +268,8 @@
 
 (let ((encoder (character-encoder)))
   (build-encoder encoder *data*)
-  (let ((rnn (rnn-layer (encoder-vocab-size encoder) *hidden-size*
-                        :cellfn #'embedding-cell))
+  (let ((rnn (recurrent-layer (encoder-vocab-size encoder) *hidden-size*
+                              :cellfn #'embedding-cell))
         (matrices (encoder-encode-strings encoder '("hello, world" "hello, world"))))
     (prn matrices)
     (prn (encoder-decode-matrices encoder matrices))
