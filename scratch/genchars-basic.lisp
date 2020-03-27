@@ -54,10 +54,10 @@
        (seq2 (encoder-encode *encoder* '("hello, world" "hello, world") :type :1-of-K))
        (rnn (sequential-layer
              (recurrent-layer (embedding-cell vsize *hidden-size*))
-             (recurrent-layer (affine-cell *hidden-size* vsize :activation :softmax)))))
-  (prn ($cnll (car ($execute rnn seq1)) (car seq1)))
-  (prn ($cee (car ($execute rnn seq1)) (car seq2)))
-  (prn ($cee (car seq2) (car seq2))))
+             (recurrent-layer (affine-cell *hidden-size* vsize :activation :nil)))))
+  (prn ($cnll ($logsoftmax (car ($execute rnn seq1))) (car seq1)))
+  (prn ($cee ($softmax (car ($execute rnn seq1))) (car seq2)))
+  (prn ($cee ($softmax (car seq2)) (car seq2))))
 
 ;; use this for cross entropy loss
 (let* ((vsize (encoder-vocabulary-size *encoder*))
