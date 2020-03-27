@@ -1,7 +1,7 @@
 ;; from
 ;; http://karpathy.github.io/2015/05/21/rnn-effectiveness/
 
-(defpackage :genchars-basic
+(defpackage :genchars-layer-dev
   (:use #:common-lisp
         #:mu
         #:th
@@ -9,7 +9,7 @@
         #:th.layers
         #:th.ex.data))
 
-(in-package :genchars-basic)
+(in-package :genchars-layer-dev)
 
 ;;
 ;; text data
@@ -44,11 +44,6 @@
   (let ((outputs ($execute rnn seq1)))
     (prn (encoder-choose *encoder* outputs))
     (prn (encoder-choose *encoder* outputs 2D0))))
-
-;; XXX
-;; (encoder-decode *encoder* (mapcar #'$choose ($execute rnn seq1)))
-;; this line could be changed to a method
-;; encoder can generate strings... is this a correct approach?
 
 ;; loss function testing
 (let* ((vsize (encoder-vocabulary-size *encoder*))
