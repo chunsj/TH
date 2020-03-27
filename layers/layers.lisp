@@ -177,6 +177,7 @@
         ((eq activation :gelu) #'$gelu)
         ((eq activation :celu) #'$celu)
         ((eq activation :softmax) #'$softmax)
+        ((eq activation :logsoftmax) #'$logsoftmax)
         ((eq activation :nil) nil)
         (t #'$sigmoid)))
 
@@ -585,7 +586,7 @@
    (wi :initform nil)))
 
 (defun affine-cell (input-size output-size
-                    &key (activation :tanh) (weight-initializer :he-normal)
+                    &key (activation :tanh) (weight-initializer :xavier-normal)
                       weight-initialization (biasp t))
   (let ((n (make-instance 'affine-cell)))
     (with-slots (wx wh bh ph wi a) n
@@ -631,7 +632,7 @@
    (wi :initform nil)))
 
 (defun embedding-cell (input-size output-size
-                       &key (activation :tanh) (weight-initializer :he-normal)
+                       &key (activation :tanh) (weight-initializer :xavier-normal)
                          weight-initialization (biasp t))
   (let ((n (make-instance 'embedding-cell)))
     (with-slots (wx wh bh ph wi a) n

@@ -59,27 +59,28 @@
   (prn ($cee (car ($execute rnn seq1)) (car seq2)))
   (prn ($cee (car seq2) (car seq2))))
 
+;; use this for cross entropy loss
+(let* ((vsize (encoder-vocabulary-size *encoder*))
+       (seq1 (encoder-encode *encoder* '("hello, world" "hello, world")))
+       (rnn (sequential-layer
+             (recurrent-layer (embedding-cell vsize *hidden-size*))
+             (recurrent-layer (affine-cell *hidden-size* vsize :activation :nil)))))
+  (prn ($cec (car ($execute rnn seq1)) (car seq1))))
+
 ;; test with backpropagation - check reductions of loss value
 (let* ((vsize (encoder-vocabulary-size *encoder*))
        (seq1 (encoder-encode *encoder* '("hello, world" "hello, world")))
-       (seq2 (encoder-encode *encoder* '("hello, world" "hello, world") :type :1-of-K))
        (rnn (sequential-layer
              (recurrent-layer (embedding-cell vsize *hidden-size*))
-             (recurrent-layer (affine-cell *hidden-size* vsize :activation :softmax)))))
-  (let* ((losses (mapcar (lambda (y c) ($cnll y c)) ($execute rnn seq1) seq1))
+             (recurrent-layer (affine-cell *hidden-size* vsize :activation :nil)))))
+  (let* ((outputs ($execute rnn seq1))
+         (losses (mapcar (lambda (y c) ($cec y c)) outputs seq1))
          (loss ($div (apply #'$+ losses) ($count losses))))
-    (prn "CNLL[0]:" ($data loss)))
+    (prn "CEC[0]:" ($data loss)))
   ($gd! rnn)
-  (let* ((losses (mapcar (lambda (y c) ($cnll y c)) ($execute rnn seq1) seq1))
+  (let* ((losses (mapcar (lambda (y c) ($cec y c)) ($execute rnn seq1) seq1))
          (loss ($div (apply #'$+ losses) ($count losses))))
-    (prn "CNLL[1]:" ($data loss)))
-  (let* ((losses (mapcar (lambda (y c) ($cee y c)) ($execute rnn seq1) seq2))
-         (loss ($div (apply #'$+ losses) ($count losses))))
-    (prn "CEE[0]:" ($data loss)))
-  ($gd! rnn)
-  (let* ((losses (mapcar (lambda (y c) ($cee y c)) ($execute rnn seq1) seq2))
-         (loss ($div (apply #'$+ losses) ($count losses))))
-    (prn "CEE[1]" ($data loss))))
+    (prn "CEC[1]:" ($data loss))))
 
 ;; XXX need to build encoding/decoding helper
 ;; first, with character encoder/decoder
