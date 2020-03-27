@@ -79,16 +79,21 @@
          (loss ($div (apply #'$+ losses) ($count losses))))
     (prn "CEC[1]:" ($data loss))))
 
-;; XXX need to build encoding/decoding helper
-;; first, with character encoder/decoder
-;; input: strings
-;; output: encoder/decoder instance
-;; contains: char-to-idx, idx-to-char information
-;; offers indices encoding/decoding
-;; offers 1-of-K encoding/decoding
-;; represents sequence as a list
-;; takes a list input of indices/1-of-K matrices
-;; supports batch encoding/decoding
+(let* ((vsize (encoder-vocabulary-size *encoder*))
+       (seq1 (encoder-encode *encoder* '("hello, world" "hello, world")))
+       (rnn (sequential-layer
+             (recurrent-layer (embedding-cell vsize *hidden-size*))
+             (recurrent-layer (affine-cell *hidden-size* vsize :activation :nil)))))
+  (loop :for iter :from 0 :below 100
+        :do (let* ((outputs ($execute rnn seq1))
+                   (losses (mapcar (lambda (y c) ($cec y c)) outputs seq1))
+                   (loss ($div (apply #'$+ losses) ($count losses))))
+              (prn iter ($data loss))
+              ($gd! rnn 0.001))))
+
+;;
+;; following old code is for referential purpose
+;;
 
 (prn (affine-cell *vocab-size* *hidden-size*))
 
