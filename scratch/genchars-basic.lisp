@@ -40,14 +40,6 @@
        (rnn (sequential-layer
              (recurrent-layer (embedding-cell vsize *hidden-size*))
              (recurrent-layer (affine-cell *hidden-size* *hidden-size*))
-             (recurrent-layer (affine-cell *hidden-size* vsize :activation :softmax)))))
-  (prn (encoder-decode *encoder* (mapcar #'$choose ($execute rnn seq1)))))
-
-(let* ((vsize (encoder-vocabulary-size *encoder*))
-       (seq1 (encoder-encode *encoder* '("hello, world" "hello, world")))
-       (rnn (sequential-layer
-             (recurrent-layer (embedding-cell vsize *hidden-size*))
-             (recurrent-layer (affine-cell *hidden-size* *hidden-size*))
              (recurrent-layer (affine-cell *hidden-size* vsize :activation :nil)))))
   (let ((outputs ($execute rnn seq1)))
     (prn (encoder-choose *encoder* outputs))
