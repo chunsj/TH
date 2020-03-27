@@ -676,19 +676,12 @@
   ((stateful :initform nil :accessor $recurrent-statefule-p)
    (cell :initform nil)))
 
-(defun recurrent-layer (input-size output-size
-                        &key (cellfn #'affine-cell) (activation :tanh)
-                          (weight-initializer :he-normal)
-                          weight-initialization (biasp t) statefulp)
-  (let ((n (make-instance 'recurrent-layer)))
+(defun recurrent-layer (cell &key statefulp)
+  (let ((n (make-instance 'recurrent-layer))
+        (celli cell))
     (with-slots (stateful cell) n
       (setf stateful statefulp)
-      (setf cell (funcall cellfn
-                          input-size output-size
-                          :activation activation
-                          :weight-initializer weight-initializer
-                          :weight-initialization weight-initialization
-                          :biasp biasp)))
+      (setf cell celli))
     n))
 
 (defmethod $train-parameters ((l recurrent-layer))

@@ -31,16 +31,16 @@
 ;; simple recurrent layer operation testing
 (let* ((vsize (encoder-vocabulary-size *encoder*))
        (seq1 (encoder-encode *encoder* '("hello, world" "hello, world")))
-       (rnn (recurrent-layer vsize *hidden-size* :cellfn #'embedding-cell)))
+       (rnn (recurrent-layer (embedding-cell vsize *hidden-size*))))
   (prn ($execute rnn seq1)))
 
 ;; multiple layered rnn testing
 (let* ((vsize (encoder-vocabulary-size *encoder*))
        (seq1 (encoder-encode *encoder* '("hello, world" "hello, world")))
        (rnn (sequential-layer
-             (recurrent-layer vsize *hidden-size* :cellfn #'embedding-cell)
-             (recurrent-layer *hidden-size* *hidden-size*)
-             (recurrent-layer *hidden-size* vsize :activation :softmax))))
+             (recurrent-layer (embedding-cell vsize *hidden-size*))
+             (recurrent-layer (affine-cell *hidden-size* *hidden-size*))
+             (recurrent-layer (affine-cell *hidden-size* vsize :activation :softmax)))))
   (prn (encoder-decode *encoder* (mapcar #'$choose ($execute rnn seq1)))))
 
 ;; XXX
@@ -53,8 +53,8 @@
        (seq1 (encoder-encode *encoder* '("hello, world" "hello, world")))
        (seq2 (encoder-encode *encoder* '("hello, world" "hello, world") :type :1-of-K))
        (rnn (sequential-layer
-             (recurrent-layer vsize *hidden-size* :cellfn #'embedding-cell)
-             (recurrent-layer *hidden-size* vsize :activation :softmax))))
+             (recurrent-layer (embedding-cell vsize *hidden-size*))
+             (recurrent-layer (affine-cell *hidden-size* vsize :activation :softmax)))))
   (prn ($cnll (car ($execute rnn seq1)) (car seq1)))
   (prn ($cee (car ($execute rnn seq1)) (car seq2)))
   (prn ($cee (car seq2) (car seq2))))
@@ -64,8 +64,8 @@
        (seq1 (encoder-encode *encoder* '("hello, world" "hello, world")))
        (seq2 (encoder-encode *encoder* '("hello, world" "hello, world") :type :1-of-K))
        (rnn (sequential-layer
-             (recurrent-layer vsize *hidden-size* :cellfn #'embedding-cell)
-             (recurrent-layer *hidden-size* vsize :activation :softmax))))
+             (recurrent-layer (embedding-cell vsize *hidden-size*))
+             (recurrent-layer (affine-cell *hidden-size* vsize :activation :softmax)))))
   (let* ((losses (mapcar (lambda (y c) ($cnll y c)) ($execute rnn seq1) seq1))
          (loss ($div (apply #'$+ losses) ($count losses))))
     (prn "CNLL[0]:" ($data loss)))
