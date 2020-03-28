@@ -25,7 +25,9 @@
            #:affine-cell
            #:$cell-state
            #:embedding-cell
-           #:recurrent-layer))
+           #:recurrent-layer
+           #:$recurrent-stateful-p
+           #:$set-stateful))
 
 (in-package :th.layers)
 
@@ -34,9 +36,13 @@
 
 (defgeneric $train-parameters (layer))
 
+(defgeneric $set-stateful (layer flag))
+
 (defclass layer () ())
 
 (defmethod $train-parameters ((l layer)) nil)
+
+(defmethod $set-stateful ((l layer) flag))
 
 (defmethod $parameters ((l layer)) ($train-parameters l))
 
@@ -105,6 +111,12 @@
   (with-slots (ls) l
     (loop :for e :in ls
           :appending ($train-parameters e))))
+
+(defmethod $set-stateful ((l sequential-layer) flag)
+  (with-slots (ls) l
+    (loop :for e :in ls
+          :do ($set-stateful e flag))
+    l))
 
 (defmethod $parameters ((l sequential-layer))
   (with-slots (ls) l
@@ -674,7 +686,7 @@
         (setf ph ph1)))))
 
 (defclass recurrent-layer (layer)
-  ((stateful :initform nil :accessor $recurrent-statefule-p)
+  ((stateful :initform nil :accessor $recurrent-stateful-p)
    (cell :initform nil)))
 
 (defun recurrent-layer (cell &key statefulp)
@@ -688,6 +700,9 @@
 (defmethod $train-parameters ((l recurrent-layer))
   (with-slots (cell) l
     ($train-parameters cell)))
+
+(defmethod $set-stateful ((l recurrent-layer) flag)
+  (setf ($recurrent-stateful-p l) flag))
 
 (defmethod $parameters ((l recurrent-layer))
   (with-slots (cell) l
