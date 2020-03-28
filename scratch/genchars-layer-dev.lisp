@@ -91,6 +91,26 @@
               (prn iter ($data loss))
               ($gd! rnn 0.001))))
 
+(let* ((vsize (encoder-vocabulary-size *encoder*))
+       (strings (list "the quick brown fox jumps over the lazy dog. "
+                      "quick brown fox jumps over the lazy dog. the "
+                      "brown fox jumps over the lazy dog. the quick "
+                      "fox jumps over the lazy dog. the quick brown "
+                      "jumps over the lazy dog. the quick brown fox "))
+       (targets (mapcar (lambda (s) (rotate-left-string 1 s)) strings))
+       (seq1 (encoder-encode *encoder* strings))
+       (tar1 (encoder-encode *encoder* targets))
+       (rnn (sequential-layer
+             (recurrent-layer (embedding-cell vsize *hidden-size*))
+             (recurrent-layer (affine-cell *hidden-size* vsize :activation :nil)))))
+  (loop :for iter :from 0 :below 100
+        :do (let* ((outputs ($execute rnn seq1))
+                   (losses (mapcar (lambda (y c) ($cec y c)) outputs tar1))
+                   (loss ($div (apply #'$+ losses) ($count losses))))
+              (prn iter ($data loss))
+              ($rmgd! rnn)))
+  (prn (encoder-choose *encoder* ($evaluate rnn seq1))))
+
 ;;
 ;; following old code is for referential purpose
 ;;
