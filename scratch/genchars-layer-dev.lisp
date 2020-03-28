@@ -108,7 +108,7 @@
     resultstr))
 
 (time
- (with-foreign-memory-limit (32768)
+ (with-foreign-memory-limit (32768) ;; for speed
    (let* ((epochs 500)
           (print-step 50)
           (temperature 1D0)
