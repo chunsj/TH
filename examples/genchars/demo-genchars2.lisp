@@ -55,20 +55,7 @@
 ;; to use seed string induced state, stateful parameter is turned on.
 ;; after processing, it should be turned off for fresh restarting.
 (defun generate-string (rnn encoder seedstr n &optional (temperature 1D0))
-  (let* ((seedps ($evaluate rnn (encoder-encode encoder (list seedstr))))
-         (seedstrs (encoder-choose encoder seedps temperature))
-         (laststrs (list (string ($last (car seedstrs)))))
-         (resultstr (concatenate 'string seedstr (car laststrs))))
-    ($set-stateful rnn T)
-    (loop :for i :from 0 :below n
-          :for nextseq = (encoder-encode encoder laststrs)
-          :for nextoutps = ($evaluate rnn nextseq)
-          :for nextoutstrs = (encoder-choose encoder nextoutps temperature)
-          :do (progn
-                (setf laststrs nextoutstrs)
-                (setf resultstr (concatenate 'string resultstr (car nextoutstrs)))))
-    ($set-stateful rnn nil)
-    resultstr))
+  ($generate-sequence rnn encoder seedstr n temperature))
 
 ;; reset network
 ($reset! *rnn*)

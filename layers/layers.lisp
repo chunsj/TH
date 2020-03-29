@@ -27,7 +27,8 @@
            #:embedding-cell
            #:recurrent-layer
            #:$recurrent-stateful-p
-           #:$set-stateful))
+           #:$set-stateful
+           #:$generate-sequence))
 
 (in-package :th.layers)
 
@@ -713,3 +714,5 @@
     (unless stateful (setf ($cell-state cell) nil))
     (loop :for x :in xs
           :collect ($execute cell x :trainp trainp))))
+
+(defgeneric $generate-sequence (rnn encoder seedseq n &optional temperature))
