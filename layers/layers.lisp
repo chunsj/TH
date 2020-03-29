@@ -24,7 +24,6 @@
            #:$function-arguments
            #:affine-cell
            #:$cell-state
-           #:embedding-cell
            #:recurrent-layer
            #:$recurrent-stateful-p
            #:$set-stateful
@@ -596,20 +595,26 @@
    (bh :initform nil)
    (ph :initform nil :accessor $cell-state)
    (os :initform #{})
-   (wi :initform nil)))
+   (wi :initform nil)
+   (embp :initform nil)))
+
+;; XXX can i consolidate affine-cell and embedding-cell as one?
+;; before implementing lstm and gru, do this first.
 
 (defun affine-cell (input-size output-size
                     &key (activation :tanh) (weight-initializer :xavier-normal)
+                      embeddedp
                       weight-initialization (biasp t))
   (let ((n (make-instance 'affine-cell)))
-    (with-slots (wx wh bh ph wi a) n
+    (with-slots (wx wh bh ph wi a embp) n
       (setf wi weight-initialization)
       (setf a (afn activation))
       (when biasp (setf bh ($parameter (zeros output-size))))
       (setf wx (wif weight-initializer (list input-size output-size)
                     weight-initialization))
       (setf wh (wif weight-initializer (list output-size output-size)
-                    weight-initialization)))
+                    weight-initialization))
+      (setf embp embeddedp))
 
     n))
 
@@ -621,69 +626,28 @@
   (with-slots (wx wh bh) l
     (if bh (list wx wh bh) (list wx wh))))
 
-(defmethod $execute ((l affine-cell) x &key (trainp t))
-  (with-slots (wx wh bh ph a) l
-    (let ((ones (affine-ones l x))
-          (ph0 (if ph ph (zeros ($size x 0) ($size wx 1))))
-          (bh0 (when bh ($data bh))))
-      (let ((ph1 (if a
-                     (if trainp
-                         (funcall a ($affine2 x wx ph0 wh bh ones))
-                         (funcall a ($affine2 x ($data wx) ph0 ($data wh) bh0 ones)))
-                     (if trainp
-                         ($affine2 x wx ph0 wh bh ones)
-                         ($affine2 x ($data wx) ph0 ($data wh) bh0 ones)))))
-        (setf ph ph1)))))
-
-(defclass embedding-cell (layer)
-  ((wx :initform nil)
-   (wh :initform nil)
-   (a :initform nil)
-   (bh :initform nil)
-   (ph :initform nil :accessor $cell-state)
-   (os :initform #{})
-   (wi :initform nil)))
-
-(defun embedding-cell (input-size output-size
-                       &key (activation :tanh) (weight-initializer :xavier-normal)
-                         weight-initialization (biasp t))
-  (let ((n (make-instance 'embedding-cell)))
-    (with-slots (wx wh bh ph wi a) n
-      (setf wi weight-initialization)
-      (setf a (afn activation))
-      (when biasp (setf bh ($parameter (zeros output-size))))
-      (setf wx (wif weight-initializer (list input-size output-size)
-                    weight-initialization))
-      (setf wh (wif weight-initializer (list output-size output-size)
-                    weight-initialization)))
-
-    n))
-
-(defmethod $train-parameters ((l embedding-cell))
-  (with-slots (wx wh bh) l
-    (if bh (list wx wh bh) (list wx wh))))
-
-(defmethod $parameters ((l embedding-cell))
-  (with-slots (wx wh bh) l
-    (if bh (list wx wh bh) (list wx wh))))
-
 (defun embedding-forward (xi wx ph wh b &optional ones)
   (let ((xp ($index wx 0 xi))
         (hp ($affine ph wh b ones)))
-    ($tanh ($+ xp hp))))
+    ($+ xp hp)))
 
-(defmethod $execute ((l embedding-cell) x &key (trainp t))
-  (with-slots (wx wh bh ph a) l
+(defun affine-cell-forward (x wx ph wh bh ones embp)
+  (if embp
+      (embedding-forward x wx ph wh bh ones)
+      ($affine2 x wx ph wh bh ones)))
+
+(defmethod $execute ((l affine-cell) x &key (trainp t))
+  (with-slots (wx wh bh ph a embp) l
     (let ((ones (affine-ones l x))
           (ph0 (if ph ph (zeros ($size x 0) ($size wx 1))))
           (bh0 (when bh ($data bh))))
       (let ((ph1 (if a
                      (if trainp
-                         (funcall a (embedding-forward x wx ph0 wh bh ones))
-                         (funcall a (embedding-forward x ($data wx) ph0 ($data wh) bh0 ones)))
+                         (funcall a (affine-cell-forward x wx ph0 wh bh ones embp))
+                         (funcall a (affine-cell-forward x ($data wx) ph0 ($data wh) bh0 ones embp)))
                      (if trainp
-                         (embedding-forward x wx ph0 wh bh ones)
-                         (embedding-forward x ($data wx) ph0 ($data wh) bh0 ones)))))
+                         (affine-cell-forward x wx ph0 wh bh ones embp)
+                         (affine-cell-forward x ($data wx) ph0 ($data wh) bh0 ones embp)))))
         (setf ph ph1)))))
 
 (defclass recurrent-layer (layer)
