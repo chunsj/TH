@@ -23,6 +23,8 @@
            #:functional-layer
            #:$function-arguments
            #:affine-cell
+           #:lstm-cell
+           #:gru-cell
            #:$cell-state
            #:recurrent-layer
            #:$recurrent-stateful-p
@@ -649,6 +651,13 @@
                          (affine-cell-forward x wx ph0 wh bh ones embp)
                          (affine-cell-forward x ($data wx) ph0 ($data wh) bh0 ones embp)))))
         (setf ph ph1)))))
+
+;; XXX write lstm and gru gated cells
+(defclass lstm-cell (layer)
+  ())
+
+(defclass gru-cell (layer)
+  ())
 
 (defclass recurrent-layer (layer)
   ((stateful :initform nil :accessor $recurrent-stateful-p)
