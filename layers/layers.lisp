@@ -592,22 +592,19 @@
    (a :initform nil)
    (bh :initform nil)
    (ph :initform nil)
-   (os :initform #{})
-   (embp :initform nil)))
+   (os :initform #{})))
 
 (defun affine-cell (input-size output-size
                     &key (activation :tanh) (weight-initializer :xavier-normal)
-                      embeddedp
                       weight-initialization (biasp t))
   (let ((n (make-instance 'affine-cell)))
-    (with-slots (wx wh bh ph wi a embp) n
+    (with-slots (wx wh bh ph wi a) n
       (setf a (afn activation))
       (when biasp (setf bh ($parameter (zeros output-size))))
       (setf wx (wif weight-initializer (list input-size output-size)
                     weight-initialization))
       (setf wh (wif weight-initializer (list output-size output-size)
-                    weight-initialization))
-      (setf embp embeddedp))
+                    weight-initialization)))
 
     n))
 
@@ -616,7 +613,6 @@
     (setf ph nil)
     l))
 
-;; XXX check embp
 (defmethod $train-parameters ((l affine-cell))
   (with-slots (wx wh bh) l
     (if bh (list wx wh bh) (list wx wh))))
@@ -630,23 +626,27 @@
         (hp ($affine ph wh b ones)))
     ($+ xp hp)))
 
-(defun affine-cell-forward (x wx ph wh bh ones embp)
-  (if embp
+(defun embeddedp (x)
+  (or (typep x 'tensor.long)
+      (typep x 'tensor.int)))
+
+(defun affine-cell-forward (x wx ph wh bh ones)
+  (if (embeddedp x)
       (embedding-forward x wx ph wh bh ones)
       ($affine2 x wx ph wh bh ones)))
 
 (defmethod $execute ((l affine-cell) x &key (trainp t))
-  (with-slots (wx wh bh ph a embp) l
+  (with-slots (wx wh bh ph a) l
     (let ((ones (affine-ones l x))
           (ph0 (if ph ph (zeros ($size x 0) ($size wx 1))))
           (bh0 (when bh ($data bh))))
       (let ((ph1 (if a
                      (if trainp
-                         (funcall a (affine-cell-forward x wx ph0 wh bh ones embp))
-                         (funcall a (affine-cell-forward x ($data wx) ph0 ($data wh) bh0 ones embp)))
+                         (funcall a (affine-cell-forward x wx ph0 wh bh ones))
+                         (funcall a (affine-cell-forward x ($data wx) ph0 ($data wh) bh0 ones)))
                      (if trainp
-                         (affine-cell-forward x wx ph0 wh bh ones embp)
-                         (affine-cell-forward x ($data wx) ph0 ($data wh) bh0 ones embp)))))
+                         (affine-cell-forward x wx ph0 wh bh ones)
+                         (affine-cell-forward x ($data wx) ph0 ($data wh) bh0 ones)))))
         (setf ph ph1)))))
 
 (defclass lstm-cell (layer)
@@ -664,12 +664,10 @@
    (ba :initform nil)
    (ph :initform nil)
    (pc :initform nil)
-   (os :initform #{})
-   (embp :initform nil)))
+   (os :initform #{})))
 
 (defun lstm-cell (input-size output-size
                   &key (weight-initializer :xavier-normal)
-                    embeddedp
                     weight-initialization (biasp t))
   (let ((n (make-instance 'lstm-cell)))
     (with-slots (wi ui bi wf uf bf wo uo bo wa ua ba embp) n
@@ -693,8 +691,7 @@
       (setf wa (wif weight-initializer (list input-size output-size)
                     weight-initialization))
       (setf ua (wif weight-initializer (list output-size output-size)
-                    weight-initialization))
-      (setf embp embeddedp))
+                    weight-initialization)))
 
     n))
 
@@ -726,18 +723,18 @@
           (bo0 (when bo ($data bo)))
           (ba0 (when ba ($data ba))))
       (if trainp
-          (let* ((it ($sigmoid (affine-cell-forward x wi ph0 ui bi ones embp)))
-                 (ft ($sigmoid (affine-cell-forward x wf ph0 uf bf ones embp)))
-                 (ot ($sigmoid (affine-cell-forward x wo ph0 uo bo ones embp)))
-                 (at ($tanh (affine-cell-forward x wa ph0 ua ba ones embp)))
+          (let* ((it ($sigmoid (affine-cell-forward x wi ph0 ui bi ones)))
+                 (ft ($sigmoid (affine-cell-forward x wf ph0 uf bf ones)))
+                 (ot ($sigmoid (affine-cell-forward x wo ph0 uo bo ones)))
+                 (at ($tanh (affine-cell-forward x wa ph0 ua ba ones)))
                  (ct ($+ ($* at it) ($* ft pc0)))
                  (ht ($* ($tanh ct) ot)))
             (setf ph ht
                   pc ct))
-          (let* ((it ($sigmoid (affine-cell-forward x ($data wi) ph0 ($data ui) bi0 ones embp)))
-                 (ft ($sigmoid (affine-cell-forward x ($data wf) ph0 ($data uf) bf0 ones embp)))
-                 (ot ($sigmoid (affine-cell-forward x ($data wo) ph0 ($data uo) bo0 ones embp)))
-                 (at ($tanh (affine-cell-forward x ($data wa) ph0 ($data ua) ba0 ones embp)))
+          (let* ((it ($sigmoid (affine-cell-forward x ($data wi) ph0 ($data ui) bi0 ones)))
+                 (ft ($sigmoid (affine-cell-forward x ($data wf) ph0 ($data uf) bf0 ones)))
+                 (ot ($sigmoid (affine-cell-forward x ($data wo) ph0 ($data uo) bo0 ones)))
+                 (at ($tanh (affine-cell-forward x ($data wa) ph0 ($data ua) ba0 ones)))
                  (ct ($+ ($* at it) ($* ft pc0)))
                  (ht ($* ($tanh ct) ot)))
             (setf ph ht

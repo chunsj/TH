@@ -35,7 +35,7 @@
 ;; generally, softmax is used for it.
 (defparameter *rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
                       (sequential-layer
-                       (recurrent-layer (affine-cell vsize *hidden-size* :embeddedp T))
+                       (recurrent-layer (affine-cell vsize *hidden-size*))
                        (recurrent-layer (affine-cell *hidden-size* vsize :activation :nil)))))
 
 ;; string generation function
