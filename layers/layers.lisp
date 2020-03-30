@@ -649,7 +649,6 @@
                          (affine-cell-forward x ($data wx) ph0 ($data wh) bh0 ones embp)))))
         (setf ph ph1)))))
 
-;; XXX write lstm and gru gated cells
 (defclass lstm-cell (layer)
   ((wi :initform nil)
    (ui :initform nil)
@@ -726,15 +725,25 @@
           (bf0 (when bf ($data bf)))
           (bo0 (when bo ($data bo)))
           (ba0 (when ba ($data ba))))
-      (let ((ph1 (if a
-                     (if trainp
-                         (funcall a (affine-cell-forward x wx ph0 wh bh ones embp))
-                         (funcall a (affine-cell-forward x ($data wx) ph0 ($data wh) bh0 ones embp)))
-                     (if trainp
-                         (affine-cell-forward x wx ph0 wh bh ones embp)
-                         (affine-cell-forward x ($data wx) ph0 ($data wh) bh0 ones embp)))))
-        (setf ph ph1)))))
+      (if trainp
+          (let* ((it ($sigmoid (affine-cell-forward x wi ph0 ui bi ones embp)))
+                 (ft ($sigmoid (affine-cell-forward x wf ph0 uf bf ones embp)))
+                 (ot ($sigmoid (affine-cell-forward x wo ph0 uo bo ones embp)))
+                 (at ($tanh (affine-cell-forward x wa ph0 ua ba ones embp)))
+                 (ct ($+ ($* at it) ($* ft pc0)))
+                 (ht ($* ($tanh ct) ot)))
+            (setf ph ht
+                  pc ct))
+          (let* ((it ($sigmoid (affine-cell-forward x ($data wi) ph0 ($data ui) bi0 ones embp)))
+                 (ft ($sigmoid (affine-cell-forward x ($data wf) ph0 ($data uf) bf0 ones embp)))
+                 (ot ($sigmoid (affine-cell-forward x ($data wo) ph0 ($data uo) bo0 ones embp)))
+                 (at ($tanh (affine-cell-forward x ($data wa) ph0 ($data ua) ba0 ones embp)))
+                 (ct ($+ ($* at it) ($* ft pc0)))
+                 (ht ($* ($tanh ct) ot)))
+            (setf ph ht
+                  pc ct))))))
 
+;; XXX write lstm and gru gated cells
 (defclass gru-cell (layer)
   ())
 
