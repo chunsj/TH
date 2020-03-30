@@ -21,7 +21,9 @@
                            "quick brown fox jumps over the lazy dog. the "
                            "brown fox jumps over the lazy dog. the quick "
                            "fox jumps over the lazy dog. the quick brown "
-                           "jumps over the lazy dog. the quick brown fox "))
+                           "jumps over the lazy dog. the quick brown fox "
+                           "over the lazy dog. the quick brown fox jumps "
+                           "the lazy dog. the quick brown fox jumps over "))
 
 ;; train target
 (defparameter *target* (mapcar (lambda (s) (rotate-left-string 1 s)) *data*))
@@ -53,7 +55,7 @@
 ;; for testing purpose, overfitting is good one :-P
 (time
  (with-foreign-memory-limit (32768) ;; for speed
-   (let* ((epochs 500)
+   (let* ((epochs 1000)
           (print-step 50)
           (xs (encoder-encode *encoder* *data*))
           (ts (encoder-encode *encoder* *target*)))
@@ -71,3 +73,57 @@
       (gen-length 100)
       (temperature 1D0))
   (prn (generate-string *rnn* *encoder* seed-string gen-length temperature)))
+
+;; lstm test
+(defparameter *rnn-lstm* (let ((vsize (encoder-vocabulary-size *encoder*)))
+                           (sequential-layer
+                            (recurrent-layer (lstm-cell vsize *hidden-size*))
+                            (recurrent-layer (affine-cell *hidden-size* vsize :activation :nil)))))
+
+($reset! *rnn-lstm*)
+
+(time
+ (with-foreign-memory-limit (32768) ;; for speed
+   (let* ((epochs 2000)
+          (print-step 50)
+          (xs (encoder-encode *encoder* *data*))
+          (ts (encoder-encode *encoder* *target*)))
+     (loop :for iter :from 0 :below epochs
+           :do (let* ((outputs ($execute *rnn-lstm* xs))
+                      (losses (mapcar (lambda (y c) ($cec y c)) outputs ts))
+                      (loss ($div (apply #'$+ losses) ($count losses))))
+                 (when (zerop (rem iter print-step))
+                   (prn iter ($data loss)))
+                 ($rmgd! *rnn-lstm*))))))
+
+(let ((seed-string "the")
+      (gen-length 100)
+      (temperature 1D0))
+  (prn (generate-string *rnn-lstm* *encoder* seed-string gen-length temperature)))
+
+;; gru test
+(defparameter *rnn-gru* (let ((vsize (encoder-vocabulary-size *encoder*)))
+                          (sequential-layer
+                           (recurrent-layer (gru-cell vsize *hidden-size*))
+                           (recurrent-layer (affine-cell *hidden-size* vsize :activation :nil)))))
+
+($reset! *rnn-gru*)
+
+(time
+ (with-foreign-memory-limit (32768) ;; for speed
+   (let* ((epochs 1000)
+          (print-step 50)
+          (xs (encoder-encode *encoder* *data*))
+          (ts (encoder-encode *encoder* *target*)))
+     (loop :for iter :from 0 :below epochs
+           :do (let* ((outputs ($execute *rnn-gru* xs))
+                      (losses (mapcar (lambda (y c) ($cec y c)) outputs ts))
+                      (loss ($div (apply #'$+ losses) ($count losses))))
+                 (when (zerop (rem iter print-step))
+                   (prn iter ($data loss)))
+                 ($rmgd! *rnn-gru*))))))
+
+(let ((seed-string "the")
+      (gen-length 100)
+      (temperature 1D0))
+  (prn (generate-string *rnn-gru* *encoder* seed-string gen-length temperature)))

@@ -740,7 +740,6 @@
             (setf ph ht
                   pc ct))))))
 
-;; XXX write lstm and gru gated cells
 (defclass gru-cell (layer)
   ((wz :initform nil)
    (uz :initform nil)
@@ -757,7 +756,7 @@
 (defun gru-cell (input-size output-size
                  &key (weight-initializer :xavier-normal)
                    weight-initialization (biasp t))
-  (let ((n (make-instance 'lstm-cell)))
+  (let ((n (make-instance 'gru-cell)))
     (with-slots (wz uz bz wr ur br wh uh bh) n
       (when biasp
         (setf bz ($parameter (zeros output-size))
@@ -803,12 +802,12 @@
           (br0 (when br ($data br)))
           (bh0 (when bh ($data bh))))
       (if trainp
-          (let* ((zt ($sigmoid (affine-cell-forward x wz ph0 uz bz0 ones)))
-                 (rt ($sigmoid (affine-cell-forward x wr ph0 ur br0 ones)))
+          (let* ((zt ($sigmoid (affine-cell-forward x wz ph0 uz bz ones)))
+                 (rt ($sigmoid (affine-cell-forward x wr ph0 ur br ones)))
                  (ht ($+ ($* zt ph0)
                          ($* ($- 1 zt)
                              ($tanh (affine-cell-forward x wh
-                                                         ($* rt ph0) uh bh0 ones))))))
+                                                         ($* rt ph0) uh bh ones))))))
             (setf ph ht))
           (let* ((zt ($sigmoid (affine-cell-forward x ($data wz) ph0 ($data uz) bz0 ones)))
                  (rt ($sigmoid (affine-cell-forward x ($data wr) ph0 ($data ur) br0 ones)))
