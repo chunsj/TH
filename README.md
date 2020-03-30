@@ -55,7 +55,7 @@
   5. Cats and Dogs CNN: examples/simple/catsdogs.lisp
   6. IMDB sentiment analysis: examples/etc/sentiment.lisp (cl-ppcre is required)
   7. Binary number addition using vanilla RNN: examples/binary-add/binadd.lisp
-  8. Simple RNN example based on layers API: examples/genchars/demo-genchars{2}.lisp
+  8. Simple RNN examples based on layers API: examples/genchars/demo-genchars{2}.lisp
   9. Karpathy's character generation using RNN/LSTM: examples/genchars/gench{ars,-lstm,-lstm2}.lisp
   10. Autoencoder: examples/autoenc.lisp, examples/autoencoder/{cae,vae}.lisp
   11. Restricted Boltzmann Machine: examples/etc/rbm.lisp
