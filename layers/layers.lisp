@@ -25,7 +25,7 @@
            #:affine-cell
            #:lstm-cell
            #:gru-cell
-           #:$cell-state
+           #:$reset-state!
            #:recurrent-layer
            #:$recurrent-stateful-p
            #:$set-stateful
@@ -39,12 +39,14 @@
 (defgeneric $train-parameters (layer))
 
 (defgeneric $set-stateful (layer flag))
+(defgeneric $reset-state! (layer))
 
 (defclass layer () ())
 
 (defmethod $train-parameters ((l layer)) nil)
 
-(defmethod $set-stateful ((l layer) flag))
+(defmethod $set-stateful ((l layer) flag) l)
+(defmethod $reset-state! ((l layer)) l)
 
 (defmethod $parameters ((l layer)) ($train-parameters l))
 
@@ -214,8 +216,7 @@
    (b :initform nil)
    (a :initform nil)
    (bn :initform nil)
-   (os :initform #{})
-   (wi :initform nil)))
+   (os :initform #{})))
 
 (defun affine-layer (input-size output-size
                      &key (activation :sigmoid) (weight-initializer :he-normal)
@@ -223,7 +224,6 @@
                        batch-normalization-p (biasp t))
   (let ((n (make-instance 'affine-layer)))
     (with-slots (w b a bn wi) n
-      (setf wi weight-initializer)
       (setf a (afn activation))
       (when biasp (setf b ($parameter (zeros output-size))))
       (setf w (wif weight-initializer (list input-size output-size) weight-initialization))
@@ -289,8 +289,7 @@
    (pw :initform 0)
    (ph :initform 0)
    (a :initform nil)
-   (bn :initform nil)
-   (wi :initform nil)))
+   (bn :initform nil)))
 
 (defun convolution-2d-output-size (l x)
   (cond ((eq 4 ($ndim x))
@@ -326,7 +325,6 @@
                                (biasp t))
   (let ((n (make-instance 'convolution-2d-layer)))
     (with-slots (w b dw dh pw ph a bn wi) n
-      (setf wi weight-initializer)
       (setf dw stride-width
             dh stride-height
             pw padding-width
@@ -462,8 +460,7 @@
    (aw :initform 0)
    (ah :initform 0)
    (a :initform nil)
-   (bn :initform nil)
-   (wi :initform nil)))
+   (bn :initform nil)))
 
 (defun full-convolution-2d-output-size (l x)
   (cond ((eq 4 ($ndim x))
@@ -500,7 +497,6 @@
                                     (biasp t))
   (let ((n (make-instance 'full-convolution-2d-layer)))
     (with-slots (w b dw dh pw ph aw ah a bn wi) n
-      (setf wi weight-initializer)
       (setf dw stride-width
             dh stride-height
             pw padding-width
@@ -595,13 +591,9 @@
    (wh :initform nil)
    (a :initform nil)
    (bh :initform nil)
-   (ph :initform nil :accessor $cell-state)
+   (ph :initform nil)
    (os :initform #{})
-   (wi :initform nil)
    (embp :initform nil)))
-
-;; XXX can i consolidate affine-cell and embedding-cell as one?
-;; before implementing lstm and gru, do this first.
 
 (defun affine-cell (input-size output-size
                     &key (activation :tanh) (weight-initializer :xavier-normal)
@@ -609,7 +601,6 @@
                       weight-initialization (biasp t))
   (let ((n (make-instance 'affine-cell)))
     (with-slots (wx wh bh ph wi a embp) n
-      (setf wi weight-initialization)
       (setf a (afn activation))
       (when biasp (setf bh ($parameter (zeros output-size))))
       (setf wx (wif weight-initializer (list input-size output-size)
@@ -620,6 +611,12 @@
 
     n))
 
+(defmethod $reset-state! ((l affine-cell))
+  (with-slots (ph) l
+    (setf ph nil)
+    l))
+
+;; XXX check embp
 (defmethod $train-parameters ((l affine-cell))
   (with-slots (wx wh bh) l
     (if bh (list wx wh bh) (list wx wh))))
@@ -654,7 +651,89 @@
 
 ;; XXX write lstm and gru gated cells
 (defclass lstm-cell (layer)
-  ())
+  ((wi :initform nil)
+   (ui :initform nil)
+   (bi :initform nil)
+   (wf :initform nil)
+   (uf :initform nil)
+   (bf :initform nil)
+   (wo :initform nil)
+   (uo :initform nil)
+   (bo :initform nil)
+   (wa :initform nil)
+   (ua :initform nil)
+   (ba :initform nil)
+   (ph :initform nil)
+   (pc :initform nil)
+   (os :initform #{})
+   (embp :initform nil)))
+
+(defun lstm-cell (input-size output-size
+                  &key (weight-initializer :xavier-normal)
+                    embeddedp
+                    weight-initialization (biasp t))
+  (let ((n (make-instance 'lstm-cell)))
+    (with-slots (wi ui bi wf uf bf wo uo bo wa ua ba embp) n
+      (when biasp
+        (setf bi ($parameter (zeros output-size))
+              bf ($parameter (zeros output-size))
+              bo ($parameter (zeros output-size))
+              ba ($parameter (zeros output-size))))
+      (setf wi (wif weight-initializer (list input-size output-size)
+                    weight-initialization))
+      (setf ui (wif weight-initializer (list output-size output-size)
+                    weight-initialization))
+      (setf wf (wif weight-initializer (list input-size output-size)
+                    weight-initialization))
+      (setf uf (wif weight-initializer (list output-size output-size)
+                    weight-initialization))
+      (setf wo (wif weight-initializer (list input-size output-size)
+                    weight-initialization))
+      (setf uo (wif weight-initializer (list output-size output-size)
+                    weight-initialization))
+      (setf wa (wif weight-initializer (list input-size output-size)
+                    weight-initialization))
+      (setf ua (wif weight-initializer (list output-size output-size)
+                    weight-initialization))
+      (setf embp embeddedp))
+
+    n))
+
+(defmethod $reset-state! ((l lstm-cell))
+  (with-slots (ph pc) l
+    (setf ph nil
+          pc nil)
+    l))
+
+(defmethod $train-parameters ((l lstm-cell))
+  (with-slots (wi ui bi wf uf bf wo uo bo wa ua ba) l
+    (if bi
+        (list wi ui bi wf uf bf wo uo bo wa ua ba)
+        (list wi ui wf uf wo uo wa ua))))
+
+(defmethod $parameters ((l lstm-cell))
+  (with-slots (wi ui bi wf uf bf wo uo bo wa ua ba) l
+    (if bi
+        (list wi ui bi wf uf bf wo uo bo wa ua ba)
+        (list wi ui wf uf wo uo wa ua))))
+
+(defmethod $execute ((l lstm-cell) x &key (trainp t))
+  (with-slots (wi ui bi wf uf bf wo uo bo wa ua ba ph pc embp) l
+    (let ((ones (affine-ones l x))
+          (ph0 (if ph ph (zeros ($size x 0) ($size wi 1))))
+          (pc0 (if pc pc (zeros ($size x 0) ($size wi 1))))
+          (bi0 (when bi ($data bi)))
+          (bf0 (when bf ($data bf)))
+          (bo0 (when bo ($data bo)))
+          (ba0 (when ba ($data ba))))
+      (let ((ph1 (if a
+                     (if trainp
+                         (funcall a (affine-cell-forward x wx ph0 wh bh ones embp))
+                         (funcall a (affine-cell-forward x ($data wx) ph0 ($data wh) bh0 ones embp)))
+                     (if trainp
+                         (affine-cell-forward x wx ph0 wh bh ones embp)
+                         (affine-cell-forward x ($data wx) ph0 ($data wh) bh0 ones embp)))))
+        (setf ph ph1)))))
 
 (defclass gru-cell (layer)
   ())
@@ -684,7 +763,7 @@
 
 (defmethod $execute ((l recurrent-layer) xs &key (trainp t))
   (with-slots (cell stateful) l
-    (unless stateful (setf ($cell-state cell) nil))
+    (unless stateful ($reset-state! cell))
     (loop :for x :in xs
           :collect ($execute cell x :trainp trainp))))
 
