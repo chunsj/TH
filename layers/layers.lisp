@@ -690,10 +690,6 @@
         (hp ($affine ph wh b ones)))
     ($+ xp hp)))
 
-(defun embeddedp (x)
-  (or (typep x 'tensor.long)
-      (typep x 'tensor.int)))
-
 (defun rnn-cell-forward (x wx ph wh bh ones)
   (if (embeddedp x)
       (embedding-forward x wx ph wh bh ones)

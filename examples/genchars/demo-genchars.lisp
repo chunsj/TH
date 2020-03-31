@@ -37,7 +37,7 @@
 ;; generally, softmax is used for it.
 (defparameter *rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
                       (sequential-layer
-                       (recurrent-layer (affine-cell vsize *hidden-size*))
+                       (recurrent-layer (rnn-cell vsize *hidden-size*))
                        (recurrent-layer (affine-cell *hidden-size* vsize :activation :nil)))))
 
 ;; string generation function
@@ -77,7 +77,7 @@
 ;; lstm test
 (defparameter *rnn-lstm* (let ((vsize (encoder-vocabulary-size *encoder*)))
                            (sequential-layer
-                            (recurrent-layer (lstm-cell vsize *hidden-size*))
+                            (recurrent-layer (lstm-cell vsize *hidden-size*) :statefulp T)
                             (recurrent-layer (affine-cell *hidden-size* vsize :activation :nil)))))
 
 ($reset! *rnn-lstm*)
@@ -99,6 +99,7 @@
 (let ((seed-string "the")
       (gen-length 100)
       (temperature 1D0))
+  ($reset-state! *rnn-lstm* nil)
   (prn (generate-string *rnn-lstm* *encoder* seed-string gen-length temperature)))
 
 ;; gru test
