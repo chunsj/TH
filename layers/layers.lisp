@@ -22,9 +22,10 @@
            #:reshape-layer
            #:functional-layer
            #:$function-arguments
-           #:affine-cell
+           #:rnn-cell
            #:lstm-cell
            #:gru-cell
+           #:affine-cell
            #:$reset-state!
            #:recurrent-layer
            #:$recurrent-stateful-p
@@ -39,14 +40,14 @@
 (defgeneric $train-parameters (layer))
 
 (defgeneric $set-stateful (layer flag))
-(defgeneric $reset-state! (layer))
+(defgeneric $reset-state! (layer statefulp))
 
 (defclass layer () ())
 
 (defmethod $train-parameters ((l layer)) nil)
 
 (defmethod $set-stateful ((l layer) flag) l)
-(defmethod $reset-state! ((l layer)) l)
+(defmethod $reset-state! ((l layer) statefulp) l)
 
 (defmethod $parameters ((l layer)) ($train-parameters l))
 
@@ -120,6 +121,12 @@
   (with-slots (ls) l
     (loop :for e :in ls
           :do ($set-stateful e flag))
+    l))
+
+(defmethod $reset-state! ((l sequential-layer) statefulp)
+  (with-slots (ls) l
+    (loop :for e :in ls
+          :do ($reset-state! e statefulp))
     l))
 
 (defmethod $parameters ((l sequential-layer))
@@ -588,16 +595,70 @@
 
 (defclass affine-cell (layer)
   ((wx :initform nil)
+   (a :initform nil)
+   (b :initform nil)
+   (os :initform #{})))
+
+(defun affine-cell (input-size output-size
+                    &key (activation :sigmoid) (weight-initializer :xavier-normal)
+                      weight-initialization (biasp t))
+  (let ((n (make-instance 'affine-cell)))
+    (with-slots (wx b wi a) n
+      (setf a (afn activation))
+      (when biasp (setf b ($parameter (zeros output-size))))
+      (setf wx (wif weight-initializer (list input-size output-size)
+                    weight-initialization)))
+
+    n))
+
+(defmethod $train-parameters ((l affine-cell))
+  (with-slots (wx b) l
+    (if b (list wx b) (list wx))))
+
+(defmethod $parameters ((l affine-cell))
+  (with-slots (wx b) l
+    (if b (list wx b) (list wx))))
+
+(defun embeddedp (x)
+  (or (typep x 'tensor.long)
+      (typep x 'tensor.int)))
+
+(defun embedding-affine-forward (xi wx b &optional ones)
+  (if b
+      (let ((xp ($index wx 0 xi))
+            (hp ($vv ones b)))
+        ($+ xp hp))
+      ($index wx 0 xi)))
+
+(defun affine-cell-forward (x wx b ones)
+  (if (embeddedp x)
+      (embedding-affine-forward x wx b ones)
+      ($affine x wx b ones)))
+
+(defmethod $execute ((l affine-cell) x &key (trainp t))
+  (with-slots (wx b a) l
+    (let ((ones (affine-ones l x))
+          (b0 (when b ($data b))))
+      (if a
+          (if trainp
+              (funcall a (affine-cell-forward x wx b ones))
+              (funcall a (affine-cell-forward x ($data wx) b0 ones)))
+          (if trainp
+              (affine-cell-forward x wx b ones)
+              (affine-cell-forward x ($data wx) b0 ones))))))
+
+(defclass rnn-cell (layer)
+  ((wx :initform nil)
    (wh :initform nil)
    (a :initform nil)
    (bh :initform nil)
    (ph :initform nil)
    (os :initform #{})))
 
-(defun affine-cell (input-size output-size
-                    &key (activation :tanh) (weight-initializer :xavier-normal)
-                      weight-initialization (biasp t))
-  (let ((n (make-instance 'affine-cell)))
+(defun rnn-cell (input-size output-size
+                 &key (activation :tanh) (weight-initializer :xavier-normal)
+                   weight-initialization (biasp t))
+  (let ((n (make-instance 'rnn-cell)))
     (with-slots (wx wh bh ph wi a) n
       (setf a (afn activation))
       (when biasp (setf bh ($parameter (zeros output-size))))
@@ -608,16 +669,19 @@
 
     n))
 
-(defmethod $reset-state! ((l affine-cell))
+(defmethod $reset-state! ((l rnn-cell) statefulp)
   (with-slots (ph) l
-    (setf ph nil)
+    (when ph
+      (if statefulp
+          (if ($parameterp ph) (setf ph ($data ph)))
+          (setf ph nil)))
     l))
 
-(defmethod $train-parameters ((l affine-cell))
+(defmethod $train-parameters ((l rnn-cell))
   (with-slots (wx wh bh) l
     (if bh (list wx wh bh) (list wx wh))))
 
-(defmethod $parameters ((l affine-cell))
+(defmethod $parameters ((l rnn-cell))
   (with-slots (wx wh bh) l
     (if bh (list wx wh bh) (list wx wh))))
 
@@ -630,23 +694,23 @@
   (or (typep x 'tensor.long)
       (typep x 'tensor.int)))
 
-(defun affine-cell-forward (x wx ph wh bh ones)
+(defun rnn-cell-forward (x wx ph wh bh ones)
   (if (embeddedp x)
       (embedding-forward x wx ph wh bh ones)
       ($affine2 x wx ph wh bh ones)))
 
-(defmethod $execute ((l affine-cell) x &key (trainp t))
+(defmethod $execute ((l rnn-cell) x &key (trainp t))
   (with-slots (wx wh bh ph a) l
     (let ((ones (affine-ones l x))
           (ph0 (if ph ph (zeros ($size x 0) ($size wx 1))))
           (bh0 (when bh ($data bh))))
       (let ((ph1 (if a
                      (if trainp
-                         (funcall a (affine-cell-forward x wx ph0 wh bh ones))
-                         (funcall a (affine-cell-forward x ($data wx) ph0 ($data wh) bh0 ones)))
+                         (funcall a (rnn-cell-forward x wx ph0 wh bh ones))
+                         (funcall a (rnn-cell-forward x ($data wx) ph0 ($data wh) bh0 ones)))
                      (if trainp
-                         (affine-cell-forward x wx ph0 wh bh ones)
-                         (affine-cell-forward x ($data wx) ph0 ($data wh) bh0 ones)))))
+                         (rnn-cell-forward x wx ph0 wh bh ones)
+                         (rnn-cell-forward x ($data wx) ph0 ($data wh) bh0 ones)))))
         (setf ph ph1)))))
 
 (defclass lstm-cell (layer)
@@ -695,10 +759,15 @@
 
     n))
 
-(defmethod $reset-state! ((l lstm-cell))
+(defmethod $reset-state! ((l lstm-cell) statefulp)
   (with-slots (ph pc) l
-    (setf ph nil
-          pc nil)
+    (when (and ph pc)
+      (if statefulp
+          (if (and ($parameterp ph) ($parameterp pc))
+              (setf ph ($data ph)
+                    pc ($data pc)))
+          (setf ph nil
+                pc nil)))
     l))
 
 (defmethod $train-parameters ((l lstm-cell))
@@ -723,18 +792,18 @@
           (bo0 (when bo ($data bo)))
           (ba0 (when ba ($data ba))))
       (if trainp
-          (let* ((it ($sigmoid (affine-cell-forward x wi ph0 ui bi ones)))
-                 (ft ($sigmoid (affine-cell-forward x wf ph0 uf bf ones)))
-                 (ot ($sigmoid (affine-cell-forward x wo ph0 uo bo ones)))
-                 (at ($tanh (affine-cell-forward x wa ph0 ua ba ones)))
+          (let* ((it ($sigmoid (rnn-cell-forward x wi ph0 ui bi ones)))
+                 (ft ($sigmoid (rnn-cell-forward x wf ph0 uf bf ones)))
+                 (ot ($sigmoid (rnn-cell-forward x wo ph0 uo bo ones)))
+                 (at ($tanh (rnn-cell-forward x wa ph0 ua ba ones)))
                  (ct ($+ ($* at it) ($* ft pc0)))
                  (ht ($* ($tanh ct) ot)))
             (setf ph ht
                   pc ct))
-          (let* ((it ($sigmoid (affine-cell-forward x ($data wi) ph0 ($data ui) bi0 ones)))
-                 (ft ($sigmoid (affine-cell-forward x ($data wf) ph0 ($data uf) bf0 ones)))
-                 (ot ($sigmoid (affine-cell-forward x ($data wo) ph0 ($data uo) bo0 ones)))
-                 (at ($tanh (affine-cell-forward x ($data wa) ph0 ($data ua) ba0 ones)))
+          (let* ((it ($sigmoid (rnn-cell-forward x ($data wi) ph0 ($data ui) bi0 ones)))
+                 (ft ($sigmoid (rnn-cell-forward x ($data wf) ph0 ($data uf) bf0 ones)))
+                 (ot ($sigmoid (rnn-cell-forward x ($data wo) ph0 ($data uo) bo0 ones)))
+                 (at ($tanh (rnn-cell-forward x ($data wa) ph0 ($data ua) ba0 ones)))
                  (ct ($+ ($* at it) ($* ft pc0)))
                  (ht ($* ($tanh ct) ot)))
             (setf ph ht
@@ -777,9 +846,12 @@
 
     n))
 
-(defmethod $reset-state! ((l gru-cell))
+(defmethod $reset-state! ((l gru-cell) statefulp)
   (with-slots (ph) l
-    (setf ph nil)
+    (when ph
+      (if statefulp
+          (if ($parameterp ph) (setf ph ($data ph)))
+          (setf ph nil)))
     l))
 
 (defmethod $train-parameters ((l gru-cell))
@@ -802,19 +874,19 @@
           (br0 (when br ($data br)))
           (bh0 (when bh ($data bh))))
       (if trainp
-          (let* ((zt ($sigmoid (affine-cell-forward x wz ph0 uz bz ones)))
-                 (rt ($sigmoid (affine-cell-forward x wr ph0 ur br ones)))
+          (let* ((zt ($sigmoid (rnn-cell-forward x wz ph0 uz bz ones)))
+                 (rt ($sigmoid (rnn-cell-forward x wr ph0 ur br ones)))
                  (ht ($+ ($* zt ph0)
                          ($* ($- 1 zt)
-                             ($tanh (affine-cell-forward x wh
-                                                         ($* rt ph0) uh bh ones))))))
+                             ($tanh (rnn-cell-forward x wh
+                                                      ($* rt ph0) uh bh ones))))))
             (setf ph ht))
-          (let* ((zt ($sigmoid (affine-cell-forward x ($data wz) ph0 ($data uz) bz0 ones)))
-                 (rt ($sigmoid (affine-cell-forward x ($data wr) ph0 ($data ur) br0 ones)))
+          (let* ((zt ($sigmoid (rnn-cell-forward x ($data wz) ph0 ($data uz) bz0 ones)))
+                 (rt ($sigmoid (rnn-cell-forward x ($data wr) ph0 ($data ur) br0 ones)))
                  (ht ($+ ($* zt ph0)
                          ($* ($- 1 zt)
-                             ($tanh (affine-cell-forward x ($data wh)
-                                                         ($* rt ph0) ($data uh) bh0 ones))))))
+                             ($tanh (rnn-cell-forward x ($data wh)
+                                                      ($* rt ph0) ($data uh) bh0 ones))))))
             (setf ph ht))))))
 
 (defclass recurrent-layer (layer)
@@ -836,13 +908,18 @@
 (defmethod $set-stateful ((l recurrent-layer) flag)
   (setf ($recurrent-stateful-p l) flag))
 
+(defmethod $reset-state! ((l recurrent-layer) statefulp)
+  (with-slots (cell) l
+    ($reset-state! cell statefulp))
+  l)
+
 (defmethod $parameters ((l recurrent-layer))
   (with-slots (cell) l
     ($parameters cell)))
 
 (defmethod $execute ((l recurrent-layer) xs &key (trainp t))
   (with-slots (cell stateful) l
-    (unless stateful ($reset-state! cell))
+    ($reset-state! cell stateful)
     (loop :for x :in xs
           :collect ($execute cell x :trainp trainp))))
 
