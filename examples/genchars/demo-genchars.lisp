@@ -31,6 +31,14 @@
 ;; network parameters
 (defparameter *hidden-size* 100)
 
+;; string generation function
+;; encoder-choose function takes relative probabilities, make them normalized
+;; probabilities and use it to generate new characters.
+;; to use seed string induced state, stateful parameter is turned on.
+;; after processing, it should be turned off for fresh restarting.
+(defun generate-string (rnn encoder seedstr n &optional (temperature 1D0))
+  ($generate-sequence rnn encoder seedstr n temperature))
+
 ;; network
 ;; the output of the network is relative probabilities of each characters and
 ;; it should be normalized or something to be interpreted as probabilities.
@@ -39,14 +47,6 @@
                       (sequential-layer
                        (recurrent-layer (rnn-cell vsize *hidden-size*))
                        (recurrent-layer (affine-cell *hidden-size* vsize :activation :nil)))))
-
-;; string generation function
-;; encoder-choose function takes relative probabilities, make them normalized
-;; probabilities and use it to generate new characters.
-;; to use seed string induced state, stateful parameter is turned on.
-;; after processing, it should be turned off for fresh restarting.
-(defun generate-string (rnn encoder seedstr n &optional (temperature 1D0))
-  ($generate-sequence rnn encoder seedstr n temperature))
 
 ;; reset network
 ($reset! *rnn*)
@@ -77,14 +77,14 @@
 ;; lstm test
 (defparameter *rnn-lstm* (let ((vsize (encoder-vocabulary-size *encoder*)))
                            (sequential-layer
-                            (recurrent-layer (lstm-cell vsize *hidden-size*) :statefulp T)
+                            (recurrent-layer (lstm-cell vsize *hidden-size*))
                             (recurrent-layer (affine-cell *hidden-size* vsize :activation :nil)))))
 
 ($reset! *rnn-lstm*)
 
 (time
  (with-foreign-memory-limit (32768) ;; for speed
-   (let* ((epochs 2000)
+   (let* ((epochs 1000)
           (print-step 50)
           (xs (encoder-encode *encoder* *data*))
           (ts (encoder-encode *encoder* *target*)))
@@ -99,7 +99,7 @@
 (let ((seed-string "the")
       (gen-length 100)
       (temperature 1D0))
-  ($reset-state! *rnn-lstm* nil)
+  ($reset-state! *rnn-lstm* nil) ;; in case of being true of statefulp
   (prn (generate-string *rnn-lstm* *encoder* seed-string gen-length temperature)))
 
 ;; gru test
