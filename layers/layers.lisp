@@ -728,7 +728,8 @@
                      (if trainp
                          (rnn-cell-forward x wx ph0 wh bh ones)
                          (rnn-cell-forward x ($data wx) ph0 ($data wh) bh0 ones)))))
-        (setf ph ph1)))))
+        (setf ph ph1)
+        ph1))))
 
 (defclass lstm-cell (layer)
   ((wi :initform nil)
@@ -816,7 +817,8 @@
                  (ct ($+ ($* ft pc0) ($* at it)))
                  (ht ($* ot ($tanh ct))))
             (setf ph ht
-                  pc ct))
+                  pc ct)
+            ht)
           (let* ((it ($sigmoid (rnn-cell-forward x ($data wi) ph0 ($data ui) bi0 ones)))
                  (ft ($sigmoid (rnn-cell-forward x ($data wf) ph0 ($data uf) bf0 ones)))
                  (ot ($sigmoid (rnn-cell-forward x ($data wo) ph0 ($data uo) bo0 ones)))
@@ -824,7 +826,8 @@
                  (ct ($+ ($* ft pc0) ($* at it)))
                  (ht ($* ot ($tanh ct))))
             (setf ph ht
-                  pc ct))))))
+                  pc ct)
+            ht)))))
 
 (defclass gru-cell (layer)
   ((wz :initform nil)
@@ -897,14 +900,16 @@
                          ($* ($- 1 zt)
                              ($tanh (rnn-cell-forward x wh
                                                       ($* rt ph0) uh bh ones))))))
-            (setf ph ht))
+            (setf ph ht)
+            ht)
           (let* ((zt ($sigmoid (rnn-cell-forward x ($data wz) ph0 ($data uz) bz0 ones)))
                  (rt ($sigmoid (rnn-cell-forward x ($data wr) ph0 ($data ur) br0 ones)))
                  (ht ($+ ($* zt ph0)
                          ($* ($- 1 zt)
                              ($tanh (rnn-cell-forward x ($data wh)
                                                       ($* rt ph0) ($data uh) bh0 ones))))))
-            (setf ph ht))))))
+            (setf ph ht)
+            ht)))))
 
 (defclass recurrent-layer (layer)
   ((stateful :initform nil :accessor $recurrent-stateful-p)
