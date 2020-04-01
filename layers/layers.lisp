@@ -22,10 +22,12 @@
            #:reshape-layer
            #:functional-layer
            #:$function-arguments
+           #:droptout-layer
            #:rnn-cell
            #:lstm-cell
            #:gru-cell
            #:affine-cell
+           #:dropout-cell
            #:$reset-state!
            #:recurrent-layer
            #:$recurrent-stateful-p
@@ -592,6 +594,25 @@
         (cond ((listp x) (apply f (append x (list :trainp trainp))))
               (t (apply f (list x :trainp trainp))))
         x)))
+
+(defclass dropout-layer (layer)
+  ((dop :initform (tensor '(0.1)))))
+
+(defun dropout-layer (dropout-probability)
+  (let ((n (make-instance 'dropout-layer)))
+    (with-slots (dop) n
+      (setf dop (tensor (list dropout-probability))))
+    n))
+
+(defmethod $parameters ((l dropout-layer))
+  (with-slots (dop) l
+    (list dop)))
+
+(defmethod $execute ((l dropout-layer) x &key (trainp t))
+  (with-slots (dop) l
+    ($dropout x trainp ($ dop 0))))
+
+(defclass dropout-cell (dropout-layer) ())
 
 (defclass affine-cell (layer)
   ((wx :initform nil)
