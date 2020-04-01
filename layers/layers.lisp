@@ -673,7 +673,7 @@
   (with-slots (ph) l
     (when ph
       (if statefulp
-          (if ($parameterp ph) (setf ph ($data ph)))
+          (if ($parameterp ph) (setf ph ($clone ($data ph))))
           (setf ph nil)))
     l))
 
@@ -760,8 +760,8 @@
     (when (and ph pc)
       (if statefulp
           (if (and ($parameterp ph) ($parameterp pc))
-              (setf ph ($data ph)
-                    pc ($data pc)))
+              (setf ph ($clone ($data ph))
+                    pc ($clone ($data pc))))
           (setf ph nil
                 pc nil)))
     l))
@@ -846,7 +846,7 @@
   (with-slots (ph) l
     (when ph
       (if statefulp
-          (if ($parameterp ph) (setf ph ($data ph)))
+          (if ($parameterp ph) (setf ph ($clone ($data ph))))
           (setf ph nil)))
     l))
 
