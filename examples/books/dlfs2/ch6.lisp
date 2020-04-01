@@ -40,7 +40,7 @@
 (time
  (with-foreign-memory-limit (4096) ;; for speed
    (let* ((epochs 4000)
-          (print-step 50))
+          (print-step 100))
      (loop :for iter :from 0 :below epochs
            :do (let* ((outputs ($execute *rnn* *xs*))
                       (losses (mapcar (lambda (y c) ($cec y c)) outputs *ys*))
