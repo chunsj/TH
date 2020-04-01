@@ -792,16 +792,16 @@
                  (ft ($sigmoid (rnn-cell-forward x wf ph0 uf bf ones)))
                  (ot ($sigmoid (rnn-cell-forward x wo ph0 uo bo ones)))
                  (at ($tanh (rnn-cell-forward x wa ph0 ua ba ones)))
-                 (ct ($+ ($* at it) ($* ft pc0)))
-                 (ht ($* ($tanh ct) ot)))
+                 (ct ($+ ($* ft pc0) ($* at it)))
+                 (ht ($* ot ($tanh ct))))
             (setf ph ht
                   pc ct))
           (let* ((it ($sigmoid (rnn-cell-forward x ($data wi) ph0 ($data ui) bi0 ones)))
                  (ft ($sigmoid (rnn-cell-forward x ($data wf) ph0 ($data uf) bf0 ones)))
                  (ot ($sigmoid (rnn-cell-forward x ($data wo) ph0 ($data uo) bo0 ones)))
                  (at ($tanh (rnn-cell-forward x ($data wa) ph0 ($data ua) ba0 ones)))
-                 (ct ($+ ($* at it) ($* ft pc0)))
-                 (ht ($* ($tanh ct) ot)))
+                 (ct ($+ ($* ft pc0) ($* at it)))
+                 (ht ($* ot ($tanh ct))))
             (setf ph ht
                   pc ct))))))
 
