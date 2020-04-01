@@ -17,9 +17,13 @@
         ((eq file :pg) (read-lines-from (data-filename "pg.txt")))
         ((eq file :small-pg) (read-lines-from (data-filename "pgsmall.txt")))))
 
-(defun ptb ()
+(defun ptb (&optional (type :train))
   (mapcar (lambda (line) (strim (concatenate 'string line "<eos>")))
-          (read-lines-from (data-filename "ptb.txt"))))
+          (read-lines-from (data-filename
+                            (concatenate 'string
+                                         "ptb."
+                                         (string-downcase (symbol-name type))
+                                         ".txt")))))
 
 (defun iris ()
   (let ((x (tensor 150 4))
