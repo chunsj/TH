@@ -1,11 +1,11 @@
-(defpackage :dlfs-ch4
+(defpackage :dlfs2-ch4
   (:use #:common-lisp
         #:mu
         #:th
         #:th.ex.data
         #:th.text))
 
-(in-package :dlfs-ch4)
+(in-package :dlfs2-ch4)
 
 ;; choice
 (prn (loop :for i :from 0 :below 20 :collect ($choice '(:a :b :c) '(0.1 0.2 0.7))))
