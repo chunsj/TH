@@ -8,4 +8,9 @@
 
 (in-package :dlfs2-ch5)
 
-(ptb)
+(defparameter *encoder* (word-encoder (loop :for line :in (ptb :train)
+                                            :append (->> (strim line)
+                                                         (split #\space)))))
+
+(prn (encoder-encode *encoder* '(("hello" "world"))))
+(prn (encoder-decode *encoder* (encoder-encode *encoder* '(("this" "world")))))
