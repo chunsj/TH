@@ -91,7 +91,7 @@
 ;; train network
 (time
  (with-foreign-memory-limit (4096) ;; for speed
-   (let* ((epochs 1000)
+   (let* ((epochs 5) ;; 1000
           (print-step 10))
      (loop :for iter :from 0 :below epochs
            :do (let* ((outputs ($execute *rnn* *xs*))
@@ -105,4 +105,4 @@
 (prn ($generate-sequence *rnn* *encoder* '("N" "years" "old" "will") 20))
 
 ;; XXX maybe adding more lstm layers could be possible.
-;; XXX dropout could be applied as well; but dropout-cell should be implemented to do this.
+;; dropout-cell, shared-affine-cell could be applied if any.
