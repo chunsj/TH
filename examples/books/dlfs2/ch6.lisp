@@ -91,7 +91,7 @@
 ;; train network
 (time
  (with-foreign-memory-limit (4096) ;; for speed
-   (let* ((epochs 5) ;; 1000
+   (let* ((epochs 1000)
           (print-step 10))
      (loop :for iter :from 0 :below epochs
            :do (let* ((outputs ($execute *rnn* *xs*))
