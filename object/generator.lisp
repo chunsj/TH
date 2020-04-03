@@ -21,4 +21,4 @@
       (th-random-manual-seed ($handle gen) (coerce seed 'integer)))
     gen))
 
-(defparameter *generator* (generator))
+(defvar *generator* (generator))

@@ -2,7 +2,7 @@
 
 (in-package :th)
 
-(defparameter *default-tensor-class* 'tensor.float)
+(defvar *default-tensor-class* 'tensor.float)
 
 (defclass tensor (th.object) ())
 (defclass tensor.integral (tensor) ())
