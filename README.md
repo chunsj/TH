@@ -1,9 +1,10 @@
 # My Deep Learning Library for Common Lisp using libTH/libTHNN
 
-## NEWS (2020-03-29)
-  New RNN layer based APIs.
+## NEWS (2020-04-03)
+  New memory management system (simpler, but only tested with SBCL).
 
 ## OLD NEWS
+  20200329: New RNN layer based APIs.
   20200120: I think current state of TH is generally usable. And yet, needs more examples.
   20191226: Clozure CL runs TH codes very well. Often, CCL does not yet show memory trashing problems.
   20191216: Version 1.44 of TH runs all the code under examples without problem; including dlfs and gdl.
@@ -110,18 +111,11 @@
   2. They may not work at all.
 
 ## On Memory Hack
-  TLDR; you can safely use Clozure CL and forget memory problem or you want to get speed of
-  SBCL, then you might encounter some memory trashing problem which I cannot yet solve.
-  To avoid work around thrashing of system due to foreign allocated memory - it is freed when
-  referencing CLOS object is garbage collected, but the gc does not know how much external
-  memory is used - I've modified the garbage collector settings for more frequent gc to prevent
-  sbcl filling memory without knowing it actually using external objects. Refer mhack.lisp for
-  detailed implementation; especially the limit-memory function.
-  Current hack for foreign memory management is simply make garbage collector do its job more
-  frequently.
+  SBCL and CCL does not know the memory pressure from foreign allocated ones, so I have to count
+  them and check when it exceeds predefined size, the full garbage collection will occur.
+  Current implementation is tested with SBCL only. If you have any better idea, than let me know.
 
 ## TODOS
-  1. Check and update examples to use the with-foreign-memory-limit macro. Check performance as well.
-  2. Apply new layer based API, though I don't like it I cannot yet find better alternative.
-  3. More application examples, especially other machine learning algorithms than neural network.
-  4. Find why using Accelerator.framework makes geev emits floating point overflow error.
+  1. Apply new layer based API, though I don't like it I cannot yet find better alternative.
+  2. More application examples, especially other machine learning algorithms than neural network.
+  3. Find why using Accelerator.framework makes geev emits floating point overflow error.

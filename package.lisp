@@ -403,5 +403,4 @@
            #:vxavier
            #:vhe
            #:vlecun
-           #:vselu
-           #:with-foreign-memory-limit))
+           #:vselu))
