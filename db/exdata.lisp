@@ -4,6 +4,7 @@
         #:th)
   (:export #:text-lines
            #:ptb
+           #:addition
            #:iris))
 
 (in-package :th.ex.data)
@@ -24,6 +25,9 @@
                                          "ptb."
                                          (string-downcase (symbol-name type))
                                          ".txt")))))
+
+(defun addition ()
+  (read-lines-from (data-filename "addition.txt")))
 
 (defun iris ()
   (let ((x (tensor 150 4))
