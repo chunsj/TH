@@ -8,9 +8,6 @@
 
 (in-package :dlfs2-ch6)
 
-(let ((x (tensor 1000 1000)))
-  (prn x))
-
 (defparameter *simple-data* '("you" "say" "goodbye" "I" "say" "hello" "."))
 (defparameter *encoder* (word-encoder *simple-data*))
 
