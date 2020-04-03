@@ -78,11 +78,10 @@
 ($reset! *model*)
 
 (time
- (with-foreign-memory-limit ()
-   (loop :for epoch :from 1 :to *epochs*
-         :do (loop :for xs :in *mnist-train-image-batches*
-                   :for idx :from 1
-                   :do (train *model* xs epoch idx :rmsprop)))))
+ (loop :for epoch :from 1 :to *epochs*
+       :do (loop :for xs :in *mnist-train-image-batches*
+                 :for idx :from 1
+                 :do (train *model* xs epoch idx :rmsprop))))
 
 ;; save/load trained weights
 ;; ($save-weights "examples/weights/cae" *model*)

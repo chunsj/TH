@@ -146,8 +146,7 @@
 
 ;; train
 (time
- (with-foreign-memory-limit ()
-   (vae-train *epochs* *model* *mnist-train-image-batches*)))
+ (vae-train *epochs* *model* *mnist-train-image-batches*))
 
 ;; test model
 ($execute *model* (car *mnist-train-image-batches*) :trainp nil)

@@ -54,18 +54,17 @@
 ;; train network - this is in fact make the network overfit the data.
 ;; for testing purpose, overfitting is good one :-P
 (time
- (with-foreign-memory-limit (32768) ;; for speed
-   (let* ((epochs 1000)
-          (print-step 50)
-          (xs (encoder-encode *encoder* *data*))
-          (ts (encoder-encode *encoder* *target*)))
-     (loop :for iter :from 0 :below epochs
-           :do (let* ((outputs ($execute *rnn* xs))
-                      (losses (mapcar (lambda (y c) ($cec y c)) outputs ts))
-                      (loss ($div (apply #'$+ losses) ($count losses))))
-                 (when (zerop (rem iter print-step))
-                   (prn iter ($data loss)))
-                 ($rmgd! *rnn*))))))
+ (let* ((epochs 1000)
+        (print-step 50)
+        (xs (encoder-encode *encoder* *data*))
+        (ts (encoder-encode *encoder* *target*)))
+   (loop :for iter :from 0 :below epochs
+         :do (let* ((outputs ($execute *rnn* xs))
+                    (losses (mapcar (lambda (y c) ($cec y c)) outputs ts))
+                    (loss ($div (apply #'$+ losses) ($count losses))))
+               (when (zerop (rem iter print-step))
+                 (prn iter ($data loss)))
+               ($rmgd! *rnn*)))))
 
 ;; test trained network - high temperature means more "creativity".
 ;; if you increase temperature, then you'll know what it means.
@@ -83,18 +82,17 @@
 ($reset! *rnn-lstm*)
 
 (time
- (with-foreign-memory-limit (32768) ;; for speed
-   (let* ((epochs 1000)
-          (print-step 50)
-          (xs (encoder-encode *encoder* *data*))
-          (ts (encoder-encode *encoder* *target*)))
-     (loop :for iter :from 0 :below epochs
-           :do (let* ((outputs ($execute *rnn-lstm* xs))
-                      (losses (mapcar (lambda (y c) ($cec y c)) outputs ts))
-                      (loss ($div (apply #'$+ losses) ($count losses))))
-                 (when (zerop (rem iter print-step))
-                   (prn iter ($data loss)))
-                 ($rmgd! *rnn-lstm*))))))
+ (let* ((epochs 1000)
+        (print-step 50)
+        (xs (encoder-encode *encoder* *data*))
+        (ts (encoder-encode *encoder* *target*)))
+   (loop :for iter :from 0 :below epochs
+         :do (let* ((outputs ($execute *rnn-lstm* xs))
+                    (losses (mapcar (lambda (y c) ($cec y c)) outputs ts))
+                    (loss ($div (apply #'$+ losses) ($count losses))))
+               (when (zerop (rem iter print-step))
+                 (prn iter ($data loss)))
+               ($rmgd! *rnn-lstm*)))))
 
 (let ((seed-string "the")
       (gen-length 100)
@@ -111,18 +109,17 @@
 ($reset! *rnn-gru*)
 
 (time
- (with-foreign-memory-limit (32768) ;; for speed
-   (let* ((epochs 1000)
-          (print-step 50)
-          (xs (encoder-encode *encoder* *data*))
-          (ts (encoder-encode *encoder* *target*)))
-     (loop :for iter :from 0 :below epochs
-           :do (let* ((outputs ($execute *rnn-gru* xs))
-                      (losses (mapcar (lambda (y c) ($cec y c)) outputs ts))
-                      (loss ($div (apply #'$+ losses) ($count losses))))
-                 (when (zerop (rem iter print-step))
-                   (prn iter ($data loss)))
-                 ($rmgd! *rnn-gru*))))))
+ (let* ((epochs 1000)
+        (print-step 50)
+        (xs (encoder-encode *encoder* *data*))
+        (ts (encoder-encode *encoder* *target*)))
+   (loop :for iter :from 0 :below epochs
+         :do (let* ((outputs ($execute *rnn-gru* xs))
+                    (losses (mapcar (lambda (y c) ($cec y c)) outputs ts))
+                    (loss ($div (apply #'$+ losses) ($count losses))))
+               (when (zerop (rem iter print-step))
+                 (prn iter ($data loss)))
+               ($rmgd! *rnn-gru*)))))
 
 (let ((seed-string "the")
       (gen-length 100)

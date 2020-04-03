@@ -17,12 +17,11 @@
 (defparameter *w* ($parameter ($reshape! (tensor (list pi)) 1 1)))
 
 ($cg! *w*)
-(with-foreign-memory-limit ()
-  (loop :for i :from 0 :below 100
-        :do (let* ((d ($- ($sin ($@ *x-train* *w*)) *y-train*))
-                   (l ($dot d d)))
-              (prn ($data l))
-              ($gd! *w*))))
+(loop :for i :from 0 :below 100
+      :do (let* ((d ($- ($sin ($@ *x-train* *w*)) *y-train*))
+                 (l ($dot d d)))
+            (prn ($data l))
+            ($gd! *w*)))
 
 (prn *w*)
 (prn (* 2 pi))

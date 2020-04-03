@@ -163,40 +163,39 @@
 (setf *niters* 1)
 
 (time
- (with-foreign-memory-limit ()
-   (loop :for iter :from 1 :to *niters*
-         :for n = 0
-         :for maxloss = 0
-         :for maxloss-pos = -1
-         :for max-mloss = 0
-         :do (progn
-               (loop :for input :in *inputs*
-                     :for target :in *targets*
-                     :for bidx :from 0 :to 0
-                     :do (let ((ph (zeros 1 *hidden-size*))
-                               (tloss 0))
-                           (loop :for i :from 0 :below ($size input 0)
-                                 :for xt = ($index input 0 i)
-                                 :for ht = ($rnn xt ph *wx* *wh* *bh*)
-                                 :for ps = (outps ht *wy* *by*)
-                                 :for y = ($index target 0 i)
-                                 :for l = ($cee ps y)
-                                 :do (progn
-                                       (setf ph ht)
-                                       (incf tloss ($data l))))
-                           (when (> tloss maxloss)
-                             (setf maxloss-pos n)
-                             (setf maxloss tloss))
-                           ($rmgd! *rnn*)
-                           (setf *mloss* (+ (* 0.999 *mloss*) (* 0.001 tloss)))
-                           (when (> *mloss* max-mloss) (setf max-mloss *mloss*))
-                           (when (zerop (rem n 200))
-                             (prn "[ITER]" iter n *mloss* maxloss maxloss-pos))
-                           (incf n)))
-               (when (< max-mloss *min-mloss*)
-                 (prn "*** BETTER MLOSS - WRITE WEIGHTS: FROM" *min-mloss* "TO" max-mloss)
-                 (setf *min-mloss* max-mloss)
-                 (rnn-write-weights))))))
+ (loop :for iter :from 1 :to *niters*
+       :for n = 0
+       :for maxloss = 0
+       :for maxloss-pos = -1
+       :for max-mloss = 0
+       :do (progn
+             (loop :for input :in *inputs*
+                   :for target :in *targets*
+                   :for bidx :from 0 :to 0
+                   :do (let ((ph (zeros 1 *hidden-size*))
+                             (tloss 0))
+                         (loop :for i :from 0 :below ($size input 0)
+                               :for xt = ($index input 0 i)
+                               :for ht = ($rnn xt ph *wx* *wh* *bh*)
+                               :for ps = (outps ht *wy* *by*)
+                               :for y = ($index target 0 i)
+                               :for l = ($cee ps y)
+                               :do (progn
+                                     (setf ph ht)
+                                     (incf tloss ($data l))))
+                         (when (> tloss maxloss)
+                           (setf maxloss-pos n)
+                           (setf maxloss tloss))
+                         ($rmgd! *rnn*)
+                         (setf *mloss* (+ (* 0.999 *mloss*) (* 0.001 tloss)))
+                         (when (> *mloss* max-mloss) (setf max-mloss *mloss*))
+                         (when (zerop (rem n 200))
+                           (prn "[ITER]" iter n *mloss* maxloss maxloss-pos))
+                         (incf n)))
+             (when (< max-mloss *min-mloss*)
+               (prn "*** BETTER MLOSS - WRITE WEIGHTS: FROM" *min-mloss* "TO" max-mloss)
+               (setf *min-mloss* max-mloss)
+               (rnn-write-weights)))))
 
 (prn (sample "This is not correct." 200 0.5))
 (prn (sample "I" 200 0.5))

@@ -38,16 +38,15 @@
 
 ;; train network
 (time
- (with-foreign-memory-limit (4096) ;; for speed
-   (let* ((epochs 1000)
-          (print-step 50))
-     (loop :for iter :from 0 :below epochs
-           :do (let* ((outputs ($execute *rnn* *xs*))
-                      (losses (mapcar (lambda (y c) ($cec y c)) outputs *ys*))
-                      (loss ($div (apply #'$+ losses) ($count losses))))
-                 (when (zerop (rem iter print-step))
-                   (prn iter ($data loss)))
-                 ($rmgd! *rnn*))))))
+ (let* ((epochs 1000)
+        (print-step 50))
+   (loop :for iter :from 0 :below epochs
+         :do (let* ((outputs ($execute *rnn* *xs*))
+                    (losses (mapcar (lambda (y c) ($cec y c)) outputs *ys*))
+                    (loss ($div (apply #'$+ losses) ($count losses))))
+               (when (zerop (rem iter print-step))
+                 (prn iter ($data loss)))
+               ($rmgd! *rnn*)))))
 
 ($reset-state! *rnn* nil)
 (prn ($generate-sequence *rnn* *encoder* '("you" "say") 10))
@@ -90,16 +89,15 @@
 
 ;; train network
 (time
- (with-foreign-memory-limit (4096) ;; for speed
-   (let* ((epochs 1000)
-          (print-step 10))
-     (loop :for iter :from 0 :below epochs
-           :do (let* ((outputs ($execute *rnn* *xs*))
-                      (losses (mapcar (lambda (y c) ($cec y c)) outputs *ys*))
-                      (loss ($div (apply #'$+ losses) ($count losses))))
-                 (when (zerop (rem iter print-step))
-                   (prn iter ($data loss)))
-                 ($rmgd! *rnn*))))))
+ (let* ((epochs 1000)
+        (print-step 10))
+   (loop :for iter :from 0 :below epochs
+         :do (let* ((outputs ($execute *rnn* *xs*))
+                    (losses (mapcar (lambda (y c) ($cec y c)) outputs *ys*))
+                    (loss ($div (apply #'$+ losses) ($count losses))))
+               (when (zerop (rem iter print-step))
+                 (prn iter ($data loss)))
+               ($rmgd! *rnn*)))))
 
 ($reset-state! *rnn* nil)
 (prn ($generate-sequence *rnn* *encoder* '("N" "years" "old" "will") 20))

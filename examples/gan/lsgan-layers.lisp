@@ -116,7 +116,7 @@
             (fname (format nil "~A/Desktop/~A-~A.png" (namestring (user-homedir-pathname))
                            epoch idx)))
         (write-tensors-png-file generated fname)))
-    (when verbose (th::report-foreign-memory-allocation))))
+    (when verbose (th::th-get-current-heap-size))))
 
 (defun train (epochs batches)
   (loop :for epoch :from 1 :to epochs
@@ -128,9 +128,7 @@
 
 ($reset! (list *generator* *discriminator*))
 
-(time
- (with-foreign-memory-limit ()
-   (train *epochs* *mnist-batches*)))
+(time (train *epochs* *mnist-batches*))
 
 (let ((generated (generate :trainp nil))
       (fname (format nil "~A/Desktop/images.png" (namestring (user-homedir-pathname)))))
@@ -142,4 +140,4 @@
 
 (gcf)
 (setf *epochs* 1)
-(th::report-foreign-memory-allocation)
+(th::th-get-current-heap-size)

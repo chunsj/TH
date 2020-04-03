@@ -92,26 +92,25 @@
 ;; train using autograd, however, this is very slow compared to direct implementation
 (reset-weights)
 (time
- (with-foreign-memory-limit ()
-   (loop :for iter :from 1 :to *iterations*
-         :do (let ((total 0)
-                   (correct 0))
-               (loop :for i :from 0 :below ($count *train-dataset*)
-                     :for x :in *train-dataset*
-                     :for y = ($ *train-targets* i)
-                     :for y* = (predict-sentiment x)
-                     :for d = ($sub y* y)
-                     :for er = ($dot d d)
-                     :do (progn
-                           ($gs! er 1)
-                           ($adgd! (list *w01* *w12*))
-                           (incf total)
-                           (when (< (abs ($data d)) 0.5)
-                             (incf correct))
-                           (when (zerop (rem i 100))
-                             (prn iter total correct))))
-               (when (zerop (rem iter 1))
-                 (print-test-perf))))))
+ (loop :for iter :from 1 :to *iterations*
+       :do (let ((total 0)
+                 (correct 0))
+             (loop :for i :from 0 :below ($count *train-dataset*)
+                   :for x :in *train-dataset*
+                   :for y = ($ *train-targets* i)
+                   :for y* = (predict-sentiment x)
+                   :for d = ($sub y* y)
+                   :for er = ($dot d d)
+                   :do (progn
+                         ($gs! er 1)
+                         ($adgd! (list *w01* *w12*))
+                         (incf total)
+                         (when (< (abs ($data d)) 0.5)
+                           (incf correct))
+                         (when (zerop (rem i 100))
+                           (prn iter total correct))))
+             (when (zerop (rem iter 1))
+               (print-test-perf)))))
 
 ;; direct implementation without using autodiff, faster than above
 ;; (XXX, there're differences in backpropagation in this code and the book has no explanation)

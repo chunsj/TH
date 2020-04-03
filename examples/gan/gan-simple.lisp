@@ -78,40 +78,39 @@
 (defun gi-sampler (m n) (funcall *gi-sampler-fn* m n))
 
 (time
- (with-foreign-memory-limit ()
-   (loop :for epoch :from 1 :to *num-epochs*
-         :do (progn
-               (loop :for dstep :from 0 :below *d-steps*
-                     :do (progn
+ (loop :for epoch :from 1 :to *num-epochs*
+       :do (progn
+             (loop :for dstep :from 0 :below *d-steps*
+                   :do (progn
+                         ($cg! *generator*)
+                         ($cg! *discriminator*)
+                         (let* ((d-real-data (d-sampler *d-input-size*))
+                                (d-real-decision (discriminate d-real-data))
+                                (d-real-error ($bce d-real-decision (ones 1)))
+                                (d-gen-input (gi-sampler *minibatch-size* *g-input-size*))
+                                (d-fake-data (generate d-gen-input))
+                                (d-fake-decision (discriminate ($transpose d-fake-data)))
+                                (d-fake-error ($bce d-fake-decision (zeros 1))))
+                           (when (zerop (rem epoch *print-interval*))
+                             (prn "EPOCH =>" epoch)
+                             (prn "DRE/DFE:" d-real-error d-fake-error)
+                             (prn " DSTAT:" ($mean d-real-data) ($sd d-real-data))
+                             (prn " FSTAT:" ($mean d-fake-data) ($sd d-fake-data)))
+                           ($amgd! *discriminator* *d-learning-rate* *beta1* *beta2*)
                            ($cg! *generator*)
-                           ($cg! *discriminator*)
-                           (let* ((d-real-data (d-sampler *d-input-size*))
-                                  (d-real-decision (discriminate d-real-data))
-                                  (d-real-error ($bce d-real-decision (ones 1)))
-                                  (d-gen-input (gi-sampler *minibatch-size* *g-input-size*))
-                                  (d-fake-data (generate d-gen-input))
-                                  (d-fake-decision (discriminate ($transpose d-fake-data)))
-                                  (d-fake-error ($bce d-fake-decision (zeros 1))))
-                             (when (zerop (rem epoch *print-interval*))
-                               (prn "EPOCH =>" epoch)
-                               (prn "DRE/DFE:" d-real-error d-fake-error)
-                               (prn " DSTAT:" ($mean d-real-data) ($sd d-real-data))
-                               (prn " FSTAT:" ($mean d-fake-data) ($sd d-fake-data)))
-                             ($amgd! *discriminator* *d-learning-rate* *beta1* *beta2*)
-                             ($cg! *generator*)
-                             ($cg! *discriminator*))))
-               (loop :for gstep :from 0 :below *g-steps*
-                     :do (progn
+                           ($cg! *discriminator*))))
+             (loop :for gstep :from 0 :below *g-steps*
+                   :do (progn
+                         ($cg! *generator*)
+                         ($cg! *discriminator*)
+                         (let* ((gen-input (gi-sampler *minibatch-size* *g-input-size*))
+                                (g-fake-data (generate gen-input))
+                                (dg-fake-decision (discriminate ($transpose g-fake-data)))
+                                (g-error ($bce dg-fake-decision (ones 1))))
+                           (when (zerop (rem epoch *print-interval*))
+                             (prn "GE:" ($data g-error)))
+                           ($amgd! *generator* *d-learning-rate* *beta1* *beta2*)
                            ($cg! *generator*)
-                           ($cg! *discriminator*)
-                           (let* ((gen-input (gi-sampler *minibatch-size* *g-input-size*))
-                                  (g-fake-data (generate gen-input))
-                                  (dg-fake-decision (discriminate ($transpose g-fake-data)))
-                                  (g-error ($bce dg-fake-decision (ones 1))))
-                             (when (zerop (rem epoch *print-interval*))
-                               (prn "GE:" ($data g-error)))
-                             ($amgd! *generator* *d-learning-rate* *beta1* *beta2*)
-                             ($cg! *generator*)
-                             ($cg! *discriminator*))))))))
+                           ($cg! *discriminator*)))))))
 
 (gcf)

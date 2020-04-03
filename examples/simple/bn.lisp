@@ -107,20 +107,19 @@
 
 (defun train (net)
   (let ((losses nil))
-    (with-foreign-memory-limit ()
-      (loop :for epoch :from 1 :to *epochs*
-            :do (loop :for xb :in *x-batches*
-                      :for yb :in *y-batches*
-                      :for i :from 0
-                      :for y* = ($execute net xb)
-                      :for l = ($cee y* yb)
-                      :do (progn
-                            ($gd! net)
-                            (when (and (zerop (rem epoch 50))
-                                       (zerop i))
-                              (let ((lv ($data l)))
-                                (push lv losses)
-                                (prn (format nil "[~A] ~2,5E" epoch lv))))))))
+    (loop :for epoch :from 1 :to *epochs*
+          :do (loop :for xb :in *x-batches*
+                    :for yb :in *y-batches*
+                    :for i :from 0
+                    :for y* = ($execute net xb)
+                    :for l = ($cee y* yb)
+                    :do (progn
+                          ($gd! net)
+                          (when (and (zerop (rem epoch 50))
+                                     (zerop i))
+                            (let ((lv ($data l)))
+                              (push lv losses)
+                              (prn (format nil "[~A] ~2,5E" epoch lv)))))))
     losses))
 
 (defparameter *losses01* (train *net01*))

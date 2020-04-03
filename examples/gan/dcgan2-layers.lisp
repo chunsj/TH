@@ -145,7 +145,7 @@
             (fname (format nil "~A/Desktop/~A-~A.png" (namestring (user-homedir-pathname))
                            epoch idx)))
         (outpngs generated fname)))
-    (when verbose (th::report-foreign-memory-allocation))))
+    (when verbose (th::th-get-current-heap-size))))
 
 (defparameter *epochs* 20)
 
@@ -153,11 +153,10 @@
 ($reset! *discriminator*)
 
 (time
- (with-foreign-memory-limit ()
-   (loop :for epoch :from 1 :to *epochs*
-         :do (loop :for xs :in *mnist-batches*
-                   :for idx :from 0
-                   :do (train xs epoch idx)))))
+ (loop :for epoch :from 1 :to *epochs*
+       :do (loop :for xs :in *mnist-batches*
+                 :for idx :from 0
+                 :do (train xs epoch idx))))
 
 (let ((generated (generate :trainp nil))
       (fname (format nil "~A/Desktop/images.png" (namestring (user-homedir-pathname)))))

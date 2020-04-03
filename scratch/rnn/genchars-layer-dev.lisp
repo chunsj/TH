@@ -108,32 +108,31 @@
     resultstr))
 
 (time
- (with-foreign-memory-limit (32768) ;; for speed
-   (let* ((epochs 500)
-          (print-step 50)
-          (temperature 1D0)
-          (gen-length 100)
-          (seed-string "the")
-          (vsize (encoder-vocabulary-size *encoder*))
-          (strings (list "the quick brown fox jumps over the lazy dog. "
-                         "quick brown fox jumps over the lazy dog. the "
-                         "brown fox jumps over the lazy dog. the quick "
-                         "fox jumps over the lazy dog. the quick brown "
-                         "jumps over the lazy dog. the quick brown fox "))
-          (targets (mapcar (lambda (s) (rotate-left-string 1 s)) strings))
-          (seq1 (encoder-encode *encoder* strings))
-          (tar1 (encoder-encode *encoder* targets))
-          (rnn (sequential-layer
-                (recurrent-layer (embedding-cell vsize *hidden-size*))
-                (recurrent-layer (affine-cell *hidden-size* vsize :activation :nil)))))
-     (loop :for iter :from 0 :below epochs
-           :do (let* ((outputs ($execute rnn seq1))
-                      (losses (mapcar (lambda (y c) ($cec y c)) outputs tar1))
-                      (loss ($div (apply #'$+ losses) ($count losses))))
-                 (when (zerop (rem iter print-step))
-                   (prn iter ($data loss)))
-                 ($rmgd! rnn)))
-     (prn (generate-string rnn *encoder* seed-string gen-length temperature)))))
+ (let* ((epochs 500)
+        (print-step 50)
+        (temperature 1D0)
+        (gen-length 100)
+        (seed-string "the")
+        (vsize (encoder-vocabulary-size *encoder*))
+        (strings (list "the quick brown fox jumps over the lazy dog. "
+                       "quick brown fox jumps over the lazy dog. the "
+                       "brown fox jumps over the lazy dog. the quick "
+                       "fox jumps over the lazy dog. the quick brown "
+                       "jumps over the lazy dog. the quick brown fox "))
+        (targets (mapcar (lambda (s) (rotate-left-string 1 s)) strings))
+        (seq1 (encoder-encode *encoder* strings))
+        (tar1 (encoder-encode *encoder* targets))
+        (rnn (sequential-layer
+              (recurrent-layer (embedding-cell vsize *hidden-size*))
+              (recurrent-layer (affine-cell *hidden-size* vsize :activation :nil)))))
+   (loop :for iter :from 0 :below epochs
+         :do (let* ((outputs ($execute rnn seq1))
+                    (losses (mapcar (lambda (y c) ($cec y c)) outputs tar1))
+                    (loss ($div (apply #'$+ losses) ($count losses))))
+               (when (zerop (rem iter print-step))
+                 (prn iter ($data loss)))
+               ($rmgd! rnn)))
+   (prn (generate-string rnn *encoder* seed-string gen-length temperature))))
 
 ;;
 ;; following old code is for referential purpose
@@ -431,40 +430,39 @@
 (setf *niters* 1)
 
 (time
- (with-foreign-memory-limit ()
-   (loop :for iter :from 1 :to *niters*
-         :for n = 0
-         :for maxloss = 0
-         :for maxloss-pos = -1
-         :for max-mloss = 0
-         :do (progn
-               (loop :for input :in *inputs*
-                     :for target :in *targets*
-                     :for bidx :from 0 :to 0
-                     :do (let ((ph (zeros 1 *hidden-size*))
-                               (tloss 0))
-                           (loop :for i :from 0 :below ($size input 0)
-                                 :for xt = ($index input 0 i)
-                                 :for ht = ($rnn xt ph *wx* *wh* *bh*)
-                                 :for ps = (outps ht *wy* *by*)
-                                 :for y = ($index target 0 i)
-                                 :for l = ($cee ps y)
-                                 :do (progn
-                                       (setf ph ht)
-                                       (incf tloss ($data l))))
-                           (when (> tloss maxloss)
-                             (setf maxloss-pos n)
-                             (setf maxloss tloss))
-                           ($rmgd! *rnn*)
-                           (setf *mloss* (+ (* 0.999 *mloss*) (* 0.001 tloss)))
-                           (when (> *mloss* max-mloss) (setf max-mloss *mloss*))
-                           (when (zerop (rem n 200))
-                             (prn "[ITER]" iter n *mloss* maxloss maxloss-pos))
-                           (incf n)))
-               (when (< max-mloss *min-mloss*)
-                 (prn "*** BETTER MLOSS - WRITE WEIGHTS: FROM" *min-mloss* "TO" max-mloss)
-                 (setf *min-mloss* max-mloss)
-                 (rnn-write-weights))))))
+ (loop :for iter :from 1 :to *niters*
+       :for n = 0
+       :for maxloss = 0
+       :for maxloss-pos = -1
+       :for max-mloss = 0
+       :do (progn
+             (loop :for input :in *inputs*
+                   :for target :in *targets*
+                   :for bidx :from 0 :to 0
+                   :do (let ((ph (zeros 1 *hidden-size*))
+                             (tloss 0))
+                         (loop :for i :from 0 :below ($size input 0)
+                               :for xt = ($index input 0 i)
+                               :for ht = ($rnn xt ph *wx* *wh* *bh*)
+                               :for ps = (outps ht *wy* *by*)
+                               :for y = ($index target 0 i)
+                               :for l = ($cee ps y)
+                               :do (progn
+                                     (setf ph ht)
+                                     (incf tloss ($data l))))
+                         (when (> tloss maxloss)
+                           (setf maxloss-pos n)
+                           (setf maxloss tloss))
+                         ($rmgd! *rnn*)
+                         (setf *mloss* (+ (* 0.999 *mloss*) (* 0.001 tloss)))
+                         (when (> *mloss* max-mloss) (setf max-mloss *mloss*))
+                         (when (zerop (rem n 200))
+                           (prn "[ITER]" iter n *mloss* maxloss maxloss-pos))
+                         (incf n)))
+             (when (< max-mloss *min-mloss*)
+               (prn "*** BETTER MLOSS - WRITE WEIGHTS: FROM" *min-mloss* "TO" max-mloss)
+               (setf *min-mloss* max-mloss)
+               (rnn-write-weights)))))
 
 (prn (sample "This is not correct." 200 0.5))
 (prn (sample "I" 200 0.5))

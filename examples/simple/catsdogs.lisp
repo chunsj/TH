@@ -88,21 +88,20 @@
 (defparameter *train-size* ($count *train-data*))
 
 (time
- (with-foreign-memory-limit ()
-   (loop :for epoch :from 1 :to *epoch*
-         :do (progn
-               (loop :for data :in (subseq *train-data* 0 *train-size*)
-                     :for labels :in (subseq *train-labels* 0 *train-size*)
-                     :for bidx :from 1
-                     :do (let* ((y* ($execute *network* data))
-                                (loss ($bce y* labels)))
-                           (prn epoch "|" bidx ($data loss))
-                           (opt!)))
-               (when (zerop (rem epoch 5))
-                 (let* ((res ($evaluate *network* *test-data*))
-                        (fres (tensor.float ($ge res 0.5)))
-                        (d ($- fres *test-labels*)))
-                   (prn "TEST ERROR:" (/ ($dot d d) *test-size*))))))))
+ (loop :for epoch :from 1 :to *epoch*
+       :do (progn
+             (loop :for data :in (subseq *train-data* 0 *train-size*)
+                   :for labels :in (subseq *train-labels* 0 *train-size*)
+                   :for bidx :from 1
+                   :do (let* ((y* ($execute *network* data))
+                              (loss ($bce y* labels)))
+                         (prn epoch "|" bidx ($data loss))
+                         (opt!)))
+             (when (zerop (rem epoch 5))
+               (let* ((res ($evaluate *network* *test-data*))
+                      (fres (tensor.float ($ge res 0.5)))
+                      (d ($- fres *test-labels*)))
+                 (prn "TEST ERROR:" (/ ($dot d d) *test-size*)))))))
 
 ;; for testing
 (setf *epoch* 1)

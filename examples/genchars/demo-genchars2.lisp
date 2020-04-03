@@ -66,18 +66,17 @@
 ;; train network - this is in fact make the network overfit the data.
 ;; for testing purpose, overfitting is good one :-P
 (time
- (with-foreign-memory-limit (32768) ;; for speed
-   (let* ((epochs *epochs*)
-          (print-step 50))
-     (loop :for epoch :from 0 :below epochs
-           :do (loop :for xs :in *inputs* :for ts :in *targets*
-                     :for iter :from 0
-                     :do (let* ((outputs ($execute *rnn* xs))
-                                (losses (mapcar (lambda (y c) ($cec y c)) outputs ts))
-                                (loss ($div (apply #'$+ losses) ($count losses))))
-                           (when (zerop (rem iter print-step))
-                             (prn epoch "|" iter ($data loss)))
-                           ($rmgd! *rnn*)))))))
+ (let* ((epochs *epochs*)
+        (print-step 50))
+   (loop :for epoch :from 0 :below epochs
+         :do (loop :for xs :in *inputs* :for ts :in *targets*
+                   :for iter :from 0
+                   :do (let* ((outputs ($execute *rnn* xs))
+                              (losses (mapcar (lambda (y c) ($cec y c)) outputs ts))
+                              (loss ($div (apply #'$+ losses) ($count losses))))
+                         (when (zerop (rem iter print-step))
+                           (prn epoch "|" iter ($data loss)))
+                         ($rmgd! *rnn*))))))
 
 ;; test trained network - high temperature means more "creativity".
 ;; if you increase temperature, then you'll know what it means.

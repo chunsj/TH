@@ -100,11 +100,10 @@
 
 (let ((contexts (convert-one-hot (getf *ct* :contexts) (getf *data* :vocab-size)))
       (target (convert-one-hot (getf *ct* :target) (getf *data* :vocab-size))))
-  (with-foreign-memory-limit ()
-    (loop :for epoch :from 0 :below 1000
-          :do (let ((loss (loss (forward contexts) target)))
-                (prn loss)
-                ($amgd! (list *win* *wout*))))))
+  (loop :for epoch :from 0 :below 1000
+        :do (let ((loss (loss (forward contexts) target)))
+              (prn loss)
+              ($amgd! (list *win* *wout*)))))
 
 (gcf)
 
