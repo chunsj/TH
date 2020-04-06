@@ -53,6 +53,10 @@
 (prn ($last ($evaluate *encoder-rnn* (car *train-xs-batches*))))
 (prn (encoder-encode *encoder* '("_")))
 
+;; XXX can i write down what each line of code wants to do?
+;;     more humane description would result more clean code.
+;; XXX encoder could be a layer as well, right?
+;;     more general archiving/unarchiving mechanism required.
 (let ((h ($last ($evaluate *encoder-rnn* (car *train-xs-batches*))))
       (xt (tensor.long (loop :repeat *batch-size* :collect 11)))
       (res '())) ;; 11 is for "_"
@@ -78,3 +82,6 @@
                     :do (push v ($ results i))))
     (setf results (mapcar (lambda (rs) (apply #'concatenate 'string (reverse rs))) results))
     (print results)))
+
+;; encoder should have more supportive methods for above implementation
+;; softmax output to encoded input and vice versa
