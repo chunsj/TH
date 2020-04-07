@@ -28,6 +28,9 @@
 (defparameter *train-xs-batches* (build-batches *train-input-data* *batch-size*))
 (defparameter *train-ys-batches* (build-batches *train-target-data* *batch-size*))
 
+(defparameter *overfit-xs-batches* (subseq (build-batches *train-input-data* 3) 0 3))
+(defparameter *overfit-ys-batches* (subseq (build-batches *train-target-data* 3) 0 3))
+
 (defun generate-string (rnn encoder seedstr n &optional (temperature 1D0))
   ($generate-sequence rnn encoder seedstr n temperature))
 
@@ -113,6 +116,7 @@
 ($reset! *encoder-rnn*)
 ($reset! *decoder-rnn*)
 
+;; real training
 (time
  (let ((epochs 30)
        (pstep 100))
@@ -134,4 +138,27 @@
 (matches-score *encoder* ($0 *train-ys-batches*)
                (evaluate-seq2seq *encoder-rnn* *decoder-rnn* *encoder* ($0 *train-xs-batches*)))
 
-;; XXX need to check the implementation with a simpler, overfitting dataset.
+(prn (encoder-decode *encoder* ($0 *train-ys-batches*)))
+(prn (evaluate-seq2seq *encoder-rnn* *decoder-rnn* *encoder* ($0 *train-xs-batches*)))
+
+;; overfitting test
+(time
+ (let ((epochs 1000)
+       (pstep 100))
+   (loop :for epoch :from 0 :below epochs
+         :do (loop :for xs :in *overfit-xs-batches*
+                   :for ts :in *overfit-ys-batches*
+                   :for iter :from 0
+                   :do (let ((loss (loss-seq2seq *encoder-rnn* *decoder-rnn* *encoder* xs ts)))
+                         ($amgd! *encoder-rnn*)
+                         ($amgd! *decoder-rnn*)
+                         (when (zerop (rem epoch pstep))
+                           (prn epoch iter ($data loss))
+                           (prn "  "
+                                (matches-score *encoder*
+                                               ts
+                                               (evaluate-seq2seq *encoder-rnn* *decoder-rnn*
+                                                                 *encoder* xs)))))))))
+
+(prn (encoder-decode *encoder* ($0 *overfit-ys-batches*)))
+(prn (evaluate-seq2seq *encoder-rnn* *decoder-rnn* *encoder* ($0 *overfit-xs-batches*)))
