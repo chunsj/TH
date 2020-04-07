@@ -121,8 +121,8 @@
                    :for ts :in *train-ys-batches*
                    :for iter :from 0
                    :do (let ((loss (loss-seq2seq *encoder-rnn* *decoder-rnn* *encoder* xs ts)))
-                         ($rmgd! *encoder-rnn*)
-                         ($rmgd! *decoder-rnn*)
+                         ($amgd! *encoder-rnn*)
+                         ($amgd! *decoder-rnn*)
                          (when (zerop (rem iter pstep))
                            (prn epoch iter ($data loss))
                            (prn "  "
