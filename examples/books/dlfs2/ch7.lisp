@@ -51,37 +51,39 @@
 ($reset! *decoder-rnn*)
 
 (prn ($last ($evaluate *encoder-rnn* (car *train-xs-batches*))))
-(prn (encoder-encode *encoder* '("_")))
+(prn (encoder-encode *encoder* '("_" "_")))
 
 ;; XXX can i write down what each line of code wants to do?
 ;;     more humane description would result more clean code.
 ;; XXX encoder could be a layer as well, right?
 ;;     more general archiving/unarchiving mechanism required.
-(let ((h ($last ($evaluate *encoder-rnn* (car *train-xs-batches*))))
-      (xt (tensor.long (loop :repeat *batch-size* :collect 11)))
-      (res '())) ;; 11 is for "_"
+(let ((h ($last ($evaluate *encoder-rnn* (car *train-xs-batches*)))))
+  ;; do not reset state of decoder network. make it as a stateful network
   ($reset-state! *decoder-rnn* T)
-  (with-slots (th.layers::cell) ($1 *decoder-rnn*)
-    (with-slots (th.layers::ph) th.layers::cell
-      (setf th.layers::ph h)))
-  (let* ((out ($evaluate *decoder-rnn* (list xt)))
-         (rt (encoder-choose *encoder* out -1)))
+  ;; update cell state with the last output/state of the encoder network
+  ($update-cell-state! ($1 *decoder-rnn*) h)
+  ;; special, initiating sequence input for the decoder network is "_"
+  ;; this input should have the same with batch size
+  (let* ((xt (encoder-encode *encoder* (loop :repeat *batch-size* :collect "_")))
+         (out ($evaluate *decoder-rnn* xt))
+         (rt (encoder-choose *encoder* out -1))
+         (res '()))
     (setf xt (encoder-encode *encoder* rt))
-    (push rt res))
-  (loop :for i :from 0 :below 3
-        :do (let* ((out ($evaluate *decoder-rnn* xt))
-                   (rt (encoder-choose *encoder* out -1)))
-              (setf xt (encoder-encode *encoder* rt))
-              (push rt res)))
-  ($reset-state! *decoder-rnn* nil)
-  (let ((res (reverse res))
-        (results (make-list *batch-size*)))
-    (loop :for r :in res
-          :do (loop :for v :in r
-                    :for i :from 0
-                    :do (push v ($ results i))))
-    (setf results (mapcar (lambda (rs) (apply #'concatenate 'string (reverse rs))) results))
-    (print results)))
+    (push rt res)
+    (loop :for i :from 0 :below 3
+          :do (let* ((out ($evaluate *decoder-rnn* xt))
+                     (rt (encoder-choose *encoder* out -1)))
+                (setf xt (encoder-encode *encoder* rt))
+                (push rt res)))
+    ($reset-state! *decoder-rnn* nil)
+    (let ((res (reverse res))
+          (results (make-list *batch-size*)))
+      (loop :for r :in res
+            :do (loop :for v :in r
+                      :for i :from 0
+                      :do (push v ($ results i))))
+      (setf results (mapcar (lambda (rs) (apply #'concatenate 'string (reverse rs))) results))
+      (print results))))
 
 ;; encoder should have more supportive methods for above implementation
 ;; softmax output to encoded input and vice versa

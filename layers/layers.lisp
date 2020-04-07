@@ -32,7 +32,10 @@
            #:recurrent-layer
            #:$recurrent-stateful-p
            #:$set-stateful
-           #:$generate-sequence))
+           #:$generate-sequence
+           #:$cell-state
+           #:$cell
+           #:$update-cell-state!))
 
 (in-package :th.layers)
 
@@ -673,7 +676,7 @@
    (wh :initform nil)
    (a :initform nil)
    (bh :initform nil)
-   (ph :initform nil)
+   (ph :initform nil :accessor $cell-state)
    (os :initform #{})))
 
 (defun rnn-cell (input-size output-size
@@ -744,7 +747,7 @@
    (wa :initform nil)
    (ua :initform nil)
    (ba :initform nil)
-   (ph :initform nil)
+   (ph :initform nil :accessor $cell-state)
    (pc :initform nil)
    (os :initform #{})))
 
@@ -839,7 +842,7 @@
    (wh :initform nil)
    (uh :initform nil)
    (bh :initform nil)
-   (ph :initform nil)
+   (ph :initform nil :accessor $cell-state)
    (os :initform #{})))
 
 (defun gru-cell (input-size output-size
@@ -913,7 +916,7 @@
 
 (defclass recurrent-layer (layer)
   ((stateful :initform nil :accessor $recurrent-stateful-p)
-   (cell :initform nil)))
+   (cell :initform nil :accessor $cell)))
 
 (defun recurrent-layer (cell &key statefulp)
   (let ((n (make-instance 'recurrent-layer))
@@ -944,6 +947,11 @@
     ($reset-state! cell stateful)
     (loop :for x :in xs
           :collect ($execute cell x :trainp trainp))))
+
+(defgeneric $update-cell-state! (recurrent-layer h))
+
+(defmethod $update-cell-state! ((l recurrent-layer) h)
+  (setf ($cell-state ($cell l)) h))
 
 (defgeneric $generate-sequence (rnn encoder seedseq n &optional temperature))
 
