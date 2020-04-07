@@ -133,3 +133,5 @@
 
 (matches-score *encoder* ($0 *train-ys-batches*)
                (evaluate-seq2seq *encoder-rnn* *decoder-rnn* *encoder* ($0 *train-xs-batches*)))
+
+;; XXX need to check the implementation with a simpler, overfitting dataset.
