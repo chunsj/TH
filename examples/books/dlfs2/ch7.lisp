@@ -51,9 +51,10 @@
                                                              :activation :nil)))))
 
 (defun execute-seq2seq (encoder-rnn decoder-rnn encoder xs &optional (n 3))
-  (let ((h0 ($last ($execute encoder-rnn xs))))
+  ($execute encoder-rnn xs)
+  (let ((h0 ($cell-state encoder-rnn)))
     ($reset-state! decoder-rnn T)
-    ($update-cell-state! ($1 decoder-rnn) h0)
+    ($update-cell-state! decoder-rnn h0)
     (let* ((batch-size ($size (car xs) 0))
            (xts (encoder-encode encoder (loop :repeat batch-size :collect "_")))
            (yts ($execute decoder-rnn xts))
@@ -76,9 +77,10 @@
     loss))
 
 (defun evaluate-seq2seq (encoder-rnn decoder-rnn encoder xs &optional (n 3))
-  (let ((h0 ($last ($evaluate encoder-rnn xs))))
+  ($evaluate encoder-rnn xs)
+  (let ((h0 ($cell-state encoder-rnn)))
     ($reset-state! decoder-rnn T)
-    ($update-cell-state! ($1 decoder-rnn) h0)
+    ($update-cell-state! decoder-rnn h0)
     (let* ((batch-size ($size (car xs) 0))
            (xts (encoder-encode encoder (loop :repeat batch-size :collect "_")))
            (yts ($evaluate decoder-rnn xts))
@@ -125,8 +127,8 @@
                    :for ts :in *train-ys-batches*
                    :for iter :from 0
                    :do (let ((loss (loss-seq2seq *encoder-rnn* *decoder-rnn* *encoder* xs ts)))
-                         ($amgd! *encoder-rnn*)
-                         ($amgd! *decoder-rnn*)
+                         ($rmgd! *encoder-rnn*)
+                         ($rmgd! *decoder-rnn*)
                          (when (zerop (rem iter pstep))
                            (prn epoch iter ($data loss))
                            (prn "  "
@@ -142,23 +144,40 @@
 (prn (evaluate-seq2seq *encoder-rnn* *decoder-rnn* *encoder* ($0 *train-xs-batches*)))
 
 ;; overfitting test
+(defparameter *encoder-rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
+                              (sequential-layer
+                               (recurrent-layer (affine-cell vsize *wvec-size*
+                                                             :activation :nil
+                                                             :biasp nil))
+                               (recurrent-layer (lstm-cell *wvec-size* *hidden-size*)))))
+
+(defparameter *decoder-rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
+                              (sequential-layer
+                               (recurrent-layer (affine-cell vsize *wvec-size*
+                                                             :activation :nil
+                                                             :biasp nil))
+                               (recurrent-layer (lstm-cell *wvec-size* *hidden-size*))
+                               (recurrent-layer (affine-cell *hidden-size* vsize
+                                                             :activation :nil)))))
+
 (time
- (let ((epochs 1000)
-       (pstep 100))
+ (let ((epochs 10000)
+       (pstep 500))
    (loop :for epoch :from 0 :below epochs
          :do (loop :for xs :in *overfit-xs-batches*
                    :for ts :in *overfit-ys-batches*
                    :for iter :from 0
-                   :do (let ((loss (loss-seq2seq *encoder-rnn* *decoder-rnn* *encoder* xs ts)))
-                         ($amgd! *encoder-rnn*)
-                         ($amgd! *decoder-rnn*)
-                         (when (zerop (rem epoch pstep))
+                   :do (let ((loss (loss-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
+                                                 (reverse xs) ts)))
+                         ($rmgd! *encoder-rnn*)
+                         ($rmgd! *decoder-rnn*)
+                         (when (and (zerop (rem epoch pstep)) (eq iter 0))
                            (prn epoch iter ($data loss))
                            (prn "  "
                                 (matches-score *encoder*
                                                ts
                                                (evaluate-seq2seq *encoder-rnn* *decoder-rnn*
-                                                                 *encoder* xs)))))))))
+                                                                 *encoder* xs 1)))))))))
 
 (prn (encoder-decode *encoder* ($0 *overfit-ys-batches*)))
-(prn (evaluate-seq2seq *encoder-rnn* *decoder-rnn* *encoder* ($0 *overfit-xs-batches*)))
+(prn (evaluate-seq2seq *encoder-rnn* *decoder-rnn* *encoder* ($0 *overfit-xs-batches*) 1))
