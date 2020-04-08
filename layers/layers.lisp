@@ -46,6 +46,8 @@
 
 (defgeneric $set-stateful (layer flag))
 (defgeneric $reset-state! (layer statefulp))
+(defgeneric $cell-state (layer))
+(defgeneric $update-cell-state! (recurrent-layer h))
 
 (defclass layer () ())
 
@@ -53,6 +55,8 @@
 
 (defmethod $set-stateful ((l layer) flag) l)
 (defmethod $reset-state! ((l layer) statefulp) l)
+(defmethod $cell-state ((l layer)))
+(defmethod $update-cell-state! ((l layer) h))
 
 (defmethod $parameters ((l layer)) ($train-parameters l))
 
@@ -146,6 +150,19 @@
             :do (let ((nr ($execute e r :trainp trainp)))
                   (setf r nr)))
       r)))
+
+(defmethod $cell-state ((l sequential-layer))
+  (let ((hs nil))
+    (with-slots (ls) l
+      (loop :for e :in ls
+            :for h = ($cell-state e)
+            :do (when h (push h hs)))
+      (apply #'append (reverse hs)))))
+
+(defmethod $update-cell-state! ((l sequential-layer) h)
+  (with-slots (ls) l
+    (loop :for e :in ls
+          :do ($update-cell-state! e h))))
 
 (defclass parallel-layer (sequential-layer) ())
 
@@ -671,12 +688,14 @@
               (affine-cell-forward x wx b ones)
               (affine-cell-forward x ($data wx) b0 ones))))))
 
+(defgeneric $cell-state (cell))
+
 (defclass rnn-cell (layer)
   ((wx :initform nil)
    (wh :initform nil)
    (a :initform nil)
    (bh :initform nil)
-   (ph :initform nil :accessor $cell-state)
+   (ph :initform nil)
    (os :initform #{})))
 
 (defun rnn-cell (input-size output-size
@@ -700,6 +719,14 @@
           (if ($parameterp ph) (setf ph ($clone ($data ph))))
           (setf ph nil)))
     l))
+
+(defmethod $cell-state ((l rnn-cell))
+  (with-slots (ph) l
+    (list ph)))
+
+(defmethod $update-cell-state! ((l rnn-cell) h)
+  (with-slots (ph) l
+    (setf ph (car h))))
 
 (defmethod $train-parameters ((l rnn-cell))
   (with-slots (wx wh bh) l
@@ -747,7 +774,7 @@
    (wa :initform nil)
    (ua :initform nil)
    (ba :initform nil)
-   (ph :initform nil :accessor $cell-state)
+   (ph :initform nil)
    (pc :initform nil)
    (os :initform #{})))
 
@@ -790,6 +817,15 @@
           (setf ph nil
                 pc nil)))
     l))
+
+(defmethod $cell-state ((l lstm-cell))
+  (with-slots (ph pc) l
+    (list ph pc)))
+
+(defmethod $update-cell-state! ((l lstm-cell) h)
+  (with-slots (ph pc) l
+    (setf ph (car h)
+          pc (cadr h))))
 
 (defmethod $train-parameters ((l lstm-cell))
   (with-slots (wi ui bi wf uf bf wo uo bo wa ua ba) l
@@ -842,7 +878,7 @@
    (wh :initform nil)
    (uh :initform nil)
    (bh :initform nil)
-   (ph :initform nil :accessor $cell-state)
+   (ph :initform nil)
    (os :initform #{})))
 
 (defun gru-cell (input-size output-size
@@ -876,6 +912,14 @@
           (if ($parameterp ph) (setf ph ($clone ($data ph))))
           (setf ph nil)))
     l))
+
+(defmethod $cell-state ((l gru-cell))
+  (with-slots (ph) l
+    (list ph)))
+
+(defmethod $update-cell-state! ((l gru-cell) h)
+  (with-slots (ph) l
+    (setf ph (car h))))
 
 (defmethod $train-parameters ((l gru-cell))
   (with-slots (wz uz bz wr ur br wh uh bh) l
@@ -948,10 +992,11 @@
     (loop :for x :in xs
           :collect ($execute cell x :trainp trainp))))
 
-(defgeneric $update-cell-state! (recurrent-layer h))
+(defmethod $cell-state ((l recurrent-layer))
+  ($cell-state ($cell l)))
 
 (defmethod $update-cell-state! ((l recurrent-layer) h)
-  (setf ($cell-state ($cell l)) h))
+  ($update-cell-state! ($cell l) h))
 
 (defgeneric $generate-sequence (rnn encoder seedseq n &optional temperature))
 
