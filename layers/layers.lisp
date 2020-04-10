@@ -37,6 +37,8 @@
            #:$cell
            #:$update-cell-state!))
 
+;; XXX cell state control api sucks!
+
 (in-package :th.layers)
 
 (defgeneric $execute (layer x &key trainp))

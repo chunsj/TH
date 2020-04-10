@@ -150,26 +150,7 @@
 ($reset! *encoder-rnn*)
 ($reset! *decoder-rnn*)
 
-;; XXX WORK START
-(progn
-  (prn (loss-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
-                     (car *overfit-xs-batches*)
-                     (car *overfit-ys-batches*)
-                     T))
-  ($cg! *decoder-rnn*)
-  ($cg! *encoder-rnn*))
-
-(let ((encoder-rnn *encoder-rnn*)
-      (decoder-rnn *decoder-rnn*)
-      (encoder *encoder*)
-      (xs (car *overfit-xs-batches*)))
-  ($evaluate encoder-rnn xs)
-  (prn (generate-decoder decoder-rnn encoder ($cell-state encoder-rnn)
-                         (encoder-encode encoder (loop :repeat ($size (car xs) 0) :collect "_"))
-                         4)))
-;; XXX END
-
-;; overfitting
+;; overfitting for checking implementation
 (time (train-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
                      *overfit-xs-batches* *overfit-ys-batches*
                      1000 100))
