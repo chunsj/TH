@@ -444,3 +444,15 @@
                    :link (link (to x (let ((ng ($clone gv)))
                                        (setf (apply #'$ ng (cons location others)) 0)
                                        ng))))))))
+
+(defmethod $squeeze ((x node) &optional dimension)
+  (if dimension
+      (node ($squeeze ($data x) dimension)
+            :name :squeeze
+            :link (link (to x ($unsqueeze gv dimension))))
+      (error "backprop does not work with implicit dimension")))
+
+(defmethod $unsqueeze ((x node) dimension)
+  (node ($unsqueeze ($data x) dimension)
+        :name :unsqueeze
+        :link (link (to x ($squeeze gv dimension)))))
