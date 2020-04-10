@@ -13,7 +13,7 @@
 ;; number addition problems
 (defparameter *data* (addition))
 (defparameter *data-length* ($count *data*))
-(defparameter *encoder* (character-encoder "0123456789 _+-=."))
+(defparameter *encoder* (character-encoder "0123456789 _+="))
 
 ;; train and test datasets
 (defparameter *train-input-data* (mapcar (lambda (s) (subseq s 0 7)) (subseq *data* 0 40000)))
@@ -60,18 +60,17 @@
       (butlast yts))))
 
 ;; loss function using cross entropy
-(defun loss-seq2seq (encoder-rnn decoder-rnn encoder xs ts)
+(defun loss-seq2seq (encoder-rnn decoder-rnn encoder xs ts &optional verbose)
   (let* ((ys (execute-seq2seq encoder-rnn decoder-rnn encoder xs ts))
          (losses (mapcar (lambda (y c) ($cec y c)) ys ts))
          (loss ($div (apply #'$+ losses) ($count losses))))
-    (prn "TS" ts)
-    (prn "TS" (encoder-decode encoder ts))
-    (prn "YS" (encoder-choose encoder ys -1))
+    (when verbose
+      (prn "TS" (encoder-decode encoder ts))
+      (prn "YS" (encoder-choose encoder ys -1)))
     loss))
 
 ;; running the model
 (defun evaluate-seq2seq (encoder-rnn decoder-rnn encoder xs &optional (n 3))
-  ;; xxx here, something wrong, i believe
   ($evaluate encoder-rnn xs)
   (let ((h0 ($cell-state encoder-rnn)))
     ($reset-state! decoder-rnn T)
@@ -126,7 +125,7 @@
                             (let* ((lv ($data loss))
                                    (ys (evaluate-seq2seq encoder-rnn decoder-rnn encoder xs))
                                    (score (matches-score encoder ts ys)))
-                              (prn epoch iter lv score)
+                              (prn iter lv score)
                               (prn "TS" (encoder-decode encoder ts))
                               (prn "YS" ys))))))))
 
@@ -153,17 +152,18 @@
 (progn
   (prn (loss-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
                      (car *overfit-xs-batches*)
-                     (car *overfit-ys-batches*)))
+                     (car *overfit-ys-batches*)
+                     T))
   ($cg! *decoder-rnn*)
   ($cg! *encoder-rnn*))
 
 ;; overfitting
 (time (train-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
                      *overfit-xs-batches* *overfit-ys-batches*
-                     1000 200))
+                     20000 200))
 
 (prn (encoder-decode *encoder* ($0 *overfit-ys-batches*)))
-(prn (evaluate-seq2seq *encoder-rnn* *decoder-rnn* *encoder* ($0 *overfit-xs-batches*) 1))
+(prn (evaluate-seq2seq *encoder-rnn* *decoder-rnn* *encoder* ($0 *overfit-xs-batches*)))
 
 ;; the real model
 (defparameter *encoder-rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
