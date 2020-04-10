@@ -56,7 +56,7 @@
 (defmethod $set-stateful ((l layer) flag) l)
 (defmethod $reset-state! ((l layer) statefulp) l)
 (defmethod $cell-state ((l layer)))
-(defmethod $update-cell-state! ((l layer) h))
+(defmethod $update-cell-state! ((l layer) h) l)
 
 (defmethod $parameters ((l layer)) ($train-parameters l))
 
@@ -162,7 +162,8 @@
 (defmethod $update-cell-state! ((l sequential-layer) h)
   (with-slots (ls) l
     (loop :for e :in ls
-          :do ($update-cell-state! e h))))
+          :do ($update-cell-state! e h)))
+  l)
 
 (defclass parallel-layer (sequential-layer) ())
 
@@ -688,8 +689,6 @@
               (affine-cell-forward x wx b ones)
               (affine-cell-forward x ($data wx) b0 ones))))))
 
-(defgeneric $cell-state (cell))
-
 (defclass rnn-cell (layer)
   ((wx :initform nil)
    (wh :initform nil)
@@ -726,7 +725,8 @@
 
 (defmethod $update-cell-state! ((l rnn-cell) h)
   (with-slots (ph) l
-    (setf ph (car h))))
+    (setf ph (car h)))
+  l)
 
 (defmethod $train-parameters ((l rnn-cell))
   (with-slots (wx wh bh) l
@@ -811,6 +811,8 @@
   (with-slots (ph pc) l
     (when (and ph pc)
       (if statefulp
+          ;; XXX this is the source of the problem
+          ;; XXX you have to separate the state truncation and the state management
           (if (and ($parameterp ph) ($parameterp pc))
               (setf ph ($clone ($data ph))
                     pc ($clone ($data pc))))
@@ -825,7 +827,9 @@
 (defmethod $update-cell-state! ((l lstm-cell) h)
   (with-slots (ph pc) l
     (setf ph (car h)
-          pc (cadr h))))
+          ;;pc (cadr h)
+          )
+    l))
 
 (defmethod $train-parameters ((l lstm-cell))
   (with-slots (wi ui bi wf uf bf wo uo bo wa ua ba) l
@@ -919,7 +923,8 @@
 
 (defmethod $update-cell-state! ((l gru-cell) h)
   (with-slots (ph) l
-    (setf ph (car h))))
+    (setf ph (car h)))
+  l)
 
 (defmethod $train-parameters ((l gru-cell))
   (with-slots (wz uz bz wr ur br wh uh bh) l
@@ -996,7 +1001,8 @@
   ($cell-state ($cell l)))
 
 (defmethod $update-cell-state! ((l recurrent-layer) h)
-  ($update-cell-state! ($cell l) h))
+  ($update-cell-state! ($cell l) h)
+  l)
 
 (defgeneric $generate-sequence (rnn encoder seedseq n &optional temperature))
 

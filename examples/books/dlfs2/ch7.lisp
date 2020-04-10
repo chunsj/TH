@@ -36,8 +36,8 @@
 (defparameter *train-ys-batches* (build-batches *train-target-data* *batch-size*))
 
 ;; for overfitting - to check implementation
-(defparameter *overfit-xs-batches* (subseq (build-batches *train-input-data* 1) 0 1))
-(defparameter *overfit-ys-batches* (subseq (build-batches *train-target-data* 1) 0 1))
+(defparameter *overfit-xs-batches* (subseq (build-batches *train-input-data* 5) 0 1))
+(defparameter *overfit-ys-batches* (subseq (build-batches *train-target-data* 5) 0 1))
 
 ;; helper functions for the seq2seq model
 ;; mostly generation, execution(for training) and evaluation(for running)
@@ -69,32 +69,33 @@
       (prn "YS" (encoder-choose encoder ys -1)))
     loss))
 
-;; running the model
-(defun evaluate-seq2seq (encoder-rnn decoder-rnn encoder xs &optional (n 3))
-  ($evaluate encoder-rnn xs)
-  (let ((h0 ($cell-state encoder-rnn)))
+;; generate using decoder
+(defun generate-decoder (decoder-rnn encoder h xs0 n)
+  (let ((sampled '())
+        (xts xs0)
+        (batch-size ($size (car xs0) 0)))
     ($reset-state! decoder-rnn T)
-    ($update-cell-state! decoder-rnn h0)
-    (let* ((batch-size ($size (car xs) 0))
-           (xts (encoder-encode encoder (loop :repeat batch-size :collect "_")))
-           (yts ($evaluate decoder-rnn xts))
-           (rts (encoder-choose encoder yts -1))
-           (res '()))
-      (push rts res)
-      (setf xts (encoder-encode encoder rts))
-      (loop :for i :from 0 :below n
-            :do (let* ((yts ($evaluate decoder-rnn xts))
-                       (rts (encoder-choose encoder yts -1)))
-                  (push rts res)
-                  (setf xts (encoder-encode encoder rts))))
-      ($reset-state! decoder-rnn nil)
-      (let ((res (reverse res))
-            (results (make-list batch-size)))
-        (loop :for r :in res
-              :do (loop :for v :in r
-                        :for i :from 0
-                        :do (push v ($ results i))))
-        (mapcar (lambda (rs) (apply #'concatenate 'string (reverse rs))) results)))))
+    ($update-cell-state! decoder-rnn h)
+    (loop :for i :from 0 :below n
+          :do (let* ((yts ($evaluate decoder-rnn xts))
+                     (rts (encoder-choose encoder yts -1)))
+                (push rts sampled)
+                (setf xts (encoder-encode encoder rts))))
+    ($reset-state! decoder-rnn nil)
+    (let ((res (reverse sampled))
+          (results (make-list batch-size)))
+      (loop :for r :in res
+            :do (loop :for v :in r
+                      :for i :from 0
+                      :do (push v ($ results i))))
+      (mapcar (lambda (rs) (apply #'concatenate 'string (reverse rs))) results))))
+
+;; running the model
+(defun evaluate-seq2seq (encoder-rnn decoder-rnn encoder xs &optional (n 4))
+  ($evaluate encoder-rnn xs)
+  (generate-decoder decoder-rnn encoder ($cell-state encoder-rnn)
+                    (encoder-encode encoder (loop :repeat ($size (car xs) 0) :collect "_"))
+                    n))
 
 ;; compare the results - between the generated one and the truth
 (defun matches-score (encoder ts ys)
@@ -132,23 +133,18 @@
 ;; overfitting - testing the implementation
 (defparameter *encoder-rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
                               (sequential-layer
-                               (recurrent-layer (affine-cell vsize *wvec-size*
-                                                             :activation :nil
-                                                             :biasp nil))
-                               (recurrent-layer (lstm-cell *wvec-size* *hidden-size*)))))
+                               (recurrent-layer (lstm-cell vsize *hidden-size*)))))
 
 (defparameter *decoder-rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
                               (sequential-layer
-                               (recurrent-layer (affine-cell vsize *wvec-size*
-                                                             :activation :nil
-                                                             :biasp nil))
-                               (recurrent-layer (lstm-cell *wvec-size* *hidden-size*))
+                               (recurrent-layer (lstm-cell vsize *hidden-size*))
                                (recurrent-layer (affine-cell *hidden-size* vsize
                                                              :activation :nil)))))
 
 ($reset! *encoder-rnn*)
 ($reset! *decoder-rnn*)
 
+;; XXX WORK START
 (progn
   (prn (loss-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
                      (car *overfit-xs-batches*)
@@ -157,10 +153,21 @@
   ($cg! *decoder-rnn*)
   ($cg! *encoder-rnn*))
 
+(let ((encoder-rnn *encoder-rnn*)
+      (decoder-rnn *decoder-rnn*)
+      (encoder *encoder*)
+      (xs (car *overfit-xs-batches*)))
+  ($evaluate encoder-rnn xs)
+  (prn (generate-decoder
+        decoder-rnn encoder ($cell-state encoder-rnn)
+        (encoder-encode encoder (loop :repeat ($size (car xs) 0) :collect "_"))
+        4)))
+;; XXX END
+
 ;; overfitting
 (time (train-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
                      *overfit-xs-batches* *overfit-ys-batches*
-                     20000 200))
+                     2000 200))
 
 (prn (encoder-decode *encoder* ($0 *overfit-ys-batches*)))
 (prn (evaluate-seq2seq *encoder-rnn* *decoder-rnn* *encoder* ($0 *overfit-xs-batches*)))
