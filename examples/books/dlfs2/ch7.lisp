@@ -47,29 +47,21 @@
   ($generate-sequence rnn encoder seedstr n temperature))
 
 ;; execution function for training - current implementation is wrong XXX
-(defun execute-seq2seq (encoder-rnn decoder-rnn encoder xs &optional (n 3))
+(defun execute-seq2seq (encoder-rnn decoder-rnn encoder xs ts)
   ($execute encoder-rnn xs)
   (let ((h0 ($cell-state encoder-rnn)))
     ($reset-state! decoder-rnn T)
     ($update-cell-state! decoder-rnn h0)
     (let* ((batch-size ($size (car xs) 0))
-           (xts (encoder-encode encoder (loop :repeat batch-size :collect "_")))
-           (yts ($execute decoder-rnn xts))
-           (rts (encoder-choose encoder yts -1))
-           (res '()))
-      (push (car yts) res)
-      (setf xts (encoder-encode encoder rts))
-      (loop :for i :from 0 :below n
-            :do (let* ((yts ($execute decoder-rnn xts))
-                       (rts (encoder-choose encoder yts -1)))
-                  (push (car yts) res)
-                  (setf xts (encoder-encode encoder rts))))
+           (ys (append (encoder-encode encoder (loop :repeat batch-size :collect "_"))
+                       ts))
+           (yts ($execute decoder-rnn ys)))
       ($reset-state! decoder-rnn nil)
-      (reverse res))))
+      (butlast yts))))
 
 ;; loss function using cross entropy
-(defun loss-seq2seq (encoder-rnn decoder-rnn encoder xs ts &optional (n 3))
-  (let* ((ys (execute-seq2seq encoder-rnn decoder-rnn encoder xs n))
+(defun loss-seq2seq (encoder-rnn decoder-rnn encoder xs ts)
+  (let* ((ys (execute-seq2seq encoder-rnn decoder-rnn encoder xs ts))
          (losses (mapcar (lambda (y c) ($cec y c)) ys ts))
          (loss ($div (apply #'$+ losses) ($count losses))))
     loss))
@@ -132,18 +124,22 @@
                                (recurrent-layer (affine-cell *hidden-size* vsize
                                                              :activation :nil)))))
 
+($reset! *encoder-rnn*)
+($reset! *decoder-rnn*)
+
 (time
- (let ((epochs 10000)
-       (pstep 500))
+ (let ((epochs 1000)
+       (pstep 200))
    (loop :for epoch :from 0 :below epochs
          :do (loop :for xs :in *overfit-xs-batches*
                    :for ts :in *overfit-ys-batches*
-                   :for iter :from 0
+                   :for idx :from 0
+                   :for iter = (+ idx (* epoch ($count *overfit-xs-batches*)))
                    :do (let ((loss (loss-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
                                                  (reverse xs) ts)))
                          ($rmgd! *encoder-rnn*)
                          ($rmgd! *decoder-rnn*)
-                         (when (and (zerop (rem epoch pstep)) (eq iter 0))
+                         (when (zerop (rem iter pstep))
                            (prn epoch iter ($data loss))
                            (prn "  "
                                 (matches-score *encoder*
