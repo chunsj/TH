@@ -36,8 +36,8 @@
 (defparameter *train-ys-batches* (build-batches *train-target-data* *batch-size*))
 
 ;; for overfitting - to check implementation
-(defparameter *overfit-xs-batches* (subseq (build-batches *train-input-data* 3) 0 3))
-(defparameter *overfit-ys-batches* (subseq (build-batches *train-target-data* 3) 0 3))
+(defparameter *overfit-xs-batches* (subseq (build-batches *train-input-data* 1) 0 1))
+(defparameter *overfit-ys-batches* (subseq (build-batches *train-target-data* 1) 0 1))
 
 ;; helper functions for the seq2seq model
 ;; mostly generation, execution(for training) and evaluation(for running)
@@ -64,10 +64,14 @@
   (let* ((ys (execute-seq2seq encoder-rnn decoder-rnn encoder xs ts))
          (losses (mapcar (lambda (y c) ($cec y c)) ys ts))
          (loss ($div (apply #'$+ losses) ($count losses))))
+    (prn "TS" ts)
+    (prn "TS" (encoder-decode encoder ts))
+    (prn "YS" (encoder-choose encoder ys -1))
     loss))
 
 ;; running the model
 (defun evaluate-seq2seq (encoder-rnn decoder-rnn encoder xs &optional (n 3))
+  ;; xxx here, something wrong, i believe
   ($evaluate encoder-rnn xs)
   (let ((h0 ($cell-state encoder-rnn)))
     ($reset-state! decoder-rnn T)
@@ -145,6 +149,13 @@
 
 ($reset! *encoder-rnn*)
 ($reset! *decoder-rnn*)
+
+(progn
+  (prn (loss-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
+                     (car *overfit-xs-batches*)
+                     (car *overfit-ys-batches*)))
+  ($cg! *decoder-rnn*)
+  ($cg! *encoder-rnn*))
 
 ;; overfitting
 (time (train-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
