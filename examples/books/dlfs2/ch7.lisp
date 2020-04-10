@@ -102,10 +102,29 @@
                   (mapcar (lambda (s)
                             (handler-case (parse-integer s)
                               (error (c)
-                                (prn "NOT A NUMBER:" c)
+                                (declare (ignore c))
                                 -1)))))))
     (let ((matches (mapcar (lambda (tn yn) (if (eq tn yn) 0 1)) tss yss)))
       (* 1D0 (/ (reduce #'+ matches) ($count matches))))))
+
+;; train seq2seq network
+(defun train-seq2seq (encoder-rnn decoder-rnn encoder xss tss epochs pstep)
+  (let ((sz ($count xss)))
+    (loop :for epoch :from 0 :below epochs
+          :do (loop :for xs :in xss
+                    :for ts :in tss
+                    :for idx :from 0
+                    :for iter = (+ idx (* epoch sz))
+                    :do (let ((loss (loss-seq2seq encoder-rnn decoder-rnn encoder xs ts)))
+                          ($rmgd! decoder-rnn)
+                          ($rmgd! encoder-rnn)
+                          (when (zerop (rem iter pstep))
+                            (let* ((lv ($data loss))
+                                   (ys (evaluate-seq2seq encoder-rnn decoder-rnn encoder xs))
+                                   (score (matches-score encoder ts ys)))
+                              (prn epoch iter lv score)
+                              (prn "TS" (encoder-decode encoder ts))
+                              (prn "YS" ys))))))))
 
 ;; overfitting - testing the implementation
 (defparameter *encoder-rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
@@ -127,25 +146,10 @@
 ($reset! *encoder-rnn*)
 ($reset! *decoder-rnn*)
 
-(time
- (let ((epochs 1000)
-       (pstep 200))
-   (loop :for epoch :from 0 :below epochs
-         :do (loop :for xs :in *overfit-xs-batches*
-                   :for ts :in *overfit-ys-batches*
-                   :for idx :from 0
-                   :for iter = (+ idx (* epoch ($count *overfit-xs-batches*)))
-                   :do (let ((loss (loss-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
-                                                 (reverse xs) ts)))
-                         ($rmgd! *encoder-rnn*)
-                         ($rmgd! *decoder-rnn*)
-                         (when (zerop (rem iter pstep))
-                           (prn epoch iter ($data loss))
-                           (prn "  "
-                                (matches-score *encoder*
-                                               ts
-                                               (evaluate-seq2seq *encoder-rnn* *decoder-rnn*
-                                                                 *encoder* xs 1)))))))))
+;; overfitting
+(time (train-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
+                     *overfit-xs-batches* *overfit-ys-batches*
+                     1000 200))
 
 (prn (encoder-decode *encoder* ($0 *overfit-ys-batches*)))
 (prn (evaluate-seq2seq *encoder-rnn* *decoder-rnn* *encoder* ($0 *overfit-xs-batches*) 1))
@@ -171,23 +175,9 @@
 ($reset! *decoder-rnn*)
 
 ;; real training
-(time
- (let ((epochs 30)
-       (pstep 100))
-   (loop :for epoch :from 0 :below epochs
-         :do (loop :for xs :in *train-xs-batches*
-                   :for ts :in *train-ys-batches*
-                   :for iter :from 0
-                   :do (let ((loss (loss-seq2seq *encoder-rnn* *decoder-rnn* *encoder* xs ts)))
-                         ($rmgd! *encoder-rnn*)
-                         ($rmgd! *decoder-rnn*)
-                         (when (zerop (rem iter pstep))
-                           (prn epoch iter ($data loss))
-                           (prn "  "
-                                (matches-score *encoder*
-                                               ts
-                                               (evaluate-seq2seq *encoder-rnn* *decoder-rnn*
-                                                                 *encoder* xs)))))))))
+(time (train-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
+                     *train-xs-batches* *train-ys-batches*
+                     30 100))
 
 (matches-score *encoder* ($0 *train-ys-batches*)
                (evaluate-seq2seq *encoder-rnn* *decoder-rnn* *encoder* ($0 *train-xs-batches*)))
