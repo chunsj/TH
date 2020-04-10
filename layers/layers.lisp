@@ -28,7 +28,7 @@
            #:gru-cell
            #:affine-cell
            #:dropout-cell
-           #:$reset-state!
+           #:$keep-state!
            #:recurrent-layer
            #:$recurrent-stateful-p
            #:$set-stateful
@@ -45,7 +45,7 @@
 (defgeneric $train-parameters (layer))
 
 (defgeneric $set-stateful (layer flag))
-(defgeneric $reset-state! (layer statefulp))
+(defgeneric $keep-state! (layer statefulp &optional truncatedp))
 (defgeneric $cell-state (layer))
 (defgeneric $update-cell-state! (recurrent-layer h))
 
@@ -54,7 +54,7 @@
 (defmethod $train-parameters ((l layer)) nil)
 
 (defmethod $set-stateful ((l layer) flag) l)
-(defmethod $reset-state! ((l layer) statefulp) l)
+(defmethod $keep-state! ((l layer) statefulp &optional (truncatedp T)) l)
 (defmethod $cell-state ((l layer)))
 (defmethod $update-cell-state! ((l layer) h) l)
 
@@ -132,11 +132,11 @@
           :do ($set-stateful e flag))
     l))
 
-(defmethod $reset-state! ((l sequential-layer) statefulp)
+(defmethod $keep-state! ((l sequential-layer) statefulp &optional (truncatedp T))
   (with-slots (ls) l
     (loop :for e :in ls
-          :do ($reset-state! e statefulp))
-    l))
+          :do ($keep-state! e statefulp truncatedp)))
+  l)
 
 (defmethod $parameters ((l sequential-layer))
   (with-slots (ls) l
@@ -711,11 +711,13 @@
 
     n))
 
-(defmethod $reset-state! ((l rnn-cell) statefulp)
+(defmethod $keep-state! ((l rnn-cell) statefulp &optional (truncatedp T))
   (with-slots (ph) l
     (when ph
       (if statefulp
-          (if ($parameterp ph) (setf ph ($clone ($data ph))))
+          (if ($parameterp ph)
+              (if truncatedp
+                  (setf ph ($clone ($data ph)))))
           (setf ph nil)))
     l))
 
@@ -807,15 +809,16 @@
 
     n))
 
-(defmethod $reset-state! ((l lstm-cell) statefulp)
+(defmethod $keep-state! ((l lstm-cell) statefulp &optional (truncatedp T))
   (with-slots (ph pc) l
     (when (and ph pc)
       (if statefulp
           ;; XXX this is the source of the problem
           ;; XXX you have to separate the state truncation and the state management
           (if (and ($parameterp ph) ($parameterp pc))
-              (setf ph ($clone ($data ph))
-                    pc ($clone ($data pc))))
+              (if truncatedp
+                  (setf ph ($clone ($data ph))
+                        pc ($clone ($data pc)))))
           (setf ph nil
                 pc nil)))
     l))
@@ -827,8 +830,7 @@
 (defmethod $update-cell-state! ((l lstm-cell) h)
   (with-slots (ph pc) l
     (setf ph (car h)
-          ;;pc (cadr h)
-          )
+          pc (cadr h))
     l))
 
 (defmethod $train-parameters ((l lstm-cell))
@@ -909,11 +911,13 @@
 
     n))
 
-(defmethod $reset-state! ((l gru-cell) statefulp)
+(defmethod $keep-state! ((l gru-cell) statefulp &optional (truncatedp T))
   (with-slots (ph) l
     (when ph
       (if statefulp
-          (if ($parameterp ph) (setf ph ($clone ($data ph))))
+          (if ($parameterp ph)
+              (if truncatedp
+                  (setf ph ($clone ($data ph)))))
           (setf ph nil)))
     l))
 
@@ -965,13 +969,15 @@
 
 (defclass recurrent-layer (layer)
   ((stateful :initform nil :accessor $recurrent-stateful-p)
+   (truncated :initform nil)
    (cell :initform nil :accessor $cell)))
 
-(defun recurrent-layer (cell &key statefulp)
+(defun recurrent-layer (cell &key statefulp truncatedp)
   (let ((n (make-instance 'recurrent-layer))
         (celli cell))
-    (with-slots (stateful cell) n
+    (with-slots (stateful truncated cell) n
       (setf stateful statefulp)
+      (setf truncated truncatedp)
       (setf cell celli))
     n))
 
@@ -982,9 +988,11 @@
 (defmethod $set-stateful ((l recurrent-layer) flag)
   (setf ($recurrent-stateful-p l) flag))
 
-(defmethod $reset-state! ((l recurrent-layer) statefulp)
-  (with-slots (cell) l
-    ($reset-state! cell statefulp))
+(defmethod $keep-state! ((l recurrent-layer) statefulp &optional (truncatedp T))
+  (with-slots (stateful truncated cell) l
+    (setf stateful statefulp
+          truncated truncatedp)
+    ($keep-state! cell statefulp truncatedp))
   l)
 
 (defmethod $parameters ((l recurrent-layer))
@@ -992,8 +1000,8 @@
     ($parameters cell)))
 
 (defmethod $execute ((l recurrent-layer) xs &key (trainp t))
-  (with-slots (cell stateful) l
-    ($reset-state! cell stateful)
+  (with-slots (cell stateful truncated) l
+    ($keep-state! cell stateful truncated)
     (loop :for x :in xs
           :collect ($execute cell x :trainp trainp))))
 
@@ -1042,7 +1050,7 @@
 
 ;;     n))
 
-;; (defmethod $reset-state! ((l lstm-cell) statefulp)
+;; (defmethod $keep-state! ((l lstm-cell) statefulp)
 ;;   (with-slots (ph pc) l
 ;;     (when (and ph pc)
 ;;       (if statefulp

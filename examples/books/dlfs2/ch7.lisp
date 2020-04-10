@@ -36,8 +36,8 @@
 (defparameter *train-ys-batches* (build-batches *train-target-data* *batch-size*))
 
 ;; for overfitting - to check implementation
-(defparameter *overfit-xs-batches* (subseq (build-batches *train-input-data* 5) 0 1))
-(defparameter *overfit-ys-batches* (subseq (build-batches *train-target-data* 5) 0 1))
+(defparameter *overfit-xs-batches* (subseq (build-batches *train-input-data* 2) 0 1))
+(defparameter *overfit-ys-batches* (subseq (build-batches *train-target-data* 2) 0 1))
 
 ;; helper functions for the seq2seq model
 ;; mostly generation, execution(for training) and evaluation(for running)
@@ -50,13 +50,13 @@
 (defun execute-seq2seq (encoder-rnn decoder-rnn encoder xs ts)
   ($execute encoder-rnn xs)
   (let ((h0 ($cell-state encoder-rnn)))
-    ($reset-state! decoder-rnn T)
     ($update-cell-state! decoder-rnn h0)
+    ($keep-state! decoder-rnn T nil)
     (let* ((batch-size ($size (car xs) 0))
            (ys (append (encoder-encode encoder (loop :repeat batch-size :collect "_"))
                        ts))
            (yts ($execute decoder-rnn ys)))
-      ($reset-state! decoder-rnn nil)
+      ($keep-state! decoder-rnn nil nil)
       (butlast yts))))
 
 ;; loss function using cross entropy
@@ -74,14 +74,14 @@
   (let ((sampled '())
         (xts xs0)
         (batch-size ($size (car xs0) 0)))
-    ($reset-state! decoder-rnn T)
     ($update-cell-state! decoder-rnn h)
+    ($keep-state! decoder-rnn T nil)
     (loop :for i :from 0 :below n
           :do (let* ((yts ($evaluate decoder-rnn xts))
                      (rts (encoder-choose encoder yts -1)))
                 (push rts sampled)
                 (setf xts (encoder-encode encoder rts))))
-    ($reset-state! decoder-rnn nil)
+    ($keep-state! decoder-rnn nil nil)
     (let ((res (reverse sampled))
           (results (make-list batch-size)))
       (loop :for r :in res
@@ -133,11 +133,17 @@
 ;; overfitting - testing the implementation
 (defparameter *encoder-rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
                               (sequential-layer
-                               (recurrent-layer (lstm-cell vsize *hidden-size*)))))
+                               (recurrent-layer (affine-cell vsize *wvec-size*
+                                                             :activation :nil
+                                                             :biasp nil))
+                               (recurrent-layer (lstm-cell *wvec-size* *hidden-size*)))))
 
 (defparameter *decoder-rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
                               (sequential-layer
-                               (recurrent-layer (lstm-cell vsize *hidden-size*))
+                               (recurrent-layer (affine-cell vsize *wvec-size*
+                                                             :activation :nil
+                                                             :biasp nil))
+                               (recurrent-layer (lstm-cell *wvec-size* *hidden-size*))
                                (recurrent-layer (affine-cell *hidden-size* vsize
                                                              :activation :nil)))))
 
@@ -158,16 +164,15 @@
       (encoder *encoder*)
       (xs (car *overfit-xs-batches*)))
   ($evaluate encoder-rnn xs)
-  (prn (generate-decoder
-        decoder-rnn encoder ($cell-state encoder-rnn)
-        (encoder-encode encoder (loop :repeat ($size (car xs) 0) :collect "_"))
-        4)))
+  (prn (generate-decoder decoder-rnn encoder ($cell-state encoder-rnn)
+                         (encoder-encode encoder (loop :repeat ($size (car xs) 0) :collect "_"))
+                         4)))
 ;; XXX END
 
 ;; overfitting
 (time (train-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
                      *overfit-xs-batches* *overfit-ys-batches*
-                     2000 200))
+                     1000 100))
 
 (prn (encoder-decode *encoder* ($0 *overfit-ys-batches*)))
 (prn (evaluate-seq2seq *encoder-rnn* *decoder-rnn* *encoder* ($0 *overfit-xs-batches*)))

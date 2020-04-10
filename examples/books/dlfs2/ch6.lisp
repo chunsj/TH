@@ -48,7 +48,7 @@
                  (prn iter ($data loss)))
                ($rmgd! *rnn*)))))
 
-($reset-state! *rnn* nil)
+($keep-state! *rnn* nil)
 (prn ($generate-sequence *rnn* *encoder* '("you" "say") 10))
 
 
@@ -99,7 +99,7 @@
                  (prn iter ($data loss)))
                ($rmgd! *rnn*)))))
 
-($reset-state! *rnn* nil)
+($keep-state! *rnn* nil)
 (prn ($generate-sequence *rnn* *encoder* '("N" "years" "old" "will") 20))
 
 ;; XXX maybe adding more lstm layers could be possible.
