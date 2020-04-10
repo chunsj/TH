@@ -36,8 +36,8 @@
 (defparameter *train-ys-batches* (build-batches *train-target-data* *batch-size*))
 
 ;; for overfitting - to check implementation
-(defparameter *overfit-xs-batches* (subseq (build-batches *train-input-data* 2) 0 1))
-(defparameter *overfit-ys-batches* (subseq (build-batches *train-target-data* 2) 0 1))
+(defparameter *overfit-xs-batches* (subseq (build-batches *train-input-data* 5) 0 1))
+(defparameter *overfit-ys-batches* (subseq (build-batches *train-target-data* 5) 0 1))
 
 ;; helper functions for the seq2seq model
 ;; mostly generation, execution(for training) and evaluation(for running)
