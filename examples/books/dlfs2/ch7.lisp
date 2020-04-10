@@ -188,3 +188,6 @@
 
 (prn (encoder-decode *encoder* ($0 *train-ys-batches*)))
 (prn (evaluate-seq2seq *encoder-rnn* *decoder-rnn* *encoder* ($0 *train-xs-batches*)))
+
+;; XXX squeeze and unsqueeze are mutually convertible - use this in backprop
+(prn ($squeeze ($unsqueeze (tensor '((1 2) (3 4) (5 6))) 1) 1))
