@@ -30,8 +30,6 @@
            #:dropout-cell
            #:$keep-state!
            #:recurrent-layer
-           #:$recurrent-stateful-p
-           #:$set-stateful
            #:$generate-sequence
            #:$cell-state
            #:$cell
@@ -46,7 +44,6 @@
 
 (defgeneric $train-parameters (layer))
 
-(defgeneric $set-stateful (layer flag))
 (defgeneric $keep-state! (layer statefulp &optional truncatedp))
 (defgeneric $cell-state (layer))
 (defgeneric $update-cell-state! (recurrent-layer h))
@@ -55,7 +52,6 @@
 
 (defmethod $train-parameters ((l layer)) nil)
 
-(defmethod $set-stateful ((l layer) flag) l)
 (defmethod $keep-state! ((l layer) statefulp &optional (truncatedp T)) l)
 (defmethod $cell-state ((l layer)))
 (defmethod $update-cell-state! ((l layer) h) l)
@@ -127,12 +123,6 @@
   (with-slots (ls) l
     (loop :for e :in ls
           :appending ($train-parameters e))))
-
-(defmethod $set-stateful ((l sequential-layer) flag)
-  (with-slots (ls) l
-    (loop :for e :in ls
-          :do ($set-stateful e flag))
-    l))
 
 (defmethod $keep-state! ((l sequential-layer) statefulp &optional (truncatedp T))
   (with-slots (ls) l
@@ -970,7 +960,7 @@
             ht)))))
 
 (defclass recurrent-layer (layer)
-  ((stateful :initform nil :accessor $recurrent-stateful-p)
+  ((stateful :initform nil)
    (truncated :initform nil)
    (cell :initform nil :accessor $cell)))
 
@@ -986,9 +976,6 @@
 (defmethod $train-parameters ((l recurrent-layer))
   (with-slots (cell) l
     ($train-parameters cell)))
-
-(defmethod $set-stateful ((l recurrent-layer) flag)
-  (setf ($recurrent-stateful-p l) flag))
 
 (defmethod $keep-state! ((l recurrent-layer) statefulp &optional (truncatedp T))
   (with-slots (stateful truncated cell) l
