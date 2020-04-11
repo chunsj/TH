@@ -805,8 +805,6 @@
   (with-slots (ph pc) l
     (when (and ph pc)
       (if statefulp
-          ;; XXX this is the source of the problem
-          ;; XXX you have to separate the state truncation and the state management
           (if (and ($parameterp ph) ($parameterp pc))
               (if truncatedp
                   (setf ph ($clone ($data ph))
