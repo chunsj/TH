@@ -15,6 +15,7 @@
    (data :initform nil :accessor $data)
    (fns :initform nil :accessor $fns)
    (gradientv :initform nil :accessor $gradientv)
+   (gradientp :initform nil :accessor $gradientp)
    (attrs :initform #{} :accessor $attrs))
   (:documentation "Represents a computational node for differentiable parameter."))
 
@@ -27,37 +28,45 @@
   (let ((n (make-instance 'node)))
     (setf ($data n) data)
     (setf ($name n) name)
+    (cond (($tensorp data) (setf ($gradientv n) ($zero data)))
+          ((numberp data) (setf ($gradientv n) 0D0)))
     (when link (funcall link n))
     n))
 
 (defun $gs! (node &optional gradientv)
   "Set gradient seed value."
   (when ($fns node) (setf ($fns node) nil))
-  (setf ($gradientv node) (or gradientv ($one ($data node)))))
+  (setf ($gradientp node) T)
+  (if gradientv
+      (setf ($gradientv node) gradientv)
+      (cond (($tensorp ($gradientv node)) ($one! ($gradientv node)))
+            ((numberp ($gradientv node)) (setf ($gradientv node) 1D0)))))
 
 (defun accumulate-effects (node)
   (cond (($tensorp ($data node))
-         (let ((gv ($zero ($data node))))
-           (loop :for f :in ($fns node) :do ($add! gv (funcall f)))
-           gv))
+         (loop :for f :in ($fns node) :do ($add! ($gradientv node) (funcall f))))
         ((numberp ($data node))
-         (let ((gv 0D0))
-           (loop :for f :in ($fns node) :do (incf gv (funcall f)))
-           gv))))
+         (loop :for f :in ($fns node) :do (incf ($gradientv node) (funcall f))))))
 
 (defun compute-gradient (node)
   (if ($fns node)
-      (let ((gv (accumulate-effects node)))
+      (progn
+        (accumulate-effects node)
         (setf ($fns node) nil)
-        (setf ($gradientv node) gv))
+        (setf ($gradientp node) T))
       ($gs! node))
   ($gradientv node))
 
-(defmethod $gradient ((node node)) (or ($gradientv node) (compute-gradient node)))
+(defmethod $gradient ((node node))
+  (if ($gradientp node)
+      ($gradientv node)
+      (compute-gradient node)))
 
 (defmethod $cg! ((node node))
   (setf ($fns node) nil
-        ($gradientv node) nil))
+        ($gradientp node) nil)
+  (cond (($tensorp ($gradientv node)) ($zero! ($gradientv node)))
+        ((numberp ($gradientv node)) (setf ($gradientv node) 0D0))))
 
 (defmethod $reset! ((node node))
   ($cg! node)
