@@ -36,8 +36,8 @@
 (defparameter *train-ys-batches* (build-batches *train-target-data* *batch-size*))
 
 ;; for overfitting - to check implementation
-(defparameter *overfit-xs-batches* (subseq (build-batches *train-input-data* 5) 0 1))
-(defparameter *overfit-ys-batches* (subseq (build-batches *train-target-data* 5) 0 1))
+(defparameter *overfit-xs-batches* (subseq (build-batches *train-input-data* 12) 0 1))
+(defparameter *overfit-ys-batches* (subseq (build-batches *train-target-data* 12) 0 1))
 
 ;; helper functions for the seq2seq model
 ;; mostly generation, execution(for training) and evaluation(for running)
@@ -130,7 +130,7 @@
                               (prn "TS" (encoder-decode encoder ts))
                               (prn "YS" ys))))))))
 
-;; overfitting - testing the implementation
+;; model
 (defparameter *encoder-rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
                               (sequential-layer
                                (recurrent-layer (affine-cell vsize *wvec-size*
@@ -155,28 +155,10 @@
                      *overfit-xs-batches* *overfit-ys-batches*
                      1000 100))
 
+(prn (car *overfit-xs-batches*))
+
 (prn (encoder-decode *encoder* ($0 *overfit-ys-batches*)))
 (prn (evaluate-seq2seq *encoder-rnn* *decoder-rnn* *encoder* ($0 *overfit-xs-batches*)))
-
-;; the real model
-(defparameter *encoder-rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
-                              (sequential-layer
-                               (recurrent-layer (affine-cell vsize *wvec-size*
-                                                             :activation :nil
-                                                             :biasp nil))
-                               (recurrent-layer (lstm-cell *wvec-size* *hidden-size*)))))
-
-(defparameter *decoder-rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
-                              (sequential-layer
-                               (recurrent-layer (affine-cell vsize *wvec-size*
-                                                             :activation :nil
-                                                             :biasp nil))
-                               (recurrent-layer (lstm-cell *wvec-size* *hidden-size*))
-                               (recurrent-layer (affine-cell *hidden-size* vsize
-                                                             :activation :nil)))))
-
-($reset! *encoder-rnn*)
-($reset! *decoder-rnn*)
 
 ;; real training
 (time (train-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
