@@ -8,7 +8,7 @@
 (cffi:defcfun ("THGetCurrentHeapSize" th-get-current-heap-size) :long-long)
 
 ;; for management
-(defvar *maximum-allowed-heap-size* (* 2 1024 1024 1024))
+(defvar *maximum-allowed-heap-size* (* 4 1024 1024 1024))
 (defun th-get-maximum-allowed-heap-size () *maximum-allowed-heap-size*)
 (defun th-set-maximum-allowed-heap-size (sz-in-mb)
   (setf *maximum-allowed-heap-size* (* sz-in-mb (* 1024 1024))))
