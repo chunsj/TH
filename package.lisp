@@ -403,4 +403,5 @@
            #:vxavier
            #:vhe
            #:vlecun
-           #:vselu))
+           #:vselu
+           #:with-max-heap))

@@ -18,3 +18,7 @@
 
 ;; set gc manager for memory management
 (th-set-lisp-gc-manager (cffi:callback check-and-gc))
+
+(defmacro with-max-heap ((&optional (sz-in-mb 4096)) &body body)
+  `(let ((th::*maximum-allowed-heap-size* (* ,sz-in-mb (* 1024 1024))))
+     ,@body))
