@@ -46,11 +46,14 @@
 (defun generate-string (rnn encoder seedstr n &optional (temperature 1D0))
   ($generate-sequence rnn encoder seedstr n temperature))
 
+(defun encoder-state (encoder-rnn) ($cell-state ($ encoder-rnn 1)))
+(defun update-decoder-state! (decoder-rnn h) ($update-cell-state! ($ decoder-rnn 1) h))
+
 ;; execution function for training - current implementation is wrong XXX
 (defun execute-seq2seq (encoder-rnn decoder-rnn encoder xs ts)
   ($execute encoder-rnn xs)
-  (let ((h0 ($cell-state encoder-rnn)))
-    ($update-cell-state! decoder-rnn h0)
+  (let ((h0 (encoder-state encoder-rnn)))
+    (update-decoder-state! decoder-rnn h0)
     ($keep-state! decoder-rnn T nil)
     (let* ((batch-size ($size (car xs) 0))
            (ys (append (encoder-encode encoder (loop :repeat batch-size :collect "_"))
@@ -74,7 +77,7 @@
   (let ((sampled '())
         (xts xs0)
         (batch-size ($size (car xs0) 0)))
-    ($update-cell-state! decoder-rnn h)
+    (update-decoder-state! decoder-rnn h)
     ($keep-state! decoder-rnn T nil)
     (loop :for i :from 0 :below n
           :do (let* ((yts ($evaluate decoder-rnn xts))
@@ -93,7 +96,7 @@
 ;; running the model
 (defun evaluate-seq2seq (encoder-rnn decoder-rnn encoder xs &optional (n 4))
   ($evaluate encoder-rnn xs)
-  (generate-decoder decoder-rnn encoder ($cell-state encoder-rnn)
+  (generate-decoder decoder-rnn encoder (encoder-state encoder-rnn)
                     (encoder-encode encoder (loop :repeat ($size (car xs) 0) :collect "_"))
                     n))
 

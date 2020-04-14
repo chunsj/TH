@@ -53,7 +53,7 @@
 (defmethod $train-parameters ((l layer)) nil)
 
 (defmethod $keep-state! ((l layer) statefulp &optional (truncatedp T)) l)
-(defmethod $cell-state ((l layer)))
+(defmethod $cell-state ((l layer)) nil)
 (defmethod $update-cell-state! ((l layer) h) l)
 
 (defmethod $parameters ((l layer)) ($train-parameters l))
@@ -142,20 +142,6 @@
             :do (let ((nr ($execute e r :trainp trainp)))
                   (setf r nr)))
       r)))
-
-(defmethod $cell-state ((l sequential-layer))
-  (let ((hs nil))
-    (with-slots (ls) l
-      (loop :for e :in ls
-            :for h = ($cell-state e)
-            :do (when h (push h hs)))
-      (apply #'append (reverse hs)))))
-
-(defmethod $update-cell-state! ((l sequential-layer) h)
-  (with-slots (ls) l
-    (loop :for e :in ls
-          :do ($update-cell-state! e h)))
-  l)
 
 (defclass parallel-layer (sequential-layer) ())
 
@@ -715,11 +701,11 @@
 
 (defmethod $cell-state ((l rnn-cell))
   (with-slots (ph) l
-    (list ph)))
+    ph))
 
 (defmethod $update-cell-state! ((l rnn-cell) h)
   (with-slots (ph) l
-    (setf ph (car h)))
+    (setf ph h))
   l)
 
 (defmethod $train-parameters ((l rnn-cell))
@@ -814,13 +800,12 @@
     l))
 
 (defmethod $cell-state ((l lstm-cell))
-  (with-slots (ph pc) l
-    (list ph pc)))
+  (with-slots (ph) l
+    ph))
 
 (defmethod $update-cell-state! ((l lstm-cell) h)
-  (with-slots (ph pc) l
-    (setf ph (car h)
-          pc (cadr h))
+  (with-slots (ph) l
+    (setf ph h)
     l))
 
 (defmethod $train-parameters ((l lstm-cell))
@@ -913,11 +898,11 @@
 
 (defmethod $cell-state ((l gru-cell))
   (with-slots (ph) l
-    (list ph)))
+    ph))
 
 (defmethod $update-cell-state! ((l gru-cell) h)
   (with-slots (ph) l
-    (setf ph (car h)))
+    (setf ph h))
   l)
 
 (defmethod $train-parameters ((l gru-cell))
