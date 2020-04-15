@@ -13,6 +13,7 @@
                                          (:file "libs")
                                          (:file "structs")
                                          (:file "mhack")
+                                         (:file "thr")
                                          (:file "generator")
                                          (:file "storages")
                                          (:file "tensors")

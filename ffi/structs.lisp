@@ -34,12 +34,6 @@
 
 (cffi:defctype th-file-ptr (:pointer :void))
 
-(cffi:defcfun ("THSetNumThreads" th-set-num-threads) :void (n :int))
-(cffi:defcfun ("THGetNumThreads" th-get-num-threads) :int)
-
-;; macbook 12 2017 - default is 4 but half of it shows better performance
-;;(th-set-num-threads 2)
-
 (defparameter *th-type-infos* '(("byte" :unsigned-char "Byte" :long)
                                 ("char" :char "Char" :long)
                                 ("short" :short "Short" :long)
