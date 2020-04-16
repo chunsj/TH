@@ -33,7 +33,8 @@
            #:$generate-sequence
            #:$cell-state
            #:$cell
-           #:$update-cell-state!))
+           #:$update-cell-state!
+           #:with-keeping-state))
 
 ;; XXX cell state control api sucks!
 
@@ -1032,5 +1033,12 @@
 (defmethod $update-cell-state! ((l recurrent-layer) h)
   ($update-cell-state! ($cell l) h)
   l)
+
+(defmacro with-keeping-state ((rnn) &body body)
+  `(progn
+     ($keep-state! ,rnn T nil)
+     (unwind-protect
+          (progn ,@body)
+       ($keep-state! ,rnn nil nil))))
 
 (defgeneric $generate-sequence (rnn encoder seedseq n &optional temperature))

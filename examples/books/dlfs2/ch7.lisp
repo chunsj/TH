@@ -49,18 +49,17 @@
 (defun encoder-state (encoder-rnn) ($cell-state ($ encoder-rnn 1)))
 (defun update-decoder-state! (decoder-rnn h) ($update-cell-state! ($ decoder-rnn 1) h))
 
-;; execution function for training - current implementation is wrong XXX
+;; execution function for training
 (defun execute-seq2seq (encoder-rnn decoder-rnn encoder xs ts)
   ($execute encoder-rnn xs)
   (let ((h0 (encoder-state encoder-rnn)))
     (update-decoder-state! decoder-rnn h0)
-    ($keep-state! decoder-rnn T nil)
-    (let* ((batch-size ($size (car xs) 0))
-           (ys (append (encoder-encode encoder (loop :repeat batch-size :collect "_"))
-                       ts))
-           (yts ($execute decoder-rnn ys)))
-      ($keep-state! decoder-rnn nil nil)
-      (butlast yts))))
+    (with-keeping-state (decoder-rnn)
+      (let* ((batch-size ($size (car xs) 0))
+             (ys (append (encoder-encode encoder (loop :repeat batch-size :collect "_"))
+                         ts))
+             (yts ($execute decoder-rnn ys)))
+        (butlast yts)))))
 
 ;; loss function using cross entropy
 (defun loss-seq2seq (encoder-rnn decoder-rnn encoder xs ts &optional verbose)
@@ -78,13 +77,12 @@
         (xts xs0)
         (batch-size ($size (car xs0) 0)))
     (update-decoder-state! decoder-rnn h)
-    ($keep-state! decoder-rnn T nil)
-    (loop :for i :from 0 :below n
-          :do (let* ((yts ($evaluate decoder-rnn xts))
-                     (rts (encoder-choose encoder yts -1)))
-                (push rts sampled)
-                (setf xts (encoder-encode encoder rts))))
-    ($keep-state! decoder-rnn nil nil)
+    (with-keeping-state (decoder-rnn)
+      (loop :for i :from 0 :below n
+            :do (let* ((yts ($evaluate decoder-rnn xts))
+                       (rts (encoder-choose encoder yts -1)))
+                  (push rts sampled)
+                  (setf xts (encoder-encode encoder rts)))))
     (let ((res (reverse sampled))
           (results (make-list batch-size)))
       (loop :for r :in res
