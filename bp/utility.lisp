@@ -11,6 +11,7 @@
 (defgeneric $wimb (xwi w) (:documentation "Computes word embedding."))
 (defgeneric $wemb (xoh w) (:documentation "Computes word embedding with one hot encoding."))
 (defgeneric $embedding (indices weight) (:documentation "Embedding operation using indices."))
+(defgeneric $emb (xi wx b) (:documentation "Embedded affine using indices."))
 
 (defgeneric $rn! (tensor &optional µ σ) (:documentation "Fills with random normal."))
 (defgeneric $rnt! (tensor &optional µ σ) (:documentation "Fills with truncated random normal."))
@@ -382,6 +383,48 @@
 
 (defmethod $embedding ((indices list) (weight node))
   ($embedding (tensor.long indices) weight))
+
+(defmethod $emb ((xi tensor.long) (wx tensor) b)
+  (if b
+      (let* ((xp ($index wx 0 xi))
+             (hp ($vv (allocate-addbuf ($size xp 0)) b)))
+        ($+ xp hp))
+      ($index wx 0 xi)))
+
+(defmethod $emb ((xi tensor.int) (wx tensor) b)
+  (if b
+      (let* ((xp ($index wx 0 xi))
+             (hp ($vv (allocate-addbuf ($size xp 0)) b)))
+        ($+ xp hp))
+      ($index wx 0 xi)))
+
+(defmethod $emb ((xi list) (wx tensor) b)
+  (if b
+      (let* ((xp ($index wx 0 xi))
+             (hp ($vv (allocate-addbuf ($size xp 0)) b)))
+        ($+ xp hp))
+      ($index wx 0 xi)))
+
+(defmethod $emb ((xi tensor.long) (wx node) b)
+  (if b
+      (let* ((xp ($index wx 0 xi))
+             (hp ($vv (allocate-addbuf ($size xp 0)) b)))
+        ($+ xp hp))
+      ($index wx 0 xi)))
+
+(defmethod $emb ((xi tensor.int) (wx node) b)
+  (if b
+      (let* ((xp ($index wx 0 xi))
+             (hp ($vv (allocate-addbuf ($size xp 0)) b)))
+        ($+ xp hp))
+      ($index wx 0 xi)))
+
+(defmethod $emb ((xi list) (wx node) b)
+  (if b
+      (let* ((xp ($index wx 0 xi))
+             (hp ($vv (allocate-addbuf ($size xp 0)) b)))
+        ($+ xp hp))
+      ($index wx 0 xi)))
 
 (defmethod $rn! ((tensor tensor) &optional (mean 0) (sd 0.05))
   ($add! ($mul! (tensor-randn tensor ($size tensor)) sd) mean)

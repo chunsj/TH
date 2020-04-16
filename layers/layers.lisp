@@ -223,8 +223,7 @@
   ((w :initform nil)
    (b :initform nil)
    (a :initform nil)
-   (bn :initform nil)
-   (os :initform #{})))
+   (bn :initform nil)))
 
 (defun affine-layer (input-size output-size
                      &key (activation :sigmoid) (weight-initializer :he-normal)
@@ -251,43 +250,25 @@
         (append (if b (list w b) (list w)) ($parameters bn))
         (if b (list w b) (list w)))))
 
-(defun affine-ones (l x)
-  (when (eq 2 ($ndim x))
-    (with-slots (os) l
-      (let* ((n ($size x 0))
-             (o ($ os n)))
-        (unless o
-          (setf ($ os n) (ones n))
-          (setf o ($ os n)))
-        o))))
-
 (defmethod $execute ((l affine-layer) x &key (trainp t))
   (with-slots (w b a bn) l
     (if a
         (if trainp
             (if bn
-                (funcall a ($execute bn ($affine x w b (affine-ones l x))))
-                (funcall a ($affine x w b (affine-ones l x))))
+                (funcall a ($execute bn ($affine x w b)))
+                (funcall a ($affine x w b)))
             (if bn
-                (funcall a ($execute bn ($affine x ($data w)
-                                                 (when b ($data b))
-                                                 (when b (affine-ones l x)))
+                (funcall a ($execute bn ($affine x ($data w) (when b ($data b)))
                                      :trainp trainp))
-                (funcall a ($affine x ($data w)
-                                    (when b ($data b))
-                                    (when b (affine-ones l x))))))
+                (funcall a ($affine x ($data w) (when b ($data b))))))
         (if trainp
             (if bn
-                ($execute bn ($affine x w b (affine-ones l x)) :trainp trainp)
+                ($execute bn ($affine x w b) :trainp trainp)
                 ($affine x w b))
             (if bn
-                ($execute bn ($affine x ($data w)
-                                      (when b ($data b))
-                                      (when b (affine-ones l x)))
+                ($execute bn ($affine x ($data w) (when b ($data b)))
                           :trainp trainp)
-                ($affine x ($data w)
-                         (when b ($data b))
-                         (when b (affine-ones l x))))))))
+                ($affine x ($data w) (when b ($data b))))))))
 
 (defclass convolution-2d-layer (layer)
   ((w :initform nil)
@@ -616,8 +597,7 @@
 (defclass affine-cell (layer)
   ((wx :initform nil)
    (a :initform nil)
-   (b :initform nil)
-   (os :initform #{})))
+   (b :initform nil)))
 
 (defun affine-cell (input-size output-size
                     &key (activation :sigmoid) (weight-initializer :xavier-normal)
@@ -643,37 +623,28 @@
   (or (typep x 'tensor.long)
       (typep x 'tensor.int)))
 
-(defun embedding-affine-forward (xi wx b &optional ones)
-  (if b
-      (let ((xp ($index wx 0 xi))
-            (hp ($vv ones b)))
-        ($+ xp hp))
-      ($index wx 0 xi)))
-
-(defun affine-cell-forward (x wx b ones)
+(defun affine-cell-forward (x wx b)
   (if (embeddedp x)
-      (embedding-affine-forward x wx b ones)
-      ($affine x wx b ones)))
+      ($emb x wx b)
+      ($affine x wx b)))
 
 (defmethod $execute ((l affine-cell) x &key (trainp t))
   (with-slots (wx b a) l
-    (let ((ones (affine-ones l x))
-          (b0 (when b ($data b))))
+    (let ((b0 (when b ($data b))))
       (if a
           (if trainp
-              (funcall a (affine-cell-forward x wx b ones))
-              (funcall a (affine-cell-forward x ($data wx) b0 ones)))
+              (funcall a (affine-cell-forward x wx b))
+              (funcall a (affine-cell-forward x ($data wx) b0)))
           (if trainp
-              (affine-cell-forward x wx b ones)
-              (affine-cell-forward x ($data wx) b0 ones))))))
+              (affine-cell-forward x wx b)
+              (affine-cell-forward x ($data wx) b0))))))
 
 (defclass rnn-cell (layer)
   ((wx :initform nil)
    (wh :initform nil)
    (a :initform nil)
    (bh :initform nil)
-   (ph :initform nil)
-   (os :initform #{})))
+   (ph :initform nil)))
 
 (defun rnn-cell (input-size output-size
                  &key (activation :tanh) (weight-initializer :xavier-normal)
@@ -716,28 +687,27 @@
   (with-slots (wx wh bh) l
     (if bh (list wx wh bh) (list wx wh))))
 
-(defun embedding-forward (xi wx ph wh b &optional ones)
+(defun embedding-forward (xi wx ph wh b)
   (let ((xp ($index wx 0 xi))
-        (hp ($affine ph wh b ones)))
+        (hp ($affine ph wh b)))
     ($+ xp hp)))
 
-(defun rnn-cell-forward (x wx ph wh bh ones)
+(defun rnn-cell-forward (x wx ph wh bh)
   (if (embeddedp x)
-      (embedding-forward x wx ph wh bh ones)
-      ($affine2 x wx ph wh bh ones)))
+      (embedding-forward x wx ph wh bh)
+      ($affine2 x wx ph wh bh)))
 
 (defmethod $execute ((l rnn-cell) x &key (trainp t))
   (with-slots (wx wh bh ph a) l
-    (let ((ones (affine-ones l x))
-          (ph0 (if ph ph (zeros ($size x 0) ($size wx 1))))
+    (let ((ph0 (if ph ph (zeros ($size x 0) ($size wx 1))))
           (bh0 (when bh ($data bh))))
       (let ((ph1 (if a
                      (if trainp
-                         (funcall a (rnn-cell-forward x wx ph0 wh bh ones))
-                         (funcall a (rnn-cell-forward x ($data wx) ph0 ($data wh) bh0 ones)))
+                         (funcall a (rnn-cell-forward x wx ph0 wh bh))
+                         (funcall a (rnn-cell-forward x ($data wx) ph0 ($data wh) bh0)))
                      (if trainp
-                         (rnn-cell-forward x wx ph0 wh bh ones)
-                         (rnn-cell-forward x ($data wx) ph0 ($data wh) bh0 ones)))))
+                         (rnn-cell-forward x wx ph0 wh bh)
+                         (rnn-cell-forward x ($data wx) ph0 ($data wh) bh0)))))
         (setf ph ph1)
         ph1))))
 
@@ -755,8 +725,7 @@
    (ua :initform nil)
    (ba :initform nil)
    (ph :initform nil)
-   (pc :initform nil)
-   (os :initform #{})))
+   (pc :initform nil)))
 
 (defun lstm-cell (input-size output-size
                   &key (weight-initializer :xavier-normal)
@@ -822,27 +791,26 @@
 
 (defmethod $execute ((l lstm-cell) x &key (trainp t))
   (with-slots (wi ui bi wf uf bf wo uo bo wa ua ba ph pc) l
-    (let ((ones (affine-ones l x))
-          (ph0 (if ph ph (zeros ($size x 0) ($size wi 1))))
+    (let ((ph0 (if ph ph (zeros ($size x 0) ($size wi 1))))
           (pc0 (if pc pc (zeros ($size x 0) ($size wi 1))))
           (bi0 (when bi ($data bi)))
           (bf0 (when bf ($data bf)))
           (bo0 (when bo ($data bo)))
           (ba0 (when ba ($data ba))))
       (if trainp
-          (let* ((it ($sigmoid (rnn-cell-forward x wi ph0 ui bi ones)))
-                 (ft ($sigmoid (rnn-cell-forward x wf ph0 uf bf ones)))
-                 (ot ($sigmoid (rnn-cell-forward x wo ph0 uo bo ones)))
-                 (at ($tanh (rnn-cell-forward x wa ph0 ua ba ones)))
+          (let* ((it ($sigmoid (rnn-cell-forward x wi ph0 ui bi)))
+                 (ft ($sigmoid (rnn-cell-forward x wf ph0 uf bf)))
+                 (ot ($sigmoid (rnn-cell-forward x wo ph0 uo bo)))
+                 (at ($tanh (rnn-cell-forward x wa ph0 ua ba)))
                  (ct ($+ ($* ft pc0) ($* at it)))
                  (ht ($* ot ($tanh ct))))
             (setf ph ht
                   pc ct)
             ht)
-          (let* ((it ($sigmoid (rnn-cell-forward x ($data wi) ph0 ($data ui) bi0 ones)))
-                 (ft ($sigmoid (rnn-cell-forward x ($data wf) ph0 ($data uf) bf0 ones)))
-                 (ot ($sigmoid (rnn-cell-forward x ($data wo) ph0 ($data uo) bo0 ones)))
-                 (at ($tanh (rnn-cell-forward x ($data wa) ph0 ($data ua) ba0 ones)))
+          (let* ((it ($sigmoid (rnn-cell-forward x ($data wi) ph0 ($data ui) bi0)))
+                 (ft ($sigmoid (rnn-cell-forward x ($data wf) ph0 ($data uf) bf0)))
+                 (ot ($sigmoid (rnn-cell-forward x ($data wo) ph0 ($data uo) bo0)))
+                 (at ($tanh (rnn-cell-forward x ($data wa) ph0 ($data ua) ba0)))
                  (ct ($+ ($* ft pc0) ($* at it)))
                  (ht ($* ot ($tanh ct))))
             (setf ph ht
@@ -859,8 +827,7 @@
    (wh :initform nil)
    (uh :initform nil)
    (bh :initform nil)
-   (ph :initform nil)
-   (os :initform #{})))
+   (ph :initform nil)))
 
 (defun gru-cell (input-size output-size
                  &key (weight-initializer :xavier-normal)
@@ -919,26 +886,25 @@
 
 (defmethod $execute ((l gru-cell) x &key (trainp t))
   (with-slots (wz uz bz wr ur br wh uh bh ph) l
-    (let ((ones (affine-ones l x))
-          (ph0 (if ph ph (zeros ($size x 0) ($size wz 1))))
+    (let ((ph0 (if ph ph (zeros ($size x 0) ($size wz 1))))
           (bz0 (when bz ($data bz)))
           (br0 (when br ($data br)))
           (bh0 (when bh ($data bh))))
       (if trainp
-          (let* ((zt ($sigmoid (rnn-cell-forward x wz ph0 uz bz ones)))
-                 (rt ($sigmoid (rnn-cell-forward x wr ph0 ur br ones)))
+          (let* ((zt ($sigmoid (rnn-cell-forward x wz ph0 uz bz)))
+                 (rt ($sigmoid (rnn-cell-forward x wr ph0 ur br)))
                  (ht ($+ ($* zt ph0)
                          ($* ($- 1 zt)
                              ($tanh (rnn-cell-forward x wh
-                                                      ($* rt ph0) uh bh ones))))))
+                                                      ($* rt ph0) uh bh))))))
             (setf ph ht)
             ht)
-          (let* ((zt ($sigmoid (rnn-cell-forward x ($data wz) ph0 ($data uz) bz0 ones)))
-                 (rt ($sigmoid (rnn-cell-forward x ($data wr) ph0 ($data ur) br0 ones)))
+          (let* ((zt ($sigmoid (rnn-cell-forward x ($data wz) ph0 ($data uz) bz0)))
+                 (rt ($sigmoid (rnn-cell-forward x ($data wr) ph0 ($data ur) br0)))
                  (ht ($+ ($* zt ph0)
                          ($* ($- 1 zt)
                              ($tanh (rnn-cell-forward x ($data wh)
-                                                      ($* rt ph0) ($data uh) bh0 ones))))))
+                                                      ($* rt ph0) ($data uh) bh0))))))
             (setf ph ht)
             ht)))))
 

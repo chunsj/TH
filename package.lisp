@@ -385,6 +385,7 @@
            #:$wimb
            #:$wemb
            #:$embedding
+           #:$emb
            #:$array
            #:$rnn
            #:$lstm
