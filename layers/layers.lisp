@@ -711,19 +711,11 @@
         (setf ph ph1)
         ph1))))
 
+;; lstm alternative implementation - faster
 (defclass lstm-cell (layer)
-  ((wi :initform nil)
-   (ui :initform nil)
-   (bi :initform nil)
-   (wf :initform nil)
-   (uf :initform nil)
-   (bf :initform nil)
-   (wo :initform nil)
-   (uo :initform nil)
-   (bo :initform nil)
-   (wa :initform nil)
-   (ua :initform nil)
-   (ba :initform nil)
+  ((wx :initform nil)
+   (wh :initform nil)
+   (bh :initform nil)
    (ph :initform nil)
    (pc :initform nil)))
 
@@ -731,29 +723,13 @@
                   &key (weight-initializer :xavier-normal)
                     weight-initialization (biasp t))
   (let ((n (make-instance 'lstm-cell)))
-    (with-slots (wi ui bi wf uf bf wo uo bo wa ua ba) n
+    (with-slots (wx wh bh) n
       (when biasp
-        (setf bi ($parameter (zeros output-size))
-              bf ($parameter (zeros output-size))
-              bo ($parameter (zeros output-size))
-              ba ($parameter (zeros output-size))))
-      (setf wi (wif weight-initializer (list input-size output-size)
+        (setf bh ($parameter (zeros (* 4 output-size)))))
+      (setf wx (wif weight-initializer (list input-size (* 4 output-size))
                     weight-initialization))
-      (setf ui (wif weight-initializer (list output-size output-size)
-                    weight-initialization))
-      (setf wf (wif weight-initializer (list input-size output-size)
-                    weight-initialization))
-      (setf uf (wif weight-initializer (list output-size output-size)
-                    weight-initialization))
-      (setf wo (wif weight-initializer (list input-size output-size)
-                    weight-initialization))
-      (setf uo (wif weight-initializer (list output-size output-size)
-                    weight-initialization))
-      (setf wa (wif weight-initializer (list input-size output-size)
-                    weight-initialization))
-      (setf ua (wif weight-initializer (list output-size output-size)
+      (setf wh (wif weight-initializer (list output-size (* 4 output-size))
                     weight-initialization)))
-
     n))
 
 (defmethod $keep-state! ((l lstm-cell) statefulp &optional (truncatedp T))
@@ -774,48 +750,155 @@
 
 (defmethod $update-cell-state! ((l lstm-cell) h)
   (with-slots (ph) l
-    (setf ph h)
-    l))
+    (setf ph h))
+  l)
 
 (defmethod $train-parameters ((l lstm-cell))
-  (with-slots (wi ui bi wf uf bf wo uo bo wa ua ba) l
-    (if bi
-        (list wi ui bi wf uf bf wo uo bo wa ua ba)
-        (list wi ui wf uf wo uo wa ua))))
+  (with-slots (wx wh bh) l
+    (if bh
+        (list wx wh bh)
+        (list wx wh))))
 
 (defmethod $parameters ((l lstm-cell))
-  (with-slots (wi ui bi wf uf bf wo uo bo wa ua ba) l
-    (if bi
-        (list wi ui bi wf uf bf wo uo bo wa ua ba)
-        (list wi ui wf uf wo uo wa ua))))
+  (with-slots (wx wh bh) l
+    (if bh
+        (list wx wh bh)
+        (list wx wh))))
 
 (defmethod $execute ((l lstm-cell) x &key (trainp t))
-  (with-slots (wi ui bi wf uf bf wo uo bo wa ua ba ph pc) l
-    (let ((ph0 (if ph ph (zeros ($size x 0) ($size wi 1))))
-          (pc0 (if pc pc (zeros ($size x 0) ($size wi 1))))
-          (bi0 (when bi ($data bi)))
-          (bf0 (when bf ($data bf)))
-          (bo0 (when bo ($data bo)))
-          (ba0 (when ba ($data ba))))
+  (with-slots (wx wh bh ph pc fspec ispec ospec aspec) l
+    (let ((ph0 (if ph ph (zeros ($size x 0) ($size wh 0))))
+          (pc0 (if pc pc (zeros ($size x 0) ($size wh 0))))
+          (bh0 (when bh ($data bh)))
+          (szf (/ ($size wx 1) 4)))
       (if trainp
-          (let* ((it ($sigmoid (rnn-cell-forward x wi ph0 ui bi)))
-                 (ft ($sigmoid (rnn-cell-forward x wf ph0 uf bf)))
-                 (ot ($sigmoid (rnn-cell-forward x wo ph0 uo bo)))
-                 (at ($tanh (rnn-cell-forward x wa ph0 ua ba)))
+          (let* ((ra (rnn-cell-forward x wx ph0 wh bh))
+                 (ft ($sigmoid ($narrow ra 1 0 szf)))
+                 (it ($sigmoid ($narrow ra 1 szf szf)))
+                 (ot ($sigmoid ($narrow ra 1 (* 2 szf) szf)))
+                 (at ($tanh ($narrow ra 1 (* 3 szf) szf)))
                  (ct ($+ ($* ft pc0) ($* at it)))
                  (ht ($* ot ($tanh ct))))
             (setf ph ht
                   pc ct)
             ht)
-          (let* ((it ($sigmoid (rnn-cell-forward x ($data wi) ph0 ($data ui) bi0)))
-                 (ft ($sigmoid (rnn-cell-forward x ($data wf) ph0 ($data uf) bf0)))
-                 (ot ($sigmoid (rnn-cell-forward x ($data wo) ph0 ($data uo) bo0)))
-                 (at ($tanh (rnn-cell-forward x ($data wa) ph0 ($data ua) ba0)))
+          (let* ((ra (rnn-cell-forward x ($data wx) ph0 ($data wh) bh0))
+                 (ft ($sigmoid ($narrow ra 1 0 szf)))
+                 (it ($sigmoid ($narrow ra 1 szf szf)))
+                 (ot ($sigmoid ($narrow ra 1 (* 2 szf) szf)))
+                 (at ($tanh ($narrow ra 1 (* 3 szf) szf)))
                  (ct ($+ ($* ft pc0) ($* at it)))
                  (ht ($* ot ($tanh ct))))
             (setf ph ht
                   pc ct)
             ht)))))
+
+;; original but slower lstm
+;; (defclass lstm-cell (layer)
+;;   ((wi :initform nil)
+;;    (ui :initform nil)
+;;    (bi :initform nil)
+;;    (wf :initform nil)
+;;    (uf :initform nil)
+;;    (bf :initform nil)
+;;    (wo :initform nil)
+;;    (uo :initform nil)
+;;    (bo :initform nil)
+;;    (wa :initform nil)
+;;    (ua :initform nil)
+;;    (ba :initform nil)
+;;    (ph :initform nil)
+;;    (pc :initform nil)))
+
+;; (defun lstm-cell (input-size output-size
+;;                   &key (weight-initializer :xavier-normal)
+;;                     weight-initialization (biasp t))
+;;   (let ((n (make-instance 'lstm-cell)))
+;;     (with-slots (wi ui bi wf uf bf wo uo bo wa ua ba) n
+;;       (when biasp
+;;         (setf bi ($parameter (zeros output-size))
+;;               bf ($parameter (zeros output-size))
+;;               bo ($parameter (zeros output-size))
+;;               ba ($parameter (zeros output-size))))
+;;       (setf wi (wif weight-initializer (list input-size output-size)
+;;                     weight-initialization))
+;;       (setf ui (wif weight-initializer (list output-size output-size)
+;;                     weight-initialization))
+;;       (setf wf (wif weight-initializer (list input-size output-size)
+;;                     weight-initialization))
+;;       (setf uf (wif weight-initializer (list output-size output-size)
+;;                     weight-initialization))
+;;       (setf wo (wif weight-initializer (list input-size output-size)
+;;                     weight-initialization))
+;;       (setf uo (wif weight-initializer (list output-size output-size)
+;;                     weight-initialization))
+;;       (setf wa (wif weight-initializer (list input-size output-size)
+;;                     weight-initialization))
+;;       (setf ua (wif weight-initializer (list output-size output-size)
+;;                     weight-initialization)))
+
+;;     n))
+
+;; (defmethod $keep-state! ((l lstm-cell) statefulp &optional (truncatedp T))
+;;   (with-slots (ph pc) l
+;;     (when (and ph pc)
+;;       (if statefulp
+;;           (if (and ($parameterp ph) ($parameterp pc))
+;;               (if truncatedp
+;;                   (setf ph ($clone ($data ph))
+;;                         pc ($clone ($data pc)))))
+;;           (setf ph nil
+;;                 pc nil)))
+;;     l))
+
+;; (defmethod $cell-state ((l lstm-cell))
+;;   (with-slots (ph) l
+;;     ph))
+
+;; (defmethod $update-cell-state! ((l lstm-cell) h)
+;;   (with-slots (ph) l
+;;     (setf ph h)
+;;     l))
+
+;; (defmethod $train-parameters ((l lstm-cell))
+;;   (with-slots (wi ui bi wf uf bf wo uo bo wa ua ba) l
+;;     (if bi
+;;         (list wi ui bi wf uf bf wo uo bo wa ua ba)
+;;         (list wi ui wf uf wo uo wa ua))))
+
+;; (defmethod $parameters ((l lstm-cell))
+;;   (with-slots (wi ui bi wf uf bf wo uo bo wa ua ba) l
+;;     (if bi
+;;         (list wi ui bi wf uf bf wo uo bo wa ua ba)
+;;         (list wi ui wf uf wo uo wa ua))))
+
+;; (defmethod $execute ((l lstm-cell) x &key (trainp t))
+;;   (with-slots (wi ui bi wf uf bf wo uo bo wa ua ba ph pc) l
+;;     (let ((ph0 (if ph ph (zeros ($size x 0) ($size wi 1))))
+;;           (pc0 (if pc pc (zeros ($size x 0) ($size wi 1))))
+;;           (bi0 (when bi ($data bi)))
+;;           (bf0 (when bf ($data bf)))
+;;           (bo0 (when bo ($data bo)))
+;;           (ba0 (when ba ($data ba))))
+;;       (if trainp
+;;           (let* ((it ($sigmoid (rnn-cell-forward x wi ph0 ui bi)))
+;;                  (ft ($sigmoid (rnn-cell-forward x wf ph0 uf bf)))
+;;                  (ot ($sigmoid (rnn-cell-forward x wo ph0 uo bo)))
+;;                  (at ($tanh (rnn-cell-forward x wa ph0 ua ba)))
+;;                  (ct ($+ ($* ft pc0) ($* at it)))
+;;                  (ht ($* ot ($tanh ct))))
+;;             (setf ph ht
+;;                   pc ct)
+;;             ht)
+;;           (let* ((it ($sigmoid (rnn-cell-forward x ($data wi) ph0 ($data ui) bi0)))
+;;                  (ft ($sigmoid (rnn-cell-forward x ($data wf) ph0 ($data uf) bf0)))
+;;                  (ot ($sigmoid (rnn-cell-forward x ($data wo) ph0 ($data uo) bo0)))
+;;                  (at ($tanh (rnn-cell-forward x ($data wa) ph0 ($data ua) ba0)))
+;;                  (ct ($+ ($* ft pc0) ($* at it)))
+;;                  (ht ($* ot ($tanh ct))))
+;;             (setf ph ht
+;;                   pc ct)
+;;             ht)))))
 
 (defclass gru-cell (layer)
   ((wz :initform nil)
@@ -951,90 +1034,3 @@
   l)
 
 (defgeneric $generate-sequence (rnn encoder seedseq n &optional temperature))
-
-;; lstm alternative implementation
-;; slower than above one
-;; (defclass lstm-cell (layer)
-;;   ((wx :initform nil)
-;;    (wh :initform nil)
-;;    (bh :initform nil)
-;;    (ph :initform nil)
-;;    (pc :initform nil)
-;;    (os :initform #{})
-;;    (fspec :initform nil)
-;;    (ispec :initform nil)
-;;    (ospec :initform nil)
-;;    (aspec :initform nil)))
-
-;; (defun lstm-cell (input-size output-size
-;;                   &key (weight-initializer :xavier-normal)
-;;                     weight-initialization (biasp t))
-;;   (let ((n (make-instance 'lstm-cell)))
-;;     (with-slots (wx wh bh fspec ispec ospec aspec) n
-;;       (when biasp
-;;         (setf bh ($parameter (zeros (* 4 output-size)))))
-;;       (setf wx (wif weight-initializer (list input-size (* 4 output-size))
-;;                     weight-initialization))
-;;       (setf wh (wif weight-initializer (list output-size (* 4 output-size))
-;;                     weight-initialization))
-;;       (setf fspec (tensor.long
-;;                    (loop :for i :from 0 :below ($size wh 0) :collect i)))
-;;       (setf ispec (tensor.long
-;;                    (loop :for i :from 0 :below ($size wh 0) :collect (+ i ($size wh 0)))))
-;;       (setf ospec (tensor.long
-;;                    (loop :for i :from 0 :below ($size wh 0) :collect (+ i (* 2 ($size wh 0))))))
-;;       (setf aspec (tensor.long
-;;                    (loop :for i :from 0 :below ($size wh 0) :collect (+ i (* 3 ($size wh 0)))))))
-
-;;     n))
-
-;; (defmethod $keep-state! ((l lstm-cell) statefulp)
-;;   (with-slots (ph pc) l
-;;     (when (and ph pc)
-;;       (if statefulp
-;;           (if (and ($parameterp ph) ($parameterp pc))
-;;               (setf ph ($clone ($data ph))
-;;                     pc ($clone ($data pc))))
-;;           (setf ph nil
-;;                 pc nil)))
-;;     l))
-
-;; (defmethod $train-parameters ((l lstm-cell))
-;;   (with-slots (wx wh bh) l
-;;     (if bh
-;;         (list wx wh bh)
-;;         (list wx wh))))
-
-;; (defmethod $parameters ((l lstm-cell))
-;;   (with-slots (wx wh bh) l
-;;     (if bh
-;;         (list wx wh bh)
-;;         (list wx wh))))
-
-;; (defmethod $execute ((l lstm-cell) x &key (trainp t))
-;;   (with-slots (wx wh bh ph pc fspec ispec ospec aspec) l
-;;     (let ((ones (affine-ones l x))
-;;           (ph0 (if ph ph (zeros ($size x 0) ($size wh 0))))
-;;           (pc0 (if pc pc (zeros ($size x 0) ($size wh 0))))
-;;           (bh0 (when bh ($data bh))))
-;;       (if trainp
-;;           (let* ((ra (rnn-cell-forward x wx ph0 wh bh ones))
-;;                  (ft ($sigmoid ($index ra 1 fspec)))
-;;                  (it ($sigmoid ($index ra 1 ispec)))
-;;                  (ot ($sigmoid ($index ra 1 ospec)))
-;;                  (at ($tanh ($index ra 1 aspec)))
-;;                  (ct ($+ ($* ft pc0) ($* at it)))
-;;                  (ht ($* ot ($tanh ct))))
-;;             (setf ph ht
-;;                   pc ct)
-;;             ht)
-;;           (let* ((ra (rnn-cell-forward x ($data wx) ph0 ($data wh) bh0 ones))
-;;                  (ft ($sigmoid ($index ra 1 fspec)))
-;;                  (it ($sigmoid ($index ra 1 ispec)))
-;;                  (ot ($sigmoid ($index ra 1 ospec)))
-;;                  (at ($tanh ($index ra 1 aspec)))
-;;                  (ct ($+ ($* ft pc0) ($* at it)))
-;;                  (ht ($* ot ($tanh ct))))
-;;             (setf ph ht
-;;                   pc ct)
-;;             ht)))))
