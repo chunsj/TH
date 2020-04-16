@@ -38,3 +38,14 @@
                ($index c 1 s2)
                ($index c 1 s3)
                ($index c 1 s4)))))
+
+(let ((a (rndn 100 100))
+      (b (rndn 100 400)))
+  (gcf)
+  (time
+   (loop :repeat 10000
+         :do (let ((c ($mm a b)))
+               ($narrow c 1 0 100)
+               ($narrow c 1 100 100)
+               ($narrow c 1 200 100)
+               ($narrow c 1 300 100)))))
