@@ -6,6 +6,9 @@
 
 (in-package :lstm-manual)
 
+;; XXX
+;; to compare multiple mm vs one large mm
+
 (let ((a (rndn 100 100))
       (b (rndn 100 100)))
   (gcf)
