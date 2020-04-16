@@ -456,3 +456,10 @@
   (node ($unsqueeze ($data x) dimension)
         :name :unsqueeze
         :link (link (to x ($squeeze gv dimension)))))
+
+(defmethod $narrow ((x node) dimension first-index size)
+  (node ($narrow ($data x) dimension first-index size)
+        :name :narrow
+        :link (link (to x (let ((g ($zero ($data x))))
+                            (setf ($narrow g dimension first-index size) gv)
+                            g)))))
