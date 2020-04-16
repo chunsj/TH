@@ -2,6 +2,32 @@
 
 (in-package :th)
 
+(defvar *zero-default-size* 100000)
+(defvar *zeros* (zeros *zero-default-size*))
+
+(defun allocate-zeros (n)
+  (if (<= n *zero-default-size*)
+      ($subview *zeros* 0 n)
+      (progn
+        (prn "WARNING: ZEROS SIZE INCREASED TO" n)
+        (setf *zero-default-size* n)
+        (setf *zeros* (-> ($resize! *zeros* *zero-default-size*)
+                          ($zero!))))))
+
+(defvar *bias-default-size* 100000)
+(defvar *bias-ones* (ones *bias-default-size*))
+
+;;(defun allocate-addbuf (nframe) ($one! (apply #'tensor (list nframe))))
+(defun allocate-addbuf (nframe)
+  (if (<= nframe *bias-default-size*)
+      ($subview *bias-ones* 0 nframe)
+      (progn
+        (prn "WARNING: BIAS SIZE INCREASED TO" nframe)
+        (setf *bias-default-size* nframe)
+        (setf *bias-ones* (-> ($resize! *bias-ones* *bias-default-size*)
+                              ($one!)))
+        *bias-ones*)))
+
 ;; XXX bnorm and bn should provide uniform interface and results
 
 (defgeneric $bnorm (x gamma beta mean var &optional trainp momentum eps))
@@ -22,8 +48,8 @@
       (if (and sm sd)
           (nn-batch-normalization-update-output x output gamma beta rm rv
                                                 sm sd t momentum eps)
-          (let ((sm (zeros n))
-                (sd (ones n)))
+          (let ((sm (allocate-zeros n))
+                (sd (allocate-addbuf n)))
             (nn-batch-normalization-update-output x output gamma beta rm rv
                                                   sm sd nil momentum eps)))
       output)))
@@ -46,8 +72,8 @@
                                          ($data x) gv dx
                                          dgamma dbeta gamma
                                          rm rv sm sd t 1 eps)
-                                        (let ((sm (zeros ($size x 1)))
-                                              (sd (ones ($size x 1))))
+                                        (let ((sm (allocate-zeros ($size x 1)))
+                                              (sd (allocate-addbuf ($size x 1))))
                                           (nn-batch-normalization-backward
                                            ($data x) gv dx
                                            dgamma dbeta gamma
@@ -74,8 +100,8 @@
                                          x gv dx
                                          dgamma dbeta gamma
                                          rm rv sm sd t 1 eps)
-                                        (let ((sm (zeros ($size x 1)))
-                                              (sd (ones ($size x 1))))
+                                        (let ((sm (allocate-zeros ($size x 1)))
+                                              (sd (allocate-addbuf ($size x 1))))
                                           (nn-batch-normalization-backward
                                            x gv dx
                                            dgamma dbeta gamma
@@ -104,7 +130,7 @@
   (let* ((x (if (or (eq 1 ($ndim x)) (eq 3 ($ndim x)))
                 (apply #'$reshape x (cons 1 ($size x)))
                 x))
-         (os (ones ($size x 0)))
+         (os (allocate-addbuf ($size x 0)))
          (zx ($div! ($sub x ($vv os mean)) ($vv os ($sqrt! ($add var eps))))))
     ($add! ($mul! zx ($vv os gamma)) ($vv os beta))))
 
@@ -114,7 +140,7 @@
   (let* ((x (if (or (eq 1 ($ndim x)) (eq 3 ($ndim x)))
                 (apply #'$reshape x (cons 1 ($size x)))
                 x))
-         (os (ones ($size x 0)))
+         (os (allocate-addbuf ($size x 0)))
          (zx ($div! ($sub x ($vv os mean)) ($vv os ($sqrt! ($add var eps))))))
     zx))
 
@@ -122,9 +148,9 @@
                    &optional (trainp t) (momentum 0.1) (eps 1E-7))
   (runstat ($data x) mean var trainp momentum)
   (let* ((x (if (or (eq 1 ($ndim x)) (eq 3 ($ndim x)))
-                ($vv (ones 1) x)
+                ($vv (allocate-addbuf 1) x)
                 x))
-         (os (ones ($size x 0)))
+         (os (allocate-addbuf ($size x 0)))
          (zx ($div ($sub x ($vv os mean)) ($vv os ($sqrt ($add var eps))))))
     ($add ($mul zx ($vv os gamma)) ($vv os beta))))
 
@@ -132,9 +158,9 @@
                    &optional (trainp t) (momentum 0.1) (eps 1E-7))
   (runstat ($data x) ($data mean) ($data var) trainp momentum)
   (let* ((x (if (eq 1 ($ndim x))
-                ($vv (ones 1) x)
+                ($vv (allocate-addbuf 1) x)
                 x))
-         (os (ones ($size x 0)))
+         (os (allocate-addbuf ($size x 0)))
          (zx ($div ($sub x ($vv os mean)) ($vv os ($sqrt ($add var eps))))))
     zx))
 
@@ -155,15 +181,15 @@
             :name :dropout
             :link (link (to x gv)))))
 
-(defun $rnn (x ph wx wh b &optional ones)
+(defun $rnn (x ph wx wh b)
   "Simple RNN cell using tanh"
-  ($tanh ($affine2 x wx ph wh b ones)))
+  ($tanh ($affine2 x wx ph wh b)))
 
-(defun $lstm (x ph pc wi ui wf uf wo uo wa ua bi bf bo ba &optional ones)
+(defun $lstm (x ph pc wi ui wf uf wo uo wa ua bi bf bo ba)
   "Basic LSTM cell"
-  (let ((it ($sigmoid ($affine2 x wi ph ui bi ones)))
-        (ft ($sigmoid ($affine2 x wf ph uf bf ones)))
-        (ot ($sigmoid ($affine2 x wo ph uo bo ones)))
-        (at ($tanh ($affine2 x wa ph ua ba ones))))
+  (let ((it ($sigmoid ($affine2 x wi ph ui bi)))
+        (ft ($sigmoid ($affine2 x wf ph uf bf)))
+        (ot ($sigmoid ($affine2 x wo ph uo bo)))
+        (at ($tanh ($affine2 x wa ph ua ba))))
     (let ((ct ($addm2 at it ft pc)))
       (list ($mul ($tanh ct) ot) ct))))

@@ -2,9 +2,6 @@
 
 (in-package :th)
 
-(defvar *bias-default-size* 100000)
-(defvar *bias-ones* (ones *bias-default-size*))
-
 (defgeneric $xwpb (x w b) (:documentation "Returns x@w + b."))
 (defgeneric $affine (x w b) (:documentation "Affine transformation."))
 (defgeneric $affine2 (x1 w1 x2 w2 b) (:documentation "Affine transformation."))
@@ -75,17 +72,6 @@
                 (to x2 ($mul w2 gv)))))
 
 (defmethod $addm2 ((x1 tensor) (w1 tensor) (x2 tensor) (w2 tensor)) (addmul x1 w1 x2 w2))
-
-;;(defun allocate-addbuf (nframe) ($one! (apply #'tensor (list nframe))))
-(defun allocate-addbuf (nframe)
-  (if (<= nframe *bias-default-size*)
-      ($subview *bias-ones* 0 nframe)
-      (progn
-        (prn "WARNING: BIAS SIZE INCREASED TO" nframe)
-        (setf *bias-default-size* nframe)
-        (setf *bias-ones* (-> ($resize! *bias-ones* *bias-default-size*)
-                              ($one!)))
-        *bias-ones*)))
 
 (defun affine-without-bias (x w)
   (let ((dim ($ndim x)))
