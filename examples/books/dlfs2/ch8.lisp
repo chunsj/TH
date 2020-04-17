@@ -34,22 +34,25 @@
   (prn ($ a '((0 5) (0 1))))
   (prn ($mm ($ a '((0 5) (0 1))) (ones 1 3))))
 
-;; data for the chapter 7 example
+;; data for the chapter 8 example
 ;;
 ;; number addition problems
-(defparameter *data* (addition))
+(defparameter *data* (date-data))
 (defparameter *data-length* ($count *data*))
-(defparameter *encoder* (character-encoder "0123456789 _+="))
+(defparameter *encoder* (character-encoder (concatenate 'string "01234567890"
+                                                        "abcdefghijklmnopqrstuvwxyz"
+                                                        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                                        " _-,/")))
 
 ;; train and test datasets
-(defparameter *train-input-data* (mapcar (lambda (s) (subseq s 0 7)) (subseq *data* 0 40000)))
-(defparameter *train-target-data* (mapcar (lambda (s) (subseq s 8)) (subseq *data* 0 40000)))
-(defparameter *test-input-data* (mapcar (lambda (s) (subseq s 0 7)) (subseq *data* 40000)))
-(defparameter *test-target-data* (mapcar (lambda (s) (subseq s 8)) (subseq *data* 40000)))
+(defparameter *train-input-data* (mapcar (lambda (s) (subseq s 0 29)) (subseq *data* 0 40000)))
+(defparameter *train-target-data* (mapcar (lambda (s) (subseq s 30)) (subseq *data* 0 40000)))
+(defparameter *test-input-data* (mapcar (lambda (s) (subseq s 0 29)) (subseq *data* 40000)))
+(defparameter *test-target-data* (mapcar (lambda (s) (subseq s 30)) (subseq *data* 40000)))
 
 ;; network parameters
 (defparameter *batch-size* 100)
-(defparameter *hidden-size* 128)
+(defparameter *hidden-size* 256)
 (defparameter *wvec-size* 16)
 
 ;; preparing datasets - an helper function
@@ -62,8 +65,8 @@
 (defparameter *train-ys-batches* (build-batches *train-target-data* *batch-size*))
 
 ;; for overfitting - to check implementation
-(defparameter *overfit-xs-batches* (subseq (build-batches *train-input-data* 12) 0 1))
-(defparameter *overfit-ys-batches* (subseq (build-batches *train-target-data* 12) 0 1))
+(defparameter *overfit-xs-batches* (subseq (build-batches *train-input-data* 5) 0 1))
+(defparameter *overfit-ys-batches* (subseq (build-batches *train-target-data* 5) 0 1))
 
 ;; helper functions for the seq2seq model
 ;; mostly generation, execution(for training) and evaluation(for running)
