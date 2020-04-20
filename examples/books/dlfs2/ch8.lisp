@@ -102,6 +102,28 @@
                    ($last ($size query)))
              values)))
 
+(let ((a (tensor '((1 2 3 4)
+                   (5 6 7 8))))
+      (b (tensor '((1 2)
+                   (3 4)
+                   (5 6)
+                   (7 8)))))
+  (prn ($mm a b)))
+
+(let ((a (tensor '((1 2) (5 6))))
+      (b (tensor '((3 4) (7 8))))
+      (c (tensor '((1 2) (3 4))))
+      (d (tensor '((5 6) (7 8)))))
+  (prn ($+ ($mm a c) ($mm b d))))
+
+(let ((x (tensor '((1 2) (5 6))))
+      (c (tensor '((3 4) (7 8))))
+      (w (tensor '((1 2) (3 4) (5 6) (7 8)))))
+  (prn ($+ ($mm x ($narrow w 0 0 2))
+           ($mm c ($narrow w 0 2 2)))))
+
+(prn ($unsqueeze (tensor '((1 2 3) (4 5 6))) 1))
+
 ;; execution function for training
 (defun execute-seq2seq (encoder-rnn decoder-rnn encoder xs ts)
   ($execute encoder-rnn xs)
