@@ -78,6 +78,30 @@
 (defun encoder-state (encoder-rnn) ($cell-state ($ encoder-rnn 1)))
 (defun update-decoder-state! (decoder-rnn h) ($update-cell-state! ($ decoder-rnn 1) h))
 
+(let ((hs ($evaluate *encoder-rnn* (car *overfit-xs-batches*))))
+  (prn "H0" (encoder-state *encoder-rnn*))
+  (let ((h1 ($last hs))
+        (h2 ($last hs))
+        (h3 ($first hs)))
+    (prn ($diag ($mm h1 ($transpose h2))))
+    (prn ($sum ($mul h1 h2) 1))
+    (prn ($mm h1 ($transpose h3)))))
+
+;; XXX from D2L book
+;; here second axis is time.
+;; can i figure out how this computation be applied to time x batch x feature dimensions?
+(let ((keys (ones 2 10 2))
+      (values (-> (range 0 39)
+                  ($reshape 10 4)
+                  ($repeat 2 1)
+                  ($reshape 2 10 4)))
+      (query (ones 2 1 2)))
+  (prn keys)
+  (prn values)
+  (prn ($bmm ($div ($bmm query ($transpose keys 1 2))
+                   ($last ($size query)))
+             values)))
+
 ;; execution function for training
 (defun execute-seq2seq (encoder-rnn decoder-rnn encoder xs ts)
   ($execute encoder-rnn xs)
@@ -121,7 +145,7 @@
       (mapcar (lambda (rs) (apply #'concatenate 'string (reverse rs))) results))))
 
 ;; running the model
-(defun evaluate-seq2seq (encoder-rnn decoder-rnn encoder xs &optional (n 4))
+(defun evaluate-seq2seq (encoder-rnn decoder-rnn encoder xs &optional (n 10))
   ($evaluate encoder-rnn xs)
   (generate-decoder decoder-rnn encoder (encoder-state encoder-rnn)
                     (encoder-encode encoder (loop :repeat ($size (car xs) 0) :collect "_"))
@@ -129,16 +153,9 @@
 
 ;; compare the results - between the generated one and the truth
 (defun matches-score (encoder ts ys)
-  (let ((tss (->> ts
-                  (encoder-decode encoder)
-                  (mapcar (lambda (s) (parse-integer s)))))
-        (yss (->> ys
-                  (mapcar (lambda (s)
-                            (handler-case (parse-integer s)
-                              (error (c)
-                                (declare (ignore c))
-                                -1)))))))
-    (let ((matches (mapcar (lambda (tn yn) (if (eq tn yn) 0 1)) tss yss)))
+  (let ((tss (encoder-decode encoder ts))
+        (yss ys))
+    (let ((matches (mapcar (lambda (tn yn) (if (string-equal tn yn) 0 1)) tss yss)))
       (* 1D0 (/ (reduce #'+ matches) ($count matches))))))
 
 ;; train seq2seq network
