@@ -67,14 +67,16 @@
 (defun generate-string (rnn encoder seedstr n &optional (temperature 1D0))
   ($generate-sequence rnn encoder seedstr n temperature))
 
-(defun encoder-state (encoder-rnn) ($cell-state ($ encoder-rnn 1)))
 (defun update-decoder-state! (decoder-rnn h) ($update-cell-state! ($ decoder-rnn 1) h))
+(defun update-attention-memory! (decoder-rnn hs)
+  ($set-memory! ($ decoder-rnn 2) (concat-sequence hs)))
 
 ;; execution function for training
 (defun execute-seq2seq (encoder-rnn decoder-rnn encoder xs ts)
-  ($execute encoder-rnn xs)
-  (let ((h0 (encoder-state encoder-rnn)))
+  (let* ((hs ($execute encoder-rnn xs))
+         (h0 ($last hs)))
     (update-decoder-state! decoder-rnn h0)
+    (update-attention-memory! decoder-rnn hs)
     (with-keeping-state (decoder-rnn)
       (let* ((batch-size ($size (car xs) 0))
              (ys (append (encoder-encode encoder (loop :repeat batch-size :collect "_"))
@@ -93,11 +95,13 @@
     loss))
 
 ;; generate using decoder
-(defun generate-decoder (decoder-rnn encoder h xs0 n)
+(defun generate-decoder (decoder-rnn encoder hs xs0 n)
   (let ((sampled '())
+        (h ($last hs))
         (xts xs0)
         (batch-size ($size (car xs0) 0)))
     (update-decoder-state! decoder-rnn h)
+    (update-attention-memory! decoder-rnn hs)
     (with-keeping-state (decoder-rnn)
       (loop :for i :from 0 :below n
             :do (let* ((yts ($evaluate decoder-rnn xts))
@@ -114,10 +118,10 @@
 
 ;; running the model
 (defun evaluate-seq2seq (encoder-rnn decoder-rnn encoder xs &optional (n 10))
-  ($evaluate encoder-rnn xs)
-  (generate-decoder decoder-rnn encoder (encoder-state encoder-rnn)
-                    (encoder-encode encoder (loop :repeat ($size (car xs) 0) :collect "_"))
-                    n))
+  (let ((hs ($evaluate encoder-rnn xs)))
+    (generate-decoder decoder-rnn encoder hs
+                      (encoder-encode encoder (loop :repeat ($size (car xs) 0) :collect "_"))
+                      n)))
 
 ;; compare the results - between the generated one and the truth
 (defun matches-score (encoder ts ys)
@@ -159,6 +163,7 @@
                                                              :activation :nil
                                                              :biasp nil))
                                (recurrent-layer (lstm-cell *wvec-size* *hidden-size*))
+                               (recurrent-layer (dot-product-attention-cell))
                                (recurrent-layer (affine-cell *hidden-size* vsize
                                                              :activation :nil)))))
 
@@ -168,7 +173,7 @@
 ;; overfitting for checking implementation
 (time (train-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
                      *overfit-xs-batches* *overfit-ys-batches*
-                     2000 100))
+                     1 100))
 
 (prn (car *overfit-xs-batches*))
 
