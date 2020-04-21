@@ -46,12 +46,14 @@
 ;; mostly generation, execution(for training) and evaluation(for running)
 
 ;; compute attention context - dot product attention
-(defun compute-context (hs qi)
-  (let* ((q (-> (apply #'$reshape qi (cons 1 ($size qi)))
+(defun compute-context (hs q)
+  "computes attention context from hs(TxBxD) and q(BxD)"
+  (let* ((d ($size q 1))
+         (q (-> (apply #'$reshape q (cons 1 ($size q)))
                 ($transpose 0 1)))
          (k ($transpose hs 0 1))
          (kt ($transpose k 1 2))
-         (qkt ($bmm q kt))
+         (qkt ($div ($bmm q kt) ($sqrt d)))
          (a (-> ($softmax ($reshape qkt ($size qkt 0) ($size qkt 2)))
                 ($reshape ($size qkt 0) 1 ($size qkt 2))))
          (ctx (-> ($bmm a k)
