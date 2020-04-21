@@ -78,6 +78,29 @@
 (defun encoder-state (encoder-rnn) ($cell-state ($ encoder-rnn 1)))
 (defun update-decoder-state! (decoder-rnn h) ($update-cell-state! ($ decoder-rnn 1) h))
 
+(defun compute-context (hs qi)
+  (let* ((q (-> (apply #'$reshape qi (cons 1 ($size qi)))
+                ($transpose 0 1)))
+         (k ($transpose hs 0 1))
+         (kt ($transpose k 1 2))
+         (qkt ($bmm q kt))
+         (a (-> ($softmax ($reshape qkt ($size qkt 0) ($size qkt 2)))
+                ($reshape ($size qkt 0) 1 ($size qkt 2))))
+         (ctx (-> ($bmm a k)
+                  ($reshape ($size k 0) ($size k 2)))))
+    ctx))
+
+(let ((hsi ($evaluate *encoder-rnn* (car *overfit-xs-batches*))))
+  (time
+   (with-max-heap (2048)
+     (loop :repeat 10000
+           :do (concat-sequence hsi)))))
+
+(let* ((hsi ($evaluate *encoder-rnn* (car *overfit-xs-batches*)))
+       (q ($last hsi))
+       (hs (concat-sequence hsi)))
+  (prn (compute-context hs q)))
+
 (let ((hs ($evaluate *encoder-rnn* (car *overfit-xs-batches*))))
   (prn "H0" (encoder-state *encoder-rnn*))
   (let ((h1 ($last hs))
@@ -222,7 +245,7 @@
 ;; overfitting for checking implementation
 (time (train-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
                      *overfit-xs-batches* *overfit-ys-batches*
-                     1000 100))
+                     2000 100))
 
 (prn (car *overfit-xs-batches*))
 
