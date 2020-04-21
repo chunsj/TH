@@ -27,6 +27,7 @@
            #:lstm-cell
            #:gru-cell
            #:affine-cell
+           #:dot-product-attention-cell
            #:dropout-cell
            #:$keep-state!
            #:recurrent-layer
