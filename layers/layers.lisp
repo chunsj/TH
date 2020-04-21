@@ -34,6 +34,7 @@
            #:$cell-state
            #:$cell
            #:$update-cell-state!
+           #:$set-memory!
            #:with-keeping-state
            #:concat-sequence))
 
@@ -49,6 +50,7 @@
 (defgeneric $keep-state! (layer statefulp &optional truncatedp))
 (defgeneric $cell-state (layer))
 (defgeneric $update-cell-state! (recurrent-layer h))
+(defgeneric $set-memory! (cell hs))
 
 (defclass layer () ())
 
@@ -57,6 +59,7 @@
 (defmethod $keep-state! ((l layer) statefulp &optional (truncatedp T)) l)
 (defmethod $cell-state ((l layer)) nil)
 (defmethod $update-cell-state! ((l layer) h) l)
+(defmethod $set-memory! ((l layer) hs) l)
 
 (defmethod $parameters ((l layer)) ($train-parameters l))
 
@@ -641,6 +644,37 @@
               (affine-cell-forward x wx b)
               (affine-cell-forward x ($data wx) b0))))))
 
+(defclass dot-product-attention-cell (layer)
+  ((hs :initform nil)))
+
+(defun dot-product-attention-cell ()
+  (make-instance 'dot-product-attention-cell))
+
+(defmethod $set-memory! ((cell dot-product-attention-cell) enc-hs)
+  (with-slots (hs) cell
+    (setf hs enc-hs))
+  cell)
+
+(defun compute-dot-product-attention (hs q)
+  "computes attention context from hs(TxBxD) and q(BxD)"
+  (let* ((d ($size q 1))
+         (q (-> (apply #'$reshape q (cons 1 ($size q)))
+                ($transpose 0 1)))
+         (k ($transpose hs 0 1))
+         (kt ($transpose k 1 2))
+         (qkt ($div ($bmm q kt) ($sqrt d)))
+         (a (-> ($softmax ($reshape qkt ($size qkt 0) ($size qkt 2)))
+                ($reshape ($size qkt 0) 1 ($size qkt 2))))
+         (ctx (-> ($bmm a k)
+                  ($reshape ($size k 0) ($size k 2)))))
+    ctx))
+
+(defmethod $execute ((cell dot-product-attention-cell) q &key (trainp t))
+  (declare (ignore trainp))
+  (with-slots (hs) cell
+    (when hs
+      (compute-dot-product-attention hs q))))
+
 (defclass rnn-cell (layer)
   ((wx :initform nil)
    (wh :initform nil)
@@ -1038,6 +1072,10 @@
 
 (defmethod $update-cell-state! ((l recurrent-layer) h)
   ($update-cell-state! ($cell l) h)
+  l)
+
+(defmethod $set-memory! ((l recurrent-layer) hs)
+  ($set-memory! ($cell l) hs)
   l)
 
 (defmacro with-keeping-state ((rnn) &body body)
