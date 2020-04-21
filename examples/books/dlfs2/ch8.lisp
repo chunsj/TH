@@ -8,32 +8,6 @@
 
 (in-package :dlfs2-ch8)
 
-;; XXX test computation for attention weight
-(time
- (let ((a (tensor '((1 2 3) (4 5 6) (4 5 6) (1 2 3))))
-       (b (tensor '((3 2 1) (6 5 4) (6 5 4) (3 2 1)))))
-   (prn ($* a b))
-   (prn ($sum ($mul a b) 1))
-   (let ((h1 ($sum ($mul a b) 1))
-         (h2 ($* 2 ($sum ($mul a b) 1)))
-         (h3 ($* 1 ($sum ($mul a b) 1))))
-     (prn ($concat h1 h2 h3 1))
-     (prn ($softmax ($concat h1 h2 h3 1)))
-     (prn (reduce (lambda (a b) ($cat a b 1)) (list h1 h2 h3))))))
-
-(let ((a (tensor '((1 2 3 4 5 6 7 8 9 0)
-                   (0 1 2 3 4 5 6 7 8 9)
-                   (9 0 1 2 3 4 5 6 7 8)
-                   (8 9 0 1 2 3 4 5 6 7)
-                   (7 8 9 0 1 2 3 4 5 6)))))
-  (prn a)
-  (prn ($ a 0))
-  (prn ($ a '(0 1) '(0 10)))
-  (prn ($ a '((0 1) (0 10))))
-  (prn ($ a '(0 5) '(0 1)))
-  (prn ($ a '((0 5) (0 1))))
-  (prn ($mm ($ a '((0 5) (0 1))) (ones 1 3))))
-
 ;; data for the chapter 8 example
 ;;
 ;; number addition problems
@@ -71,13 +45,7 @@
 ;; helper functions for the seq2seq model
 ;; mostly generation, execution(for training) and evaluation(for running)
 
-;; generate a string using the seed string
-(defun generate-string (rnn encoder seedstr n &optional (temperature 1D0))
-  ($generate-sequence rnn encoder seedstr n temperature))
-
-(defun encoder-state (encoder-rnn) ($cell-state ($ encoder-rnn 1)))
-(defun update-decoder-state! (decoder-rnn h) ($update-cell-state! ($ decoder-rnn 1) h))
-
+;; compute attention context - dot product attention
 (defun compute-context (hs qi)
   (let* ((q (-> (apply #'$reshape qi (cons 1 ($size qi)))
                 ($transpose 0 1)))
@@ -90,62 +58,15 @@
                   ($reshape ($size k 0) ($size k 2)))))
     ctx))
 
-(let ((hsi ($evaluate *encoder-rnn* (car *overfit-xs-batches*))))
-  (time
-   (with-max-heap (2048)
-     (loop :repeat 10000
-           :do (concat-sequence hsi)))))
+;; generate a string using the seed string
+(defun generate-string (rnn encoder seedstr n &optional (temperature 1D0))
+  ($generate-sequence rnn encoder seedstr n temperature))
 
-(let* ((hsi ($evaluate *encoder-rnn* (car *overfit-xs-batches*)))
-       (q ($last hsi))
-       (hs (concat-sequence hsi)))
-  (prn (compute-context hs q)))
+(defun encoder-state (encoder-rnn) ($cell-state ($ encoder-rnn 1)))
+(defun update-decoder-state! (decoder-rnn h) ($update-cell-state! ($ decoder-rnn 1) h))
 
-(let ((hs ($evaluate *encoder-rnn* (car *overfit-xs-batches*))))
-  (prn "H0" (encoder-state *encoder-rnn*))
-  (let ((h1 ($last hs))
-        (h2 ($last hs))
-        (h3 ($first hs)))
-    (prn ($diag ($mm h1 ($transpose h2))))
-    (prn ($sum ($mul h1 h2) 1))
-    (prn ($mm h1 ($transpose h3)))))
-
-;; XXX from D2L book
-;; here second axis is time.
-;; can i figure out how this computation be applied to time x batch x feature dimensions?
-(let ((keys (ones 2 10 2))
-      (values (-> (range 0 39)
-                  ($reshape 10 4)
-                  ($repeat 2 1)
-                  ($reshape 2 10 4)))
-      (query (ones 2 1 2)))
-  (prn keys)
-  (prn values)
-  (prn ($bmm ($div ($bmm query ($transpose keys 1 2))
-                   ($last ($size query)))
-             values)))
-
-(let ((a (tensor '((1 2 3 4)
-                   (5 6 7 8))))
-      (b (tensor '((1 2)
-                   (3 4)
-                   (5 6)
-                   (7 8)))))
-  (prn ($mm a b)))
-
-(let ((a (tensor '((1 2) (5 6))))
-      (b (tensor '((3 4) (7 8))))
-      (c (tensor '((1 2) (3 4))))
-      (d (tensor '((5 6) (7 8)))))
-  (prn ($+ ($mm a c) ($mm b d))))
-
-(let ((x (tensor '((1 2) (5 6))))
-      (c (tensor '((3 4) (7 8))))
-      (w (tensor '((1 2) (3 4) (5 6) (7 8)))))
-  (prn ($+ ($mm x ($narrow w 0 0 2))
-           ($mm c ($narrow w 0 2 2)))))
-
-(prn ($unsqueeze (tensor '((1 2 3) (4 5 6))) 1))
+;; XXX temporal input xt is index-encoded but the context ctx is not
+;; XXX so we need special cell for processing concatenation of [xt; ctx].
 
 ;; execution function for training
 (defun execute-seq2seq (encoder-rnn decoder-rnn encoder xs ts)
@@ -262,3 +183,46 @@
 
 (prn (encoder-decode *encoder* ($0 *train-ys-batches*)))
 (prn (evaluate-seq2seq *encoder-rnn* *decoder-rnn* *encoder* ($0 *train-xs-batches*)))
+
+;;
+;; XXX for developing
+;;
+
+;; concat-sequence performance
+(let ((hsi ($evaluate *encoder-rnn* (car *overfit-xs-batches*))))
+  (time
+   (with-max-heap (2048)
+     (loop :repeat 10000
+           :do (concat-sequence hsi)))))
+
+;; checking compute-context
+(let* ((hsi ($evaluate *encoder-rnn* (car *overfit-xs-batches*)))
+       (q ($last hsi))
+       (hs (concat-sequence hsi)))
+  (prn (compute-context hs q)))
+
+;; XXX test computation for attention weight
+(time
+ (let ((a (tensor '((1 2 3) (4 5 6) (4 5 6) (1 2 3))))
+       (b (tensor '((3 2 1) (6 5 4) (6 5 4) (3 2 1)))))
+   (prn ($* a b))
+   (prn ($sum ($mul a b) 1))
+   (let ((h1 ($sum ($mul a b) 1))
+         (h2 ($* 2 ($sum ($mul a b) 1)))
+         (h3 ($* 1 ($sum ($mul a b) 1))))
+     (prn ($concat h1 h2 h3 1))
+     (prn ($softmax ($concat h1 h2 h3 1)))
+     (prn (reduce (lambda (a b) ($cat a b 1)) (list h1 h2 h3))))))
+
+(let ((a (tensor '((1 2 3 4 5 6 7 8 9 0)
+                   (0 1 2 3 4 5 6 7 8 9)
+                   (9 0 1 2 3 4 5 6 7 8)
+                   (8 9 0 1 2 3 4 5 6 7)
+                   (7 8 9 0 1 2 3 4 5 6)))))
+  (prn a)
+  (prn ($ a 0))
+  (prn ($ a '(0 1) '(0 10)))
+  (prn ($ a '((0 1) (0 10))))
+  (prn ($ a '(0 5) '(0 1)))
+  (prn ($ a '((0 5) (0 1))))
+  (prn ($mm ($ a '((0 5) (0 1))) (ones 1 3))))
