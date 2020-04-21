@@ -60,15 +60,15 @@
                   ($reshape ($size k 0) ($size k 2)))))
     ctx))
 
+;; XXX
+;; 1. attention cell or layer should be written (using functional-layer?
+
 ;; generate a string using the seed string
 (defun generate-string (rnn encoder seedstr n &optional (temperature 1D0))
   ($generate-sequence rnn encoder seedstr n temperature))
 
 (defun encoder-state (encoder-rnn) ($cell-state ($ encoder-rnn 1)))
 (defun update-decoder-state! (decoder-rnn h) ($update-cell-state! ($ decoder-rnn 1) h))
-
-;; XXX temporal input xt is index-encoded but the context ctx is not
-;; XXX so we need special cell for processing concatenation of [xt; ctx].
 
 ;; execution function for training
 (defun execute-seq2seq (encoder-rnn decoder-rnn encoder xs ts)
