@@ -34,7 +34,8 @@
            #:$cell-state
            #:$cell
            #:$update-cell-state!
-           #:with-keeping-state))
+           #:with-keeping-state
+           #:concat-sequence))
 
 ;; XXX cell state control api sucks!
 
@@ -1026,20 +1027,11 @@
         (reshape-args (cons ($count seq) ($size (car seq)))))
     (apply #'$reshape (cons (apply #'$concat concat-args) reshape-args))))
 
-(defmethod $execute ((l recurrent-layer) (xs list) &key (trainp t))
+(defmethod $execute ((l recurrent-layer) xs &key (trainp t))
   (with-slots (cell stateful truncated) l
     ($keep-state! cell stateful truncated)
     (loop :for x :in xs
           :collect ($execute cell x :trainp trainp))))
-
-(defmethod $execute ((l recurrent-layer) (xs tensor) &key (trainp t))
-  (with-slots (cell stateful truncated) l
-    ($keep-state! cell stateful truncated)
-    (let ((nx ($size xs 0)))
-      (concat-sequence
-       (loop :for i :from 0 :below nx
-             :for x = ($ xs i)
-             :collect ($execute cell x :trainp trainp))))))
 
 (defmethod $cell-state ((l recurrent-layer))
   ($cell-state ($cell l)))
