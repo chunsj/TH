@@ -91,6 +91,7 @@
            #:$split
            #:$chunk
            #:$cat
+           #:$catn
            #:$repeat
            #:$reshape
            #:$reshape!

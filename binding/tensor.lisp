@@ -895,6 +895,9 @@
   (tensor-cat2 tensor dimension tensor other)
   tensor)
 
+(defmethod $catn ((tensors list) &optional (dimension 0))
+  (tensor-catn (tensor) dimension tensors))
+
 (defmethod $concat ((tensor tensor) other &rest tensors)
   (let ((pd ($last tensors)))
     (if (numberp pd)

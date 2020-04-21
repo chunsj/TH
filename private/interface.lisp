@@ -224,6 +224,7 @@
 (defgeneric tensor-tri-u (tensor src k))
 (defgeneric tensor-cat (tensor dimension &rest srcs))
 (defgeneric tensor-cat2 (tensor dimension src1 src2))
+(defgeneric tensor-catn (tensor dimension srcs))
 (defgeneric tensor-equal (tensor-a tensor-b)
   (:documentation "check equality of element in tensors"))
 (defgeneric tensor-compare (operation tensor src1 src2)) ;; :lt :le :gt :ge :ne :eq

@@ -876,6 +876,14 @@
     (defmethod tensor-tri-u ((tensor tensor.type) (src tensor.type) k)
       (ft-tensor-triu ($handle tensor) ($handle src) k)
       tensor)
+    (defmethod tensor-catn ((tensor tensor.type) dimension srcs)
+      (let ((n ($count srcs)))
+        (cffi:with-foreign-object (inputs :pointer n)
+          (loop :for s :in srcs
+                :for i :from 0
+                :do (setf (cffi:mem-aref inputs :pointer i) ($handle s)))
+          (ft-tensor-cat-array ($handle tensor) inputs n dimension))
+        tensor))
     (defmethod tensor-cat ((tensor tensor.type) dimension &rest srcs)
       (cond ((null srcs) tensor)
             ((eq 1 ($count srcs)) (tensor-set tensor (tensor-clone ($0 srcs))))
@@ -885,9 +893,9 @@
                                                    ($handle ($1 srcs))
                                                    dimension)
                                     tensor))
-            (t (tensor-set tensor (reduce (lambda (r e)
-                                            (tensor-cat (tensor.type) dimension r e))
-                                          srcs)))))
+            (t (progn
+                 (tensor-catn tensor dimension srcs)
+                 tensor))))
     (defmethod tensor-cat2 ((tensor tensor.type) dimension (src1 tensor.type) (src2 tensor.type))
       (ft-tensor-cat ($handle tensor) ($handle src1) ($handle src2) dimension)
       tensor)

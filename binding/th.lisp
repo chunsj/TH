@@ -151,9 +151,11 @@
   (:documentation "Splits tensor by n approximately equal partitions along dimension."))
 
 (defgeneric $cat (tensor other &optional dimension)
-  (:documentation "Returns a new tensor which is a concatenation of tensors along dimension."))
+  (:documentation "Returns a new tensor which is a concatenation of tensor-other along dimension."))
 (defgeneric $cat! (tensor other &optional dimension)
   (:documentation "Returns a tensor which is a concatenation of tensors along dimension."))
+(defgeneric $catn (tensors &optional dimension)
+  (:documentation "Returns a new tensor which is a concatenation of tensors along dimension."))
 
 (defgeneric $reshape (tensor &rest sizes)
   (:documentation "Returns a new tensor of sizes shape, elements copied from tensor."))
