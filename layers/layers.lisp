@@ -645,15 +645,19 @@
               (affine-cell-forward x wx b)
               (affine-cell-forward x ($data wx) b0))))))
 
+(defun concat-sequence (seq)
+  (let ((concat-args (append seq '(0)))
+        (reshape-args (cons ($count seq) ($size (car seq)))))
+    (apply #'$reshape (cons (apply #'$concat concat-args) reshape-args))))
+
 (defclass dot-product-attention-cell (layer)
-  ((hs :initform nil)))
+  ((hs :initform nil :accessor $memory)))
 
 (defun dot-product-attention-cell ()
   (make-instance 'dot-product-attention-cell))
 
-(defmethod $set-memory! ((cell dot-product-attention-cell) enc-hs)
-  (with-slots (hs) cell
-    (setf hs enc-hs))
+(defmethod $set-memory! ((cell dot-product-attention-cell) hs)
+  (setf ($memory cell) hs)
   cell)
 
 (defun compute-dot-product-attention (hs q)
@@ -674,7 +678,7 @@
   (declare (ignore trainp))
   (with-slots (hs) cell
     (when hs
-      (compute-dot-product-attention hs q))))
+      ($cat q (compute-dot-product-attention hs q) 1))))
 
 (defclass rnn-cell (layer)
   ((wx :initform nil)
@@ -1056,11 +1060,6 @@
 (defmethod $parameters ((l recurrent-layer))
   (with-slots (cell) l
     ($parameters cell)))
-
-(defun concat-sequence (seq)
-  (let ((concat-args (append seq '(0)))
-        (reshape-args (cons ($count seq) ($size (car seq)))))
-    (apply #'$reshape (cons (apply #'$concat concat-args) reshape-args))))
 
 (defmethod $execute ((l recurrent-layer) xs &key (trainp t))
   (with-slots (cell stateful truncated) l
