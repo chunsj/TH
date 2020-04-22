@@ -71,10 +71,10 @@
 (defmethod $agd! ((parameters parameters) &optional (learning-rate 0.01))
   (loop :for n :in ($parameters parameters) :do ($agd! n learning-rate)))
 
-(defmethod $amgd! ((object t) &optional (learning-rate 0.01) (β1 0.9) (β2 0.999))
+(defmethod $amgd! ((object t) &optional (learning-rate 0.001) (β1 0.9) (β2 0.999))
   (declare (ignore learning-rate β1 β2)))
 
-(defmethod $amgd! ((node node) &optional (learning-rate 0.01) (β1 0.9) (β2 0.999))
+(defmethod $amgd! ((node node) &optional (learning-rate 0.001) (β1 0.9) (β2 0.999))
   (let ((data ($data node))
         (grv ($gradient node)))
     (cond ((null grv) nil)
@@ -102,10 +102,10 @@
                ($axpy! (- clr) ($div m ($add! ($sqrt v) 1E-8)) data))))
     ($cg! node)))
 
-(defmethod $amgd! ((nodes list) &optional (learning-rate 0.01) (β1 0.9) (β2 0.999))
+(defmethod $amgd! ((nodes list) &optional (learning-rate 0.001) (β1 0.9) (β2 0.999))
   (loop :for n :in nodes :do ($amgd! n learning-rate β1 β2)))
 
-(defmethod $amgd! ((parameters parameters) &optional (learning-rate 0.01) (β1 0.9) (β2 0.999))
+(defmethod $amgd! ((parameters parameters) &optional (learning-rate 0.001) (β1 0.9) (β2 0.999))
   (loop :for n :in ($parameters parameters) :do ($amgd! n learning-rate β1 β2)))
 
 (defmethod $rmgd! ((object t) &optional (learning-rate 0.001) (decay-rate 0.99))
