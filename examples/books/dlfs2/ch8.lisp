@@ -180,7 +180,7 @@
 ;; overfitting for checking implementation
 (time (train-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
                      *overfit-xs-batches* *overfit-ys-batches*
-                     500 100))
+                     1000 100))
 
 (prn (car *overfit-xs-batches*))
 
