@@ -27,7 +27,7 @@
            #:lstm-cell
            #:gru-cell
            #:affine-cell
-           #:dot-product-attention-cell
+           #:attention-cell
            #:dropout-cell
            #:$keep-state!
            #:recurrent-layer
@@ -211,19 +211,21 @@
         ((eq activation :nil) nil)
         (t #'$sigmoid)))
 
-(defun wif (weight-initializer sz as)
-  (cond ((eq weight-initializer :random-uniform) (apply #'vru (cons sz as)))
-        ((eq weight-initializer :random-normal) (apply #'vrn (cons sz as)))
-        ((eq weight-initializer :random-normal-truncated) (apply #'vrnt (cons sz as)))
-        ((eq weight-initializer :xavier-uniform) (vxavier sz :uniform))
-        ((eq weight-initializer :xavier-normal) (vxavier sz :normal))
-        ((eq weight-initializer :he-uniform) (vhe sz :uniform))
-        ((eq weight-initializer :he-normal) (vhe sz :normal))
-        ((eq weight-initializer :lecun-uniform) (vlecun sz :uniform))
-        ((eq weight-initializer :lecun-normal) (vlecun sz :normal))
-        ((eq weight-initializer :selu-uniform) (vselu sz :uniform))
-        ((eq weight-initializer :selu-normal) (vselu sz :normal))
-        (t (vru sz))))
+(defun wif (weight-initializer sz as &optional factor)
+  (let ((w (cond ((eq weight-initializer :random-uniform) (apply #'vru (cons sz as)))
+                 ((eq weight-initializer :random-normal) (apply #'vrn (cons sz as)))
+                 ((eq weight-initializer :random-normal-truncated) (apply #'vrnt (cons sz as)))
+                 ((eq weight-initializer :xavier-uniform) (vxavier sz :uniform))
+                 ((eq weight-initializer :xavier-normal) (vxavier sz :normal))
+                 ((eq weight-initializer :he-uniform) (vhe sz :uniform))
+                 ((eq weight-initializer :he-normal) (vhe sz :normal))
+                 ((eq weight-initializer :lecun-uniform) (vlecun sz :uniform))
+                 ((eq weight-initializer :lecun-normal) (vlecun sz :normal))
+                 ((eq weight-initializer :selu-uniform) (vselu sz :uniform))
+                 ((eq weight-initializer :selu-normal) (vselu sz :normal))
+                 (t (vru sz)))))
+    (when factor ($mul! ($data w) factor))
+    w))
 
 (defclass affine-layer (layer)
   ((w :initform nil)
@@ -234,12 +236,14 @@
 (defun affine-layer (input-size output-size
                      &key (activation :sigmoid) (weight-initializer :he-normal)
                        weight-initialization
+                       weight-factor
                        batch-normalization-p (biasp t))
   (let ((n (make-instance 'affine-layer)))
     (with-slots (w b a bn wi) n
       (setf a (afn activation))
       (when biasp (setf b ($parameter (zeros output-size))))
-      (setf w (wif weight-initializer (list input-size output-size) weight-initialization))
+      (setf w (wif weight-initializer (list input-size output-size) weight-initialization
+                   weight-factor))
       (when batch-normalization-p
         (setf bn (batch-normalization-layer output-size))))
     n))
@@ -316,6 +320,7 @@
                                (padding-width 0) (padding-height 0)
                                (activation :sigmoid) (weight-initializer :he-normal)
                                weight-initialization
+                               weight-factor
                                batch-normalization-p
                                (biasp t))
   (let ((n (make-instance 'convolution-2d-layer)))
@@ -328,7 +333,7 @@
       (when biasp (setf b ($parameter (zeros output-channel-size))))
       (setf w (wif weight-initializer
                    (list output-channel-size input-channel-size filter-height filter-width)
-                   weight-initialization))
+                   weight-initialization weight-factor))
       (when batch-normalization-p
         (setf bn (batch-normalization-layer output-channel-size))))
     n))
@@ -488,6 +493,7 @@
                                     (adjust-width 0) (adjust-height 0)
                                     (activation :sigmoid) (weight-initializer :he-normal)
                                     weight-initialization
+                                    weight-factor
                                     batch-normalization-p
                                     (biasp t))
   (let ((n (make-instance 'full-convolution-2d-layer)))
@@ -502,7 +508,7 @@
       (when biasp (setf b ($parameter (zeros output-channel-size))))
       (setf w (wif weight-initializer
                    (list input-channel-size output-channel-size filter-height filter-width)
-                   weight-initialization))
+                   weight-initialization weight-factor))
       (when batch-normalization-p
         (setf bn (batch-normalization-layer output-channel-size))))
     n))
@@ -607,13 +613,13 @@
 
 (defun affine-cell (input-size output-size
                     &key (activation :sigmoid) (weight-initializer :xavier-normal)
-                      weight-initialization (biasp t))
+                      weight-initialization weight-factor (biasp t))
   (let ((n (make-instance 'affine-cell)))
     (with-slots (wx b wi a) n
       (setf a (afn activation))
       (when biasp (setf b ($parameter (zeros output-size))))
       (setf wx (wif weight-initializer (list input-size output-size)
-                    weight-initialization)))
+                    weight-initialization weight-factor)))
 
     n))
 
@@ -650,16 +656,6 @@
         (reshape-args (cons ($count seq) ($size (car seq)))))
     (apply #'$reshape (cons (apply #'$concat concat-args) reshape-args))))
 
-(defclass dot-product-attention-cell (layer)
-  ((hs :initform nil :accessor $memory)))
-
-(defun dot-product-attention-cell ()
-  (make-instance 'dot-product-attention-cell))
-
-(defmethod $set-memory! ((cell dot-product-attention-cell) hs)
-  (setf ($memory cell) hs)
-  cell)
-
 (defun compute-dot-product-attention (hs q)
   "computes attention context from hs(TxBxD) and q(BxD)"
   (let* ((d ($size q 1))
@@ -674,11 +670,27 @@
                   ($reshape ($size k 0) ($size k 2)))))
     ctx))
 
-(defmethod $execute ((cell dot-product-attention-cell) q &key (trainp t))
+(defclass attention-cell (layer)
+  ((hs :initform nil :accessor $memory)
+   (fn :initform #'compute-dot-product-attention :accessor $computer)))
+
+(defun attention-cell (&key (computer :dot-product))
+  (let ((n (make-instance 'attention-cell)))
+    (with-slots (fn) n
+      (cond ((eq computer :dot-product) (setf fn #'compute-dot-product-attention))
+            (T (setf fn #'compute-dot-product-attention))))
+    n))
+
+(defmethod $set-memory! ((cell attention-cell) hs)
+  (setf ($memory cell) hs)
+  cell)
+
+(defmethod $execute ((cell attention-cell) q &key (trainp t))
   (declare (ignore trainp))
-  (with-slots (hs) cell
-    (when hs
-      (compute-dot-product-attention hs q))))
+  (with-slots (hs fn) cell
+    (if (and hs fn)
+        (funcall fn hs q)
+        (error "no memory to compute"))))
 
 (defclass rnn-cell (layer)
   ((wx :initform nil)
@@ -689,15 +701,15 @@
 
 (defun rnn-cell (input-size output-size
                  &key (activation :tanh) (weight-initializer :xavier-normal)
-                   weight-initialization (biasp t))
+                   weight-initialization weight-factor (biasp t))
   (let ((n (make-instance 'rnn-cell)))
     (with-slots (wx wh bh ph wi a) n
       (setf a (afn activation))
       (when biasp (setf bh ($parameter (zeros output-size))))
       (setf wx (wif weight-initializer (list input-size output-size)
-                    weight-initialization))
+                    weight-initialization weight-factor))
       (setf wh (wif weight-initializer (list output-size output-size)
-                    weight-initialization)))
+                    weight-initialization weight-factor)))
 
     n))
 
@@ -762,15 +774,15 @@
 
 (defun lstm-cell (input-size output-size
                   &key (weight-initializer :xavier-normal)
-                    weight-initialization (biasp t))
+                    weight-initialization weight-factor (biasp t))
   (let ((n (make-instance 'lstm-cell)))
     (with-slots (wx wh bh) n
       (when biasp
         (setf bh ($parameter (zeros (* 4 output-size)))))
       (setf wx (wif weight-initializer (list input-size (* 4 output-size))
-                    weight-initialization))
+                    weight-initialization weight-factor))
       (setf wh (wif weight-initializer (list output-size (* 4 output-size))
-                    weight-initialization)))
+                    weight-initialization weight-factor)))
     n))
 
 (defmethod $keep-state! ((l lstm-cell) statefulp &optional (truncatedp T))
@@ -834,113 +846,6 @@
                   pc ct)
             ht)))))
 
-;; original but slower lstm
-;; (defclass lstm-cell (layer)
-;;   ((wi :initform nil)
-;;    (ui :initform nil)
-;;    (bi :initform nil)
-;;    (wf :initform nil)
-;;    (uf :initform nil)
-;;    (bf :initform nil)
-;;    (wo :initform nil)
-;;    (uo :initform nil)
-;;    (bo :initform nil)
-;;    (wa :initform nil)
-;;    (ua :initform nil)
-;;    (ba :initform nil)
-;;    (ph :initform nil)
-;;    (pc :initform nil)))
-
-;; (defun lstm-cell (input-size output-size
-;;                   &key (weight-initializer :xavier-normal)
-;;                     weight-initialization (biasp t))
-;;   (let ((n (make-instance 'lstm-cell)))
-;;     (with-slots (wi ui bi wf uf bf wo uo bo wa ua ba) n
-;;       (when biasp
-;;         (setf bi ($parameter (zeros output-size))
-;;               bf ($parameter (zeros output-size))
-;;               bo ($parameter (zeros output-size))
-;;               ba ($parameter (zeros output-size))))
-;;       (setf wi (wif weight-initializer (list input-size output-size)
-;;                     weight-initialization))
-;;       (setf ui (wif weight-initializer (list output-size output-size)
-;;                     weight-initialization))
-;;       (setf wf (wif weight-initializer (list input-size output-size)
-;;                     weight-initialization))
-;;       (setf uf (wif weight-initializer (list output-size output-size)
-;;                     weight-initialization))
-;;       (setf wo (wif weight-initializer (list input-size output-size)
-;;                     weight-initialization))
-;;       (setf uo (wif weight-initializer (list output-size output-size)
-;;                     weight-initialization))
-;;       (setf wa (wif weight-initializer (list input-size output-size)
-;;                     weight-initialization))
-;;       (setf ua (wif weight-initializer (list output-size output-size)
-;;                     weight-initialization)))
-
-;;     n))
-
-;; (defmethod $keep-state! ((l lstm-cell) statefulp &optional (truncatedp T))
-;;   (with-slots (ph pc) l
-;;     (when (and ph pc)
-;;       (if statefulp
-;;           (if (and ($parameterp ph) ($parameterp pc))
-;;               (if truncatedp
-;;                   (setf ph ($clone ($data ph))
-;;                         pc ($clone ($data pc)))))
-;;           (setf ph nil
-;;                 pc nil)))
-;;     l))
-
-;; (defmethod $cell-state ((l lstm-cell))
-;;   (with-slots (ph) l
-;;     ph))
-
-;; (defmethod $update-cell-state! ((l lstm-cell) h)
-;;   (with-slots (ph) l
-;;     (setf ph h)
-;;     l))
-
-;; (defmethod $train-parameters ((l lstm-cell))
-;;   (with-slots (wi ui bi wf uf bf wo uo bo wa ua ba) l
-;;     (if bi
-;;         (list wi ui bi wf uf bf wo uo bo wa ua ba)
-;;         (list wi ui wf uf wo uo wa ua))))
-
-;; (defmethod $parameters ((l lstm-cell))
-;;   (with-slots (wi ui bi wf uf bf wo uo bo wa ua ba) l
-;;     (if bi
-;;         (list wi ui bi wf uf bf wo uo bo wa ua ba)
-;;         (list wi ui wf uf wo uo wa ua))))
-
-;; (defmethod $execute ((l lstm-cell) x &key (trainp t))
-;;   (with-slots (wi ui bi wf uf bf wo uo bo wa ua ba ph pc) l
-;;     (let ((ph0 (if ph ph (zeros ($size x 0) ($size wi 1))))
-;;           (pc0 (if pc pc (zeros ($size x 0) ($size wi 1))))
-;;           (bi0 (when bi ($data bi)))
-;;           (bf0 (when bf ($data bf)))
-;;           (bo0 (when bo ($data bo)))
-;;           (ba0 (when ba ($data ba))))
-;;       (if trainp
-;;           (let* ((it ($sigmoid (rnn-cell-forward x wi ph0 ui bi)))
-;;                  (ft ($sigmoid (rnn-cell-forward x wf ph0 uf bf)))
-;;                  (ot ($sigmoid (rnn-cell-forward x wo ph0 uo bo)))
-;;                  (at ($tanh (rnn-cell-forward x wa ph0 ua ba)))
-;;                  (ct ($+ ($* ft pc0) ($* at it)))
-;;                  (ht ($* ot ($tanh ct))))
-;;             (setf ph ht
-;;                   pc ct)
-;;             ht)
-;;           (let* ((it ($sigmoid (rnn-cell-forward x ($data wi) ph0 ($data ui) bi0)))
-;;                  (ft ($sigmoid (rnn-cell-forward x ($data wf) ph0 ($data uf) bf0)))
-;;                  (ot ($sigmoid (rnn-cell-forward x ($data wo) ph0 ($data uo) bo0)))
-;;                  (at ($tanh (rnn-cell-forward x ($data wa) ph0 ($data ua) ba0)))
-;;                  (ct ($+ ($* ft pc0) ($* at it)))
-;;                  (ht ($* ot ($tanh ct))))
-;;             (setf ph ht
-;;                   pc ct)
-;;             ht)))))
-
 (defclass gru-cell (layer)
   ((wz :initform nil)
    (uz :initform nil)
@@ -955,7 +860,7 @@
 
 (defun gru-cell (input-size output-size
                  &key (weight-initializer :xavier-normal)
-                   weight-initialization (biasp t))
+                   weight-initialization weight-factor (biasp t))
   (let ((n (make-instance 'gru-cell)))
     (with-slots (wz uz bz wr ur br wh uh bh) n
       (when biasp
@@ -963,17 +868,17 @@
               br ($parameter (zeros output-size))
               bh ($parameter (zeros output-size))))
       (setf wz (wif weight-initializer (list input-size output-size)
-                    weight-initialization))
+                    weight-initialization weight-factor))
       (setf uz (wif weight-initializer (list output-size output-size)
-                    weight-initialization))
+                    weight-initialization weight-factor))
       (setf wr (wif weight-initializer (list input-size output-size)
-                    weight-initialization))
+                    weight-initialization weight-factor))
       (setf ur (wif weight-initializer (list output-size output-size)
-                    weight-initialization))
+                    weight-initialization weight-factor))
       (setf wh (wif weight-initializer (list input-size output-size)
-                    weight-initialization))
+                    weight-initialization weight-factor))
       (setf uh (wif weight-initializer (list output-size output-size)
-                    weight-initialization)))
+                    weight-initialization weight-factor)))
 
     n))
 
