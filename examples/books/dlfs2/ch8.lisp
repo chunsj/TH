@@ -124,6 +124,11 @@
     (let ((matches (mapcar (lambda (tn yn) (if (string-equal tn yn) 0 1)) tss yss)))
       (* 1D0 (/ (reduce #'+ matches) ($count matches))))))
 
+(defun gd! (encoder-rnn decoder-rnn)
+  (let ((lr 0.001))
+    ($amgd! decoder-rnn lr)
+    ($amgd! encoder-rnn lr)))
+
 ;; train seq2seq network
 (defun train-seq2seq (encoder-rnn decoder-rnn encoder xss tss epochs pstep)
   (let ((sz ($count xss)))
@@ -133,8 +138,7 @@
                     :for idx :from 0
                     :for iter = (+ idx (* epoch sz))
                     :do (let ((loss (loss-seq2seq encoder-rnn decoder-rnn encoder xs ts)))
-                          ($rmgd! decoder-rnn)
-                          ($rmgd! encoder-rnn)
+                          (gd! encoder-rnn decoder-rnn)
                           (when (zerop (rem iter pstep))
                             (let* ((lv ($data loss))
                                    (ys (evaluate-seq2seq encoder-rnn decoder-rnn encoder xs))
@@ -144,22 +148,27 @@
                               (prn "YS" ys))))))))
 
 ;; model
+(defparameter *wi* :he-normal)
 (defparameter *encoder-rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
                               (sequential-layer
                                (recurrent-layer (affine-cell vsize *wvec-size*
                                                              :activation :nil
-                                                             :biasp nil))
-                               (recurrent-layer (lstm-cell *wvec-size* *hidden-size*)))))
+                                                             :biasp nil
+                                                             :weight-initializater *wi*))
+                               (recurrent-layer (gru-cell *wvec-size* *hidden-size*
+                                                          :weight-initializer *wi*)))))
 
 (defparameter *decoder-rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
                               (sequential-layer
                                (recurrent-layer (affine-cell vsize *wvec-size*
                                                              :activation :nil
-                                                             :biasp nil))
-                               (recurrent-layer (lstm-cell *wvec-size* *hidden-size*))
+                                                             :biasp nil
+                                                             :weight-initializer *wi*))
+                               (recurrent-layer (gru-cell *wvec-size* *hidden-size*
+                                                          :weight-initializer *wi*))
                                (recurrent-layer
                                 (sequential-layer
-                                 (parallel-layer (dot-product-attention-cell)
+                                 (parallel-layer (attention-cell)
                                                  (functional-layer
                                                   (lambda (q &key (trainp t))
                                                    (declare (ignore trainp))
@@ -169,7 +178,8 @@
                                    (declare (ignore trainp))
                                    ($cat q c 1)))))
                                (recurrent-layer (affine-cell (* 2 *hidden-size*) vsize
-                                                             :activation :nil)))))
+                                                             :activation :nil
+                                                             :weight-initializer *wi*)))))
 
 ($reset! *encoder-rnn*)
 ($reset! *decoder-rnn*)
