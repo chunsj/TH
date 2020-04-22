@@ -152,14 +152,14 @@
                                (recurrent-layer (affine-cell vsize *wvec-size*
                                                              :activation :nil
                                                              :biasp nil))
-                               (recurrent-layer (rnn-cell *wvec-size* *hidden-size*)))))
+                               (recurrent-layer (lstm-cell *wvec-size* *hidden-size*)))))
 
 (defparameter *decoder-rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
                               (sequential-layer
                                (recurrent-layer (affine-cell vsize *wvec-size*
                                                              :activation :nil
                                                              :biasp nil))
-                               (recurrent-layer (rnn-cell *wvec-size* *hidden-size*))
+                               (recurrent-layer (lstm-cell *wvec-size* *hidden-size*))
                                (recurrent-layer
                                 (sequential-layer
                                  (parallel-layer (dot-product-attention-cell)
