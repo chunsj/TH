@@ -60,16 +60,13 @@
                   ($reshape ($size k 0) ($size k 2)))))
     ctx))
 
-;; XXX
-;; 1. attention cell or layer should be written (using functional-layer?
-
 ;; generate a string using the seed string
 (defun generate-string (rnn encoder seedstr n &optional (temperature 1D0))
   ($generate-sequence rnn encoder seedstr n temperature))
 
 (defun update-decoder-state! (decoder-rnn h) ($update-cell-state! ($ decoder-rnn 1) h))
 (defun update-attention-memory! (decoder-rnn hs)
-  ($set-memory! ($ decoder-rnn 2) (concat-sequence hs)))
+  ($set-memory! ($cell ($ decoder-rnn 2)) (concat-sequence hs)))
 
 ;; execution function for training
 (defun execute-seq2seq (encoder-rnn decoder-rnn encoder xs ts)
@@ -164,7 +161,7 @@
                                                              :biasp nil))
                                (recurrent-layer (lstm-cell *wvec-size* *hidden-size*))
                                (recurrent-layer (dot-product-attention-cell))
-                               (recurrent-layer (affine-cell *hidden-size* vsize
+                               (recurrent-layer (affine-cell (* 2 *hidden-size*) vsize
                                                              :activation :nil)))))
 
 ($reset! *encoder-rnn*)
@@ -173,7 +170,7 @@
 ;; overfitting for checking implementation
 (time (train-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
                      *overfit-xs-batches* *overfit-ys-batches*
-                     1 100))
+                     1000 100))
 
 (prn (car *overfit-xs-batches*))
 
