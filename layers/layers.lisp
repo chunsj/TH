@@ -678,7 +678,7 @@
   (declare (ignore trainp))
   (with-slots (hs) cell
     (when hs
-      ($cat q (compute-dot-product-attention hs q) 1))))
+      (compute-dot-product-attention hs q))))
 
 (defclass rnn-cell (layer)
   ((wx :initform nil)
