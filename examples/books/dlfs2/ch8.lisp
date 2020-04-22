@@ -42,9 +42,6 @@
 (defparameter *overfit-xs-batches* (subseq (build-batches *train-input-data* 5) 0 1))
 (defparameter *overfit-ys-batches* (subseq (build-batches *train-target-data* 5) 0 1))
 
-;; helper functions for the seq2seq model
-;; mostly generation, execution(for training) and evaluation(for running)
-
 ;; compute attention context - dot product attention
 (defun compute-context (hs q)
   "computes attention context from hs(TxBxD) and q(BxD)"
