@@ -137,14 +137,14 @@
                                (recurrent-layer (affine-cell vsize *wvec-size*
                                                              :activation :nil
                                                              :biasp nil))
-                               (recurrent-layer (lstm-cell *wvec-size* *hidden-size*)))))
+                               (recurrent-layer (rnn-cell *wvec-size* *hidden-size*)))))
 
 (defparameter *decoder-rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
                               (sequential-layer
                                (recurrent-layer (affine-cell vsize *wvec-size*
                                                              :activation :nil
                                                              :biasp nil))
-                               (recurrent-layer (lstm-cell *wvec-size* *hidden-size*))
+                               (recurrent-layer (rnn-cell *wvec-size* *hidden-size*))
                                (recurrent-layer (affine-cell *hidden-size* vsize
                                                              :activation :nil)))))
 
@@ -154,7 +154,7 @@
 ;; overfitting for checking implementation
 (time (train-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
                      *overfit-xs-batches* *overfit-ys-batches*
-                     1000 100))
+                     500 100))
 
 (prn (car *overfit-xs-batches*))
 

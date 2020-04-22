@@ -688,7 +688,7 @@
    (ph :initform nil)))
 
 (defun rnn-cell (input-size output-size
-                 &key (activation :tanh) (weight-initializer :xavier-normal)
+                 &key (activation :tanh) (weight-initializer :he-normal)
                    weight-initialization (biasp t))
   (let ((n (make-instance 'rnn-cell)))
     (with-slots (wx wh bh ph wi a) n
