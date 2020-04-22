@@ -66,7 +66,7 @@
 
 (defun update-decoder-state! (decoder-rnn h) ($update-cell-state! ($ decoder-rnn 1) h))
 (defun update-attention-memory! (decoder-rnn hs)
-  ($set-memory! ($cell ($ decoder-rnn 2)) (concat-sequence hs)))
+  ($set-memory! ($ ($ ($cell ($ decoder-rnn 2)) 0) 0) (concat-sequence hs)))
 
 ;; execution function for training
 (defun execute-seq2seq (encoder-rnn decoder-rnn encoder xs ts)
@@ -160,7 +160,17 @@
                                                              :activation :nil
                                                              :biasp nil))
                                (recurrent-layer (lstm-cell *wvec-size* *hidden-size*))
-                               (recurrent-layer (dot-product-attention-cell))
+                               (recurrent-layer
+                                (sequential-layer
+                                 (parallel-layer (dot-product-attention-cell)
+                                                 (functional-layer
+                                                  (lambda (q &key (trainp t))
+                                                   (declare (ignore trainp))
+                                                   q)))
+                                 (functional-layer
+                                  (lambda (c q &key (trainp t))
+                                   (declare (ignore trainp))
+                                   ($cat q c 1)))))
                                (recurrent-layer (affine-cell (* 2 *hidden-size*) vsize
                                                              :activation :nil)))))
 
@@ -170,7 +180,7 @@
 ;; overfitting for checking implementation
 (time (train-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
                      *overfit-xs-batches* *overfit-ys-batches*
-                     1000 100))
+                     10000 100))
 
 (prn (car *overfit-xs-batches*))
 
@@ -187,46 +197,3 @@
 
 (prn (encoder-decode *encoder* ($0 *train-ys-batches*)))
 (prn (evaluate-seq2seq *encoder-rnn* *decoder-rnn* *encoder* ($0 *train-xs-batches*)))
-
-;;
-;; XXX for developing
-;;
-
-;; concat-sequence performance
-(let ((hsi ($evaluate *encoder-rnn* (car *overfit-xs-batches*))))
-  (time
-   (with-max-heap (2048)
-     (loop :repeat 10000
-           :do (concat-sequence hsi)))))
-
-;; checking compute-context
-(let* ((hsi ($evaluate *encoder-rnn* (car *overfit-xs-batches*)))
-       (q ($last hsi))
-       (hs (concat-sequence hsi)))
-  (prn (compute-context hs q)))
-
-;; XXX test computation for attention weight
-(time
- (let ((a (tensor '((1 2 3) (4 5 6) (4 5 6) (1 2 3))))
-       (b (tensor '((3 2 1) (6 5 4) (6 5 4) (3 2 1)))))
-   (prn ($* a b))
-   (prn ($sum ($mul a b) 1))
-   (let ((h1 ($sum ($mul a b) 1))
-         (h2 ($* 2 ($sum ($mul a b) 1)))
-         (h3 ($* 1 ($sum ($mul a b) 1))))
-     (prn ($concat h1 h2 h3 1))
-     (prn ($softmax ($concat h1 h2 h3 1)))
-     (prn (reduce (lambda (a b) ($cat a b 1)) (list h1 h2 h3))))))
-
-(let ((a (tensor '((1 2 3 4 5 6 7 8 9 0)
-                   (0 1 2 3 4 5 6 7 8 9)
-                   (9 0 1 2 3 4 5 6 7 8)
-                   (8 9 0 1 2 3 4 5 6 7)
-                   (7 8 9 0 1 2 3 4 5 6)))))
-  (prn a)
-  (prn ($ a 0))
-  (prn ($ a '(0 1) '(0 10)))
-  (prn ($ a '((0 1) (0 10))))
-  (prn ($ a '(0 5) '(0 1)))
-  (prn ($ a '((0 5) (0 1))))
-  (prn ($mm ($ a '((0 5) (0 1))) (ones 1 3))))
