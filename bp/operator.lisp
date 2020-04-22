@@ -354,9 +354,9 @@
   (node ($cat ($data x) ($data y) dimension)
         :name :cat
         :link (link
-                (to x ($narrow gv dimension 0 ($size ($data x) 1)))
-                (to y ($narrow gv dimension ($size ($data x) 1)
-                               ($size ($data y) 1))))))
+                (to x ($narrow gv dimension 0 ($size ($data x) dimension)))
+                (to y ($narrow gv dimension ($size ($data x) dimension)
+                               ($size ($data y) dimension))))))
 
 (defmethod $cat ((x node) (y tensor) &optional (dimension 0))
   (node ($cat ($data x) y dimension)
