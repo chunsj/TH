@@ -361,12 +361,13 @@
 (defmethod $cat ((x node) (y tensor) &optional (dimension 0))
   (node ($cat ($data x) y dimension)
         :name :cat
-        :link (link (to x ($narrow gv dimension 0 ($size ($data x) 1))))))
+        :link (link (to x ($narrow gv dimension 0 ($size ($data x) dimension))))))
 
 (defmethod $cat ((x tensor) (y node) &optional (dimension 0))
   (node ($cat x ($data y) dimension)
         :name :cat
-        :link (link (to y ($narrow gv dimension ($size x 1) ($size ($data y) 1))))))
+        :link (link (to y ($narrow gv dimension ($size x dimension)
+                                   ($size ($data y) dimension))))))
 
 (defmethod $concat ((x node) nodes &rest others)
   (let ((pd ($last others)))
