@@ -176,7 +176,9 @@
 ;; real training
 (time (train-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
                      *train-xs-batches* *train-ys-batches*
-                     30 100))
+                     30 100
+                     #'$adgd!
+                     1))
 
 (matches-score *encoder* ($0 *train-ys-batches*)
                (evaluate-seq2seq *encoder-rnn* *decoder-rnn* *encoder* ($0 *train-xs-batches*)))
