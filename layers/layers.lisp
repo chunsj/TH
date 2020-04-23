@@ -804,12 +804,13 @@
     l))
 
 (defmethod $cell-state ((l lstm-cell))
-  (with-slots (ph) l
-    ph))
+  (with-slots (ph pc) l
+    (list ph pc)))
 
 (defmethod $update-cell-state! ((l lstm-cell) h)
-  (with-slots (ph) l
-    (setf ph h))
+  (with-slots (ph pc) l
+    (setf ph (car h)
+          pc (cadr h)))
   l)
 
 (defmethod $train-parameters ((l lstm-cell))
