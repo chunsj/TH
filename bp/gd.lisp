@@ -7,7 +7,7 @@
 (defgeneric $agd! (node &optional learning-rate) (:documentation "Executes adagrad."))
 (defgeneric $amgd! (node &optional learning-rate β1 β2) (:documentation "Executes adam."))
 (defgeneric $rmgd! (node &optional learning-rate decay-rate) (:documentation "Executes rmsprop."))
-(defgeneric $adgd! (node &optional decay-rate) (:documentation "Executes adadelta."))
+(defgeneric $adgd! (node &optional learning-rate decay-rate) (:documentation "Executes adadelta."))
 
 (defmethod $gd! ((object t) &optional (learning-rate 0.01)) (declare (ignore learning-rate)))
 
@@ -136,7 +136,7 @@
 
 (defmethod $adgd! ((object t) &optional (decay-rate 0.95)) (declare (ignore decay-rate)))
 
-(defmethod $adgd! ((node node) &optional (decay-rate 0.95))
+(defmethod $adgd! ((node node) &optional (learning-rate 1) (decay-rate 0.95))
   (let ((data ($data node))
         (grv ($gradient node))
         (eps 1E-6))
@@ -151,7 +151,7 @@
                              (setf d (+ d (* (- 1 decay-rate) (* delta delta))))
                              (setf ($attr node :h) h)
                              (setf ($attr node :d) d)
-                             (setf ($data node) (- data delta)))))
+                             (setf ($data node) (- data (* learning-rate delta))))))
           (t (let ((h ($attr node :h (apply #'zeros ($size grv))))
                    (d ($attr node :d (apply #'zeros ($size grv)))))
                ($mul! h decay-rate)
@@ -159,11 +159,11 @@
                (let ((delta ($mul! ($sqrt! ($div! ($add d eps) ($add h eps))) grv)))
                  ($mul! d decay-rate)
                  ($axpy! (- 1 decay-rate) ($expt delta 2) d)
-                 ($axpy! -1 delta data)))))
+                 ($axpy! -1 ($mul! delta learning-rate) data)))))
     ($cg! node)))
 
-(defmethod $adgd! ((nodes list) &optional (decay-rate 0.95))
-  (loop :for n :in nodes :do ($adgd! n decay-rate)))
+(defmethod $adgd! ((nodes list) &optional (learning-rate 1) (decay-rate 0.95))
+  (loop :for n :in nodes :do ($adgd! n learning-rate decay-rate)))
 
-(defmethod $adgd! ((parameters parameters) &optional (decay-rate 0.95))
-  (loop :for n :in ($parameters parameters) :do ($adgd! n decay-rate)))
+(defmethod $adgd! ((parameters parameters) &optional (learning-rate 1) (decay-rate 0.95))
+  (loop :for n :in ($parameters parameters) :do ($adgd! n learning-rate decay-rate)))
