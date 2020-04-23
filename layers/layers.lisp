@@ -615,7 +615,7 @@
    (b :initform nil)))
 
 (defun affine-cell (input-size output-size
-                    &key (activation :sigmoid) (weight-initializer :xavier-normal)
+                    &key (activation :sigmoid) (weight-initializer :he-normal)
                       weight-initialization weight-factor (biasp t))
   (let ((n (make-instance 'affine-cell)))
     (with-slots (wx b wi a) n
@@ -703,7 +703,7 @@
    (ph :initform nil)))
 
 (defun rnn-cell (input-size output-size
-                 &key (activation :tanh) (weight-initializer :xavier-normal)
+                 &key (activation :tanh) (weight-initializer :he-normal)
                    weight-initialization weight-factor (biasp t))
   (let ((n (make-instance 'rnn-cell)))
     (with-slots (wx wh bh ph wi a) n
@@ -776,8 +776,8 @@
    (pc :initform nil)))
 
 (defun lstm-cell (input-size output-size
-                  &key (weight-initializer :xavier-normal)
-                    weight-initialization weight-factor (biasp t))
+                  &key (weight-initializer :he-normal)
+                    (weight-initialization) weight-factor (biasp t))
   (let ((n (make-instance 'lstm-cell)))
     (with-slots (wx wh bh) n
       (when biasp
@@ -785,7 +785,10 @@
       (setf wx (wif weight-initializer (list input-size (* 4 output-size))
                     weight-initialization weight-factor))
       (setf wh (wif weight-initializer (list output-size (* 4 output-size))
-                    weight-initialization weight-factor)))
+                    weight-initialization weight-factor))
+      (when biasp
+        ($fill! ($narrow ($data bh) 0 0 output-size) 1D0))
+      )
     n))
 
 (defmethod $keep-state! ((l lstm-cell) statefulp &optional (truncatedp T))
@@ -862,13 +865,13 @@
    (ph :initform nil)))
 
 (defun gru-cell (input-size output-size
-                 &key (weight-initializer :xavier-normal)
+                 &key (weight-initializer :he-normal)
                    weight-initialization weight-factor (biasp t))
   (let ((n (make-instance 'gru-cell)))
     (with-slots (wz uz bz wr ur br wh uh bh) n
       (when biasp
         (setf bz ($parameter (zeros output-size))
-              br ($parameter (zeros output-size))
+              br ($parameter ($* -1 (ones output-size)))
               bh ($parameter (zeros output-size))))
       (setf wz (wif weight-initializer (list input-size output-size)
                     weight-initialization weight-factor))
