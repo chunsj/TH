@@ -42,25 +42,7 @@
 (defparameter *overfit-xs-batches* (subseq (build-batches *train-input-data* 5) 0 1))
 (defparameter *overfit-ys-batches* (subseq (build-batches *train-target-data* 5) 0 1))
 
-;; compute attention context - dot product attention
-(defun compute-context (hs q)
-  "computes attention context from hs(TxBxD) and q(BxD)"
-  (let* ((d ($size q 1))
-         (q (-> (apply #'$reshape q (cons 1 ($size q)))
-                ($transpose 0 1)))
-         (k ($transpose hs 0 1))
-         (kt ($transpose k 1 2))
-         (qkt ($div ($bmm q kt) ($sqrt d)))
-         (a (-> ($softmax ($reshape qkt ($size qkt 0) ($size qkt 2)))
-                ($reshape ($size qkt 0) 1 ($size qkt 2))))
-         (ctx (-> ($bmm a k)
-                  ($reshape ($size k 0) ($size k 2)))))
-    ctx))
-
-;; generate a string using the seed string
-(defun generate-string (rnn encoder seedstr n &optional (temperature 1D0))
-  ($generate-sequence rnn encoder seedstr n temperature))
-
+;; encoder decoder network connection managements
 (defun update-decoder-state! (decoder-rnn h) ($update-cell-state! ($ decoder-rnn 1) h))
 (defun update-attention-memory! (decoder-rnn hs)
   ($set-memory! ($ ($ ($cell ($ decoder-rnn 2)) 0) 0) (concat-sequence hs)))
@@ -124,48 +106,44 @@
     (let ((matches (mapcar (lambda (tn yn) (if (string-equal tn yn) 0 1)) tss yss)))
       (* 1D0 (/ (reduce #'+ matches) ($count matches))))))
 
-(defun gd! (encoder-rnn decoder-rnn)
-  (let ((lr 0.001))
-    ($amgd! decoder-rnn lr)
-    ($amgd! encoder-rnn lr)))
+(defun gd! (encoder-rnn decoder-rnn fn lr)
+  (funcall fn decoder-rnn lr)
+  (funcall fn encoder-rnn lr))
 
 ;; train seq2seq network
-(defun train-seq2seq (encoder-rnn decoder-rnn encoder xss tss epochs pstep)
+(defun train-seq2seq (encoder-rnn decoder-rnn encoder xss tss epochs pstep fn lr)
   (let ((sz ($count xss)))
-    (loop :for epoch :from 0 :below epochs
-          :do (loop :for xs :in xss
-                    :for ts :in tss
-                    :for idx :from 0
-                    :for iter = (+ idx (* epoch sz))
-                    :do (let ((loss (loss-seq2seq encoder-rnn decoder-rnn encoder xs ts)))
-                          (gd! encoder-rnn decoder-rnn)
-                          (when (zerop (rem iter pstep))
-                            (let* ((lv ($data loss))
-                                   (ys (evaluate-seq2seq encoder-rnn decoder-rnn encoder xs))
-                                   (score (matches-score encoder ts ys)))
-                              (prn iter lv score)
-                              (prn "TS" (encoder-decode encoder ts))
-                              (prn "YS" ys))))))))
+    (block train
+      (loop :for epoch :from 0 :below epochs
+            :do (loop :for xs :in xss
+                      :for ts :in tss
+                      :for idx :from 0
+                      :for iter = (+ idx (* epoch sz))
+                      :do (let ((loss (loss-seq2seq encoder-rnn decoder-rnn encoder xs ts)))
+                            (gd! encoder-rnn decoder-rnn fn lr)
+                            (when (zerop (rem iter pstep))
+                              (let* ((lv ($data loss))
+                                     (ys (evaluate-seq2seq encoder-rnn decoder-rnn encoder xs))
+                                     (score (matches-score encoder ts ys)))
+                                (prn iter lv score)
+                                (prn "TS" (encoder-decode encoder ts))
+                                (prn "YS" ys)
+                                (when (< score 1E-2) (return-from train))))))))))
 
 ;; model
-(defparameter *wi* :he-normal)
 (defparameter *encoder-rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
                               (sequential-layer
                                (recurrent-layer (affine-cell vsize *wvec-size*
                                                              :activation :nil
-                                                             :biasp nil
-                                                             :weight-initializater *wi*))
-                               (recurrent-layer (gru-cell *wvec-size* *hidden-size*
-                                                          :weight-initializer *wi*)))))
+                                                             :biasp nil))
+                               (recurrent-layer (rnn-cell *wvec-size* *hidden-size*)))))
 
 (defparameter *decoder-rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
                               (sequential-layer
                                (recurrent-layer (affine-cell vsize *wvec-size*
                                                              :activation :nil
-                                                             :biasp nil
-                                                             :weight-initializer *wi*))
-                               (recurrent-layer (gru-cell *wvec-size* *hidden-size*
-                                                          :weight-initializer *wi*))
+                                                             :biasp nil))
+                               (recurrent-layer (rnn-cell *wvec-size* *hidden-size*))
                                (recurrent-layer
                                 (sequential-layer
                                  (parallel-layer (attention-cell)
@@ -178,8 +156,7 @@
                                    (declare (ignore trainp))
                                    ($cat q c 1)))))
                                (recurrent-layer (affine-cell (* 2 *hidden-size*) vsize
-                                                             :activation :nil
-                                                             :weight-initializer *wi*)))))
+                                                             :activation :nil)))))
 
 ($reset! *encoder-rnn*)
 ($reset! *decoder-rnn*)
@@ -187,7 +164,9 @@
 ;; overfitting for checking implementation
 (time (train-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
                      *overfit-xs-batches* *overfit-ys-batches*
-                     1000 100))
+                     5000 100
+                     #'$adgd!
+                     1))
 
 (prn (car *overfit-xs-batches*))
 

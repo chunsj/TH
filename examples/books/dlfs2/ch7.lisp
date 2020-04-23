@@ -112,24 +112,29 @@
     (let ((matches (mapcar (lambda (tn yn) (if (eq tn yn) 0 1)) tss yss)))
       (* 1D0 (/ (reduce #'+ matches) ($count matches))))))
 
+(defun gd! (encoder-rnn decoder-rnn fn lr)
+  (funcall fn decoder-rnn lr)
+  (funcall fn encoder-rnn lr))
+
 ;; train seq2seq network
-(defun train-seq2seq (encoder-rnn decoder-rnn encoder xss tss epochs pstep)
+(defun train-seq2seq (encoder-rnn decoder-rnn encoder xss tss epochs pstep fn lr)
   (let ((sz ($count xss)))
-    (loop :for epoch :from 0 :below epochs
-          :do (loop :for xs :in xss
-                    :for ts :in tss
-                    :for idx :from 0
-                    :for iter = (+ idx (* epoch sz))
-                    :do (let ((loss (loss-seq2seq encoder-rnn decoder-rnn encoder xs ts)))
-                          ($adgd! decoder-rnn)
-                          ($adgd! encoder-rnn)
-                          (when (zerop (rem iter pstep))
-                            (let* ((lv ($data loss))
-                                   (ys (evaluate-seq2seq encoder-rnn decoder-rnn encoder xs))
-                                   (score (matches-score encoder ts ys)))
-                              (prn iter lv score)
-                              (prn "TS" (encoder-decode encoder ts))
-                              (prn "YS" ys))))))))
+    (block train
+      (loop :for epoch :from 0 :below epochs
+            :do (loop :for xs :in xss
+                      :for ts :in tss
+                      :for idx :from 0
+                      :for iter = (+ idx (* epoch sz))
+                      :do (let ((loss (loss-seq2seq encoder-rnn decoder-rnn encoder xs ts)))
+                            (gd! encoder-rnn decoder-rnn fn lr)
+                            (when (zerop (rem iter pstep))
+                              (let* ((lv ($data loss))
+                                     (ys (evaluate-seq2seq encoder-rnn decoder-rnn encoder xs))
+                                     (score (matches-score encoder ts ys)))
+                                (prn iter lv score)
+                                (prn "TS" (encoder-decode encoder ts))
+                                (prn "YS" ys)
+                                (when (< score 1E-2) (return-from train))))))))))
 
 ;; model
 (defparameter *encoder-rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
@@ -154,7 +159,9 @@
 ;; overfitting for checking implementation
 (time (train-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
                      *overfit-xs-batches* *overfit-ys-batches*
-                     500 100))
+                     5000 100
+                     #'$adgd!
+                     1))
 
 (prn (car *overfit-xs-batches*))
 
