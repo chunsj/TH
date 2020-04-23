@@ -790,12 +790,13 @@
 (defmethod $nonzero ((tensor tensor)) (tensor-non-zero tensor))
 
 (defmethod $repeat ((tensor tensor) &rest sizes)
-  (let* ((result ($empty tensor))
+  (warn "$repeat method does not work correctly")
+  (let* ((result ($clone tensor))
          (tensor (if ($contiguousp tensor) tensor ($clone tensor)))
          (size (if (eq 1 ($count sizes))
                    (append sizes '(1))
                    (copy-list sizes)))
-         (xtensor (tensor tensor))
+         (xtensor ($clone tensor))
          (xsize ($size xtensor))
          (xsize (progn (loop :for i :from 0 :below (- ($count size) ($ndim tensor))
                              :do (push 1 xsize))
@@ -804,7 +805,7 @@
          (size (loop :for i :from 0 :below ($count size-tensor)
                      :collect ($ ($storage size-tensor) i)))
          (result ($resize! result size))
-         (urtensor (tensor result))
+         (urtensor ($clone result))
          (xtensor ($resize! xtensor xsize)))
     (loop :for i :from 0 :below ($ndim xtensor)
           :for xs = ($size xtensor i)
@@ -814,6 +815,13 @@
     ($resize! xtensor xsize)
     ($copy! urtensor ($expand xtensor ($size urtensor)))
     result))
+
+;; XXX this should be better
+;; (let ((a (tensor '(1 1)))
+;;       (b (zeros 2 2)))
+;;   (setf ($subview b 0 1 0 2) a)
+;;   (prn a)
+;;   (prn b))
 
 (defmethod $repeat ((n number) &rest sizes)
   (let ((result (apply #'tensor sizes)))
