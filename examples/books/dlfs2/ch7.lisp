@@ -121,8 +121,8 @@
                     :for idx :from 0
                     :for iter = (+ idx (* epoch sz))
                     :do (let ((loss (loss-seq2seq encoder-rnn decoder-rnn encoder xs ts)))
-                          ($rmgd! decoder-rnn)
-                          ($rmgd! encoder-rnn)
+                          ($adgd! decoder-rnn)
+                          ($adgd! encoder-rnn)
                           (when (zerop (rem iter pstep))
                             (let* ((lv ($data loss))
                                    (ys (evaluate-seq2seq encoder-rnn decoder-rnn encoder xs))

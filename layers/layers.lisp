@@ -82,14 +82,14 @@
 (defmethod $agd! ((l layer) &optional (learning-rate 0.01))
   ($agd! ($train-parameters l) learning-rate))
 
-(defmethod $amgd! ((l layer) &optional (learning-rate 0.01) (β1 0.9) (β2 0.999))
+(defmethod $amgd! ((l layer) &optional (learning-rate 0.001) (β1 0.9) (β2 0.999))
   ($amgd! ($train-parameters l) learning-rate β1 β2))
 
 (defmethod $rmgd! ((l layer) &optional (learning-rate 0.001) (decay-rate 0.99))
   ($rmgd! ($train-parameters l) learning-rate decay-rate))
 
-(defmethod $adgd! ((l layer) &optional (decay-rate 0.95))
-  ($adgd! ($train-parameters l) decay-rate))
+(defmethod $adgd! ((l layer) &optional (learning-rate 1) (decay-rate 0.95))
+  ($adgd! ($train-parameters l) learning-rate decay-rate))
 
 (defmethod $cg! ((l layer)) ($cg! ($train-parameters l)))
 (defmethod $reset! ((l layer)) ($reset! ($train-parameters l)))
