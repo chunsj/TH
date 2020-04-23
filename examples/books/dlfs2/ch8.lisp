@@ -13,7 +13,7 @@
 ;; number addition problems
 (defparameter *data* (date-data))
 (defparameter *data-length* ($count *data*))
-(defparameter *encoder* (character-encoder (concatenate 'string "01234567890"
+(defparameter *encoder* (character-encoder (concatenate 'string "0123456789"
                                                         "abcdefghijklmnopqrstuvwxyz"
                                                         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                                         " _-,/")))
@@ -23,6 +23,8 @@
 (defparameter *train-target-data* (mapcar (lambda (s) (subseq s 30)) (subseq *data* 0 40000)))
 (defparameter *test-input-data* (mapcar (lambda (s) (subseq s 0 29)) (subseq *data* 40000)))
 (defparameter *test-target-data* (mapcar (lambda (s) (subseq s 30)) (subseq *data* 40000)))
+
+(defparameter *bs* ($ (car (encoder-encode *encoder* '("_"))) 0))
 
 ;; network parameters
 (defparameter *batch-size* 100)
@@ -48,27 +50,23 @@
   ($set-memory! ($ ($ ($cell ($ decoder-rnn 2)) 0) 0) (concat-sequence hs)))
 
 ;; execution function for training
-(defun execute-seq2seq (encoder-rnn decoder-rnn encoder xs ts)
+(defun execute-seq2seq (encoder-rnn decoder-rnn xs ts)
   (let* ((hs ($execute encoder-rnn xs))
          (h0 ($last hs)))
     (update-decoder-state! decoder-rnn h0)
     (update-attention-memory! decoder-rnn hs)
     (with-keeping-state (decoder-rnn)
       (let* ((batch-size ($size (car xs) 0))
-             (ys (append (encoder-encode encoder (loop :repeat batch-size :collect "_"))
+             (ys (append (list ($fill! (tensor.long batch-size) *bs*))
                          ts))
              (yts ($execute decoder-rnn ys)))
         (butlast yts)))))
 
 ;; loss function using cross entropy
-(defun loss-seq2seq (encoder-rnn decoder-rnn encoder xs ts &optional verbose)
-  (let* ((ys (execute-seq2seq encoder-rnn decoder-rnn encoder xs ts))
-         (losses (mapcar (lambda (y c) ($cec y c)) ys ts))
-         (loss ($div (apply #'$+ losses) ($count losses))))
-    (when verbose
-      (prn "TS" (encoder-decode encoder ts))
-      (prn "YS" (encoder-choose encoder ys -1)))
-    loss))
+(defun loss-seq2seq (encoder-rnn decoder-rnn xs ts)
+  (let* ((ys (execute-seq2seq encoder-rnn decoder-rnn xs ts))
+         (losses (mapcar (lambda (y c) ($cec y c)) ys ts)))
+    ($div (apply #'$+ losses) ($count losses))))
 
 ;; generate using decoder
 (defun generate-decoder (decoder-rnn encoder hs xs0 n)
@@ -96,7 +94,7 @@
 (defun evaluate-seq2seq (encoder-rnn decoder-rnn encoder xs &optional (n 10))
   (let ((hs ($evaluate encoder-rnn xs)))
     (generate-decoder decoder-rnn encoder hs
-                      (encoder-encode encoder (loop :repeat ($size (car xs) 0) :collect "_"))
+                      (list ($fill! (tensor.long ($size (car xs) 0)) *bs*))
                       n)))
 
 ;; compare the results - between the generated one and the truth
@@ -119,16 +117,20 @@
                       :for ts :in tss
                       :for idx :from 0
                       :for iter = (+ idx (* epoch sz))
-                      :do (let ((loss (loss-seq2seq encoder-rnn decoder-rnn encoder xs ts)))
+                      :do (let ((loss (loss-seq2seq encoder-rnn decoder-rnn xs ts)))
                             (gd! encoder-rnn decoder-rnn fn lr)
                             (when (zerop (rem iter pstep))
                               (let* ((lv ($data loss))
                                      (ys (evaluate-seq2seq encoder-rnn decoder-rnn encoder xs))
                                      (score (matches-score encoder ts ys)))
                                 (prn iter lv score)
+                                (prn "XS" (encoder-decode encoder xs))
                                 (prn "TS" (encoder-decode encoder ts))
                                 (prn "YS" ys)
+                                (prn "==")
                                 (when (< score 1E-2) (return-from train))))))))))
+
+;; XXX lstm should use both c and h
 
 ;; model
 (defparameter *encoder-rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
