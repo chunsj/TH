@@ -121,10 +121,11 @@
   (let ((sz ($count xss)))
     (block train
       (loop :for epoch :from 0 :below epochs
-            :do (loop :for xs :in xss
+            :do (loop :for xs0 :in xss
                       :for ts :in tss
                       :for idx :from 0
                       :for iter = (+ idx (* epoch sz))
+                      :for xs = (reverse xs0)
                       :do (let ((loss (loss-seq2seq encoder-rnn decoder-rnn encoder xs ts)))
                             (gd! encoder-rnn decoder-rnn fn lr)
                             (when (zerop (rem iter pstep))
