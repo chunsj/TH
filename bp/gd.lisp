@@ -134,12 +134,13 @@
 (defmethod $rmgd! ((parameters parameters) &optional (learning-rate 0.001) (decay-rate 0.99))
   (loop :for n :in ($parameters parameters) :do ($rmgd! n learning-rate decay-rate)))
 
-(defmethod $adgd! ((object t) &optional (decay-rate 0.95)) (declare (ignore decay-rate)))
+(defmethod $adgd! ((object t) &optional (learning-rate 1) (decay-rate 0.95))
+  (declare (ignore learning-rate decay-rate)))
 
 (defmethod $adgd! ((node node) &optional (learning-rate 1) (decay-rate 0.95))
   (let ((data ($data node))
         (grv ($gradient node))
-        (eps 1E-6))
+        (eps 1E-8))
     (cond ((null grv) nil)
           ((numberp grv) (let ((h ($attr node :h 0))
                                (d ($attr node :d 0)))
