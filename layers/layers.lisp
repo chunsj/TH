@@ -36,6 +36,9 @@
            #:$cell
            #:$update-cell-state!
            #:$set-memory!
+           #:bidirectional-recurrent-layer
+           #:$fcell
+           #:$bcell
            #:with-keeping-state
            #:concat-sequence))
 
@@ -982,6 +985,63 @@
 (defmethod $set-memory! ((l recurrent-layer) hs)
   ($set-memory! ($cell l) hs)
   l)
+
+(defclass bidirectional-recurrent-layer (layer)
+  ((stateful :initform nil)
+   (truncated :initform nil)
+   (fcell :initform nil :accessor $fcell)
+   (bcell :initform nil :accessor $bcell)))
+
+(defun bidirectional-recurrent-layer (fcell bcell &key statefulp truncatedp)
+  (let ((n (make-instance 'recurrent-layer))
+        (fcelli fcell)
+        (bcelli bcell))
+    (with-slots (stateful truncated fcell bcell) n
+      (setf stateful statefulp)
+      (setf truncated truncatedp)
+      (setf fcell fcelli)
+      (setf bcell bcelli))
+    n))
+
+(defmethod $train-parameters ((l bidirectional-recurrent-layer))
+  (with-slots (fcell bcell) l
+    (append ($train-parameters fcell) ($train-parameters bcell))))
+
+(defmethod $keep-state! ((l bidirectional-recurrent-layer) statefulp &optional (truncatedp T))
+  (with-slots (stateful truncated fcell bcell) l
+    (setf stateful statefulp
+          truncated truncatedp)
+    ($keep-state! fcell statefulp truncatedp)
+    ($keep-state! bcell statefulp truncatedp))
+  l)
+
+(defmethod $parameters ((l bidirectional-recurrent-layer))
+  (with-slots (fcell bcell) l
+    (append ($parameters fcell) ($parameters bcell))))
+
+(defmethod $execute ((l bidirectional-recurrent-layer) xs &key (trainp t))
+  (with-slots (fcell bcell stateful truncated) l
+    ($keep-state! fcell stateful truncated)
+    ($keep-state! bcell stateful truncated)
+    (let ((frs (loop :for x :in xs
+                     :collect ($execute fcell x :trainp trainp)))
+          (brs (loop :for x :in (reverse xs)
+                     :collect ($execute bcell x :trainp trainp))))
+      (mapcar (lambda (fr br) (list fr br)) frs brs))))
+
+(defmethod $cell-state ((l bidirectional-recurrent-layer))
+  (list ($cell-state ($fcell l)) ($cell-state ($bcell l))))
+
+(defmethod $update-cell-state! ((l bidirectional-recurrent-layer) h)
+  ($update-cell-state! ($fcell l) ($0 h))
+  ($update-cell-state! ($bcell l) ($1 h))
+  l)
+
+(defmethod $set-memory! ((l bidirectional-recurrent-layer) hs)
+  ($set-memory! ($fcell l) ($0 hs))
+  ($set-memory! ($bcell l) ($1 hs))
+  l)
+
 
 (defmacro with-keeping-state ((rnn) &body body)
   `(progn
