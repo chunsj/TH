@@ -6,6 +6,8 @@
            #:ptb
            #:addition
            #:date-data
+           #:eng-fra-small
+           #:eng-fra-small-processed
            #:iris))
 
 (in-package :th.ex.data)
@@ -29,6 +31,8 @@
 
 (defun addition () (read-lines-from (data-filename "addition.txt")))
 (defun date-data () (read-lines-from (data-filename "date.txt")))
+(defun eng-fra-small () (read-lines-from (data-filename "eng-fra.small.txt")))
+(defun eng-fra-small-processed () (read-lines-from (data-filename "eng-fra.small-processed.txt")))
 
 (defun iris ()
   (let ((x (tensor 150 4))
