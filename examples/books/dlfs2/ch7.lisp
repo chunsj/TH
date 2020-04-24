@@ -57,9 +57,9 @@
     (with-keeping-state (decoder-rnn)
       (let* ((batch-size ($size (car xs) 0))
              (ys (append (encoder-encode encoder (loop :repeat batch-size :collect "_"))
-                         ts))
+                         (butlast ts)))
              (yts ($execute decoder-rnn ys)))
-        (butlast yts)))))
+        yts))))
 
 ;; loss function using cross entropy
 (defun loss-seq2seq (encoder-rnn decoder-rnn encoder xs ts &optional verbose)

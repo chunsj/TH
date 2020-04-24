@@ -58,9 +58,9 @@
     (with-keeping-state (decoder-rnn)
       (let* ((batch-size ($size (car xs) 0))
              (ys (append (list ($fill! (tensor.long batch-size) *bs*))
-                         ts))
+                         (butlast ts)))
              (yts ($execute decoder-rnn ys)))
-        (butlast yts)))))
+        yts))))
 
 ;; loss function using cross entropy
 (defun loss-seq2seq (encoder-rnn decoder-rnn xs ts)
@@ -165,8 +165,8 @@
 (time (train-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
                      *overfit-xs-batches* *overfit-ys-batches*
                      500 100
-                     #'$amgd!
-                     0.001))
+                     #'$adgd!
+                     1))
 
 (prn (car *overfit-xs-batches*))
 
