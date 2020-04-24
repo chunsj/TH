@@ -52,7 +52,7 @@
 ;; execution function for training
 (defun execute-seq2seq (encoder-rnn decoder-rnn xs ts)
   (let* ((hs ($execute encoder-rnn xs))
-         (h0 ($last hs)))
+         (h0 ($cell-state ($cell ($ encoder-rnn 1)))))
     (update-decoder-state! decoder-rnn h0)
     (update-attention-memory! decoder-rnn hs)
     (with-keeping-state (decoder-rnn)
@@ -69,12 +69,11 @@
     ($div (apply #'$+ losses) ($count losses))))
 
 ;; generate using decoder
-(defun generate-decoder (decoder-rnn encoder hs xs0 n)
+(defun generate-decoder (decoder-rnn encoder h0 hs xs0 n)
   (let ((sampled '())
-        (h ($last hs))
         (xts xs0)
         (batch-size ($size (car xs0) 0)))
-    (update-decoder-state! decoder-rnn h)
+    (update-decoder-state! decoder-rnn h0)
     (update-attention-memory! decoder-rnn hs)
     (with-keeping-state (decoder-rnn)
       (loop :for i :from 0 :below n
@@ -92,8 +91,9 @@
 
 ;; running the model
 (defun evaluate-seq2seq (encoder-rnn decoder-rnn encoder xs &optional (n 10))
-  (let ((hs ($evaluate encoder-rnn xs)))
-    (generate-decoder decoder-rnn encoder hs
+  (let ((hs ($evaluate encoder-rnn xs))
+        (h0 ($cell-state ($cell ($ encoder-rnn 1)))))
+    (generate-decoder decoder-rnn encoder h0 hs
                       (list ($fill! (tensor.long ($size (car xs) 0)) *bs*))
                       n)))
 
@@ -130,22 +130,20 @@
                                 (prn "==")
                                 (when (< score 1E-2) (return-from train))))))))))
 
-;; XXX lstm should use both c and h
-
 ;; model
 (defparameter *encoder-rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
                               (sequential-layer
                                (recurrent-layer (affine-cell vsize *wvec-size*
                                                              :activation :nil
                                                              :biasp nil))
-                               (recurrent-layer (rnn-cell *wvec-size* *hidden-size*)))))
+                               (recurrent-layer (lstm-cell *wvec-size* *hidden-size*)))))
 
 (defparameter *decoder-rnn* (let ((vsize (encoder-vocabulary-size *encoder*)))
                               (sequential-layer
                                (recurrent-layer (affine-cell vsize *wvec-size*
                                                              :activation :nil
                                                              :biasp nil))
-                               (recurrent-layer (rnn-cell *wvec-size* *hidden-size*))
+                               (recurrent-layer (lstm-cell *wvec-size* *hidden-size*))
                                (recurrent-layer
                                 (sequential-layer
                                  (parallel-layer (attention-cell)
@@ -166,9 +164,9 @@
 ;; overfitting for checking implementation
 (time (train-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
                      *overfit-xs-batches* *overfit-ys-batches*
-                     5000 100
-                     #'$adgd!
-                     1))
+                     500 100
+                     #'$amgd!
+                     0.001))
 
 (prn (car *overfit-xs-batches*))
 
