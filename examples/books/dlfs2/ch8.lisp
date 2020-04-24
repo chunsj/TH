@@ -113,10 +113,11 @@
   (let ((sz ($count xss)))
     (block train
       (loop :for epoch :from 0 :below epochs
-            :do (loop :for xs :in xss
+            :do (loop :for xsi :in xss
                       :for ts :in tss
                       :for idx :from 0
                       :for iter = (+ idx (* epoch sz))
+                      :for xs = (reverse xsi)
                       :do (let ((loss (loss-seq2seq encoder-rnn decoder-rnn xs ts)))
                             (gd! encoder-rnn decoder-rnn fn lr)
                             (when (zerop (rem iter pstep))
@@ -176,7 +177,7 @@
 ;; real training
 (time (train-seq2seq *encoder-rnn* *decoder-rnn* *encoder*
                      *train-xs-batches* *train-ys-batches*
-                     30 100
+                     10 100
                      #'$adgd!
                      1))
 
