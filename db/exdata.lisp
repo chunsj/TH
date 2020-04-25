@@ -32,7 +32,9 @@
 (defun addition () (read-lines-from (data-filename "addition.txt")))
 (defun date-data () (read-lines-from (data-filename "date.txt")))
 (defun eng-fra-small () (read-lines-from (data-filename "eng-fra.small.txt")))
-(defun eng-fra-small-processed () (read-lines-from (data-filename "eng-fra.small-processed.txt")))
+(defun eng-fra-small-processed ()
+  (->> (read-lines-from (data-filename "eng-fra.small-processed.txt"))
+       (mapcar (lambda (s) (split #\Tab s)))))
 
 (defun iris ()
   (let ((x (tensor 150 4))
