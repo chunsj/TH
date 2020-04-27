@@ -62,3 +62,8 @@
 (defparameter *train-ys-batches* (build-batches *eng-encoder* *output-max-length*
                                                 (mapcar #'$1 *pairs*)
                                                 *batch-size*))
+
+(defparameter *overfit-xs-batches* (subseq *train-xs-batches* 0 1))
+(defparameter *overfit-ys-batches* (subseq *train-ys-batches* 0 1))
+
+;; XXX use classes instead of scattered functions
