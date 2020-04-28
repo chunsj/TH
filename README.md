@@ -64,17 +64,18 @@
   13. Generative Adversarial Network: examples/gan/{ls,c,info,w}gan[2].lisp (opticl is required)
   14. Deep Convolutional GAN: examples/gan/dcgan.lisp
   15. Neural Arithmetic Logic Unit or NALU: examples/nalu/nalu.lisp
-  16. VGG16, pretrained model: examples/pretrained/vgg16.lisp
+  16. Sequence-to-sequence with attention: examples/seq2seq/eng-fra.lisp
+  17. VGG16, pretrained model: examples/pretrained/vgg16.lisp
                                (refer torch-vgg16.py under scratch/python)
-  17. VGG19, pretrained model: examples/pretrained/vgg19.lisp
+  18. VGG19, pretrained model: examples/pretrained/vgg19.lisp
                                (refer torch-vgg16.py under scratch/python)
-  18. ResNet50,101,152 pretrained model: examples/pretrained/resnet50.lisp (refer torch-resnet50.py)
-  19. DenseNet161, pretrained model: examples/pretrained/densenet161.lisp (refer torch-densenet161.py)
-  20. SqueezeNet1.1, pretrained model: examples/pretrained/squeezenet11.lisp
+  19. ResNet50,101,152 pretrained model: examples/pretrained/resnet50.lisp (refer torch-resnet50.py)
+  20. DenseNet161, pretrained model: examples/pretrained/densenet161.lisp (refer torch-densenet161.py)
+  21. SqueezeNet1.1, pretrained model: examples/pretrained/squeezenet11.lisp
                                        (refer torch-squeezenet11.py)
-  21. Fully convolutional network: examples/pretrained/fcn.lisp
-  22. Hidden Markov model: examples/etc/hmm.lisp (from the Machine Learning with Tensorflow book)
-  23. Reinforcement learning example: examples/etc/rl.lisp (ditto above)
+  22. Fully convolutional network: examples/pretrained/fcn.lisp
+  23. Hidden Markov model: examples/etc/hmm.lisp (from the Machine Learning with Tensorflow book)
+  24. Reinforcement learning example: examples/etc/rl.lisp (ditto above)
 
 ## Pretrained Models
   Though there's currently 5 models, VGG16, VGG19, ResNet50, DenseNet161 and SqueezeNet1.1 are
