@@ -40,7 +40,18 @@
            #:$fcell
            #:$bcell
            #:with-keeping-state
-           #:concat-sequence))
+           #:concat-sequence
+           #:encoder-vocabulary-size
+           #:encoder-encode
+           #:encoder-decode
+           #:encoder-choose
+           #:encoder-vocabularies
+           #:encoder-vocabulary-map
+           #:encoder
+           #:word-encoder
+           #:character-encoder
+           #:build-character-encoder
+           #:$choose))
 
 ;; XXX cell state control api sucks!
 
@@ -1055,3 +1066,195 @@
        ($keep-state! ,rnn nil nil))))
 
 (defgeneric $generate-sequence (rnn encoder seedseq n &optional temperature))
+
+(defgeneric encoder-vocabulary-size (encoder))
+(defgeneric encoder-encode (encoder sequences &key type))
+(defgeneric encoder-decode (encoder matrices &key type))
+(defgeneric encoder-choose (encoder probseqs &optional temperature))
+
+(defclass encoder () ())
+
+(defclass word-encoder (encoder)
+  ((word-to-idx :initform #{} :reader encoder-vocabulary-map)
+   (idx-to-word :initform #{})
+   (words :initform nil :reader encoder-vocabularies)))
+
+(defun build-word-encoder (encoder data)
+  (with-slots (word-to-idx idx-to-word words) encoder
+    (setf words nil
+          word-to-idx #{}
+          idx-to-word #{})
+    (let ((tid 0))
+      (loop :for word :in (coerce data 'list)
+            :do (unless ($ word-to-idx word)
+                  (setf ($ word-to-idx word) tid
+                        ($ idx-to-word tid) word)
+                  (push word words)
+                  (incf tid))))
+    (setf words ($array (reverse words))))
+  encoder)
+
+(defun word-encoder (&optional data)
+  (let ((n (make-instance 'word-encoder)))
+    (when data (build-word-encoder n data))
+    n))
+
+(defmethod encoder-vocabulary-size ((encoder word-encoder))
+  (with-slots (idx-to-word) encoder
+    ($count idx-to-word)))
+
+;; sentence is the list of strings
+(defmethod encoder-encode ((encoder word-encoder) sentences &key (type :index))
+  (cond ((eq type :index) (let ((ntime ($count ($0 sentences)))
+                                (nbatch ($count sentences)))
+                            (with-slots (word-to-idx) encoder
+                              (loop :for time :from 0 :below ntime
+                                    :collect (let ((m (tensor.long (zeros nbatch))))
+                                               (loop :for sentence :in sentences
+                                                     :for b :from 0
+                                                     :for word = ($ sentence time)
+                                                     :for idx = ($ word-to-idx word
+                                                                  ($ word-to-idx "<unk>"))
+                                                     :do (setf ($ m b) idx))
+                                               m)))))
+        ((eq type :1-of-K) (let ((ntime ($count ($0 sentences)))
+                                 (nbatch ($count sentences))
+                                 (vocab-size (encoder-vocabulary-size encoder)))
+                             (with-slots (word-to-idx) encoder
+                               (loop :for time :from 0 :below ntime
+                                     :collect (let ((m (zeros nbatch vocab-size)))
+                                                (loop :for sentence :in sentences
+                                                      :for b :from 0
+                                                      :for word = ($ sentence time)
+                                                      :for idx = ($ word-to-idx word
+                                                                   ($ word-to-idx "<unk>"))
+                                                      :do (setf ($ m b idx) 1))
+                                                m)))))))
+
+(defmethod encoder-decode ((encoder word-encoder) matrices &key (type :index))
+  (cond ((eq type :index) (let ((nbatch ($size ($0 matrices) 0)))
+                            (with-slots (idx-to-word) encoder
+                              (loop :for b :from 0 :below nbatch
+                                    :collect (loop :for m :in matrices
+                                                   :for idx = ($ m b)
+                                                   :collect ($ idx-to-word idx))))))
+        ((eq type :1-of-k) (let ((nbatch ($size ($0 matrices) 0)))
+                             (with-slots (idx-to-word) encoder
+                               (loop :for b :from 0 :below nbatch
+                                     :collect (loop :for m :in matrices
+                                                    :for mi = ($nonzero m)
+                                                    :for idx = ($ mi b 1)
+                                                    :collect ($ idx-to-word idx))))))))
+
+
+(defclass character-encoder (encoder)
+  ((char-to-idx :initform #{} :reader encoder-vocabulary-map)
+   (idx-to-char :initform nil :reader encoder-vocabularies)))
+
+(defun build-character-encoder (encoder data)
+  (with-slots (char-to-idx idx-to-char) encoder
+    (setf idx-to-char ($array (remove-duplicates (coerce data 'list))))
+    (let ((vocab-size ($count idx-to-char)))
+      (loop :for i :from 0 :below vocab-size
+            :for ch = ($ idx-to-char i)
+            :do (setf ($ char-to-idx ch) i))))
+  encoder)
+
+(defun character-encoder (&optional data)
+  (let ((n (make-instance 'character-encoder)))
+    (when data (build-character-encoder n data))
+    n))
+
+(defmethod encoder-vocabulary-size ((encoder character-encoder))
+  (with-slots (idx-to-char) encoder
+    ($count idx-to-char)))
+
+(defmethod encoder-encode ((encoder character-encoder) strings &key (type :index))
+  (cond ((eq type :index) (let ((ntime ($count ($0 strings)))
+                                (nbatch ($count strings)))
+                            (with-slots (char-to-idx) encoder
+                              (loop :for time :from 0 :below ntime
+                                    :collect (let ((m (tensor.long (zeros nbatch))))
+                                               (loop :for str :in strings
+                                                     :for b :from 0
+                                                     :for ch = ($ str time)
+                                                     :do (setf ($ m b) ($ char-to-idx ch)))
+                                               m)))))
+        ((eq type :1-of-K) (let ((ntime ($count ($0 strings)))
+                                 (nbatch ($count strings))
+                                 (vocab-size (encoder-vocabulary-size encoder)))
+                             (with-slots (char-to-idx) encoder
+                               (loop :for time :from 0 :below ntime
+                                     :collect (let ((m (zeros nbatch vocab-size)))
+                                                (loop :for str :in strings
+                                                      :for b :from 0
+                                                      :for ch = ($ str time)
+                                                      :do (setf ($ m b ($ char-to-idx ch)) 1))
+                                                m)))))))
+
+(defmethod encoder-decode ((encoder character-encoder) matrices &key (type :index))
+  (cond ((eq type :index) (let ((nbatch ($size ($0 matrices) 0)))
+                            (with-slots (idx-to-char) encoder
+                              (loop :for b :from 0 :below nbatch
+                                    :collect (coerce (loop :for m :in matrices
+                                                           :for idx = ($ m b)
+                                                           :collect ($ idx-to-char idx))
+                                                     'string)))))
+        ((eq type :1-of-k) (let ((nbatch ($size ($0 matrices) 0)))
+                             (with-slots (idx-to-char) encoder
+                               (loop :for b :from 0 :below nbatch
+                                     :collect (coerce (loop :for m :in matrices
+                                                            :for mi = ($nonzero m)
+                                                            :for idx = ($ mi b 1)
+                                                            :collect ($ idx-to-char idx))
+                                                      'string)))))))
+
+(defun $choose (probabilities &optional (temperature 1D0))
+  "select one of the index by their given relative probabilities"
+  (if (>= temperature 0)
+      (let ((probs ($div (if ($parameterp probabilities) ($data probabilities) probabilities)
+                         temperature)))
+        (let ((probs ($softmax probs)))
+          ($reshape! ($multinomial probs 1) ($size probs 0))))
+      (let ((res ($max (if ($parameterp probabilities) ($data probabilities) probabilities) 1)))
+        ($reshape! (cadr res) ($size probabilities 0)))))
+
+(defmethod encoder-choose ((encoder character-encoder) probseqs &optional (temperature 1D0))
+  (encoder-decode encoder (mapcar (lambda (probs) ($choose probs temperature)) probseqs)))
+
+(defmethod $generate-sequence ((rnn layer) (encoder character-encoder) seedstr n
+                               &optional (temperature 1D0))
+  (let* ((seedps ($evaluate rnn (encoder-encode encoder (list seedstr))))
+         (seedstrs (encoder-choose encoder seedps temperature))
+         (laststrs (list (string ($last (car seedstrs)))))
+         (resultstr (concatenate 'string seedstr (car laststrs))))
+    ($set-stateful rnn T)
+    (loop :for i :from 0 :below (1- n)
+          :for nextseq = (encoder-encode encoder laststrs)
+          :for nextoutps = ($evaluate rnn nextseq)
+          :for nextoutstrs = (encoder-choose encoder nextoutps temperature)
+          :do (progn
+                (setf laststrs nextoutstrs)
+                (setf resultstr (concatenate 'string resultstr (car nextoutstrs)))))
+    ($set-stateful rnn nil)
+    resultstr))
+
+(defmethod encoder-choose ((encoder word-encoder) probseqs &optional (temperature 1D0))
+  (encoder-decode encoder (mapcar (lambda (probs) ($choose probs temperature)) probseqs)))
+
+(defmethod $generate-sequence ((rnn layer) (encoder word-encoder) seedsentence n
+                               &optional (temperature 1D0))
+  (let* ((seedps ($evaluate rnn (encoder-encode encoder (list seedsentence))))
+         (seedsentences (encoder-choose encoder seedps temperature))
+         (lastsentences (list (last (car seedsentences))))
+         (resultsentence (append seedsentence (car lastsentences))))
+    ($set-stateful rnn T)
+    (loop :for i :from 0 :below (1- n)
+          :for nextseq = (encoder-encode encoder lastsentences)
+          :for nextoutps = ($evaluate rnn nextseq)
+          :for nextouts = (encoder-choose encoder nextoutps temperature)
+          :do (progn
+                (setf lastsentences nextouts)
+                (setf resultsentence (append resultsentence (car nextouts)))))
+    ($set-stateful rnn nil)
+    resultsentence))
