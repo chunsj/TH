@@ -57,12 +57,18 @@
 (defparameter *batch-size* 100)
 (defparameter *hidden-size* 256)
 
-(defparameter *train-xs-batches* (build-batches *fra-encoder* *input-max-length*
-                                                (mapcar #'$0 *pairs*)
-                                                *batch-size*))
-(defparameter *train-ys-batches* (build-batches *eng-encoder* *output-max-length*
-                                                (mapcar #'$1 *pairs*)
-                                                *batch-size*))
+(defparameter *xs-batches* (build-batches *fra-encoder* *input-max-length*
+                                          (mapcar #'$0 *pairs*)
+                                          *batch-size*))
+(defparameter *ys-batches* (build-batches *eng-encoder* *output-max-length*
+                                          (mapcar #'$1 *pairs*)
+                                          *batch-size*))
+
+(defparameter *train-xs-batches* (subseq *xs-batches* 0 50))
+(defparameter *train-ys-batches* (subseq *ys-batches* 0 50))
+
+(defparameter *test-xs-batches* (subseq *xs-batches* 50 60))
+(defparameter *test-ys-batches* (subseq *ys-batches* 50 60))
 
 (defparameter *overfit-xs-batches* (subseq (build-batches *fra-encoder* *input-max-length*
                                                           (mapcar #'$0 *pairs*)
@@ -190,7 +196,7 @@
                                     ""
                                     e))))
 
-(defun $train (s2s xss tss &key (epochs 10) (pstep 100) (gdfn #'$adgd!) (lr 1D0))
+(defun $train (s2s xss tss &key (epochs 10) (pstep 100) (gdfn #'$adgd!) (lr 1D0) (testp T))
   (let ((sz ($count xss)))
     (with-slots (to-encoder) s2s
       (loop :for epoch :from 0 :below epochs
@@ -203,10 +209,17 @@
                             (gd! s2s gdfn lr)
                             (when (zerop (rem iter pstep))
                               (let* ((lv ($data loss))
-                                     (ys ($evaluate-seq2seq s2s xs))
-                                     (score ($matches-score s2s ts ys)))
+                                     (tidx (random ($count *test-xs-batches*)))
+                                     (txs (if testp
+                                              (reverse ($ *test-xs-batches* tidx))
+                                              xs))
+                                     (tts (if testp
+                                              ($ *test-ys-batches* tidx)
+                                              ts))
+                                     (ys ($evaluate-seq2seq s2s txs))
+                                     (score ($matches-score s2s tts ys)))
                                 (prn iter lv score)
-                                (prn "TS" (replace-eos (encoder-decode to-encoder ts)))
+                                (prn "TS" (replace-eos (encoder-decode to-encoder tts)))
                                 (prn "YS" (replace-eos ys))
                                 (prn "==")))))))))
 
@@ -218,13 +231,16 @@
 (defparameter *s2s* (seq2seq *fra-encoder* *eng-encoder* 256))
 ($reset! *s2s*)
 
-(time ($train *s2s* *overfit-xs-batches* *overfit-ys-batches* :epochs 500 :pstep 100))
+;; to check whether the code works
+(time ($train *s2s* *overfit-xs-batches* *overfit-ys-batches* :epochs 500 :pstep 100 :testp nil))
 
+;; real one
+(time ($train *s2s* *train-xs-batches* *train-ys-batches* :epochs 100 :pstep 100))
+
+;; testing, checking
 (prn (->> '(("tu" "es" "la" "professeur" "." "EOS" "EOS" "EOS" "EOS"))
           (encoder-encode *fra-encoder*)
           ($evaluate-seq2seq *s2s*)))
 (prn (encoder-decode *fra-encoder* ($0 *overfit-xs-batches*)))
 (prn (encoder-decode *eng-encoder* ($0 *overfit-ys-batches*)))
 (prn ($evaluate-seq2seq *s2s* ($0 *overfit-xs-batches*)))
-
-(time ($train *s2s* *train-xs-batches* *train-ys-batches* :epochs 100 :pstep 100))
