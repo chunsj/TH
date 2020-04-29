@@ -235,7 +235,7 @@
 (time ($train *s2s* *overfit-xs-batches* *overfit-ys-batches* :epochs 500 :pstep 100 :testp nil))
 
 ;; real one
-(time ($train *s2s* *train-xs-batches* *train-ys-batches* :epochs 100 :pstep 100))
+(time ($train *s2s* *train-xs-batches* *train-ys-batches* :epochs 1000 :pstep 100))
 
 ;; testing, checking
 (prn (->> '(("tu" "es" "la" "professeur" "." "EOS" "EOS" "EOS" "EOS"))
