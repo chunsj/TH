@@ -198,7 +198,7 @@
                       :for ts :in tss
                       :for idx :from 0
                       :for iter = (+ idx (* epoch sz))
-                      :for xs = xsi
+                      :for xs = (reverse xsi)
                       :do (let ((loss ($compute-loss s2s xs ts)))
                             (gd! s2s gdfn lr)
                             (when (zerop (rem iter pstep))
@@ -220,7 +220,11 @@
 
 (time ($train *s2s* *overfit-xs-batches* *overfit-ys-batches* :epochs 500 :pstep 100))
 
-(prn ($evaluate-seq2seq *s2s* ($0 *overfit-xs-batches*)))
+(prn (->> '(("tu" "es" "la" "professeur" "." "EOS" "EOS" "EOS" "EOS"))
+          (encoder-encode *fra-encoder*)
+          ($evaluate-seq2seq *s2s*)))
+(prn (encoder-decode *fra-encoder* ($0 *overfit-xs-batches*)))
 (prn (encoder-decode *eng-encoder* ($0 *overfit-ys-batches*)))
+(prn ($evaluate-seq2seq *s2s* ($0 *overfit-xs-batches*)))
 
-(time ($train *s2s* *train-xs-batches* *train-ys-batches* :epochs 10 :pstep 100))
+(time ($train *s2s* *train-xs-batches* *train-ys-batches* :epochs 100 :pstep 100))
