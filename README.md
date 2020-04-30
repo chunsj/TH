@@ -47,6 +47,7 @@
   4. Check location of library path in the load.lisp file.
   5. Load with quicklisp (ql:quickload :th)
   6. If there's error, you need check previous processes.
+  7. Additionally, there're th.images and th.text support libraries for examples.
 
 ## Examples using TH
   1. Basic tensor operations: examples/intro/tensor.lisp
@@ -115,7 +116,7 @@
   SBCL and CCL does not know the memory pressure from foreign allocated ones, so I have to count
   them and check when it exceeds predefined size, the full garbage collection will occur.
   Current implementation is tested with SBCL only. If you have any better idea, than let me know.
-  Default maximum is set as 2GB, you can modify this with th-set-maximum-allowed-heap-size function.
+  Default maximum is set as 4GB, you can modify this with th-set-maximum-allowed-heap-size function.
   Note that the argument of the function is the size in MB.
 
 ## TODOS
