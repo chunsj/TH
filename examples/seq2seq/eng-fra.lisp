@@ -210,7 +210,7 @@
                               (let* ((lv ($data loss))
                                      (tidx (random ($count *test-xs-batches*)))
                                      (txs (if testp
-                                              (reverse ($ *test-xs-batches* tidx))
+                                              ($ *test-xs-batches* tidx)
                                               xs))
                                      (tts (if testp
                                               ($ *test-ys-batches* tidx)
@@ -231,7 +231,7 @@
 ($reset! *s2s*)
 
 ;; to check whether the code works
-(time ($train *s2s* *overfit-xs-batches* *overfit-ys-batches* :epochs 500 :pstep 100 :testp nil))
+(time ($train *s2s* *overfit-xs-batches* *overfit-ys-batches* :epochs 300 :pstep 100 :testp nil))
 
 ;; real one
 (time ($train *s2s* *train-xs-batches* *train-ys-batches* :epochs 2000 :pstep 100))
