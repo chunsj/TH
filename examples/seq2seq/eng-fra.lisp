@@ -166,7 +166,7 @@
 
 (defun $evaluate-seq2seq (s2s xs &optional (n 9))
   (with-slots (encoder-network decoder-network) s2s
-    (let ((hs ($evaluate encoder-network xs))
+    (let ((hs ($evaluate encoder-network (reverse xs)))
           (h0 ($encoder-state s2s)))
       ($generate-seq2seq s2s hs h0
                          (list ($fill (tensor.long ($size (car xs) 0)) 0))
@@ -235,12 +235,20 @@
 (time ($train *s2s* *overfit-xs-batches* *overfit-ys-batches* :epochs 500 :pstep 100 :testp nil))
 
 ;; real one
-(time ($train *s2s* *train-xs-batches* *train-ys-batches* :epochs 1000 :pstep 100))
+(time ($train *s2s* *train-xs-batches* *train-ys-batches* :epochs 2000 :pstep 100))
 
 ;; testing, checking
-(prn (->> '(("tu" "es" "la" "professeur" "." "EOS" "EOS" "EOS" "EOS"))
-          (encoder-encode *fra-encoder*)
+(prn (->> (->> ($0 *overfit-xs-batches*)
+               (mapcar (lambda (s) ($narrow s 0 0 1))))
+          (funcall (lambda (s)
+                     (prn (encoder-decode *fra-encoder* s))
+                     s))
           ($evaluate-seq2seq *s2s*)))
+
 (prn (encoder-decode *fra-encoder* ($0 *overfit-xs-batches*)))
 (prn (encoder-decode *eng-encoder* ($0 *overfit-ys-batches*)))
 (prn ($evaluate-seq2seq *s2s* ($0 *overfit-xs-batches*)))
+
+(prn (->> '(("tu" "es" "la" "professeur" "." "EOS" "EOS" "EOS" "EOS"))
+          (encoder-encode *fra-encoder*)
+          ($evaluate-seq2seq *s2s*)))
