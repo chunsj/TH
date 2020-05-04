@@ -166,7 +166,7 @@
 
 (defun $evaluate-seq2seq (s2s xs &optional (n 9))
   (with-slots (encoder-network decoder-network) s2s
-    (let ((hs ($evaluate encoder-network (reverse xs)))
+    (let ((hs ($evaluate encoder-network xs))
           (h0 ($encoder-state s2s)))
       ($generate-seq2seq s2s hs h0
                          (list ($fill (tensor.long ($size (car xs) 0)) 0))
@@ -200,11 +200,10 @@
   (let ((sz ($count xss)))
     (with-slots (to-encoder) s2s
       (loop :for epoch :from 0 :below epochs
-            :do (loop :for xsi :in xss
+            :do (loop :for xs :in xss
                       :for ts :in tss
                       :for idx :from 0
                       :for iter = (+ idx (* epoch sz))
-                      :for xs = (reverse xsi)
                       :do (let ((loss ($compute-loss s2s xs ts)))
                             (gd! s2s gdfn lr)
                             (when (zerop (rem iter pstep))
