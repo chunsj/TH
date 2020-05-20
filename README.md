@@ -50,7 +50,7 @@
   7. Additionally, there're th.images and th.text support libraries for examples.
 
 ## Examples using TH
-  1. Basic tensor operations: examples/intro/tensor.lisp
+  1. Basic tensor operations: [tensor.lisp](examples/intro/tensor.lisp)
   2. Some examples on auto-backpropagation: examples/intro/bp.lisp
   3. XOR neural network: examples/intro/simple/xor.lisp
   4. MNIST convolutional neural network: examples/simple/mnist.lisp
