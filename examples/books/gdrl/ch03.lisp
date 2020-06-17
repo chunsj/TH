@@ -1,11 +1,11 @@
-(defpackage :drl-ch02
+(defpackage :gdrl-ch03
   (:use #:common-lisp
         #:mu
         #:th
         #:th.env)
   (:import-from #:th.env.examples))
 
-(in-package :drl-ch02)
+(in-package :drl-ch03)
 
 (defun all-true (list)
   (let ((x (loop :for e :in list
