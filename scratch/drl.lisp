@@ -113,6 +113,30 @@
         (let ((argmax (cadr maxres)))
           ($ argmax s 0))))))
 
+(defun policy-iteration (p &key (gamma 1D0) (theta 1E-10))
+  (let* ((actions (hash-table-keys ($ p 0)))
+         (random-actions (loop :repeat ($count p)
+                               :collect ($choice actions (loop :for i :from 0 :below ($count actions)
+                                                               :collect 1D0))))
+         (policy (lambda (s) ($ random-actions s)))
+         (keep-running-p T)
+         (value-res nil)
+         (policy-res nil))
+    (loop :while keep-running-p
+          :for iter :from 0
+          :for old-policy-res = (loop :for s :from 0 :below ($count p)
+                                      :collect (funcall policy s))
+          :for v = (policy-evaluation policy p :gamma gamma :theta theta)
+          :for new-policy = (policy-improvement v p :gamma gamma)
+          :do (let ((new-policy-res (loop :for s :from 0 :below ($count p)
+                                          :collect (funcall new-policy s))))
+                (if (all-true (mapcar (lambda (o n) (eq o n)) old-policy-res new-policy-res))
+                    (setf keep-running-p nil))
+                (setf value-res v
+                      policy-res new-policy
+                      policy new-policy)))
+    (list value-res policy-res)))
+
 (let* ((env (th.env.examples:slippery-walk-five-env))
        (p (env-p env))
        (policy (lambda (s) ($ '(0 0 0 0 0 0 0) s))))
@@ -167,3 +191,13 @@
        (new-new-v (policy-evaluation new-new-policy p)))
   (print-state-value-function new-new-v p :ncols 7)
   ($equal new-v new-new-v))
+
+(let* ((env (th.env.examples:slippery-walk-five-env))
+       (p (env-p env))
+       (res (policy-iteration p))
+       (optimal-value-function (car res))
+       (optimal-policy (cadr res)))
+  (print-policy optimal-policy p :action-symbols '("<" ">") :ncols 7)
+  (print-state-value-function optimal-value-function p :ncols 7)
+  (list :success-rate (probability-success env optimal-policy 6)
+        :mean-return (mean-return env optimal-policy)))
