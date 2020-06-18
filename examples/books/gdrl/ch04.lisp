@@ -3,6 +3,6 @@
         #:mu
         #:th
         #:th.env)
-  (:import-from #:th.env.examples))
+  (:import-from #:th.env.bandits))
 
 (in-package :gdrl-ch04)
