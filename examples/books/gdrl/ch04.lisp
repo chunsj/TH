@@ -7,6 +7,9 @@
 
 (in-package :gdrl-ch04)
 
+(defun true-q (env) ($* (env-p-dist env) (env-r-dist env)))
+(defun opt-v (true-q) ($max true-q))
+
 (defun pure-exploitation (env &key (nepisodes 1000))
   (let ((q (zeros ($count (env-action-space env))))
         (n (tensor.int (zeros ($count (env-action-space env)))))
@@ -162,20 +165,19 @@
 (let ((b2-vs '()))
   (loop :repeat 5
         :do (let* ((env (th.env.bandits:two-armed-random-fixed-bandit-env))
-                   (p-dist (env-p-dist env))
-                   (r-dist (env-r-dist env))
-                   (b2-q ($* p-dist r-dist))
-                   (b2-v ($max b2-q)))
-              (prn "Probability of Reward:")
-              (prn p-dist)
-              (prn "Reward:")
-              (prn r-dist)
-              (prn "Q:")
-              (prn b2-q)
-              (prn "V*: " b2-v)
-              (push b2-v b2-vs)))
+                   (true-q (true-q env))
+                   (opt-v (opt-v true-q)))
+              (prn "")
+              (prn "***")
+              (prn "Q:" true-q)
+              (prn "V*: " opt-v)
+              (push opt-v b2-vs)))
+  (prn "")
+  (prn "***")
   (prn "Mean V*:" (/ (reduce #'+ b2-vs) ($count b2-vs))))
 
-(let* ((env (th.env.bandits:two-armed-random-fixed-bandit-env)))
-  (optimistic-initialization env :optimistic-estimate 1D0
-                                 :initial-count 10))
+(let* ((env (th.env.bandits:two-armed-random-fixed-bandit-env))
+       (true-q (true-q env))
+       (expres (optimistic-initialization env :optimistic-estimate 1D0
+                                              :initial-count 50)))
+  (cons true-q expres))
