@@ -234,8 +234,7 @@
          (name (format nil "Thompson Sampling ~A ~A" alpha beta)))
     (loop :for e :from 0 :below nepisodes
           :for samples = (sample-normal q ($/ alpha ($+ ($sqrt n) beta)))
-          :for action = (let ((maxres ($max samples 0)))
-                          ($ (cadr maxres) 0))
+          :for action = ($argmax samples)
           :for tx = (env-step! env action)
           :for reward = ($2 tx)
           :do (progn
