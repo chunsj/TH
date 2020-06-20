@@ -388,6 +388,8 @@
            #:$embedding
            #:$emb
            #:$array
+           #:$argmax
+           #:$argmin
            #:$rnn
            #:$lstm
            #:$rn!

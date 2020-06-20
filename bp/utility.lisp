@@ -25,6 +25,9 @@
 
 (defgeneric $array (collection) (:documentation "Converts collection into array."))
 
+(defgeneric $argmax (x &optional dim) (:documentation "Argument Max."))
+(defgeneric $argmin (x &optional dim) (:documentation "Argument Max."))
+
 (defun addmul (x1 w1 x2 w2) ($addmul! ($mul x1 w1) x2 w2))
 
 (defmethod $addm2 ((x1 node) (w1 node) (x2 node) (w2 node))
@@ -585,3 +588,19 @@
   ($choice elements (tensor (coerce probabilities 'list))))
 
 (defmethod $array ((list list)) (coerce list 'vector))
+
+(defmethod $argmax ((x tensor) &optional (dim -1))
+  (if (< dim 0)
+      (if (eq ($ndim x) 1)
+          (let ((maxres ($max x) 0))
+            ($ (cadr maxres) 0))
+          (error "cannot find argmax for ndim > 1"))
+      (cadr ($max x dim))))
+
+(defmethod $argmin ((x tensor) &optional (dim -1))
+  (if (< dim 0)
+      (if (eq ($ndim x) 1)
+          (let ((minres ($min x) 0))
+            ($ (cadr minres) 0))
+          (error "cannot find argmin for ndim > 1"))
+      (cadr ($min x dim))))
