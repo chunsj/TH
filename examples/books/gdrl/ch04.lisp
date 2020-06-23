@@ -177,7 +177,8 @@
                                (setf temp (* temp (- temperature0 min-temperature)))
                                (incf temp min-temperature)
                                (if (< temp min-temperature) (setf temp min-temperature))
-                               (if (> temp temperature0) (setf temp temperature0)))
+                               (if (> temp temperature0) (setf temp temperature0))
+                               temp)
           :for scaled-q = ($/ q temperature)
           :for norm-q = ($- scaled-q ($max scaled-q))
           :for exp-q = ($exp norm-q)
@@ -202,10 +203,9 @@
          (name (format nil "UCB ~A" c)))
     (loop :for e :from 0 :below nepisodes
           :for action = (let ((a e))
-                          (when (> e ($count q))
-                            (let* ((u ($sqrt ($* c ($/ (log e) N))))
-                                   (maxres ($max ($+ u q) 0 )))
-                              ($ (cadr maxres) 0)))
+                          (when (>= e ($count q))
+                            (let* ((u ($sqrt ($* c ($/ (log e) (tensor n))))))
+                              (setf a ($argmax ($+ u q) 0))))
                           a)
           :for tx = (env-step! env action)
           :for reward = ($2 tx)
@@ -225,7 +225,7 @@
                                            ($ stds i))))
     samples))
 
-(defun thompson-sampling-strategy (env &key (alpha 1) (beta 0) (nepisodes 1000))
+(defun thompson-sampling-strategy (env &key (alpha 1) (beta 1) (nepisodes 1000))
   (let* ((q (zeros ($count (env-action-space env))))
          (n (tensor.int (zeros ($count (env-action-space env)))))
          (qe (tensor nepisodes ($count (env-action-space env))))
@@ -233,7 +233,7 @@
          (actions (tensor.int nepisodes))
          (name (format nil "Thompson Sampling ~A ~A" alpha beta)))
     (loop :for e :from 0 :below nepisodes
-          :for samples = (sample-normal q ($/ alpha ($+ ($sqrt n) beta)))
+          :for samples = (sample-normal q ($/ alpha ($+ ($sqrt (tensor n)) beta)))
           :for action = ($argmax samples)
           :for tx = (env-step! env action)
           :for reward = ($2 tx)
@@ -269,4 +269,9 @@
        (true-q (true-q env))
        (expres (optimistic-initialization env :optimistic-estimate 1D0
                                               :initial-count 50)))
+  (cons true-q expres))
+
+(let* ((env (th.env.bandits:two-armed-random-fixed-bandit-env))
+       (true-q (true-q env))
+       (expres (thompson-sampling-strategy env)))
   (cons true-q expres))
