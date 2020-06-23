@@ -1,13 +1,17 @@
 (defpackage :gdrl-ch04
   (:use #:common-lisp
         #:mu
+        #:mplot
         #:th
         #:th.env)
   (:import-from #:th.env.bandits))
 
 (in-package :gdrl-ch04)
 
-(defun true-q (env) ($* (env-p-dist env) (env-r-dist env)))
+(defun true-q (env)
+  (if (eq ($ndim (env-r-dist env)) 1)
+      ($* (env-p-dist env) (env-r-dist env))
+      ($* (env-p-dist env) ($subview (env-r-dist env) 0 ($size (env-r-dist env) 0) 0 1))))
 (defun opt-v (true-q) ($max true-q))
 
 (defun pure-exploitation (env &key (nepisodes 1000))
@@ -245,6 +249,84 @@
                 (setf ($ actions e) action)))
     (list name returns qe actions)))
 
+(defun basic-experiments ()
+  (list (lambda (env)
+          (pure-exploitation env))
+        (lambda (env)
+          (pure-exploration env))
+        (lambda (env)
+          (epsilon-greedy env :epsilon 0.07))
+        (lambda (env)
+          (epsilon-greedy env :epsilon 0.1))
+        (lambda (env)
+          (linear-decreasing-epsilon-greedy env :epsilon0 1.0
+                                                :min-epsilon 0.0
+                                                :decay-ratio 0.1))
+        (lambda (env)
+          (linear-decreasing-epsilon-greedy env :epsilon0 0.3
+                                                :min-epsilon 0.001
+                                                :decay-ratio 0.1))
+        (lambda (env)
+          (exponential-decreasing-epsilon-greedy env :epsilon0 1.0
+                                                     :min-epsilon 0.0
+                                                     :decay-ratio 0.1))
+        (lambda (env)
+          (exponential-decreasing-epsilon-greedy env :epsilon0 0.3
+                                                     :min-epsilon 0.0
+                                                     :decay-ratio 0.3))
+        (lambda (env)
+          (optimistic-initialization env :optimistic-estimate 1.0 :initial-count 10))
+        (lambda (env)
+          (optimistic-initialization env :optimistic-estimate 1.0 :initial-count 50))))
+
+(defun advanced-experiments ()
+  (list (lambda (env) (pure-exploitation env))
+        (lambda (env) (pure-exploration env))
+        (lambda (env)
+          (exponential-decreasing-epsilon-greedy env :epsilon0 0.3
+                                                     :min-epsilon 0.0
+                                                     :decay-ratio 0.3))
+        (lambda (env)
+          (optimistic-initialization env :optimistic-estimate 1.0 :initial-count 10))
+        (lambda (env) (softmax-strategy env :decay-ratio 0.005))
+        (lambda (env) (softmax-strategy env :temperature0 100
+                                       :min-temperature 0.01
+                                       :decay-ratio 0.005))
+        (lambda (env) (upper-confidence-bound-strategy env :c 0.2))
+        (lambda (env) (upper-confidence-bound-strategy env :c 0.5))
+        (lambda (env) (thompson-sampling-strategy env))
+        (lambda (env) (thompson-sampling-strategy env :alpha 0.5 :beta 0.5))))
+
+(defun run-experiments (experiments env)
+  (let* ((true-q (true-q env))
+         (opt-v (opt-v true-q))
+         (res #{}))
+    (loop :for experiment :in experiments
+          :for strategy-result = (progn
+                                   (env-reset! env)
+                                   (funcall experiment env))
+          :for name = ($0 strategy-result)
+          :for returns = ($1 strategy-result)
+          :for q-episodes = ($2 strategy-result)
+          :for action-episodes = ($3 strategy-result)
+          :for cum-returns = ($cumsum returns)
+          :for mean-rewards = ($/ cum-returns ($+ 1 (arange 0 ($count returns))))
+          :for q-selected = (tensor (loop :for i :from 0 :below ($count action-episodes)
+                                          :for a = ($ action-episodes i)
+                                          :collect ($ true-q a)))
+          :for regret = ($- opt-v q-selected)
+          :for cum-regret = ($cumsum regret)
+          :do (setf ($ res name)
+                    (let ((sres #{}))
+                      (setf ($ sres :returns) returns
+                            ($ sres :cum-returns) cum-returns
+                            ($ sres :qe) q-episodes
+                            ($ sres :ae) action-episodes
+                            ($ sres :cum-regret) cum-regret
+                            ($ sres :mean-rewards) mean-rewards)
+                      sres)))
+    res))
+
 (let ((b2-vs '()))
   (loop :repeat 5
         :do (let* ((env (th.env.bandits:two-armed-random-fixed-bandit-env))
@@ -275,3 +357,41 @@
        (true-q (true-q env))
        (expres (thompson-sampling-strategy env)))
   (cons true-q expres))
+
+(env (th.env.bandits:two-armed-random-fixed-bandit-env))
+
+
+(defparameter *basic-results*
+  (run-experiments (basic-experiments) (th.env.bandits:two-armed-random-fixed-bandit-env)))
+(let* ((name "Pure exploration")
+       (vs ($list ($ ($ *basic-results* name) :mean-rewards))))
+  (plot-lines (nthcdr 200 vs) :yrange (cons 0 1)))
+
+(defparameter *advanced-results*
+  (run-experiments (advanced-experiments) (th.env.bandits:two-armed-random-fixed-bandit-env)))
+(let* ((name "Thompson Sampling 0.5 0.5")
+       (vs ($list ($ ($ *advanced-results* name) :mean-rewards))))
+  (plot-lines (nthcdr 200 vs) :yrange (cons 0 1)))
+
+(let* ((env (th.env.bandits:ten-armed-gaussian-bandit-env))
+       (true-q (true-q env))
+       (expres (epsilon-greedy env)))
+  (cons true-q expres))
+
+(let* ((env (th.env.bandits:ten-armed-gaussian-bandit-env))
+       (true-q (true-q env))
+       (expres (optimistic-initialization env :optimistic-estimate 1D0
+                                              :initial-count 50)))
+  (cons true-q expres))
+
+(defparameter *basic-results*
+  (run-experiments (basic-experiments) (th.env.bandits:ten-armed-gaussian-bandit-env)))
+(let* ((name "Pure exploration")
+       (vs ($list ($ ($ *basic-results* name) :mean-rewards))))
+  (plot-lines (nthcdr 200 vs) :yrange (cons 0 1)))
+
+(defparameter *advanced-results*
+  (run-experiments (advanced-experiments) (th.env.bandits:ten-armed-gaussian-bandit-env)))
+(let* ((name "Thompson Sampling 0.5 0.5")
+       (vs ($list ($ ($ *advanced-results* name) :mean-rewards))))
+  (plot-lines (nthcdr 200 vs) :yrange (cons -0.5 1.5)))
