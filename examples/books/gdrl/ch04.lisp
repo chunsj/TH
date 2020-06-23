@@ -377,8 +377,8 @@
 
 (let* ((env (th.env.bandits:ten-armed-gaussian-bandit-env))
        (true-q (true-q env))
-       (expres (epsilon-greedy env)))
-  (cons true-q expres))
+       (opt-v (opt-v true-q)))
+  (list (env-p-dist env) (env-r-dist env) true-q opt-v))
 
 (let* ((env (th.env.bandits:ten-armed-gaussian-bandit-env))
        (true-q (true-q env))
@@ -389,11 +389,11 @@
 (defparameter *basic-results*
   (run-experiments (basic-experiments) (th.env.bandits:ten-armed-gaussian-bandit-env)))
 (let* ((name "Pure exploration")
-       (vs ($list ($ ($ *basic-results* name) :mean-rewards))))
-  (plot-lines (nthcdr 200 vs) :yrange (cons 0 1)))
+       (vs ($list ($ ($ *basic-results* name) :cum-regret))))
+  (plot-lines (nthcdr 200 vs) :yrange (cons 0 100)))
 
 (defparameter *advanced-results*
   (run-experiments (advanced-experiments) (th.env.bandits:ten-armed-gaussian-bandit-env)))
 (let* ((name "Thompson Sampling 0.5 0.5")
-       (vs ($list ($ ($ *advanced-results* name) :mean-rewards))))
-  (plot-lines (nthcdr 200 vs) :yrange (cons -0.5 1.5)))
+       (vs ($list ($ ($ *advanced-results* name) :cum-regret))))
+  (plot-lines (nthcdr 200 vs) :yrange (cons 0 100)))
