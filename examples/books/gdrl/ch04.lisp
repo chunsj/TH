@@ -9,9 +9,11 @@
 (in-package :gdrl-ch04)
 
 (defun true-q (env)
-  (if (eq ($ndim (env-r-dist env)) 1)
-      ($* (env-p-dist env) (env-r-dist env))
-      ($* (env-p-dist env) ($subview (env-r-dist env) 0 ($size (env-r-dist env) 0) 0 1))))
+  (let ((rdist (env-r-dist env))
+        (pdist (env-p-dist env)))
+    (cond ((eq 1 ($ndim rdist)) ($* pdist rdist))
+          ((eq 2 ($ndim rdist)) ($* pdist ($subview rdist 0 ($size rdist 0) 0 1)))
+          (T (error "exceptional case")))))
 (defun opt-v (true-q) ($max true-q))
 
 (defun pure-exploitation (env &key (nepisodes 1000))
