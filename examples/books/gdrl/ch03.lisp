@@ -12,9 +12,14 @@
   (print-policy env policy :action-symbols '("<" ">") :ncols 7))
 
 (let* ((env (th.env.examples:slippery-walk-five-env))
+       (policy (lambda (s) ($ '(0 0 0 0 0 0 0) s))))
+  (list :success-rate (success-probability env policy 6)
+        :mean-return (mean-return env policy)))
+
+(let* ((env (th.env.examples:slippery-walk-five-env))
        (policy (lambda (s) ($ '(0 0 0 0 0 0 0) s)))
-       (value (policy-evaluation env policy)))
-  (print-state-value-function env value :ncols 7))
+       (v (policy-evaluation env policy)))
+  (print-state-value-function env v :ncols 7))
 
 (let* ((env (th.env.examples:slippery-walk-five-env))
        (policy (lambda (s) ($ '(0 0 0 0 0 0 0) s)))
@@ -24,34 +29,7 @@
   (list :success-rate (success-probability env new-policy 6)
         :mean-return (mean-return env new-policy)))
 
-
-;; xxxxxxx
-
-(let* ((env (th.env.examples:slippery-walk-five-env))
-       (p (env-p env))
-       (policy (lambda (s) ($ '(0 0 0 0 0 0 0) s))))
-  (print-policy policy p :action-symbols '("<" ">") :ncols 7))
-
-(let* ((env (th.env.examples:slippery-walk-five-env))
-       (policy (lambda (s) ($ '(0 0 0 0 0 0 0) s))))
-  (list :success-rate (probability-success env policy 6)
-        :mean-return (mean-return env policy)))
-
-(let* ((env (th.env.examples:slippery-walk-five-env))
-       (p (env-p env))
-       (policy (lambda (s) ($ '(0 0 0 0 0 0 0) s)))
-       (v (policy-evaluation policy p)))
-  (print-state-value-function v p :ncols 7))
-
-(let* ((env (th.env.examples:slippery-walk-five-env))
-       (p (env-p env))
-       (policy (lambda (s) ($ '(0 0 0 0 0 0 0) s)))
-       (v (policy-evaluation policy p))
-       (new-policy (policy-improvement v p)))
-  (print-policy new-policy p :action-symbols '("<" ">") :ncols 7)
-  (list :success-rate (probability-success env new-policy 6)
-        :mean-return (mean-return env new-policy)))
-
+;; xxx
 (let* ((env (th.env.examples:slippery-walk-five-env))
        (p (env-p env))
        (policy (lambda (s) ($ '(0 0 0 0 0 0 0) s)))
