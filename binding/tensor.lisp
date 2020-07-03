@@ -968,23 +968,23 @@
     result))
 
 (defmethod $ ((list list) (location tensor.int) &rest others-and-default)
-  (if (eq 1 ($ndim location))
-      ($ list ($ location 0) others-and-default)
+  (if (eq 1 ($count location))
+      ($ list ($ ($squeeze location) 0) others-and-default)
       (error "cannot use location of dimension = ~A" ($ndim location))))
 
 (defmethod $ ((list list) (location tensor.long) &rest others-and-default)
-  (if (eq 1 ($ndim location))
-      ($ list ($ location 0) others-and-default)
+  (if (eq 1 ($count location))
+      ($ list ($ ($squeeze location) 0) others-and-default)
       (error "cannot use location of dimension = ~A" ($ndim location))))
 
 (defmethod $ ((list array) (location tensor.int) &rest others-and-default)
-  (if (eq 1 ($ndim location))
-      ($ list ($ location 0) others-and-default)
+  (if (eq 1 ($count location))
+      ($ list ($ ($squeeze location) 0) others-and-default)
       (error "cannot use location of dimension = ~A" ($ndim location))))
 
 (defmethod $ ((list array) (location tensor.long) &rest others-and-default)
-  (if (eq 1 ($ndim location))
-      ($ list ($ location 0) others-and-default)
+  (if (eq 1 ($count location))
+      ($ list ($ ($squeeze location) 0) others-and-default)
       (error "cannot use location of dimension = ~A" ($ndim location))))
 
 (defmethod (setf $) ((value number) (tensor tensor) (location number) &rest others)
