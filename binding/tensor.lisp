@@ -1264,6 +1264,7 @@
 (defmethod $frac! ((x tensor)) (tensor-frac x x))
 
 (defmethod $equal ((x t) (y t)) (equal x y))
+(defmethod $equal ((x list) (y list)) (eq 0 (reduce #'+ (mapcar (lambda (a b) (if (eq a b) 0 1)) x y))))
 (defmethod $equal ((x tensor) (y tensor)) (tensor-equal x y))
 
 (defmethod $clamp ((x tensor) (min number) (max number))
