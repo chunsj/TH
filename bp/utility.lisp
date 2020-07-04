@@ -598,7 +598,7 @@
                 res))
           (error "cannot find argmax for ndim > 1"))
       (let ((res (cadr ($max x dim))))
-        ($squeeze res))))
+        res)))
 
 (defmethod $argmin ((x tensor) &optional (dim -1))
   (if (< dim 0)
@@ -609,4 +609,4 @@
                 res))
           (error "cannot find argmin for ndim > 1"))
       (let ((res (cadr ($min x dim))))
-        ($squeeze res))))
+        res)))
