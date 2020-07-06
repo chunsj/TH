@@ -390,6 +390,7 @@
            #:$array
            #:$argmax
            #:$argmin
+           #:random-normals
            #:$rnn
            #:$lstm
            #:$rn!

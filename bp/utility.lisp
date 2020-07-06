@@ -610,3 +610,11 @@
           (error "cannot find argmin for ndim > 1"))
       (let ((res (cadr ($min x dim))))
         res)))
+
+(defun random-normals (means sds)
+  (let ((samples (tensor ($count means))))
+    (loop :for i :from 0 :below ($count means)
+          :do (setf ($ samples i) ($normal *generator*
+                                           ($ means i)
+                                           ($ sds i))))
+    samples))
