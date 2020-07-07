@@ -38,6 +38,14 @@
            #:$lognormal
            #:$geometric
            #:$bernoulli
+           #:random/random
+           #:random/uniform
+           #:random/normal
+           #:random/exponential
+           #:random/cauchy
+           #:random/lognormal
+           #:random/geometric
+           #:random/bernoulli
            #:$storagep
            #:$tensorp
            #:$empty

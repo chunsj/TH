@@ -48,3 +48,12 @@
 (defmethod $bernoulli ((generator generator) p)
   (th-random-bernoulli ($handle generator)
                        (coerce p 'double-float)))
+
+(defun random/random () ($random *generator*))
+(defun random/uniform (a b) ($uniform *generator* a b))
+(defun random/normal (m s) ($normal *generator* m s))
+(defun random/exponential (l) ($exponential *generator* l))
+(defun random/cauchy (m s) ($cauchy *generator* m s))
+(defun random/lognormal (m s) ($lognormal *generator* m s))
+(defun random/geometric (p) ($geometric *generator* p))
+(defun random/bernoulli (p) ($bernoulli *generator* p))
