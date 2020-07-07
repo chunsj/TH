@@ -257,15 +257,15 @@
                                (basic-experiments)
                                (th.env.bandits:two-armed-bernoulli-bandit-env 0.8)))
 (let* ((name "EXPONENTIAL E-GREEDY 1.0 0.0 0.1")
-       (vs ($list ($ ($ *basic-results* name) :mean-rewards))))
-  (plot-lines (nthcdr 1 vs) :yrange (cons 0 1)))
+       (vs ($list ($ ($ *basic-results* name) :accum-regret))))
+  (plot-lines (nthcdr 1 vs) :yrange (cons 0 30)))
 
 (defparameter *advanced-results* (run-experiments
                                   (advanced-experiments)
                                   (th.env.bandits:two-armed-bernoulli-bandit-env 0.8)))
-(let* ((name "PURE EXPLOITATION")
-       (vs ($list ($ ($ *advanced-results* name) :mean-rewards))))
-  (plot-lines (nthcdr 1 vs) :yrange (cons 0 1)))
+(let* ((name "SOFTMAX 100 0.01 0.005")
+       (vs ($list ($ ($ *advanced-results* name) :accum-regret))))
+  (plot-lines (nthcdr 1 vs) :yrange (cons 0 5)))
 
 ;; 10 armed bandit
 (let* ((env (th.env.bandits:ten-armed-gaussian-bandit-env))
