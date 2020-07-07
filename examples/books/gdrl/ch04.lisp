@@ -216,59 +216,62 @@
     (prn "")))
 
 ;; testing strategy - basic
-(report-last-qs (th.env.bandits:two-armed-random-fixed-bandit-env)
+(report-last-qs (th.env.bandits:two-armed-bernoulli-bandit-env 0.8)
                 (basic-experiments))
 
 ;; testing strategy - advanced
-(report-last-qs (th.env.bandits:two-armed-random-fixed-bandit-env)
+(report-last-qs (th.env.bandits:two-armed-bernoulli-bandit-env 0.8)
                 (advanced-experiments))
 
 (defun run-experiments (experiments env)
   (let* ((true-q (env/true-q env))
-         (opt-v ($max env))
+         (opt-v ($max true-q))
          (res #{}))
     (loop :for experiment :in experiments
           :for strategy-result = (progn
                                    (env/reset! env)
                                    (funcall experiment env))
-          :for name = ($0 strategy-result)
-          :for returns = ($1 strategy-result)
-          :for q-episodes = ($2 strategy-result)
-          :for action-episodes = ($3 strategy-result)
-          :for cum-returns = ($cumsum returns)
-          :for mean-rewards = ($/ cum-returns ($+ 1 (arange 0 ($count returns))))
+          :for name = (expr/name strategy-result)
+          :for returns = (expr/returns strategy-result)
+          :for q-episodes = (expr/qe strategy-result)
+          :for action-episodes = (expr/actions strategy-result)
+          :for accum-returns = ($cumsum returns)
+          :for mean-rewards = ($/ accum-returns ($+ 1 (arange 0 ($count returns))))
           :for q-selected = (tensor (loop :for i :from 0 :below ($count action-episodes)
                                           :for a = ($ action-episodes i)
                                           :collect ($ true-q a)))
           :for regret = ($- opt-v q-selected)
-          :for cum-regret = ($cumsum regret)
+          :for accum-regret = ($cumsum regret)
           :do (setf ($ res name)
                     (let ((sres #{}))
                       (setf ($ sres :returns) returns
-                            ($ sres :cum-returns) cum-returns
+                            ($ sres :accum-returns) accum-returns
                             ($ sres :qe) q-episodes
                             ($ sres :ae) action-episodes
-                            ($ sres :cum-regret) cum-regret
+                            ($ sres :accum-regret) accum-regret
                             ($ sres :mean-rewards) mean-rewards)
                       sres)))
     res))
 
-(defparameter *basic-results*
-  (run-experiments (basic-experiments) (th.env.bandits:two-armed-random-fixed-bandit-env)))
-(let* ((name "Pure exploration")
+(defparameter *basic-results* (run-experiments
+                               (basic-experiments)
+                               (th.env.bandits:two-armed-bernoulli-bandit-env 0.8)))
+(let* ((name "EXPONENTIAL E-GREEDY 1.0 0.0 0.1")
        (vs ($list ($ ($ *basic-results* name) :mean-rewards))))
-  (plot-lines (nthcdr 200 vs) :yrange (cons 0 1)))
+  (plot-lines (nthcdr 1 vs) :yrange (cons 0 1)))
 
-(defparameter *advanced-results*
-  (run-experiments (advanced-experiments) (th.env.bandits:two-armed-random-fixed-bandit-env)))
-(let* ((name "Thompson Sampling 0.5 0.5")
+(defparameter *advanced-results* (run-experiments
+                                  (advanced-experiments)
+                                  (th.env.bandits:two-armed-bernoulli-bandit-env 0.8)))
+(let* ((name "PURE EXPLOITATION")
        (vs ($list ($ ($ *advanced-results* name) :mean-rewards))))
-  (plot-lines (nthcdr 200 vs) :yrange (cons 0 1)))
+  (plot-lines (nthcdr 1 vs) :yrange (cons 0 1)))
 
+;; 10 armed bandit
 (let* ((env (th.env.bandits:ten-armed-gaussian-bandit-env))
-       (true-q (true-q env))
-       (opt-v (opt-v true-q)))
-  (list (env-p-dist env) (env-r-dist env) true-q opt-v))
+       (true-q (env/true-q env))
+       (opt-v ($max true-q)))
+  (list (env/p-dist env) (env/r-dist env) true-q opt-v))
 
 (let* ((env (th.env.bandits:ten-armed-gaussian-bandit-env))
        (true-q (true-q env))
