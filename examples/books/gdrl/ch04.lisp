@@ -133,7 +133,7 @@
                       :nepisodes nepisodes)))
 
 (defun upper-confidence-bound-strategy (env &key (c 2) (nepisodes 1000))
-  (run-episodes env :name (format nil "USB ~A" c)
+  (run-episodes env :name (format nil "UCB ~A" c)
                     :strategy (lambda (e q n)
                                 (let ((a e))
                                   (when (>= e ($count q))
