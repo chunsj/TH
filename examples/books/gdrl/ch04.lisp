@@ -197,6 +197,32 @@
         (lambda (env) (thompson-sampling-strategy env))
         (lambda (env) (thompson-sampling-strategy env :alpha 0.5 :beta 0.5))))
 
+(defun report-last-qs (env strategies)
+  (let* ((true-q (env/true-q env))
+         (opt-v ($max true-q))
+         (expreses (loop :for strategy :in strategies
+                         :collect (funcall strategy env))))
+    (prn "***********")
+    (prn "* RESULTS *")
+    (prn "***********")
+    (prn "")
+    (prn "* TRUE Q:" true-q)
+    (prn "* OPTM V:" opt-v "* OPTM A:" ($argmax true-q))
+    (loop :for er :in expreses
+          :for sname = (expr/name er)
+          :for qe = (expr/qe er)
+          :for lq = ($ qe (1- ($size qe 0)))
+          :do (prn sname "=>" lq))
+    (prn "")))
+
+;; testing strategy - basic
+(report-last-qs (th.env.bandits:two-armed-random-fixed-bandit-env)
+                (basic-experiments))
+
+;; testing strategy - advanced
+(report-last-qs (th.env.bandits:two-armed-random-fixed-bandit-env)
+                (advanced-experiments))
+
 (defun run-experiments (experiments env)
   (let* ((true-q (env/true-q env))
          (opt-v ($max env))
@@ -226,66 +252,6 @@
                             ($ sres :mean-rewards) mean-rewards)
                       sres)))
     res))
-
-(let* ((env (th.env.bandits:two-armed-random-fixed-bandit-env))
-       (true-q (env/true-q env))
-       (opt-v ($max true-q))
-       (expres (pure-exploration env))
-       (qe (expr/qe expres))
-       (lq ($ qe (1- ($size qe 0)))))
-  (prn "***********")
-  (prn "* RESULTS *")
-  (prn "***********")
-  (prn "")
-  (prn "* TRUE Q:" true-q)
-  (prn "* OPTM V:" opt-v "OPTM A:" ($argmax true-q))
-  (prn "* LAST Q:" lq)
-  (prn ""))
-
-(prn (tensor))
-(prn (tensor '(1 2 3 4)))
-(prn (rndn 10))
-(prn (tensor '((1 2 3) (4 5 6))))
-(prn (rndn 10 10))
-(prn (rndn 3 3 3))
-(prn (rndn 2 2))
-(prn (rndn 10 10 10))
-(prn (rndn 3 3 3 3))
-
-
-(let ((b2-vs '()))
-  (loop :repeat 5
-        :do (let* ((env (th.env.bandits:two-armed-random-fixed-bandit-env))
-                   (true-q (env/true-q env))
-                   (opt-v ($max true-q)))
-              (prn "")
-              (prn "***")
-              (prn (env/p-dist env))
-              (prn "Q:" true-q)
-              (prn "V*: " opt-v)
-              (push opt-v b2-vs)))
-  (prn "")
-  (prn "***")
-  (prn "Mean V*:" (/ (reduce #'+ b2-vs) ($count b2-vs))))
-
-(let* ((env (th.env.bandits:two-armed-random-fixed-bandit-env))
-       (true-q (env/true-q env))
-       (expres (epsilon-greedy env)))
-  (cons true-q expres))
-
-(let* ((env (th.env.bandits:two-armed-random-fixed-bandit-env))
-       (true-q (true-q env))
-       (expres (optimistic-initialization env :optimistic-estimate 1D0
-                                              :initial-count 50)))
-  (cons true-q expres))
-
-(let* ((env (th.env.bandits:two-armed-random-fixed-bandit-env))
-       (true-q (true-q env))
-       (expres (thompson-sampling-strategy env)))
-  (cons true-q expres))
-
-(env (th.env.bandits:two-armed-random-fixed-bandit-env))
-
 
 (defparameter *basic-results*
   (run-experiments (basic-experiments) (th.env.bandits:two-armed-random-fixed-bandit-env)))
