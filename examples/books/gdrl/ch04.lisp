@@ -28,11 +28,16 @@
                 (setf ($ actions e) action)))
     (list name returns qe actions)))
 
+(defun expr/name (res) ($ res 0))
+(defun expr/returns (res) ($ res 1))
+(defun expr/qe (res) ($ res 2))
+(defun expr/actions (res) ($ res 3))
+
 (defun pure-exploitation (env &key (nepisodes 1000))
   (run-episodes env :name "PURE EXPLOITATION"
                     :strategy (lambda (e q n)
                                 (declare (ignore e n))
-                                ($argmax q 0))
+                                ($argmax q))
                     :nepisodes nepisodes))
 
 (defun pure-exploration (env &key (nepisodes 1000))
@@ -47,7 +52,7 @@
                     :strategy (lambda (e q n)
                                 (declare (ignore e n))
                                 (if (> (random 1D0) epsilon)
-                                    ($argmax q 0)
+                                    ($argmax q)
                                     (random ($count q))))
                     :nepisodes nepisodes))
 
@@ -68,7 +73,7 @@
                                     (if (> epsilon epsilon0)
                                         (setf epsilon epsilon0))
                                     (if (> (random 1D0) epsilon)
-                                        ($argmax q 0)
+                                        ($argmax q)
                                         (random ($count q)))))
                       :nepisodes nepisodes)))
 
@@ -89,7 +94,7 @@
                                   (declare (ignore n))
                                   (let ((epsilon ($ epsilons e)))
                                     (if (> (random 1D0) epsilon)
-                                        ($argmax q 0)
+                                        ($argmax q)
                                         (random ($count q))))))))
 
 (defun optimistic-initialization (env &key (optimistic-estimate 1D0)
@@ -101,7 +106,7 @@
                     :initn (lambda (n) ($fill! n initial-count))
                     :strategy (lambda (e q n)
                                 (declare (ignore e n))
-                                ($argmax q 0))
+                                ($argmax q))
                     :nepisodes nepisodes))
 
 (defun softmax-strategy (env &key (temperature0 99999) (min-temperature 0.00001D0)
@@ -133,7 +138,7 @@
                                 (let ((a e))
                                   (when (>= e ($count q))
                                     (let ((u ($sqrt ($* c ($/ (log e) (tensor n))))))
-                                      (setf a ($argmax ($+ u q) 0))))
+                                      (setf a ($argmax ($+ u q)))))
                                   a))
                     :nepisodes nepisodes))
 
@@ -222,6 +227,32 @@
                       sres)))
     res))
 
+(let* ((env (th.env.bandits:two-armed-random-fixed-bandit-env))
+       (true-q (env/true-q env))
+       (opt-v ($max true-q))
+       (expres (pure-exploration env))
+       (qe (expr/qe expres))
+       (lq ($ qe (1- ($size qe 0)))))
+  (prn "***********")
+  (prn "* RESULTS *")
+  (prn "***********")
+  (prn "")
+  (prn "* TRUE Q:" true-q)
+  (prn "* OPTM V:" opt-v "OPTM A:" ($argmax true-q))
+  (prn "* LAST Q:" lq)
+  (prn ""))
+
+(prn (tensor))
+(prn (tensor '(1 2 3 4)))
+(prn (rndn 10))
+(prn (tensor '((1 2 3) (4 5 6))))
+(prn (rndn 10 10))
+(prn (rndn 3 3 3))
+(prn (rndn 2 2))
+(prn (rndn 10 10 10))
+(prn (rndn 3 3 3 3))
+
+
 (let ((b2-vs '()))
   (loop :repeat 5
         :do (let* ((env (th.env.bandits:two-armed-random-fixed-bandit-env))
@@ -238,7 +269,7 @@
   (prn "Mean V*:" (/ (reduce #'+ b2-vs) ($count b2-vs))))
 
 (let* ((env (th.env.bandits:two-armed-random-fixed-bandit-env))
-       (true-q (true-q env))
+       (true-q (env/true-q env))
        (expres (epsilon-greedy env)))
   (cons true-q expres))
 
