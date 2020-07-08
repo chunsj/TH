@@ -267,6 +267,9 @@
        (vs ($list ($ ($ *advanced-results* name) :accum-regret))))
   (plot-lines (nthcdr 1 vs) :yrange (cons 0 5)))
 
+(let ((env (th.env.bandits:ten-armed-gaussian-bandit-env)))
+  (env/step! env 0))
+
 ;; 10 armed bandit
 (let* ((env (th.env.bandits:ten-armed-gaussian-bandit-env))
        (true-q (env/true-q env))
@@ -274,19 +277,39 @@
   (list (env/p-dist env) (env/r-dist env) true-q opt-v))
 
 (let* ((env (th.env.bandits:ten-armed-gaussian-bandit-env))
-       (true-q (true-q env))
+       (true-q (env/true-q env))
+       (expres (pure-exploration env)))
+  (list true-q (expr/qe expres)))
+
+(let* ((env (th.env.bandits:ten-armed-gaussian-bandit-env))
+       (true-q (env/true-q env))
+       (expres (epsilon-greedy env))
+       (qe (expr/qe expres))
+       (lq ($ qe (1- ($size qe 0)))))
+  (list true-q ($max true-q) ($argmax true-q) lq ($max lq) ($argmax lq)))
+
+(let* ((env (th.env.bandits:ten-armed-gaussian-bandit-env))
+       (true-q (env/true-q env))
        (expres (optimistic-initialization env :optimistic-estimate 1D0
-                                              :initial-count 50)))
-  (cons true-q expres))
+                                              :initial-count 50))
+       (qe (expr/qe expres))
+       (lq ($ qe (1- ($size qe 0)))))
+  (list true-q ($max true-q) ($argmax true-q) lq ($max lq) ($argmax lq)))
+
+(report-last-qs (th.env.bandits:ten-armed-gaussian-bandit-env)
+                (basic-experiments))
+
+(report-last-qs (th.env.bandits:ten-armed-gaussian-bandit-env)
+                (advanced-experiments))
 
 (defparameter *basic-results*
   (run-experiments (basic-experiments) (th.env.bandits:ten-armed-gaussian-bandit-env)))
-(let* ((name "Pure exploration")
-       (vs ($list ($ ($ *basic-results* name) :cum-regret))))
-  (plot-lines (nthcdr 200 vs) :yrange (cons 0 100)))
+(let* ((name "EXPONENTIAL E-GREEDY 1.0 0.0 0.1")
+       (vs ($list ($ ($ *basic-results* name) :accum-regret))))
+  (plot-lines (nthcdr 1 vs) :yrange (cons 0 100)))
 
 (defparameter *advanced-results*
   (run-experiments (advanced-experiments) (th.env.bandits:ten-armed-gaussian-bandit-env)))
-(let* ((name "Thompson Sampling 0.5 0.5")
-       (vs ($list ($ ($ *advanced-results* name) :cum-regret))))
-  (plot-lines (nthcdr 200 vs) :yrange (cons 0 100)))
+(let* ((name "SOFTMAX 100 0.01 0.005")
+       (vs ($list ($ ($ *advanced-results* name) :accum-regret))))
+  (plot-lines (nthcdr 1 vs) :yrange (cons 0 5)))
