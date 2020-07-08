@@ -111,3 +111,41 @@
        (v (prediction/state-value-function mcpred)))
   (env/print-state-value-function env v :ncols 7)
   (env/print-state-value-function env ($- v v-true) :ncols 7 :title "ERROR"))
+
+(defun td-prediction (env policy &key (gamma 1D0) (alpha0 0.5) (min-alpha 0.01)
+                                   (alpha-decay-ratio 0.5) (nepisodes 500))
+  (let* ((alphas (decay-schedule alpha0 min-alpha alpha-decay-ratio nepisodes))
+         (ns (env/state-count env))
+         (v (zeros ns))
+         (v-track (zeros nepisodes ns))
+         (targets (loop :for s :from 0 :below ns :collect '())))
+    (loop :for e :from 0 :below nepisodes
+          :for state = (env/reset! env)
+          :for done = nil
+          :do (progn
+                (loop :while (not done)
+                      :for action = (funcall policy state)
+                      :for tx = (env/step! env action)
+                      :for next-state = (transition/next-state tx)
+                      :for reward = (transition/reward tx)
+                      :for terminalp = (transition/terminalp tx)
+                      :for td-target = (+ reward (* gamma ($ v next-state) (if done 0 1)))
+                      :do (progn
+                            (push td-target ($ targets state))
+                            (incf ($ v state) (* ($ alphas e) (- td-target ($ v state))))
+                            (setf done terminalp
+                                  state next-state)))
+                (setf ($ v-track e) v)))
+    (list v v-track targets)))
+
+(let* ((env (th.env.examples:random-walk-env))
+       (policy (lambda (s) ($ '(0 0 0 0 0 0 0) s))))
+  (td-prediction env policy))
+
+(let* ((env (th.env.examples:random-walk-env))
+       (policy (lambda (s) ($ '(0 0 0 0 0 0 0) s)))
+       (v-true (env/policy-evaluation env policy))
+       (mcpred (td-prediction env policy))
+       (v (prediction/state-value-function mcpred)))
+  (env/print-state-value-function env v :ncols 7)
+  (env/print-state-value-function env ($- v v-true) :ncols 7 :title "ERROR"))
