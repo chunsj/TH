@@ -266,3 +266,47 @@
   (env/print-state-value-function env v :ncols 7)
   (env/print-state-value-function env v-true :ncols 7 :title "TRUE")
   (env/print-state-value-function env ($- v v-true) :ncols 7 :title "ERROR"))
+
+(defun td-lambda (env policy &key (gamma 1D0) (alpha0 0.5) (min-alpha 0.01)
+                               (alpha-decay-ratio 0.5) (lam 0.3) (nepisodes 500))
+  (let* ((alphas (decay-schedule alpha0 min-alpha alpha-decay-ratio nepisodes))
+         (ns (env/state-count env))
+         (v (zeros ns))
+         (es (zeros ns))
+         (v-track (zeros nepisodes ns)))
+    (loop :for e :from 0 :below nepisodes
+          :for state = (env/reset! env)
+          :for done = nil
+          :do (progn
+                ($zero! es)
+                (loop :while (not done)
+                      :for action = (funcall policy state)
+                      :for tx = (env/step! env action)
+                      :for next-state = (transition/next-state tx)
+                      :for reward = (transition/reward tx)
+                      :for terminalp = (transition/terminalp tx)
+                      :for fac = (if terminalp 0 1)
+                      :for td-target = (+ reward (* gamma ($ v next-state) fac))
+                      :for td-error = (- td-target ($ v state))
+                      :for alpha-err = (* ($ alphas e) td-error)
+                      :do (progn
+                            (incf ($ es state))
+                            ($add! v ($* alpha-err es))
+                            (setf es ($* es gamma lam))
+                            (setf done terminalp
+                                  state next-state)))
+                (setf ($ v-track e) v)))
+    (list v v-track '())))
+
+(let* ((env (th.env.examples:random-walk-env))
+       (policy (lambda (s) ($ '(0 0 0 0 0 0 0) s))))
+  (td-lambda env policy))
+
+(let* ((env (th.env.examples:random-walk-env))
+       (policy (lambda (s) ($ '(0 0 0 0 0 0 0) s)))
+       (v-true (env/policy-evaluation env policy))
+       (ntdpred (td-lambda env policy))
+       (v (prediction/state-value-function ntdpred)))
+  (env/print-state-value-function env v :ncols 7)
+  (env/print-state-value-function env v-true :ncols 7 :title "TRUE")
+  (env/print-state-value-function env ($- v v-true) :ncols 7 :title "ERROR"))
