@@ -102,6 +102,7 @@
        (mcpred (mc-prediction env policy))
        (v (prediction/state-value-function mcpred)))
   (env/print-state-value-function env v :ncols 7)
+  (env/print-state-value-function env v-true :ncols 7 :title "TRUE")
   (env/print-state-value-function env ($- v v-true) :ncols 7 :title "ERROR"))
 
 (let* ((env (th.env.examples:random-walk-env))
@@ -152,6 +153,7 @@
   (env/print-state-value-function env v-true :ncols 7 :title "TRUE")
   (env/print-state-value-function env ($- v v-true) :ncols 7 :title "ERROR"))
 
+;; from sutton & barto's book
 (defun ntd-prediction (env policy &key (gamma 1D0) (alpha0 0.5) (min-alpha 0.01)
                                     (alpha-decay-ratio 0.5) (nstep 3) (nepisodes 500))
   (let* ((alphas (decay-schedule alpha0 min-alpha alpha-decay-ratio nepisodes))
@@ -160,45 +162,36 @@
          (v-track (zeros nepisodes ns)))
     (loop :for e :from 0 :below nepisodes
           :for state = (env/reset! env)
-          :for path = '()
-          :for done = nil
-          :do (progn
-                (loop :while (or (not done) (not (null path)))
-                      :for path = (reverse (cdr path))
+          :for ende = most-positive-fixnum
+          :for endp = nil
+          :do (let ((rewards '())
+                    (states (list state)) ;; XXX states is required to refer S(tau)
+                    (next-state -1)
+                    (tau -1))
+                (loop :for tm :from 0
+                      :while (not endp)
                       :do (progn
-                            (loop :while (and (not done) (< ($count path) nstep))
-                                  :for action = (funcall policy state)
-                                  :for tx = (env/step! env action)
-                                  :for next-state = (transition/next-state tx)
-                                  :for reward = (transition/reward tx)
-                                  :for terminalp = (transition/terminalp tx)
-                                  :for experience = (list state action reward next-state terminalp)
-                                  :do (progn
-                                        (push experience path)
-                                        (setf state next-state)
-                                        (setf done terminalp)))
-                            (when path
-                              (let* ((path (reverse path))
-                                     (npath ($count path))
-                                     (est-state (experience/state (car path)))
-                                     (nx-state (experience/next-state ($last path)))
-                                     (termp (experience/terminalp ($last path)))
-                                     (partial-returns 0)
-                                     (bs-val 0)
-                                     (ntd-target 0)
-                                     (ntd-error 0))
-                                (setf partial-returns
-                                      (loop :for exp :in path
-                                            :for n :from 0
-                                            :for reward = (experience/reward exp)
-                                            :summing (* (expt gamma n) reward)))
-                                (setf bs-val (* (expt gamma npath) ($ v nx-state)
-                                                (if termp 0 1)))
-                                (setf ntd-target (+ bs-val partial-returns))
-                                (setf ntd-error (- ntd-target ($ v est-state)))
-                                (incf ($ v est-state) (* ($ alphas e) ntd-error))
-                                (when (and (= 1 ($count path)) (experience/terminalp (car path)))
-                                  (setf path '()))))))
+                            (when (< tm ende)
+                              (let* ((action (funcall policy state))
+                                     (tx (env/step! env action)))
+                                (setf next-state (transition/next-state tx))
+                                (push next-state states)
+                                (push (transition/reward tx) rewards)
+                                (if (transition/terminalp tx) (setf ende (1+ tm)))))
+                            (setf tau (+ 1 (- tm nstep)))
+                            (when (>= tau 0)
+                              (let* ((rs (subseq (reverse rewards)
+                                                 (1+ tau) (min ende (+ tau nstep))))
+                                     (sts (reverse states))
+                                     (stau ($ sts tau))
+                                     (g (loop :for r :in rs
+                                              :for i :from 0
+                                              :summing (* (expt gamma (- i tau 1)) r))))
+                                (when (< (+ tau nstep) ende)
+                                  (incf g (* (expt gamma nstep) ($ v next-state))))
+                                (incf ($ v stau) (* ($ alphas e) (- g ($ v stau))))))
+                            (if (= tau (- ende 1)) (setf endp T))
+                            (setf state next-state)))
                 (setf ($ v-track e) v)))
     (list v v-track '())))
 
@@ -209,7 +202,66 @@
 (let* ((env (th.env.examples:random-walk-env))
        (policy (lambda (s) ($ '(0 0 0 0 0 0 0) s)))
        (v-true (env/policy-evaluation env policy))
-       (ntdpred (ntd-prediction env policy :nstep 1000))
+       (ntdpred (ntd-prediction env policy))
+       (v (prediction/state-value-function ntdpred)))
+  (env/print-state-value-function env v :ncols 7)
+  (env/print-state-value-function env v-true :ncols 7 :title "TRUE")
+  (env/print-state-value-function env ($- v v-true) :ncols 7 :title "ERROR"))
+
+(defun ntd-prediction (env policy &key (gamma 1D0) (alpha0 0.5) (min-alpha 0.01)
+                                    (alpha-decay-ratio 0.5) (nstep 3) (nepisodes 500))
+  (let* ((alphas (decay-schedule alpha0 min-alpha alpha-decay-ratio nepisodes))
+         (ns (env/state-count env))
+         (v (zeros ns))
+         (v-track (zeros nepisodes ns)))
+    (loop :for e :from 0 :below nepisodes
+          :for state = (env/reset! env)
+          :for done = nil
+          :do (let ((experiences '()))
+                (loop :while (or (not done) (not (null experiences)))
+                      :do (progn
+                            (loop :while (and (not done) (< ($count experiences) nstep))
+                                  :for action = (funcall policy state)
+                                  :for tx = (env/step! env action)
+                                  :for next-state = (transition/next-state tx)
+                                  :for reward = (transition/reward tx)
+                                  :for terminalp = (transition/terminalp tx)
+                                  :for experience = (list state action reward next-state terminalp)
+                                  :do (progn
+                                        (push experience experiences)
+                                        (setf state next-state)
+                                        (setf done terminalp)))
+                            (when experiences
+                              (let* ((ne ($count experiences))
+                                     (exs (reverse experiences))
+                                     (e0 (car exs))
+                                     (el ($last exs))
+                                     (est-state (experience/state e0))
+                                     (next-state (experience/next-state el))
+                                     (termp (experience/terminalp el))
+                                     (partial-returns (loop :for exp :in exs
+                                                            :for n :from 0
+                                                            :for reward = (experience/reward exp)
+                                                            :summing (* (expt gamma n) reward)))
+                                     (bs-val (* (expt gamma nstep) ($ v next-state)
+                                                (if termp 0 1)))
+                                     (ntd-target (+ bs-val partial-returns))
+                                     (ntd-error (- ntd-target ($ v est-state))))
+                                (incf ($ v est-state) (* ($ alphas e) ntd-error))
+                                (when (and (= 1 ne) (experience/terminalp e0))
+                                  (setf experiences '()))))
+                            (setf experiences (butlast experiences))))
+                (setf ($ v-track e) v)))
+    (list v v-track '())))
+
+(let* ((env (th.env.examples:random-walk-env))
+       (policy (lambda (s) ($ '(0 0 0 0 0 0 0) s))))
+  (ntd-prediction env policy))
+
+(let* ((env (th.env.examples:random-walk-env))
+       (policy (lambda (s) ($ '(0 0 0 0 0 0 0) s)))
+       (v-true (env/policy-evaluation env policy))
+       (ntdpred (ntd-prediction env policy))
        (v (prediction/state-value-function ntdpred)))
   (env/print-state-value-function env v :ncols 7)
   (env/print-state-value-function env v-true :ncols 7 :title "TRUE")
