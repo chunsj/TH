@@ -305,8 +305,30 @@
 (let* ((env (th.env.examples:random-walk-env))
        (policy (lambda (s) ($ '(0 0 0 0 0 0 0) s)))
        (v-true (env/policy-evaluation env policy))
-       (ntdpred (td-lambda env policy))
-       (v (prediction/state-value-function ntdpred)))
+       (ntlpred (td-lambda env policy))
+       (v (prediction/state-value-function ntlpred)))
   (env/print-state-value-function env v :ncols 7)
   (env/print-state-value-function env v-true :ncols 7 :title "TRUE")
   (env/print-state-value-function env ($- v v-true) :ncols 7 :title "ERROR"))
+
+(let* ((env (th.env.examples:grid-world-env))
+       (policy (lambda (s) ($ '(2 2 2 0
+                           3 0 3 0
+                           3 0 0 0)
+                        s)))
+       (v-true (env/policy-evaluation env policy)))
+  (env/print-state-value-function env v-true)
+  (td-lambda env policy))
+
+(let* ((env (th.env.examples:grid-world-env))
+       (policy (lambda (s) ($ '(2 2 2 0
+                           3 0 3 0
+                           3 0 0 0)
+                        s)))
+       (v-true (env/policy-evaluation env policy))
+       (ntlpred (td-lambda env policy))
+       (v (prediction/state-value-function ntlpred)))
+  (env/print-policy env policy)
+  (env/print-state-value-function env v)
+  (env/print-state-value-function env v-true :title "TRUE")
+  (env/print-state-value-function env ($- v v-true) :title "ERROR"))
