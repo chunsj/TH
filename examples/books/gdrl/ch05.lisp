@@ -322,13 +322,43 @@
 
 (let* ((env (th.env.examples:grid-world-env))
        (policy (lambda (s) ($ '(2 2 2 0
+                           1 0 1 0
+                           1 0 0 0)
+                        s))))
+  (->> (loop :repeat 500
+             :collect (progn
+                        (env/reset! env)
+                        (->> (mapcar #'$3 (generate-trajectory env policy))
+                             (remove-if-not (lambda (s) (or (eq s 8)
+                                                       (eq s 9)
+                                                       (eq s 10)
+                                                       (eq s 11)))))))
+       (remove-if (lambda (s) (null s)))))
+
+(let* ((env (th.env.examples:grid-world-env))
+       (policy (lambda (s) ($ '(2 2 2 0
                            3 0 3 0
                            3 0 0 0)
                         s)))
        (v-true (env/policy-evaluation env policy))
-       (ntlpred (td-lambda env policy))
-       (v (prediction/state-value-function ntlpred)))
+       (pred (mc-prediction env policy))
+       (v (prediction/state-value-function pred)))
   (env/print-policy env policy)
   (env/print-state-value-function env v)
   (env/print-state-value-function env v-true :title "TRUE")
   (env/print-state-value-function env ($- v v-true) :title "ERROR"))
+
+(let* ((env (th.env.examples:grid-world-env))
+       (policy (lambda (s) ($ '(2 2 2 0
+                           3 0 3 0
+                           3 0 0 0)
+                        s)))
+       (v-true (env/policy-evaluation env policy))
+       (pred (td-lambda env policy))
+       (v (prediction/state-value-function pred)))
+  (env/print-policy env policy)
+  (env/print-state-value-function env v)
+  (env/print-state-value-function env v-true :title "TRUE")
+  (env/print-state-value-function env ($- v v-true) :title "ERROR")
+  (prn "PGOAL:" (env/success-probability env policy 3)
+       "MRET:" (env/mean-return env policy)))
