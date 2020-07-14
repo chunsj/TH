@@ -74,17 +74,14 @@
           :for visited = (zeros ns na)
           :do (progn
                 (loop :for strj :on trajectory
-                      :for it :from 0
                       :for experience = (car strj)
                       :for state = (experience/state experience)
                       :for action = (experience/action experience)
                       :for reward = (experience/reward experience)
                       :do (unless (and first-visit-p (> ($ visited state action) 0))
-                            (let* ((strj (subseq trajectory it))
-                                   (g (loop :for exi :in strj
-                                            :for ri = (experience/reward exi)
-                                            :for i :from 0
-                                            :summing (* ($ discounts i) ri)))
+                            (let* ((g (->> (mapcar (lambda (d e) (* d (experience/reward e)))
+                                                   discounts strj)
+                                           (reduce #'+)))
                                    (mc-err (- g ($ Q state action))))
                               (setf ($ visited state action) 1)
                               (incf ($ Q state action) (* ($ alphas e) mc-err)))))
@@ -92,3 +89,12 @@
                 (push ($squeeze ($argmax Q 1)) pi-track)))
     (let ((v ($squeeze ($argmax Q 1))))
       (list Q v (lambda (s) ($ v s)) Q-track pi-track))))
+
+(let* ((env (th.env.examples:slippery-walk-seven-env))
+       (optres (env/value-iteration env :gamma 0.99D0))
+       (opt-v (value-iteration/optimal-value-function optres))
+       (opt-p (value-iteration/optimal-policy optres))
+       (opt-q (value-iteration/optimal-action-value-function optres)))
+  (env/print-state-value-function env opt-v :ncols 9)
+  (env/print-policy env opt-p :action-symbols '("<" ">") :ncols 9)
+  (prn opt-q))
