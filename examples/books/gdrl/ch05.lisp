@@ -322,21 +322,6 @@
 
 (let* ((env (th.env.examples:grid-world-env))
        (policy (lambda (s) ($ '(2 2 2 0
-                           1 0 1 0
-                           1 0 0 0)
-                        s))))
-  (->> (loop :repeat 500
-             :collect (progn
-                        (env/reset! env)
-                        (->> (mapcar #'$3 (generate-trajectory env policy))
-                             (remove-if-not (lambda (s) (or (eq s 8)
-                                                       (eq s 9)
-                                                       (eq s 10)
-                                                       (eq s 11)))))))
-       (remove-if (lambda (s) (null s)))))
-
-(let* ((env (th.env.examples:grid-world-env))
-       (policy (lambda (s) ($ '(2 2 2 0
                            3 0 3 0
                            3 0 0 0)
                         s)))
