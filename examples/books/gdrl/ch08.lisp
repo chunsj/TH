@@ -2,7 +2,7 @@
   (:use #:common-lisp
         #:mu
         #:th
-        #:th.env)
-  (:import-from #:th.env.examples))
+        #:th.env
+        #:th.env.cartpole))
 
 (in-package :gdrl-ch08)
