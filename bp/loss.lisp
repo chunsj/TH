@@ -58,7 +58,7 @@
                    ($log1p ($exp neg-abs)))))
     ($mean loss)))
 
-(defmethod $mse ((a T) (b T)) ($mean ($expt ($- a b) 2)))
+(defmethod $mse ((a T) (b T)) ($mean ($square ($sub a b))))
 
 ;; (defmethod $mse ((a tensor) (b tensor))
 ;;   (let ((output ($resize! ($empty a) '(1))))
