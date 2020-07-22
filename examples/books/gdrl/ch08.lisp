@@ -102,6 +102,19 @@
 (prn ($evaluate *model* (tensor '((0) (1) (2) (3) (4) (5) (6) (7) (8)))))
 (prn ($argmax ($evaluate *model* (tensor '((0) (1) (2) (3) (4) (5) (6) (7) (8)))) 1))
 
+(let* ((env (slippery-walk-seven-env))
+       (optres (env/value-iteration env :gamma 1D0))
+       (opt-q (value-iteration/optimal-action-value-function optres))
+       (states (tensor '((0) (1) (2) (3) (4) (5) (6) (7) (8)))))
+  (loop :repeat 5000
+        :for k :from 1
+        :do (let* ((v ($execute *model* states))
+                   (l (loss v opt-q)))
+              ($rmgd! *model*)
+              (when (zerop (rem k 500)) (prn l))))
+  (prn opt-q)
+  (prn ($evaluate *model* states)))
+
 (let ((env (slippery-walk-seven-env))
       (model *model*)
       (max-episodes 100)
