@@ -20,11 +20,22 @@
         ($argmax qvs 1)
         (tensor.long ($bernoulli (tensor ($size state 0) 1) 0.5D0)))))
 
+;; xxx i don't know why $mse does not work
+(defun loss (v r) ($mse v r))
+
+(let* ((w ($parameter (zeros 4 2)))
+       (a '((0) (1) (0) (1)))
+       (r (ones 4 1)))
+  (loop :repeat 3
+        :for iter :from 0
+        :for l = (loss ($gather w 1 a) r)
+        :do (progn
+              ($rmgd! w 0.1)
+              (prn iter ":" ($data l)))))
+
 (let* ((m (fcq 4 2))
        (x ($uniform (tensor 1 4) -0.05 0.05)))
   (epsilon-greedy m x))
-
-()
 
 (let* ((net (fcq 4 2))
        (x ($uniform (tensor 10 4) -0.05 0.05))
@@ -48,10 +59,13 @@
     (-> (apply #'$concat states)
         ($reshape! n 4))))
 
+(defparameter *model* (fcq 4 2))
+
 (let ((env (cartpole-env))
-      (model (fcq 4 2))
+      (model *model*)
       (nbatch 1024)
       (ntrain 40)
+      (epsilon 0.5D0)
       (gamma 1D0)
       (lr 0.0001))
   (loop :repeat 1
@@ -59,7 +73,7 @@
         :for state = (env/reset! env)
         :do (let ((experiences '()))
               (loop :for i :from 0 :below nbatch
-                    :for action = (-> (epsilon-greedy model ($reshape state 1 4) :epsilon 0.1D0)
+                    :for action = (-> (epsilon-greedy model ($reshape state 1 4) :epsilon epsilon)
                                       ($ 0 0))
                     :do (let* ((tx (env/step! env action))
                                (next-state (transition/next-state tx))
@@ -86,12 +100,12 @@
                                    ($reshape ne 1))))
                   (with-max-heap ()
                     (loop :repeat ntrain
-                          :for k :from 0
+                          :for k :from 1
                           :do (let* ((maxaqsp (-> ($evaluate model next-states)
                                                   ($max 1)
                                                   (car)))
                                      (target-qs ($+ rewards ($* gamma maxaqsp donesf)))
                                      (qsa ($gather ($execute model states) 1 actions))
-                                     (loss ($mean ($* 0.5 ($expt ($- qsa target-qs) 2)))))
-                                (prn episode k loss)
-                                ($rmgd! model lr)))))))))
+                                     (loss (loss qsa target-qs)))
+                                (when (zerop (rem k ntrain)) (prn episode loss))
+                                ($gd! model lr)))))))))
