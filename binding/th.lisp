@@ -362,11 +362,13 @@
 (defgeneric $cumsum (x &optional dimension) (:documentation "Returns cumulative sum."))
 (defgeneric $cumsum! (y x &optional dimension) (:documentation "Returns y = cumsum x."))
 
-(defgeneric $max (x &optional dimension) (:documentation "Returns (max-vals, max-indices)."))
+(defgeneric $max* (x &optional dimension) (:documentation "Returns (max-vals, max-indices)."))
+(defgeneric $max (x &optional dimension) (:documentation "Returns max-vals."))
 (defgeneric $max! (vals indices x &optional dimension)
   (:documentation "Returns (max-vals, max-indices)."))
 
-(defgeneric $min (x &optional dimension) (:documentation "Returns (min-vals, min-indices)."))
+(defgeneric $min* (x &optional dimension) (:documentation "Returns (min-vals, min-indices)."))
+(defgeneric $min (x &optional dimension) (:documentation "Returns min-vals."))
 (defgeneric $min! (vals indices x &optional dimension)
   (:documentation "Returns (min-vals, min-indices)."))
 

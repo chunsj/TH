@@ -230,8 +230,10 @@
            #:$cumprd!
            #:$cumsum
            #:$cumsum!
+           #:$max*
            #:$max
            #:$max!
+           #:$min*
            #:$min
            #:$min!
            #:$cmax

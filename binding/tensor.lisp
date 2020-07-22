@@ -1586,7 +1586,7 @@
   (tensor-cum-sum y x dimension)
   y)
 
-(defmethod $max ((x tensor) &optional (dimension -1))
+(defmethod $max* ((x tensor) &optional (dimension -1))
   (if (< dimension 0)
       (tensor-max-all x)
       (let ((indices (tensor.long))
@@ -1594,9 +1594,25 @@
         (tensor-max vals indices x dimension t)
         (list vals indices))))
 
+(defmethod $max ((x tensor) &optional (dimension -1))
+  (if (< dimension 0)
+      (tensor-max-all x)
+      (let ((indices (tensor.long))
+            (vals ($empty x)))
+        (tensor-max vals indices x dimension t)
+        vals)))
+
 (defmethod $max! ((vals tensor) (indices tensor.long) (x tensor) &optional (dimension 0))
   (tensor-max vals indices x dimension t)
   (list vals indices))
+
+(defmethod $min* ((x tensor) &optional (dimension -1))
+  (if (< dimension 0)
+      (tensor-min-all x)
+      (let ((indices (tensor.long))
+            (vals ($empty x)))
+        (tensor-min vals indices x dimension t)
+        (list vals indices))))
 
 (defmethod $min ((x tensor) &optional (dimension -1))
   (if (< dimension 0)
@@ -1604,7 +1620,7 @@
       (let ((indices (tensor.long))
             (vals ($empty x)))
         (tensor-min vals indices x dimension t)
-        (list vals indices))))
+        vals)))
 
 (defmethod $min! ((vals tensor) (indices tensor.long) (x tensor) &optional (dimension 0))
   (tensor-min vals indices x dimension t)
