@@ -28,6 +28,8 @@
 (defgeneric $argmax (x &optional dim) (:documentation "Argument Max."))
 (defgeneric $argmin (x &optional dim) (:documentation "Argument Max."))
 
+(defgeneric $scalar (x) (:documentation "Convert to the scalar value if possible."))
+
 (defun addmul (x1 w1 x2 w2) ($addmul! ($mul x1 w1) x2 w2))
 
 (defmethod $addm2 ((x1 node) (w1 node) (x2 node) (w2 node))
@@ -618,3 +620,11 @@
                                            ($ means i)
                                            ($ sds i))))
     samples))
+
+(defmethod $scalar ((x tensor))
+  (when (eq 1 ($count x))
+    ($ ($storage x) 0)))
+
+(defmethod $scalar ((x node))
+  (when (eq 1 ($count ($data x)))
+    ($ ($storage ($data x)) 0)))

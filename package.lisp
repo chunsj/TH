@@ -400,6 +400,7 @@
            #:$array
            #:$argmax
            #:$argmin
+           #:$scalar
            #:random-normals
            #:$rnn
            #:$lstm
