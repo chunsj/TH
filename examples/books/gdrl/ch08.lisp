@@ -15,7 +15,7 @@
     (sequential-layer
      (affine-layer input-dim h1 :activation :tanh)
      (affine-layer h1 h2 :activation :tanh)
-     (affine-layer h2 output-dim :activation :sigmoid))))
+     (affine-layer h2 output-dim))))
 
 (defun epsilon-greedy (model state &key (epsilon 0.1D0))
   (let ((qvs ($evaluate model state)))
