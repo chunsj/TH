@@ -468,6 +468,6 @@
 (defmethod $gather ((x node) dimension indices)
   (node ($gather ($data x) dimension indices)
         :name :gather
-        :link (link (to x (let* ((g ($zero ($data x))))
+        :link (link (to x (let ((g ($zero ($data x))))
                             ($scatter! g dimension indices gv)
                             g)))))

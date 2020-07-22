@@ -58,33 +58,35 @@
                    ($log1p ($exp neg-abs)))))
     ($mean loss)))
 
-(defmethod $mse ((a tensor) (b tensor))
-  (let ((output ($resize! ($empty a) '(1))))
-    (nn-mse-criterion-update-output a b output t)
-    ($ output 0)))
+(defmethod $mse ((a T) (b T)) ($mean ($expt ($- a b) 2)))
 
-(defun dmse (input target gradient)
-  (let ((dinput ($resize! ($empty input) ($size input)))
-        (grad (if ($tensorp gradient) gradient (tensor (list gradient)))))
-    (nn-mse-criterion-update-grad-input input target grad dinput t)
-    dinput))
+;; (defmethod $mse ((a tensor) (b tensor))
+;;   (let ((output ($resize! ($empty a) '(1))))
+;;     (nn-mse-criterion-update-output a b output t)
+;;     ($ output 0)))
 
-(defmethod $mse ((a node) (b node))
-  (node ($mse ($data a) ($data b))
-        :name :mse
-        :link (link
-                (to a (dmse ($data a) ($data b) gv))
-                (to b (dmse ($data b) ($data a) gv)))))
+;; (defun dmse (input target gradient)
+;;   (let ((dinput ($resize! ($empty input) ($size input)))
+;;         (grad (if ($tensorp gradient) gradient (tensor (list gradient)))))
+;;     (nn-mse-criterion-update-grad-input input target grad dinput t)
+;;     dinput))
 
-(defmethod $mse ((a node) (b tensor))
-  (node ($mse ($data a) b)
-        :name :mse
-        :link (link (to a (dmse ($data a) b gv)))))
+;; (defmethod $mse ((a node) (b node))
+;;   (node ($mse ($data a) ($data b))
+;;         :name :mse
+;;         :link (link
+;;                 (to a (dmse ($data a) ($data b) gv))
+;;                 (to b (dmse ($data b) ($data a) gv)))))
 
-(defmethod $mse ((a tensor) (b node))
-  (node ($mse a ($data b))
-        :name :mse
-        :link (link (to b (dmse ($data b) a gv)))))
+;; (defmethod $mse ((a node) (b tensor))
+;;   (node ($mse ($data a) b)
+;;         :name :mse
+;;         :link (link (to a (dmse ($data a) b gv)))))
+
+;; (defmethod $mse ((a tensor) (b node))
+;;   (node ($mse a ($data b))
+;;         :name :mse
+;;         :link (link (to b (dmse ($data b) a gv)))))
 
 (defmethod $cee ((a tensor) (b tensor))
   (let ((tiny 1D-7)
