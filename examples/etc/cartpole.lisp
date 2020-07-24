@@ -183,7 +183,7 @@
           (and (>= ne (- +eval-max-steps+ 2)) (<= (abs ($0 state)) +x-success-range+))
           ecost)))
 
-(defvar *init-experience* nil)
+(defvar *init-experience* T)
 (defvar *increment-experience* T)
 (defvar *hint-to-goal* T)
 (defvar *max-epochs* 300)
@@ -231,4 +231,4 @@
                     (setf success ($1 eres))
                     (report epoch loss ntrain ctrain neval ceval success)))))
     (when success
-      (prn (format nil "TOTAL ~6D / ~4,2F" ($count experiences) total-cost)))))
+      (prn (format nil "*** TOTAL ~6D / ~4,2F" ($count experiences) total-cost)))))
