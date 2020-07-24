@@ -102,6 +102,9 @@
 (defmethod $adgd! ((l layer) &optional (learning-rate 1) (decay-rate 0.95))
   ($adgd! ($train-parameters l) learning-rate decay-rate))
 
+(defmethod $rpgd! ((l layer) &optional (learning-rate 1E-2) (etas '(0.5 1.2)) (steps '(1E-6 50)))
+  ($rpgd! ($train-parameters l) learning-rate etas steps))
+
 (defmethod $cg! ((l layer)) ($cg! ($train-parameters l)))
 (defmethod $reset! ((l layer)) ($reset! ($train-parameters l)))
 

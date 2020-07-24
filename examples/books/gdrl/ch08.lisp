@@ -122,7 +122,7 @@
       (ntrain 5)
       (epsilon 0.5D0)
       (gamma 1D0)
-      (lr 0.02)
+      (lr 0.01)
       (experiences '()))
   (loop :repeat max-episodes
         :for episode :from 1
@@ -166,7 +166,7 @@
                                               (when (zerop (rem episode 20))
                                                 (when (eq k 1) (prn lbl lv))
                                                 (when (eq k ntrain) (prn lbl lv)))
-                                              ($rmgd! model lr)))))))
+                                              ($rpgd! model lr)))))))
                           (setf state next-state
                                 done terminalp))))))
 
