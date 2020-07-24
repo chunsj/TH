@@ -3,7 +3,7 @@
 (defpackage :cartpole2
   (:use #:common-lisp
         #:mu
-        #:th
+        n        #:th
         #:th.layers
         #:th.env))
 
@@ -122,13 +122,13 @@
                 (setf state next-state)))
     (list (reverse rollout) episode-cost)))
 
-(defun model ()
+(defun model (&optional (ni 5) (no 1))
   (let ((h1 5)
         (h2 5))
     (sequential-layer
-     (affine-layer 5 h1 :weight-initializer :random-uniform)
+     (affine-layer ni h1 :weight-initializer :random-uniform)
      (affine-layer h1 h2 :weight-initializer :random-uniform)
-     (affine-layer h2 1 :weight-initializer :random-uniform))))
+     (affine-layer h2 no :weight-initializer :random-uniform))))
 
 (defun best-action-selector (model)
   (lambda (state)
