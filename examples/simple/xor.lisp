@@ -105,6 +105,23 @@
               ($agd! w2 lr)))
   (prn ($sigmoid ($mm ($sigmoid ($mm X w1)) w2))))
 
+(time
+ (let* ((w1 ($parameter (rndn 3 3)))
+        (w2 ($parameter (rndn 3 1)))
+        (X (tensor '((0 0 1) (0 1 1) (1 0 1) (1 1 1))))
+        (Y (tensor '(0 1 1 0)))
+        (lr 1E-2)
+        (etas '(0.5 1.2)))
+   (loop :for i :from 0 :below 1000
+         :do (let* ((l1 ($sigmoid ($mm X w1)))
+                    (l2 ($sigmoid ($mm l1 w2)))
+                    (d ($sub l2 Y))
+                    (out ($dot d d)))
+               ($gs! out 1)
+               ($rpgd! w1 lr etas)
+               ($rpgd! w2 lr etas)))
+   (prn ($sigmoid ($mm ($sigmoid ($mm X w1)) w2)))))
+
 (let* ((ps (parameters))
        (w1 ($push ps (rndn 3 3)))
        (w2 ($push ps (rndn 3 1)))

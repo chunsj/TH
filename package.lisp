@@ -358,6 +358,7 @@
            #:$amgd!
            #:$rmgd!
            #:$adgd!
+           #:$rpgd!
            #:$bce
            #:$bce*
            #:$cee
