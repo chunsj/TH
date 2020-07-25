@@ -95,6 +95,7 @@
 ## Selected Book Follow Ups
   1. Deep Learning from Scratch: examples/books/dlfs
   2. Grokking Deep Learning: examples/books/gdl
+  3. Grokking Deep Reinforcement Learning: examples/books/gdrl
 
 ## Test Data Support - data should be copied under ~/.th/datasets/[datasetname]
   1. MNIST: db/mnist.lisp, you need to download original mnist data, unpack them, and generate.
