@@ -1,13 +1,13 @@
 ;; from https://github.com/seungjaeryanlee/implementations-nfq.git
 
-(defpackage :cartpole2
+(defpackage :cartpole-nfq
   (:use #:common-lisp
         #:mu
-        n        #:th
+        #:th
         #:th.layers
         #:th.env))
 
-(in-package :cartpole2)
+(in-package :cartpole-nfq)
 
 (defconstant +gravity+ 9.8D0)
 (defconstant +masscart+ 1D0)
