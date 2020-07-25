@@ -74,6 +74,7 @@
   22. Fully convolutional network: [22](examples/pretrained/fcn.lisp)
   23. Hidden Markov model: [23](examples/etc/hmm.lisp) (from the Machine Learning with Tensorflow book)
   24. Reinforcement learning example: [24](examples/etc/rl.lisp) (ditto above)
+  25. Neural Fitted Q-iteration example: [25](examples/etc/cartpole.lisp) (refer github.com/seungjaeryanlee)
 
 ## Pretrained Models
   Though there's currently 5 models, VGG16, VGG19, ResNet50, DenseNet161 and SqueezeNet1.1 are
