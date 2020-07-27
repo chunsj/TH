@@ -8,6 +8,20 @@
 
 (in-package :cartpole-dqn)
 
+(defun decay-schedule (v0 minv decay-ratio max-steps &key (log-start -2) (log-base 10))
+  (let* ((decay-steps (round (* max-steps decay-ratio)))
+         (rem-steps (- max-steps decay-steps))
+         (vs (-> ($/ (logspace log-start 0 decay-steps) (log log-base 10))
+                 ($list)
+                 (reverse)
+                 (tensor)))
+         (minvs ($min vs))
+         (maxvs ($max vs))
+         (rngv (- maxvs minvs))
+         (vs ($/ ($- vs minvs) rngv))
+         (vs ($+ minv ($* vs (- v0 minv)))))
+    ($cat vs ($fill! (tensor rem-steps) ($last vs)))))
+
 (defun model (&optional (ni 5) (no 1))
   (let ((h1 5)
         (h2 5))
@@ -16,12 +30,14 @@
      (affine-layer h1 h2 :weight-initializer :random-uniform)
      (affine-layer h2 no :weight-initializer :random-uniform))))
 
-(defun best-action-selector (model)
+(defun best-action-selector (model epsilon)
   (lambda (state)
-    (let* ((state ($reshape state 1 4))
-           (qleft ($evaluate model ($concat state (zeros 1 1) 1)))
-           (qright ($evaluate model ($concat state (ones 1 1) 1))))
-      (if (>= ($ qleft 0 0) ($ qright 0 0)) 1 0))))
+    (if (> (random 1D0) epsilon)
+        (let* ((state ($reshape state 1 4))
+               (qleft ($evaluate model ($concat state (zeros 1 1) 1)))
+               (qright ($evaluate model ($concat state (ones 1 1) 1))))
+          (if (>= ($ qleft 0 0) ($ qright 0 0)) 1 0))
+        (random 2))))
 
 (defun sample-experiences (experiences nbatch)
   (let ((nr ($count experiences)))
@@ -62,6 +78,9 @@
 (defvar *batch-size* 512)
 (defvar *max-epochs* 1000)
 (defvar *sync-period* 15)
+(defvar *eps0* 1D0)
+(defvar *min-eps* 0.1D0)
+(defvar *eps-decay-ratio* 0.9D0)
 
 (setf *init-experience* nil
       *hint-to-goal* nil)
@@ -77,6 +96,9 @@
         :for po :in ($parameters online)
         :do ($set! ($data pt) ($data po))))
 
+(defun generate-epsilons ()
+  (decay-schedule *eps0* *min-eps* *eps-decay-ratio* *max-epochs*))
+
 (with-max-heap ()
   (let* ((train-env (cartpole-regulator-env :train))
          (eval-env (cartpole-regulator-env :eval))
@@ -84,7 +106,8 @@
          (model-online (model))
          (experiences '())
          (total-cost 0)
-         (success nil))
+         (success nil)
+         (epsilons (generate-epsilons)))
     (sync-models model-target model-online)
     (when *init-experience*
       (let* ((exsi (collect-experiences train-env))
@@ -94,10 +117,12 @@
         (incf total-cost ecost)))
     (loop :for epoch :from 1 :to *max-epochs*
           :while (not success)
+          :for eps = ($ epsilons (1- epoch))
           :do (let ((ctrain 0)
                     (ntrain 0))
                 (when *increment-experience*
-                  (let* ((exsi (collect-experiences train-env (best-action-selector model-target)))
+                  (let* ((exsi (collect-experiences train-env
+                                                    (best-action-selector model-target eps)))
                          (exs (car exsi)))
                     (setf ctrain (cadr exsi))
                     (setf ntrain ($count exs))
@@ -117,7 +142,7 @@
                       (setf xs ($concat xs (car gxys) 0))
                       (setf ys ($concat ys (cadr gxys) 0))))
                   (let* ((loss (train model-online xs ys))
-                         (eres (evaluate eval-env (best-action-selector model-online)))
+                         (eres (evaluate eval-env (best-action-selector model-online 0D0)))
                          (neval ($0 eres))
                          (ceval ($2 eres)))
                     (setf success ($1 eres))
