@@ -209,7 +209,7 @@
 
 (defparameter *m* nil)
 
-(let ((strategy #'ddqn))) (setf *m* (funcall strategy *m*))
+(let ((strategy #'ddqn)) (setf *m* (funcall strategy *m*)))
 
 (let ((env (cartpole-regulator-env :eval)))
   (evaluate env (best-action-selector *m* 0)))

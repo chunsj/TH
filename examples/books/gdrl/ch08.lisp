@@ -4,8 +4,7 @@
         #:th
         #:th.layers
         #:th.env
-        #:th.env.examples
-        #:th.env.cartpole))
+        #:th.env.examples))
 
 (in-package :gdrl-ch08)
 
