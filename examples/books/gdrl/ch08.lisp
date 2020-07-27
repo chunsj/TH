@@ -170,4 +170,4 @@
                           (setf state next-state
                                 done terminalp))))))
 
-;; for cartpole example check examples/etc/cartpole.lisp
+;; for cartpole example check examples/etc/cartpole-nfq.lisp
