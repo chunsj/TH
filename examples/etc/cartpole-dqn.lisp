@@ -68,7 +68,7 @@
 (defun train (model xs ts)
   (let* ((ys ($execute model xs))
          (loss ($mse ys ts)))
-    ($rpgd! model)
+    ($rmgd! model 0.003)
     ($data loss)))
 
 (defvar *init-experience* nil)
@@ -153,10 +153,63 @@
       (prn (format nil "*** TOTAL ~6D / ~4,2F" ($count experiences) total-cost)))
     model-online))
 
+(defun ddqn (&optional model)
+  (let* ((train-env (cartpole-regulator-env :train))
+         (eval-env (cartpole-regulator-env :eval))
+         (model-target (model))
+         (model-online (or model (model)))
+         (experiences '())
+         (total-cost 0)
+         (success nil)
+         (epsilons (generate-epsilons)))
+    (sync-models model-target model-online)
+    (when *init-experience*
+      (let* ((exsi (collect-experiences train-env))
+             (exs (car exsi))
+             (ecost (cadr exsi)))
+        (setf experiences exs)
+        (incf total-cost ecost)))
+    (loop :for epoch :from 1 :to *max-epochs*
+          :while (not success)
+          :for eps = ($ epsilons (1- epoch))
+          :do (let ((ctrain 0)
+                    (ntrain 0))
+                (when *increment-experience*
+                  (let* ((exsi (collect-experiences train-env
+                                                    (best-action-selector model-online eps)))
+                         (exs (car exsi)))
+                    (setf ctrain (cadr exsi))
+                    (setf ntrain ($count exs))
+                    (setf experiences (let ((ne ($count experiences)))
+                                        (if (> ne *max-buffer-size*)
+                                            (append (nthcdr (- ne *max-buffer-size*) experiences)
+                                                    exs)
+                                            (append experiences exs))))
+                    (incf total-cost ctrain)))
+                (let* ((xys (generate-dataset model-target
+                                              (sample-experiences experiences *batch-size*)
+                                              0.95D0))
+                       (xs (car xys))
+                       (ys (cadr xys)))
+                  (when *hint-to-goal*
+                    (let ((gxys (generate-goal-patterns)))
+                      (setf xs ($concat xs (car gxys) 0))
+                      (setf ys ($concat ys (cadr gxys) 0))))
+                  (let* ((loss (train model-online xs ys))
+                         (eres (evaluate eval-env (best-action-selector model-online 0D0)))
+                         (neval ($0 eres))
+                         (ceval ($2 eres)))
+                    (setf success ($1 eres))
+                    (report epoch loss ntrain ctrain neval ceval success)))
+                (when (zerop (rem epoch *sync-period*))
+                  (sync-models model-target model-online))))
+    (when success
+      (prn (format nil "*** TOTAL ~6D / ~4,2F" ($count experiences) total-cost)))
+    model-online))
 
 (defparameter *m* nil)
 
-(setf *m* (dqn *m*))
+(let ((strategy #'ddqn))) (setf *m* (funcall strategy *m*))
 
 (let ((env (cartpole-regulator-env :eval)))
   (evaluate env (best-action-selector *m* 0)))
