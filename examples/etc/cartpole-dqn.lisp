@@ -55,13 +55,16 @@
     ($rpgd! model)
     ($data loss)))
 
-(defvar *init-experience* T)
+(defvar *init-experience* nil)
 (defvar *increment-experience* T)
-(defvar *hint-to-goal* T)
+(defvar *hint-to-goal* nil)
 (defvar *max-buffer-size* 4096)
 (defvar *batch-size* 512)
 (defvar *max-epochs* 1000)
 (defvar *sync-period* 15)
+
+(setf *init-experience* nil
+      *hint-to-goal* nil)
 
 (defun report (epoch loss ntrain ctrain neval ceval success)
   (when (or success (zerop (rem epoch 20)))
@@ -69,8 +72,7 @@
       (prn (format nil fmt epoch ntrain ctrain neval ceval loss)))))
 
 (defun sync-models (target online)
-  ($cg! target)
-  ($cg! online)
+  ($cg! (list target online))
   (loop :for pt :in ($parameters target)
         :for po :in ($parameters online)
         :do ($set! ($data pt) ($data po))))
