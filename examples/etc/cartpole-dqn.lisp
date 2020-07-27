@@ -76,7 +76,7 @@
 (defvar *hint-to-goal* nil)
 (defvar *max-buffer-size* 4096)
 (defvar *batch-size* 512)
-(defvar *max-epochs* 1000)
+(defvar *max-epochs* 2000)
 (defvar *sync-period* 15)
 (defvar *eps0* 1D0)
 (defvar *min-eps* 0.1D0)
