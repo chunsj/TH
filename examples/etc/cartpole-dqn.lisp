@@ -99,11 +99,11 @@
 (defun generate-epsilons ()
   (decay-schedule *eps0* *min-eps* *eps-decay-ratio* *max-epochs*))
 
-(defun dqn ()
+(defun dqn (&optional model)
   (let* ((train-env (cartpole-regulator-env :train))
          (eval-env (cartpole-regulator-env :eval))
          (model-target (model))
-         (model-online (model))
+         (model-online (or model (model)))
          (experiences '())
          (total-cost 0)
          (success nil)
@@ -153,4 +153,10 @@
       (prn (format nil "*** TOTAL ~6D / ~4,2F" ($count experiences) total-cost)))
     model-online))
 
-(dqn)
+
+(defparameter *m* nil)
+
+(setf *m* (dqn *m*))
+
+(let ((env (cartpole-regulator-env :eval)))
+  (evaluate env (best-action-selector *m* 0)))
