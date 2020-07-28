@@ -22,13 +22,42 @@
          (vs ($+ minv ($* vs (- v0 minv)))))
     ($cat vs ($fill! (tensor rem-steps) ($last vs)))))
 
-(defun model (&optional (ni 4) (no 2))
+(defun model-common (&optional (ni 4))
   (let ((h1 5)
         (h2 5))
     (sequential-layer
      (affine-layer ni h1 :weight-initializer :random-uniform)
-     (affine-layer h1 h2 :weight-initializer :random-uniform)
-     (affine-layer h2 no :weight-initializer :random-uniform))))
+     (affine-layer h1 h2 :weight-initializer :random-uniform))))
+
+(defun model-value (&optional (ni 5))
+  (sequential-layer
+   (affine-layer ni 1 :weight-initializer :random-uniform)))
+
+(defun model-advantage (&optional (ni 5) (no 2))
+  (sequential-layer
+   (affine-layer ni no :weight-initializer :random-uniform)))
+
+(defclass duel-ddqn-model (layer)
+  ((cm :initform (model-common))
+   (vm :initform (model-value))
+   (am :initform (model-advantage))))
+
+(defun model () (make-instance 'duel-ddqn-model))
+
+(defmethod $execute ((m duel-ddqn-model) x &key (trainp T))
+  (with-slots (cm vm am) m
+    (let* ((hc ($execute cm x :trainp trainp))
+           (hv ($execute vm hc :trainp trainp))
+           (ha ($execute am hc :trainp trainp))
+           (sa ($size ha))
+           (ma ($mean ha 1)))
+      ($add ($expand hv sa) ($sub ha ($expand ma sa))))))
+
+(defmethod $train-parameters ((m duel-ddqn-model))
+  (with-slots (cm vm am) m
+    (append ($train-parameters cm)
+            ($train-parameters vm)
+            ($train-parameters am))))
 
 (defun best-action-selector (model &optional (epsilon 0))
   (lambda (state)
@@ -90,7 +119,7 @@
 (defun generate-epsilons ()
   (decay-schedule *eps0* *min-eps* *eps-decay-ratio* *max-epochs*))
 
-(defun ddqn (&optional model)
+(defun duel-ddqn (&optional model)
   (let* ((train-env (cartpole-regulator-env :train))
          (eval-env (cartpole-regulator-env :eval))
          (model-target (model))
@@ -132,7 +161,7 @@
 
 (defparameter *m* nil)
 
-(setf *m* (ddqn *m*))
+(setf *m* (duel-ddqn *m*))
 
 (let ((env (cartpole-regulator-env :eval)))
   (evaluate env (best-action-selector *m*)))
