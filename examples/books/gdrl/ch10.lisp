@@ -1,4 +1,4 @@
-(defpackage :gdrl-ch09
+(defpackage :gdrl-ch10
   (:use #:common-lisp
         #:mu
         #:th
@@ -6,7 +6,7 @@
         #:th.env
         #:th.env.cartpole-regulator))
 
-(in-package :gdrl-ch09)
+(in-package :gdrl-ch10)
 
 (defun decay-schedule (v0 minv decay-ratio max-steps &key (log-start -2) (log-base 10))
   (let* ((decay-steps (round (* max-steps decay-ratio)))
@@ -62,11 +62,11 @@
          (tqvs ($+ costs ($* gamma qns ($- 1 dones)))))
     (list states actions tqvs)))
 
-(defun train (model xs as ts &optional (lr 0.008))
+(defun train (model xs as ts)
   (let* ((qs ($execute model xs))
          (ys ($gather qs 1 as))
          (loss ($mse ys ts)))
-    ($rmgd! model lr)
+    ($rmgd! model 0.008)
     ($data loss)))
 
 (defvar *max-buffer-size* 4096)
@@ -90,51 +90,6 @@
 
 (defun generate-epsilons ()
   (decay-schedule *eps0* *min-eps* *eps-decay-ratio* *max-epochs*))
-
-(defun dqn (&optional model)
-  (let* ((train-env (cartpole-regulator-env :train))
-         (eval-env (cartpole-regulator-env :eval))
-         (model-target (model))
-         (model-online (or model (model)))
-         (experiences '())
-         (total-cost 0)
-         (success nil)
-         (epsilons (generate-epsilons)))
-    (sync-models model-target model-online)
-    (loop :for epoch :from 1 :to *max-epochs*
-          :while (not success)
-          :for eps = ($ epsilons (1- epoch))
-          :do (let ((ctrain 0)
-                    (ntrain 0))
-                (let* ((exsi (collect-experiences train-env
-                                                  (best-action-selector model-target eps)))
-                       (exs (car exsi)))
-                  (setf ctrain (cadr exsi))
-                  (setf ntrain ($count exs))
-                  (setf experiences (let ((ne ($count experiences)))
-                                      (if (> ne *max-buffer-size*)
-                                          (append (nthcdr (- ne *max-buffer-size*) experiences)
-                                                  exs)
-                                          (append experiences exs))))
-                  (incf total-cost ctrain))
-                (let* ((xts (generate-dataset model-target
-                                              model-target
-                                              (sample-experiences experiences *batch-size*)
-                                              0.95D0))
-                       (xs (car xts))
-                       (as (cadr xts))
-                       (ys (caddr xts)))
-                  (let* ((loss (train model-online xs as ys 0.003))
-                         (eres (evaluate eval-env (best-action-selector model-online 0D0)))
-                         (neval ($0 eres))
-                         (ceval ($2 eres)))
-                    (setf success ($1 eres))
-                    (report epoch loss ntrain ctrain neval ceval success)))
-                (when (zerop (rem epoch *sync-period*))
-                  (sync-models model-target model-online))))
-    (when success
-      (prn (format nil "*** TOTAL ~6D / ~4,2F" ($count experiences) total-cost)))
-    model-online))
 
 (defun ddqn (&optional model)
   (let* ((train-env (cartpole-regulator-env :train))
@@ -183,7 +138,7 @@
 
 (defparameter *m* nil)
 
-(setf *m* (let ((rl #'dqn)) (funcall rl *m*)))
+(setf *m* (ddqn *m*))
 
 (let ((env (cartpole-regulator-env :eval)))
   (evaluate env (best-action-selector *m* 0D0)))
