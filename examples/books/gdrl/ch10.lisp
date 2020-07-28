@@ -110,11 +110,16 @@
     (let ((fmt "EPOCH ~4D | TRAIN ~3D / ~4,2F | EVAL ~4D / ~5,2F | TRAIN.LOSS ~,4F"))
       (prn (format nil fmt epoch ntrain ctrain neval ceval loss)))))
 
-(defun sync-models (target online)
+(defun polyak-averaging (target online &optional (tau 0.1D0))
   ($cg! (list target online))
   (loop :for pt :in ($parameters target)
         :for po :in ($parameters online)
-        :do ($set! ($data pt) ($data po))))
+        :for a = ($* tau ($data po))
+        :for b = ($* (- 1 tau) ($data pt))
+        :do ($set! ($data pt) ($+ a b))))
+
+(defun sync-models (target online)
+  (polyak-averaging target online))
 
 (defun generate-epsilons ()
   (decay-schedule *eps0* *min-eps* *eps-decay-ratio* *max-epochs*))
@@ -153,8 +158,7 @@
                        (ceval ($2 eres)))
                   (setf success ($1 eres))
                   (report epoch loss ntrain ctrain neval ceval success))
-                (when (zerop (rem epoch *sync-period*))
-                  (sync-models model-target model-online))))
+                (sync-models model-target model-online)))
     (when success
       (prn (format nil "*** TOTAL ~6D / ~4,2F" ($count experiences) total-cost)))
     model-online))
