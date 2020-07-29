@@ -1,4 +1,4 @@
-(defpackage :gdrl-ch10
+(defpackage :cartpole-per
   (:use #:common-lisp
         #:mu
         #:th
@@ -6,7 +6,7 @@
         #:th.env
         #:th.env.cartpole-regulator))
 
-(in-package :gdrl-ch10)
+(in-package :cartpole-per)
 
 (defun decay-schedule (v0 minv decay-ratio max-steps &key (log-start -2) (log-base 10))
   (let* ((decay-steps (round (* max-steps decay-ratio)))

@@ -1,4 +1,4 @@
-(defpackage :gdrl-ch10
+(defpackage :cartpole-duel-ddqn
   (:use #:common-lisp
         #:mu
         #:th
@@ -6,7 +6,7 @@
         #:th.env
         #:th.env.cartpole-regulator))
 
-(in-package :gdrl-ch10)
+(in-package :cartpole-duel-ddqn)
 
 (defun decay-schedule (v0 minv decay-ratio max-steps &key (log-start -2) (log-base 10))
   (let* ((decay-steps (round (* max-steps decay-ratio)))
@@ -67,75 +67,14 @@
           ($scalar ($argmin q 1)))
         (random 2))))
 
-(defclass replay-buffer ()
-  ((entries :initform nil)
-   (deltas :initform nil)
-   (nsz :initform 0)
-   (idx :initform -1)
-   (alpha :initform 0.6)
-   (beta :initform 0.1)
-   (beta-rate :initform 0.99992)))
+(defun sample-experiences (experiences nbatch)
+  (let ((nr ($count experiences)))
+    (if (> nr nbatch)
+        (loop :repeat nbatch :collect ($ experiences (random nr)))
+        experiences)))
 
-(defun replay-buffer (size)
-  (let ((n (make-instance 'replay-buffer)))
-    (with-slots (entries deltas nsz idx) n
-      (setf entries (make-array size :initial-element nil)
-            deltas ($fill! (tensor size) 1D0)
-            nsz 0
-            idx 0))
-    n))
-
-(defun add-sample (buffer sample)
-  (with-slots (idx nsz entries deltas) buffer
-    (let ((maxsz ($count entries))
-          (maxd ($max deltas)))
-      (setf ($ entries idx) sample
-            ($ deltas idx) maxd)
-      (setf nsz (min (1+ nsz) maxsz))
-      (incf idx)
-      (setf idx (rem idx maxsz)))
-    buffer))
-
-(defun update-deltas (buffer idcs tderrs)
-  (with-slots (entries deltas) buffer
-    (setf ($index deltas 0 idcs) ($abs ($reshape tderrs ($count tderrs))))))
-
-(defun update-beta! (buffer)
-  (with-slots (beta beta0 beta-rate) buffer
-    (setf beta (min 1D0 (/ beta beta-rate)))))
-
-(defconstant +eps+ 1E-6)
-
-(defun sample-experiences (buffer nbatch)
-  (with-slots (entries nsz deltas alpha beta) buffer
-    (if (>= nsz nbatch)
-        (let* ((prs ($expt ($+ ($subview deltas 0 nsz) +eps+) alpha))
-               (pbs ($/ prs ($sum prs)))
-               (wts ($expt ($* pbs nsz) beta))
-               (nwts ($/ wts ($max wts)))
-               (indices (tensor.long (loop :for i :from 0 :below nsz :collect i)))
-               (idcs (loop :repeat nbatch :collect ($choice indices pbs))))
-          (update-beta! buffer)
-          (list idcs
-                ($reshape ($index nwts 0 idcs) nbatch 1)
-                (loop :for i :in idcs :collect ($ entries i))))
-        (list (loop :for i :from 0 :below nsz :collect i)
-              ($reshape (tensor (loop :repeat nsz :collect 1)) nsz 1)
-              (loop :for i :from 0 :below nsz :collect ($ entries i))))))
-
-(defvar *max-buffer-size* 4096)
-(defvar *batch-size* 512)
-(defvar *max-epochs* 1000)
-(defvar *eps0* 1D0)
-(defvar *min-eps* 0.1D0)
-(defvar *eps-decay-ratio* 0.9D0)
-
-(defun train-model (model-online model-target buffer &optional (gamma 0.95D0) (lr 0.003))
-  (let* ((experiences0 (sample-experiences buffer *batch-size*))
-         (indices ($ experiences0 0))
-         (nweights ($ experiences0 1))
-         (experiences ($ experiences0 2))
-         (nr ($count experiences)))
+(defun train-model (model-online model-target experiences &optional (gamma 0.95D0) (lr 0.003))
+  (let ((nr ($count experiences)))
     (let ((states (-> (apply #'$concat (mapcar #'$0 experiences))
                       ($reshape! nr 4)))
           (actions (-> (tensor.long (mapcar #'$1 experiences))
@@ -154,11 +93,16 @@
              (ts ($+ costs ($* gamma qns ($- 1 dones))))
              (ys (-> ($execute model-online xs)
                      ($gather 1 actions)))
-             (tderrs ($- ys ts))
-             (loss ($mean ($square ($* nweights tderrs)))))
+             (loss ($mse ys ts)))
         ($rmgd! model-online lr)
-        (update-deltas buffer indices ($data tderrs))
         ($data loss)))))
+
+(defvar *max-buffer-size* 4096)
+(defvar *batch-size* 512)
+(defvar *max-epochs* 2000)
+(defvar *eps0* 1D0)
+(defvar *min-eps* 0.1D0)
+(defvar *eps-decay-ratio* 0.9D0)
 
 (defun report (epoch loss ntrain ctrain neval ceval success)
   (when (or success (zerop (rem epoch 20)))
@@ -184,8 +128,7 @@
          (eval-env (cartpole-regulator-env :eval))
          (model-target (model))
          (model-online (or model (model)))
-         (buffer (replay-buffer *max-buffer-size*))
-         (excount 0)
+         (experiences '())
          (total-cost 0)
          (success nil)
          (epsilons (generate-epsilons)))
@@ -200,11 +143,14 @@
                        (exs (car exsi)))
                   (setf ctrain (cadr exsi))
                   (setf ntrain ($count exs))
-                  (incf excount ntrain)
-                  (loop :for e :in exs :do (add-sample buffer e))
+                  (setf experiences (let ((ne ($count experiences)))
+                                      (if (> ne *max-buffer-size*)
+                                          (append (nthcdr (- ne *max-buffer-size*) experiences)
+                                                  exs)
+                                          (append experiences exs))))
                   (incf total-cost ctrain))
                 (let* ((loss (train-model model-online model-target
-                                          buffer
+                                          (sample-experiences experiences *batch-size*)
                                           0.95D0 0.008))
                        (eres (evaluate eval-env (best-action-selector model-online)))
                        (neval ($0 eres))
@@ -213,7 +159,7 @@
                   (report epoch loss ntrain ctrain neval ceval success))
                 (sync-models model-target model-online)))
     (when success
-      (prn (format nil "*** TOTAL ~6D / ~4,2F" excount total-cost)))
+      (prn (format nil "*** TOTAL ~6D / ~4,2F" ($count experiences) total-cost)))
     model-online))
 
 (defparameter *m* nil)
