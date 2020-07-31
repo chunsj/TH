@@ -28,18 +28,18 @@
 (defconstant +train-max-steps+ 100)
 (defconstant +eval-max-steps+ 3000)
 
-(defclass cartpole-regulator-env ()
+(defclass cartpole-env ()
   ((mode :initform nil :accessor env/mode)
    (step :initform 0 :accessor env/episode-step)
    (state :initform nil :accessor env/state)))
 
-(defun cartpole-regulator-env (&optional (m :train))
-  (let ((n (make-instance 'cartpole-regulator-env)))
+(defun cartpole-env (&optional (m :train))
+  (let ((n (make-instance 'cartpole-env)))
     (setf (env/mode n) m)
     (env/reset! n)
     n))
 
-(defmethod env/reset! ((env cartpole-regulator-env))
+(defmethod env/reset! ((env cartpole-env))
   (with-slots (mode state step) env
     (setf step 0)
     (setf state (if (eq mode :train)
@@ -53,7 +53,7 @@
                                   0))))
     state))
 
-(defmethod env/step! ((env cartpole-regulator-env) action)
+(defmethod env/step! ((env cartpole-env) action)
   (let* ((x ($0 (env/state env)))
          (xd ($1 (env/state env)))
          (th ($2 (env/state env)))
@@ -196,8 +196,8 @@
       (prn (format nil fmt epoch ntrain ctrain neval ceval loss)))))
 
 (with-max-heap ()
-  (let* ((train-env (cartpole-regulator-env :train))
-         (eval-env (cartpole-regulator-env :eval))
+  (let* ((train-env (cartpole-env :train))
+         (eval-env (cartpole-env :eval))
          (model (model))
          (experiences '())
          (total-cost 0)

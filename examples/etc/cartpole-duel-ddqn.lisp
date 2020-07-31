@@ -4,7 +4,7 @@
         #:th
         #:th.layers
         #:th.env
-        #:th.env.cartpole-regulator))
+        #:th.env.cartpole))
 
 (in-package :cartpole-duel-ddqn)
 
@@ -124,8 +124,8 @@
   (decay-schedule *eps0* *min-eps* *eps-decay-ratio* *max-epochs*))
 
 (defun duel-ddqn (&optional model)
-  (let* ((train-env (cartpole-regulator-env :train))
-         (eval-env (cartpole-regulator-env :eval))
+  (let* ((train-env (cartpole-env :train))
+         (eval-env (cartpole-env :eval))
          (model-target (model))
          (model-online (or model (model)))
          (experiences '())
@@ -166,5 +166,5 @@
 
 (setf *m* (duel-ddqn *m*))
 
-(let ((env (cartpole-regulator-env :eval)))
+(let ((env (cartpole-env :eval)))
   (evaluate env (best-action-selector *m*)))
