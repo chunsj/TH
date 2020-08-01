@@ -57,7 +57,8 @@
                             (setf w ($+ w ($* lr grad returns)))))
                 (push score episode-rewards)
                 (when (zerop (rem e 100))
-                  (prn (format nil "~5D: ~8,2F" e score)))))))
+                  (prn (format nil "~5D: ~8,2F" e score)))))
+    (reverse episode-rewards)))
 
 (defparameter *w* (rnd 4 2))
 (reinforce-simple *w*)
@@ -65,6 +66,11 @@
 ;; using auto differentiation of TH.
 
 (defun policy (state w) ($softmax ($@ ($unsqueeze state 0) w)))
+
+(defun select-action (state w)
+  (let* ((probs (policy state w))
+         (action ($multinomial ($data probs) 1)))
+    (list ($scalar action) ($gather probs 1 action))))
 
 (defun reinforce-bp (w &optional (max-episodes 2000))
   (let ((gamma 0.99)
@@ -80,13 +86,9 @@
           :for done = nil
           :do (let ((loss 0))
                 (loop :while (not done)
-                      :for probs = (policy state w)
-                      :for action = ($multinomial ($data probs) 1)
-                      :for tx = (env/step! env ($scalar action))
-                      :for next-state = (transition/next-state tx)
-                      :for reward = (transition/reward tx)
-                      :for terminalp = (transition/terminalp tx)
-                      :do (let* ((logit ($log ($gather probs 1 action))))
+                      :for (action prob) = (select-action state w)
+                      :for (_ next-state reward terminalp) = (env/step! env action)
+                      :do (let* ((logit ($log prob)))
                             (push logit logits)
                             (push reward rewards)
                             (incf score reward)
@@ -101,7 +103,8 @@
                 ($amgd! w lr)
                 (push score episode-rewards)
                 (when (zerop (rem e 100))
-                  (prn (format nil "~5D: ~8,2F" e score)))))))
+                  (prn (format nil "~5D: ~8,2F" e score)))))
+    (reverse episode-rewards)))
 
 (defparameter *w* ($parameter (rnd 4 2)))
 (reinforce-bp *w*)
