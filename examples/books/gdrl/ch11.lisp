@@ -17,7 +17,7 @@
      (affine-layer h2 no :weight-initializer :random-uniform
                          :activation :softmax))))
 
-(defun policy (m state) ($execute m ($unsqueeze state 0)))
+(defun policy (m state &key (trainp T)) ($execute m ($unsqueeze state 0) :trainp trainp))
 
 (defun select-action (m state)
   (let* ((probs (policy m state))
@@ -44,8 +44,8 @@
                             (push logit logits)
                             (push reward rewards)
                             (incf score reward)
-                            p                            (setf state next-state
-                                                               done terminalp)))
+                            (setf state next-state
+                                  done terminalp)))
                 (loop :for logit :in (reverse logits)
                       :for rwds :on (reverse rewards)
                       :do (let ((returns (reduce #'+ (loop :for r :in rwds
@@ -60,3 +60,19 @@
 
 (defparameter *m* (model))
 (reinforce-bp *m*)
+
+(defun evaluate-model (env m)
+  (let ((done nil)
+        (state (env/reset! env))
+        (score 0))
+    (loop :while (not done)
+          :for probs = (policy m state :trainp nil)
+          :for action = ($scalar ($argmax probs 1))
+          :for (_ next-state reward terminalp) = (env/step! env action)
+          :do (progn
+                (incf score reward)
+                (setf state next-state
+                      done terminalp)))
+    score))
+
+(evaluate-model (cartpole-v0-env 1000) *m*)
