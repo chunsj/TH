@@ -1,4 +1,4 @@
-(defpackage :gdrl-ddqn
+(defpackage :cartpole-ddqn
   (:use #:common-lisp
         #:mu
         #:th
@@ -6,7 +6,7 @@
         #:th.env
         #:th.env.cartpole))
 
-(in-package :gdrl-ddqn)
+(in-package :cartpole-ddqn)
 
 (defun decay-schedule (v0 minv decay-ratio max-steps &key (log-start -2) (log-base 10))
   (let* ((decay-steps (round (* max-steps decay-ratio)))
