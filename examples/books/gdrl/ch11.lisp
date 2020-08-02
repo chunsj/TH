@@ -76,3 +76,8 @@
     score))
 
 (evaluate-model (cartpole-v0-env 1000) *m*)
+
+;; interestingly, you can run this policy model with regulated cartpole as well
+(evaluate (cartpole-env :eval)
+          (lambda (state)
+            ($scalar ($argmax (policy *m* state :trainp nil) 1))))
