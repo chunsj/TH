@@ -153,3 +153,10 @@
 (defparameter *m* (model))
 (defparameter *vm* (vmodel))
 (vpg *m* *vm* 2000)
+
+(evaluate-model (cartpole-v0-env 1000) *m*)
+
+;; application on the regulated cartpole
+(evaluate (cartpole-env :eval)
+          (lambda (state)
+            ($scalar ($argmax (policy *m* state :trainp nil) 1))))
