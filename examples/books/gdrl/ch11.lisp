@@ -263,9 +263,9 @@
 ;; N-STEP
 
 (defun returns (rewards gamma)
-  (reduce #'+ (loop :for r :in rewards
-                    :for i :from 0
-                    :collect (* r (expt gamma i)))))
+  (loop :for r :in rewards
+        :for i :from 0
+        :summing (* r (expt gamma i))))
 
 (defun n-step-ac (acm &optional (max-steps 10) (max-episodes 4000))
   (let* ((gamma 0.99)
