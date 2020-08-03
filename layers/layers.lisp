@@ -23,7 +23,7 @@
            #:reshape-layer
            #:functional-layer
            #:$function-arguments
-           #:droptout-layer
+           #:dropout-layer
            #:rnn-cell
            #:lstm-cell
            #:gru-cell
