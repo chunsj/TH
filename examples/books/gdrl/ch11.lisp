@@ -272,7 +272,7 @@
     avg-score))
 
 (defparameter *m* (ac-model))
-(ac *m* 4000)
+(ac *m* 2000)
 
 (evaluate-model-ac (cartpole-v0-env 1000) *m*)
 
