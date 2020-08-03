@@ -628,3 +628,5 @@
 (defmethod $scalar ((x node))
   (when (eq 1 ($count ($data x)))
     ($ ($storage ($data x)) 0)))
+
+(defmethod $scalar ((x T)) x)

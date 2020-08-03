@@ -46,7 +46,7 @@
   (cond (($tensorp ($data node))
          (loop :for f :in ($fns node) :do ($add! ($gradientv node) (funcall f))))
         ((numberp ($data node))
-         (loop :for f :in ($fns node) :do (incf ($gradientv node) (funcall f))))))
+         (loop :for f :in ($fns node) :do (incf ($gradientv node) ($scalar (funcall f)))))))
 
 (defun compute-gradient (node)
   (if ($fns node)
