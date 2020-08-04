@@ -8,6 +8,8 @@
 
 (in-package :gdrl-ch11)
 
+(defparameter *eval-steps* 1000)
+
 (defun returns (rewards gamma)
   (loop :for r :in rewards
         :for i :from 0
@@ -18,29 +20,17 @@
 ;;
 
 (defun model (&optional (ni 4) (no 2))
-  (let ((h1 5)
-        (h2 5))
+  (let ((h1 8)
+        (h2 8))
     (sequential-layer
-     (affine-layer ni h1 :weight-initializer :random-uniform)
-     (affine-layer h1 h2 :weight-initializer :random-uniform)
+     (affine-layer ni h1 :weight-initializer :random-uniform
+                         :activation :relu)
+     (affine-layer h1 h2 :weight-initializer :random-uniform
+                         :activation :relu)
      (affine-layer h2 no :weight-initializer :random-uniform
                          :activation :softmax))))
 
-(defun policy (m state &key (trainp T)) ($execute m ($unsqueeze state 0) :trainp trainp))
-
-(defun evaluate-model (env m)
-  (let ((done nil)
-        (state (env/reset! env))
-        (score 0))
-    (loop :while (not done)
-          :for probs = (policy m state :trainp nil)
-          :for action = ($scalar ($argmax probs 1))
-          :for (_ next-state reward terminalp) = (env/step! env action)
-          :do (progn
-                (incf score reward)
-                (setf state next-state
-                      done terminalp)))
-    score))
+(defun policy (m state &optional (trainp T)) ($execute m ($unsqueeze state 0) :trainp trainp))
 
 (defun select-action (m state)
   (let* ((probs (policy m state))
@@ -48,6 +38,11 @@
          (action ($multinomial ($data probs) 1))
          (pa ($gather probs 1 action)))
     (list ($scalar action) pa entropy)))
+
+(defun action-selector (m)
+  (lambda (state)
+    (let ((probs (policy m state nil)))
+      ($scalar ($argmax probs 1)))))
 
 (defun reinforce (m &optional (max-episodes 2000))
   (let* ((gamma 0.99)
@@ -66,7 +61,9 @@
                 (loop :while (not done)
                       :for (action prob entropy) = (select-action m state)
                       :for (_ next-state reward terminalp) = (env/step! env action)
-                      :do (let* ((logit ($log prob)))
+                      :do (let* ((logit ($log ($clamp prob
+                                                      single-float-epsilon
+                                                      (- 1 single-float-epsilon)))))
                             (push logit logits)
                             (push reward rewards)
                             (incf score reward)
@@ -81,37 +78,56 @@
                     (setf avg-score score)
                     (setf avg-score (+ (* 0.9 avg-score) (* 0.1 score))))
                 (when (zerop (rem e 100))
-                  (let ((escore (evaluate-model (cartpole-v0-env nex) m)))
+                  (let ((escore (cadr (evaluate (cartpole-v0-env *eval-steps*)
+                                                (action-selector m)))))
                     (prn (format nil "~5D: ~8,4F / ~5,0F" e avg-score escore))))))
     avg-score))
 
 (defparameter *m* (model))
-(reinforce *m*)
+(reinforce *m* 2000)
 
-(evaluate-model (cartpole-v0-env 1000) *m*)
+(evaluate (cartpole-v0-env 1000) (action-selector *m*))
 
 ;; interestingly, you can run this policy model with regulated cartpole as well
-(evaluate (cartpole-env :eval)
-          (lambda (state)
-            ($scalar ($argmax (policy *m* state :trainp nil) 1))))
+(evaluate (cartpole-env :eval) (action-selector *m*))
 
 
 ;;
 ;; VANILLA POLICY GRADIENT, VPG
 ;;
 
-(defun vmodel (&optional (ni 4) (no 1))
-  (let ((h1 5)
-        (h2 5))
+(defun model (&optional (ni 4) (no 2))
+  (let ((h 16))
     (sequential-layer
-     (affine-layer ni h1 :weight-initializer :random-uniform)
-     (affine-layer h1 h2 :weight-initializer :random-uniform)
-     (affine-layer h2 no :weight-initializer :random-uniform))))
+     (affine-layer ni h :weight-initializer :random-uniform
+                        :activation :tanh)
+     (affine-layer h h :weight-initializer :random-uniform
+                       :activation :tanh)
+     (affine-layer h h :weight-initializer :random-uniform
+                       :activation :tanh)
+     (affine-layer h h :weight-initializer :random-uniform
+                       :activation :tanh)
+     (affine-layer h no :weight-initializer :random-uniform
+                        :activation :softmax))))
 
-(defun vpg (m vm &optional (max-episodes 4000))
+(defun vmodel (&optional (ni 4) (no 1))
+  (let ((h 16))
+    (sequential-layer
+     (affine-layer ni h :weight-initializer :random-uniform
+                        :activation :tanh)
+     (affine-layer h h :weight-initializer :random-uniform
+                       :activation :tanh)
+     (affine-layer h h :weight-initializer :random-uniform
+                       :activation :tanh)
+     (affine-layer h h :weight-initializer :random-uniform
+                       :activation :tanh)
+     (affine-layer h no :weight-initializer :random-uniform
+                        :activation :nil))))
+
+(defun vpg (m vm &optional (max-episodes 2000))
   (let* ((gamma 0.99)
          (beta 0.001)
-         (lr 0.05)
+         (lr 0.001)
          (nex 100)
          (env (cartpole-v0-env nex))
          (avg-score nil))
@@ -129,10 +145,11 @@
                     (ne 0))
                 (loop :while (not done)
                       :for (action prob entropy) = (select-action m state)
-                      :for (_ next-state reward0 terminalp) = (env/step! env action)
-                      :for reward = (/ reward0 (* 2 nex))
+                      :for (_ next-state reward terminalp) = (env/step! env action)
                       :for v = ($execute vm ($unsqueeze state 0))
-                      :do (let* ((logit ($log prob)))
+                      :do (let* ((logit ($log ($clamp prob
+                                                      single-float-epsilon
+                                                      (- 1 single-float-epsilon)))))
                             (push logit logits)
                             (push reward rewards)
                             (push ($* beta entropy) entropies)
@@ -149,66 +166,48 @@
                                  (adv ($- returns v)))
                             (setf policy-loss ($- policy-loss ($+ ($* logit ($data adv)) et)))
                             (setf value-loss ($+ value-loss ($square adv)))))
-                (setf policy-loss ($/ policy-loss ne))
-                (setf value-loss ($/ value-loss ne))
+                ($/ value-loss ($/ value-loss ne))
                 ($amgd! m lr)
                 ($amgd! vm lr)
                 (if (null avg-score)
                     (setf avg-score score)
                     (setf avg-score (+ (* 0.9 avg-score) (* 0.1 score))))
                 (when (zerop (rem e 100))
-                  (let ((escore (evaluate-model (cartpole-v0-env nex) m)))
-                    (prn (format nil "~5D: ~8,4F / ~5,0F | ~8,4F ~8,4F" e avg-score escore
+                  (let ((escore (cadr (evaluate (cartpole-v0-env *eval-steps*)
+                                                (action-selector m)))))
+                    (prn (format nil "~5D: ~8,4F / ~5,0F | ~8,2F ~10,2F" e avg-score escore
                                  ($scalar policy-loss) ($scalar value-loss)))))))
     avg-score))
 
 (defparameter *m* (model))
 (defparameter *vm* (vmodel))
-(vpg *m* *vm* 4000)
+(vpg *m* *vm* 2000)
 
-(evaluate-model (cartpole-v0-env 1000) *m*)
-
-;; application on the regulated cartpole
-(evaluate (cartpole-env :eval)
-          (lambda (state)
-            ($scalar ($argmax (policy *m* state :trainp nil) 1))))
+(evaluate (cartpole-v0-env 1000) (action-selector *m*))
+(evaluate (cartpole-env :eval) (action-selector *m*))
 
 ;;
 ;; ACTOR-CRITIC - SHARED NETWORK MODEL
 ;;
 
 (defun ac-model (&optional (ns 4) (na 2) (nv 1))
-  (let ((h1 8)
-        (h2 8))
+  (let ((h 64))
     (let ((common-net (sequential-layer
-                       (affine-layer ns h1 :weight-initializer :random-uniform
-                                           :activation :lrelu)
-                       (affine-layer h1 h2 :weight-initializer :random-uniform
-                                           :activation :lrelu)))
-          (policy-net (affine-layer h2 na :weight-initializer :random-uniform
-                                          :activation :softmax))
-          (value-net (affine-layer h2 nv :weight-initializer :random-uniform)))
+                       (affine-layer ns h :weight-initializer :random-uniform
+                                          :activation :tanh)
+                       (affine-layer h h :weight-initializer :random-uniform
+                                         :activation :tanh)))
+          (policy-net (affine-layer h na :weight-initializer :random-uniform
+                                         :activation :softmax))
+          (value-net (affine-layer h nv :weight-initializer :random-uniform
+                                        :activation :nil)))
       (sequential-layer common-net
                         (parallel-layer policy-net value-net)))))
 
 (defun policy-and-value (m state &optional (trainp T))
   ($execute m ($unsqueeze state 0) :trainp trainp))
 
-(defun evaluate-model-ac (env m)
-  (let ((done nil)
-        (state (env/reset! env))
-        (score 0))
-    (loop :while (not done)
-          :for (probs val) = (policy-and-value m state nil)
-          :for action = ($scalar ($argmax probs 1))
-          :for (_ next-state reward terminalp) = (env/step! env action)
-          :do (progn
-                (incf score reward)
-                (setf state next-state
-                      done terminalp)))
-    score))
-
-(defun select-action-ac (m state)
+(defun select-action (m state)
   (let* ((out (policy-and-value m state))
          (probs ($0 out))
          (val ($1 out))
@@ -217,10 +216,16 @@
          (pa ($gather probs 1 action)))
     (list ($scalar action) pa entropy val)))
 
+(defun action-selector (m)
+  (lambda (state)
+    (let* ((policy-and-value (policy-and-value m state nil))
+           (policy ($0 policy-and-value)))
+      ($scalar ($argmax policy 1)))))
+
 (defun ac (acm &optional (max-episodes 2000))
   (let* ((gamma 0.99)
          (beta 0.001)
-         (lr 0.02)
+         (lr 0.001)
          (nex 100)
          (env (cartpole-v0-env nex))
          (avg-score nil))
@@ -238,10 +243,11 @@
                     (ne 0)
                     (loss nil))
                 (loop :while (not done)
-                      :for (action prob entropy v) = (select-action-ac acm state)
-                      :for (_ next-state reward0 terminalp) = (env/step! env action)
-                      :for reward = (/ reward0 (* 2 nex))
-                      :do (let* ((logit ($log prob)))
+                      :for (action prob entropy v) = (select-action acm state)
+                      :for (_ next-state reward terminalp) = (env/step! env action)
+                      :do (let* ((logit ($log ($clamp prob
+                                                      single-float-epsilon
+                                                      (- 1 single-float-epsilon)))))
                             (push logit logits)
                             (push reward rewards)
                             (push ($* beta entropy) entropies)
@@ -258,23 +264,23 @@
                                  (adv ($- returns v)))
                             (setf policy-loss ($- policy-loss ($+ ($* logit ($data adv)) et)))
                             (setf value-loss ($+ value-loss ($square adv)))))
-                (setf policy-loss ($/ policy-loss ne))
-                (setf value-loss ($/ value-loss ne))
-                (setf loss ($+ policy-loss value-loss))
+                (setf loss ($+ policy-loss ($/ value-loss ne)))
                 ($amgd! acm lr)
                 (if (null avg-score)
                     (setf avg-score score)
                     (setf avg-score (+ (* 0.9 avg-score) (* 0.1 score))))
                 (when (zerop (rem e 100))
-                  (let ((escore (evaluate-model-ac (cartpole-v0-env nex) acm)))
-                    (prn (format nil "~5D: ~8,4F ~5,0F | ~8,4F ~8,4F" e avg-score escore
+                  (let ((escore (cadr (evaluate (cartpole-v0-env *eval-steps*)
+                                                (action-selector acm)))))
+                    (prn (format nil "~5D: ~8,4F ~5,0F | ~8,2F ~10,2F" e avg-score escore
                                  ($scalar policy-loss) ($scalar value-loss)))))))
     avg-score))
 
 (defparameter *m* (ac-model))
 (ac *m* 2000)
 
-(evaluate-model-ac (cartpole-v0-env 1000) *m*)
+(evaluate (cartpole-v0-env 1000) (action-selector *m*))
+(evaluate (cartpole-env :eval) (action-selector *m*))
 
 ;; N-STEP
 
