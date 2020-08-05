@@ -10,10 +10,11 @@
 
 (defun discounted-rewards (rewards gamma)
   (let ((running 0))
-    (loop :for r :in rewards
-          :collect (progn
-                     (setf running ($+ r (* gamma running)))
-                     running))))
+    (-> (loop :for r :in (reverse rewards)
+              :collect (progn
+                         (setf running ($+ r (* gamma running)))
+                         running))
+        (reverse))))
 
 (defun train-env (&optional (max-steps 300)) (cartpole-env :easy :reward max-steps))
 (defun eval-env () (cartpole-env :eval))
@@ -71,9 +72,10 @@
                             (incf score reward)
                             (setf state next-state
                                   done terminalp)))
-                (setf rewards (discounted-rewards rewards gamma))
-                (loop :for logP :in (reverse logPs)
-                      :for vt :in (reverse rewards)
+                (setf logPs (reverse logPs))
+                (setf rewards (discounted-rewards (reverse rewards) gamma))
+                (loop :for logP :in logPs
+                      :for vt :in rewards
                       ;; in practice, we don't have to collect losses.
                       ;; each loss has independent computational graph.
                       :do (push ($- ($* logP vt)) losses))
@@ -145,11 +147,16 @@
                             (incf score reward)
                             (setf state next-state
                                   done terminalp)))
-                (setf rewards (discounted-rewards rewards gamma))
-                (loop :for logP :in (reverse logPs)
-                      :for vt :in (reverse rewards)
-                      :for et :in (reverse entropies)
-                      :for v :in (reverse vals)
+                (setf logPs (reverse logPs)
+                      entropies (reverse entropies)
+                      vals (reverse vals))
+                (setf rewards (discounted-rewards (reverse rewards) gamma))
+                (loop :for logP :in logPs
+                      :for vt :in rewards
+                      :for et :in entropies
+                      :for v :in vals
+                      ;; in practice, we don't have to collect losses.
+                      ;; each loss has independent computational graph.
                       :do (let ((adv ($- vt v)))
                             (push ($- ($+ ($* logP ($data adv)) et)) plosses)
                             (push ($square adv) vlosses)))
