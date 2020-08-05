@@ -402,6 +402,8 @@
            #:$argmax
            #:$argmin
            #:$scalar
+           #:$incf
+           #:$decf
            #:random-normals
            #:$rnn
            #:$lstm
