@@ -85,7 +85,7 @@
                 (when (zerop (rem e 100))
                   (let ((escore (cadr (evaluate (eval-env) (action-selector m)))))
                     (if (and (>= avg-score (* 0.9 300)) (>= escore 3000)) (setf success T))
-                    (prn (format nil "~5D: ~8,4F / ~5,0F | ~8,2F" e avg-score escore
+                    (prn (format nil "~5D: ~8,2F / ~5,0F | ~8,2F" e avg-score escore
                                  ($scalar loss)))))))
     avg-score))
 
@@ -166,7 +166,7 @@
                 (when (zerop (rem e 100))
                   (let ((escore (cadr (evaluate (eval-env) (action-selector pm)))))
                     (if (and (>= avg-score (* 0.9 300)) (>= escore 3000)) (setf success T))
-                    (prn (format nil "~5D: ~8,4F / ~5,0F | ~8,2F ~10,2F" e avg-score escore
+                    (prn (format nil "~5D: ~8,2F / ~5,0F | ~8,2F ~10,2F" e avg-score escore
                                  ($scalar ploss) ($scalar vloss)))))))
     avg-score))
 
