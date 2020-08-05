@@ -630,3 +630,6 @@
     ($ ($storage ($data x)) 0)))
 
 (defmethod $scalar ((x T)) x)
+
+(defmacro $incf (place &optional (delta 1)) `(setf ,place ($+ ,place ,delta)))
+(defmacro $decf (place &optional (delta 1)) `(setf ,place ($- ,place ,delta)))

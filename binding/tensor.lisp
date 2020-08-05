@@ -1751,6 +1751,11 @@
   (declare (ignore dimension))
   x)
 
+(defmethod $sum ((xs list) &optional (dimension -1))
+  (if (< dimension 0)
+      (reduce #'+ xs)
+      (error "list does not support dimension")))
+
 (defmethod $sum! ((z tensor) (x tensor) &optional (dimension 0))
   (tensor-sum z x dimension t)
   z)
