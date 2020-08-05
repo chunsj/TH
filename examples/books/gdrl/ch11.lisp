@@ -176,9 +176,11 @@
 
 (evaluate (eval-env) (action-selector *pm*))
 
-;; XXX it seems that is was just the matter of initial conditions.
-;; check with the following as well.
-;; take some rest and enjoy the HOPE!!!
+;; TODO/PLAN XXX
+;;
+;; before proceed into actor-critic, first tacke with the n-step bootstrapping problem.
+;; after that actor-critic with monte-carlo or vge could be approcheable.
+;;
 
 ;;
 ;; ACTOR-CRITIC - SHARED NETWORK MODEL
