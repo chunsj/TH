@@ -23,7 +23,7 @@
 (defun reinforce-simple (w &optional (max-episodes 2000))
   (let ((gamma 0.99)
         (lr 0.0001)
-        (env (cartpole-env :easy))
+        (env (cartpole-env :easy :reward 300))
         (avg-score nil))
     (loop :repeat max-episodes
           :for e :from 1
@@ -76,7 +76,7 @@
 (defun reinforce-bp (w &optional (max-episodes 2000))
   (let ((gamma 0.99)
         (lr 0.01)
-        (env (cartpole-env :easy))
+        (env (cartpole-env :easy :reward 300))
         (avg-score nil))
     (loop :repeat max-episodes
           :for e :from 1
