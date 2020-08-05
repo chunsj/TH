@@ -13,6 +13,9 @@
         :for i :from 0
         :summing (* r (expt gamma i))))
 
+(defun train-env (&optional (max-steps 300)) (cartpole-env :easy :reward max-steps))
+(defun eval-env () (cartpole-env :eval))
+
 ;;
 ;; REINFORCE
 ;;
@@ -44,8 +47,8 @@
 
 (defun reinforce (m &optional (max-episodes 4000))
   (let* ((gamma 0.99)
-         (lr 0.01)
-         (env (cartpole-env))
+         (lr 0.001)
+         (env (train-env))
          (avg-score nil)
          (success nil))
     (loop :while (not success)
@@ -72,7 +75,7 @@
                   (loop :for logit :in (reverse logits)
                         :for rwds :on (reverse rewards)
                         :do (let ((returns (returns rwds gamma)))
-                              ($incf loss ($* logit ($- returns)))))
+                              ($incf loss ($- ($* logit returns)))))
                   ;;(setf loss ($/ loss ne))
                   ($amgd! m lr)
                   (if (null avg-score)
@@ -80,17 +83,16 @@
                       (setf avg-score (+ (* 0.9 avg-score) (* 0.1 score)))))
                 ($cg! m)
                 (when (zerop (rem e 100))
-                  (let ((escore (cadr (evaluate (cartpole-env :eval)
-                                                (action-selector m)))))
-                    (if (>= escore 3000) (setf success T))
+                  (let ((escore (cadr (evaluate (eval-env) (action-selector m)))))
+                    (if (and (>= avg-score (* 0.9 300)) (>= escore 3000)) (setf success T))
                     (prn (format nil "~5D: ~8,4F / ~5,0F | ~8,2F" e avg-score escore
                                  ($scalar loss)))))))
     avg-score))
 
 (defparameter *m* (model))
-(reinforce *m* 2000)
+(reinforce *m* 4000)
 
-(evaluate (cartpole-env :eval) (action-selector *m*))
+(evaluate (eval-env) (action-selector *m*))
 
 ;;
 ;; VANILLA POLICY GRADIENT, VPG
@@ -101,8 +103,6 @@
     (sequential-layer
      (affine-layer ni h :weight-initializer :random-uniform
                         :activation :relu)
-     (affine-layer h h :weight-initializer :random-uniform
-                       :activation :relu)
      (affine-layer h no :weight-initializer :random-uniform
                         :activation :softmax))))
 
@@ -111,17 +111,15 @@
     (sequential-layer
      (affine-layer ni h :weight-initializer :random-uniform
                         :activation :relu)
-     (affine-layer h h :weight-initializer :random-uniform
-                       :activation :relu)
      (affine-layer h no :weight-initializer :random-uniform
                         :activation :nil))))
 
-(defun vpg (pm vm &optional (max-episodes 2000))
+(defun vpg (pm vm &optional (max-episodes 4000))
   (let* ((gamma 0.99)
          (beta 0.001)
          (plr 0.001)
          (vlr 0.001)
-         (env (cartpole-env))
+         (env (train-env))
          (avg-score nil)
          (success nil))
     (loop :while (not success)
@@ -134,8 +132,8 @@
           :for vals = '()
           :for score = 0
           :for done = nil
-          :do (let ((policy-loss 0)
-                    (value-loss 0)
+          :do (let ((ploss 0)
+                    (vloss 0)
                     (ne 0))
                 (loop :while (not done)
                       :for (action logit entropy) = (select-action pm state)
@@ -156,28 +154,27 @@
                       :for v :in (reverse vals)
                       :do (let* ((returns (returns rwds gamma))
                                  (adv ($- returns v)))
-                            (setf policy-loss ($- policy-loss ($+ ($* logit ($data adv)) et)))
-                            (setf value-loss ($+ value-loss ($square adv)))))
-                ($/ policy-loss ($/ policy-loss ne))
-                ($/ value-loss ($/ value-loss ne))
+                            ($incf ploss ($- ($+ ($* logit ($data adv)) et)))
+                            ($incf vloss ($square adv))))
+                ;;($/ policy-loss ($/ ploss ne))
+                ;;($/ value-loss ($/ vloss ne))
                 ($amgd! pm plr)
                 ($amgd! vm vlr)
                 (if (null avg-score)
                     (setf avg-score score)
                     (setf avg-score (+ (* 0.9 avg-score) (* 0.1 score))))
                 (when (zerop (rem e 100))
-                  (let ((escore (cadr (evaluate (cartpole-env :eval)
-                                                (action-selector pm)))))
-                    (if (>= escore 3000) (setf success T))
+                  (let ((escore (cadr (evaluate (eval-env) (action-selector pm)))))
+                    (if (and (>= avg-score (* 0.9 300)) (>= escore 3000)) (setf success T))
                     (prn (format nil "~5D: ~8,4F / ~5,0F | ~8,2F ~10,2F" e avg-score escore
-                                 ($scalar policy-loss) ($scalar value-loss)))))))
+                                 ($scalar ploss) ($scalar vloss)))))))
     avg-score))
 
 (defparameter *pm* (model))
 (defparameter *vm* (vmodel))
 (vpg *pm* *vm* 4000)
 
-(evaluate (cartpole-env :eval) (action-selector *pm*))
+(evaluate (eval-env) (action-selector *pm*))
 
 ;; XXX it seems that is was just the matter of initial conditions.
 ;; check with the following as well.
