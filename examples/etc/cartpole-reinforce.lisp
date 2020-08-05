@@ -85,7 +85,7 @@
           :for logits = '()
           :for score = 0
           :for done = nil
-          :do (let ((loss 0))
+          :do (let ((losses nil))
                 (loop :while (not done)
                       :for (action prob) = (select-action state w)
                       :for (_ next-state reward terminalp successp) = (env/step! env action)
@@ -100,7 +100,7 @@
                       :do (let ((returns (reduce #'+ (loop :for r :in rwds
                                                            :for i :from 0
                                                            :collect (* r (expt gamma i))))))
-                            (setf loss ($- loss ($* logit returns)))))
+                            (push ($- ($* logit returns)) losses)))
                 ($amgd! w lr)
                 (if (null avg-score)
                     (setf avg-score score)
