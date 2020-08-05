@@ -32,13 +32,13 @@
 
 (defun select-action (m state)
   (let* ((probs (policy m state))
-         (logits ($log ($clamp probs
-                               single-float-epsilon
-                               (- 1 single-float-epsilon))))
-         (entropy ($- ($dot probs logits)))
+         (logPs ($log ($clamp probs
+                              single-float-epsilon
+                              (- 1 single-float-epsilon))))
+         (entropy ($- ($dot probs logPs)))
          (action ($multinomial ($data probs) 1))
-         (logit ($gather logits 1 action)))
-    (list ($scalar action) logit entropy)))
+         (logP ($gather logPs 1 action)))
+    (list ($scalar action) logP entropy)))
 
 (defun action-selector (m)
   (lambda (state)
@@ -56,37 +56,34 @@
           :for e :from 1
           :for state = (env/reset! env)
           :for rewards = '()
-          :for logits = '()
+          :for logPs = '()
           :for score = 0
           :for done = nil
-          :do (let ((loss 0)
-                    (ne 0))
+          :do (let ((losses nil))
                 (loop :while (not done)
-                      :for (action logit entropy) = (select-action m state)
+                      :for (action logP entropy) = (select-action m state)
                       :for (next-state reward terminalp) = (cdr (env/step! env action))
                       :do (progn
-                            (push logit logits)
+                            (push logP logPs)
                             (push reward rewards)
-                            (incf ne)
                             (incf score reward)
                             (setf state next-state
                                   done terminalp)))
-                (when (> ne 0)
-                  (loop :for logit :in (reverse logits)
-                        :for rwds :on (reverse rewards)
-                        :do (let ((returns (returns rwds gamma)))
-                              ($incf loss ($- ($* logit returns)))))
-                  ;;(setf loss ($/ loss ne))
-                  ($amgd! m lr)
-                  (if (null avg-score)
-                      (setf avg-score score)
-                      (setf avg-score (+ (* 0.9 avg-score) (* 0.1 score)))))
+                (loop :for logP :in (reverse logPs)
+                      :for rwds :on (reverse rewards)
+                      :do (let ((vt (returns rwds gamma)))
+                            ;; in practice, we don't have to collect losses.
+                            ;; each loss has independent computational graph.
+                            (push ($- ($* logP vt)) losses)))
+                ($amgd! m lr)
+                (if (null avg-score)
+                    (setf avg-score score)
+                    (setf avg-score (+ (* 0.9 avg-score) (* 0.1 score))))
                 ($cg! m)
                 (when (zerop (rem e 100))
                   (let ((escore (cadr (evaluate (eval-env) (action-selector m)))))
                     (if (and (>= avg-score (* 0.9 300)) (>= escore 3000)) (setf success T))
-                    (prn (format nil "~5D: ~8,2F / ~5,0F | ~8,2F" e avg-score escore
-                                 ($scalar loss)))))))
+                    (prn (format nil "~5D: ~8,2F / ~5,0F" e avg-score escore))))))
     avg-score))
 
 (defparameter *m* (model))
@@ -127,37 +124,33 @@
           :for e :from 1
           :for state = (env/reset! env)
           :for rewards = '()
-          :for logits = '()
+          :for logPs = '()
           :for entropies = '()
           :for vals = '()
           :for score = 0
           :for done = nil
-          :do (let ((ploss 0)
-                    (vloss 0)
-                    (ne 0))
+          :do (let ((plosses nil)
+                    (vlosses nil))
                 (loop :while (not done)
-                      :for (action logit entropy) = (select-action pm state)
+                      :for (action logP entropy) = (select-action pm state)
                       :for (_ next-state reward terminalp) = (env/step! env action)
                       :for v = ($execute vm ($unsqueeze state 0))
                       :do (progn
-                            (push logit logits)
+                            (push logP logPs)
                             (push reward rewards)
                             (push ($* beta entropy) entropies)
                             (push v vals)
-                            (incf ne)
                             (incf score reward)
                             (setf state next-state
                                   done terminalp)))
-                (loop :for logit :in (reverse logits)
+                (loop :for logP :in (reverse logPs)
                       :for rwds :on (reverse rewards)
                       :for et :in (reverse entropies)
                       :for v :in (reverse vals)
-                      :do (let* ((returns (returns rwds gamma))
-                                 (adv ($- returns v)))
-                            ($incf ploss ($- ($+ ($* logit ($data adv)) et)))
-                            ($incf vloss ($square adv))))
-                ;;($/ policy-loss ($/ ploss ne))
-                ;;($/ value-loss ($/ vloss ne))
+                      :do (let* ((vt (returns rwds gamma))
+                                 (adv ($- vt v)))
+                            (push ($- ($+ ($* logP ($data adv)) et)) plosses)
+                            (push ($square adv) vlosses)))
                 ($amgd! pm plr)
                 ($amgd! vm vlr)
                 (if (null avg-score)
@@ -166,8 +159,7 @@
                 (when (zerop (rem e 100))
                   (let ((escore (cadr (evaluate (eval-env) (action-selector pm)))))
                     (if (and (>= avg-score (* 0.9 300)) (>= escore 3000)) (setf success T))
-                    (prn (format nil "~5D: ~8,2F / ~5,0F | ~8,2F ~10,2F" e avg-score escore
-                                 ($scalar ploss) ($scalar vloss)))))))
+                    (prn (format nil "~5D: ~8,2F / ~5,0F" e avg-score escore))))))
     avg-score))
 
 (defparameter *pm* (model))
