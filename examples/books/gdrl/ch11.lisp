@@ -8,10 +8,12 @@
 
 (in-package :gdrl-ch11)
 
-(defun returns (rewards gamma)
-  (loop :for r :in rewards
-        :for i :from 0
-        :summing (* r (expt gamma i))))
+(defun discounted-rewards (rewards gamma)
+  (let ((running 0))
+    (loop :for r :in rewards
+          :collect (progn
+                     (setf running ($+ r (* gamma running)))
+                     running))))
 
 (defun train-env (&optional (max-steps 300)) (cartpole-env :easy :reward max-steps))
 (defun eval-env () (cartpole-env :eval))
@@ -69,12 +71,12 @@
                             (incf score reward)
                             (setf state next-state
                                   done terminalp)))
+                (setf rewards (discounted-rewards rewards gamma))
                 (loop :for logP :in (reverse logPs)
-                      :for rwds :on (reverse rewards)
-                      :do (let ((vt (returns rwds gamma)))
-                            ;; in practice, we don't have to collect losses.
-                            ;; each loss has independent computational graph.
-                            (push ($- ($* logP vt)) losses)))
+                      :for vt :in (reverse rewards)
+                      ;; in practice, we don't have to collect losses.
+                      ;; each loss has independent computational graph.
+                      :do (push ($- ($* logP vt)) losses))
                 ($amgd! m lr)
                 (if (null avg-score)
                     (setf avg-score score)
@@ -143,12 +145,12 @@
                             (incf score reward)
                             (setf state next-state
                                   done terminalp)))
+                (setf rewards (discounted-rewards rewards gamma))
                 (loop :for logP :in (reverse logPs)
-                      :for rwds :on (reverse rewards)
+                      :for vt :in (reverse rewards)
                       :for et :in (reverse entropies)
                       :for v :in (reverse vals)
-                      :do (let* ((vt (returns rwds gamma))
-                                 (adv ($- vt v)))
+                      :do (let ((adv ($- vt v)))
                             (push ($- ($+ ($* logP ($data adv)) et)) plosses)
                             (push ($square adv) vlosses)))
                 ($amgd! pm plr)
