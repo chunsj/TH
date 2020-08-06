@@ -53,15 +53,19 @@
      (affine-layer h no :weight-initializer :random-uniform
                         :activation :softmax))))
 
-(defun policy (m state &optional (trainp T)) ($execute m ($unsqueeze state 0) :trainp trainp))
+(defun policy (m state &optional (trainp T))
+  ($execute m (if (eq ($ndim state) 1)
+                  ($unsqueeze state 0)
+                  state)
+            :trainp trainp))
 
 (defun select-action (m state)
   (let* ((probs (policy m state))
          (logPs ($log ($clamp probs
                               single-float-epsilon
                               (- 1 single-float-epsilon))))
-         (entropy ($- ($dot probs logPs)))
-         (action ($multinomial ($data probs) 1))
+         (entropy ($- ($dot ($data probs) logPs)))
+         (action ($multinomial probs 1))
          (logP ($gather logPs 1 action)))
     (list ($scalar action) logP entropy)))
 
@@ -105,17 +109,78 @@
                 (if (null avg-score)
                     (setf avg-score score)
                     (setf avg-score (+ (* 0.9 avg-score) (* 0.1 score))))
-                ($cg! m)
                 (when (zerop (rem e 100))
                   (let ((escore (cadr (evaluate (eval-env) (action-selector m)))))
                     (if (and (>= avg-score (* 0.9 300)) (>= escore 3000)) (setf success T))
                     (prn (format nil "~5D: ~8,2F / ~5,0F" e avg-score escore))))))
     avg-score))
 
+(defun $logP (x) ($log ($clamp x single-float-epsilon (- 1 single-float-epsilon))))
+(defun select-action (m state) ($scalar ($multinomial (policy m state nil) 1)))
+
+(defun select-action (m state)
+  (let* ((probs (policy m state nil))
+         (logPs ($log ($clamp probs
+                              single-float-epsilon
+                              (- 1 single-float-epsilon))))
+         (entropy ($- ($dot probs logPs)))
+         (action ($multinomial probs 1))
+         (logP ($gather logPs 1 action)))
+    (list ($scalar action) logP entropy)
+    ($scalar action)))
+
+(defun reinforce (m &optional (max-episodes 4000))
+  (let* ((gamma 0.99)
+         (lr 0.01)
+         (env (train-env))
+         (avg-score nil)
+         (success nil))
+    (loop :while (not success)
+          :repeat max-episodes
+          :for e :from 1
+          :for state = (env/reset! env)
+          :for states = '()
+          :for actions = '()
+          :for rewards = '()
+          :for score = 0
+          :for done = nil
+          :do (let ((logPs nil)
+                    (loss nil))
+                (loop :while (not done)
+                      :for action = (select-action m state)
+                      :for (next-state reward terminalp) = (cdr (env/step! env action))
+                      :do (progn
+                            (push ($list state) states)
+                            (push action actions)
+                            (push reward rewards)
+                            (incf score reward)
+                            (setf state next-state
+                                  done terminalp)))
+                (setf states (tensor (reverse states)))
+                (setf rewards ($reshape! (tensor (discounted-rewards (reverse rewards) gamma T))
+                                         ($count rewards) 1))
+                (setf actions ($reshape! (tensor.long (reverse actions)) ($count actions) 1))
+                (setf logPs ($gather ($logP (policy m states)) 1 actions))
+                (setf loss ($mean ($* -1 rewards logPs)))
+                ($amgd! m lr)
+                (if (null avg-score)
+                    (setf avg-score score)
+                    (setf avg-score (+ (* 0.9 avg-score) (* 0.1 score))))
+                (when (zerop (rem e 100))
+                  (let ((escore (cadr (evaluate (eval-env) (action-selector m)))))
+                    (if (and (>= avg-score (* 0.9 300)) (>= escore 3000)) (setf success T))
+                    (prn (format nil "~5D: ~8,2F / ~5,0F ~12,4F" e avg-score escore
+                                 ($scalar ($data loss))))))))
+    avg-score))
+
 (defparameter *m* (model))
 (reinforce *m* 4000)
 
 (evaluate (eval-env) (action-selector *m*))
+
+(let ((actions (tensor.long '(0 1 0 1)))
+      (probs (tensor '((1 2) (1 2) (1 2) (1 2)))))
+  ($gather probs 1 ($reshape! actions 4 1)))
 
 ;;
 ;; VANILLA POLICY GRADIENT, VPG
