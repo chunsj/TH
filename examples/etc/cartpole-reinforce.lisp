@@ -13,8 +13,6 @@
 
 (defun policy (state w) ($softmax ($@ ($unsqueeze state 0) w)))
 
-(defun $diagflat (s) ($diag ($reshape s ($count s))))
-
 (defun softmax-grad (sm)
   (let ((s ($transpose sm)))
     ($- ($diagflat s) ($@ s ($transpose s)))))
