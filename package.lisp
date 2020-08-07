@@ -402,6 +402,7 @@
            #:$argmax
            #:$argmin
            #:$scalar
+           #:$diagflat
            #:$incf
            #:$decf
            #:random-normals

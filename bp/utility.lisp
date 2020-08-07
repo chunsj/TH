@@ -30,6 +30,8 @@
 
 (defgeneric $scalar (x) (:documentation "Convert to the scalar value if possible."))
 
+(defgeneric $diagflat (x) (:documentation "Diagonal matrix with flattening."))
+
 (defun addmul (x1 w1 x2 w2) ($addmul! ($mul x1 w1) x2 w2))
 
 (defmethod $addm2 ((x1 node) (w1 node) (x2 node) (w2 node))
@@ -633,3 +635,9 @@
 
 (defmacro $incf (place &optional (delta 1)) `(setf ,place ($+ ,place ,delta)))
 (defmacro $decf (place &optional (delta 1)) `(setf ,place ($- ,place ,delta)))
+
+(defmethod $diagflat ((x tensor))
+  ($diag ($reshape x ($count x))))
+
+(defmethod $diagflat ((x list))
+  ($diagflat (tensor x)))
