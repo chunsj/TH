@@ -11,14 +11,31 @@
 ;; most simpliest implementation using CartPole-v0
 ;; this does not uses auto differentiation of TH.
 
-(defun policy (state w)
-  (let* ((z ($@ ($unsqueeze state 0) w))
-         (exp ($exp z)))
-    ($/ exp ($sum exp))))
+(defun policy (state w) ($softmax ($@ ($unsqueeze state 0) w)))
+
+(defun $diagflat (s) ($diag ($reshape s ($count s))))
 
 (defun softmax-grad (sm)
-  (let ((s ($reshape sm ($count sm) 1)))
-    ($- ($diag ($reshape s ($count s))) ($@ s ($transpose s)))))
+  (let ((s ($transpose sm)))
+    ($- ($diagflat s) ($@ s ($transpose s)))))
+
+(defun policy-grad (ps action state)
+  "computing d/dw of log P(action)"
+  (let* ((ds ($ (softmax-grad ps) action))
+         (dl ($/ ds ($ ps 0 action))) ;; note that we're differentiating log(P(action))
+         (dw ($@ ($transpose state) ($unsqueeze dl 0))))
+    dw))
+
+(let* ((w0 (tensor '((0.01 -0.01) (-0.01 0.01) (0.01 -0.01) (-0.01 0.01))))
+       (w1 ($clone w0))
+       (w2 ($parameter ($clone w0))))
+  (let* ((s (tensor '(0.1 -0.1 0.2 -0.2)))
+         (a 0)
+         (p1 (policy s w1))
+         (p2 (policy s w2))
+         (lp2 ($log ($ p2 0 a))))
+    (setf lp2 ($* lp2 1)) ;; XXX dummy operation
+    (list ($mse p1 ($data p2)) ($mse (policy-grad p1 0 s) ($gradient w2)))))
 
 (defun reinforce-simple (w &optional (max-episodes 2000))
   (let ((gamma 0.99)
