@@ -35,6 +35,14 @@
     (setf lp2 ($* lp2 1)) ;; XXX dummy operation
     (list ($mse p1 ($data p2)) ($mse (policy-grad p1 0 s) ($gradient w2)))))
 
+(defun returns (rewards gamma)
+  (let ((running 0))
+    (-> (loop :for r :in (reverse rewards)
+              :collect (progn
+                         (setf running ($+ r (* gamma running)))
+                         running))
+        (reverse))))
+
 (defun reinforce-simple (w &optional (max-episodes 2000))
   (let ((gamma 0.99)
         (lr 0.0001)
@@ -52,21 +60,17 @@
                       :for probs = (policy state w)
                       :for action = ($scalar ($multinomial probs 1))
                       :for (_ next-state reward terminalp successp) = (env/step! env action)
-                      :do (let* ((dsoftmax ($ (softmax-grad probs) action))
-                                 (dlog ($/ dsoftmax ($ probs 0 action)))
-                                 (grad ($@ ($transpose state)
-                                           ($unsqueeze dlog 0))))
+                      :do (let ((grad (policy-grad probs action state)))
                             (push grad grads)
                             (push reward rewards)
                             (incf score reward)
                             (setf state next-state
                                   done terminalp)))
                 (loop :for grad :in (reverse grads)
-                      :for rwds :on (reverse rewards)
-                      :do (let ((returns (reduce #'+ (loop :for r :in rwds
-                                                           :for i :from 0
-                                                           :collect (* r (expt gamma i))))))
-                            ($set! w ($+ w ($* lr grad returns)))))
+                      :for gt :in (returns (reverse rewards) gamma)
+                      :for i :from 0
+                      :for gm = (expt gamma i)
+                      :do  ($set! w ($+ w ($* lr gm gt grad))))
                 (if (null avg-score)
                     (setf avg-score score)
                     (setf avg-score (+ (* 0.9 avg-score) (* 0.1 score))))
@@ -97,25 +101,24 @@
           :for e :from 1
           :for state = (env/reset! env)
           :for rewards = '()
-          :for logits = '()
+          :for logPs = '()
           :for score = 0
           :for done = nil
           :do (let ((losses nil))
                 (loop :while (not done)
                       :for (action prob) = (select-action state w)
                       :for (_ next-state reward terminalp successp) = (env/step! env action)
-                      :do (let* ((logit ($log prob)))
-                            (push logit logits)
+                      :do (let* ((logP ($log prob)))
+                            (push logP logPs)
                             (push reward rewards)
                             (incf score reward)
                             (setf state next-state
                                   done terminalp)))
-                (loop :for logit :in (reverse logits)
-                      :for rwds :on (reverse rewards)
-                      :do (let ((returns (reduce #'+ (loop :for r :in rwds
-                                                           :for i :from 0
-                                                           :collect (* r (expt gamma i))))))
-                            (push ($- ($* logit returns)) losses)))
+                (loop :for logP :in (reverse logPs)
+                      :for gt :in (returns (reverse rewards) gamma)
+                      :for i :from 0
+                      :for gm = (expt gamma i)
+                      :do (push ($- ($* gm logP gt)) losses))
                 ($amgd! w lr)
                 (if (null avg-score)
                     (setf avg-score score)
