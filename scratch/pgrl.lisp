@@ -1,12 +1,13 @@
-(defpackage :cartpole-reinforce
+(defpackage :policy-gradient-related-scratchpad
   (:use #:common-lisp
         #:mu
         #:th
         #:th.layers
         #:th.env
-        #:th.env.cartpole))
+        #:th.env.cartpole)
+  (:import-from #:th.env.examples #:short-corridor-env))
 
-(in-package :cartpole-reinforce)
+(in-package :policy-gradient-related-scratchpad)
 
 ;; most simpliest implementation using CartPole-v0
 ;; this does not uses auto differentiation of TH.
@@ -153,3 +154,46 @@
 (reinforce-bp *w*)
 
 (evaluate (cartpole-env :eval) (lambda (state) ($scalar ($argmax (policy state ($data *w*)) 1))))
+
+;;
+;; SHORT CORRIDOR
+;;
+
+(defun reinforce-corridor (w &optional (max-episodes 2000))
+  (let ((gamma 1)
+        (lr 0.001)
+        (env (short-corridor-env))
+        (avg-score nil))
+    (loop :repeat max-episodes
+          :for e :from 1
+          :for state = (env/reset! env)
+          :for grads = '()
+          :for rewards = '()
+          :for score = 0
+          :for done = nil
+          :do (progn
+                (loop :while (not done)
+                      :repeat 100
+                      :for probs = (policy (tensor (list state)) w)
+                      :for action = ($scalar ($multinomial probs 1))
+                      :for (reward next-state terminalp) = (env/step! env action)
+                      :do (let ((grad (policy-grad probs action state)))
+                            (push grad grads)
+                            (push reward rewards)
+                            (incf score reward)
+                            (setf state next-state
+                                  done terminalp)))
+                (loop :for grad :in (reverse grads)
+                      :for gt :in (returns (reverse rewards) gamma T)
+                      :for i :from 0
+                      :for gm = (expt gamma i)
+                      :do  ($set! w ($+ w ($* lr gm gt grad))))
+                (if (null avg-score)
+                    (setf avg-score score)
+                    (setf avg-score (+ (* 0.9 avg-score) (* 0.1 score))))
+                (when (zerop (rem e 100))
+                  (prn (format nil "~5D: ~8,2F / ~8,2F" e score avg-score)))))
+    avg-score))
+
+(defparameter *w* (tensor '((-1.47 1.47))))
+(reinforce-corridor *w*)
