@@ -70,6 +70,8 @@
 ;; most simpliest implementation using CartPole-v0
 ;; this does not uses auto differentiation of TH.
 
+(defparameter *manual-grads* nil)
+
 (defun reinforce-simple (env w &optional (max-episodes 2000))
   (let ((gamma 0.99)
         (lr 0.001)
@@ -91,11 +93,15 @@
                             (incf score reward)
                             (setf state next-state
                                   done terminalp)))
+                (setf *manual-grads* nil)
                 (loop :for grad :in (reverse grads)
                       :for gt :in (returns (reverse rewards) gamma T)
                       :for i :from 0
                       :for gm = (expt gamma i)
-                      :do  ($set! w ($+ w ($* lr gm gt grad))))
+                      :for gv = ($* gm gt grad)
+                      :do  (progn
+                             (push gv *manual-grads*)
+                             ($set! w ($+ w ($* lr gv)))))
                 (if (null avg-score)
                     (setf avg-score score)
                     (setf avg-score (+ (* 0.9 avg-score) (* 0.1 score))))
@@ -103,16 +109,18 @@
                   (prn (format nil "~5D: ~8,2F / ~8,2F" e score avg-score)))))
     avg-score))
 
-(defparameter *w* ($clone *w0*))
-(reinforce-simple (cartpole-fixed-env) *w* 1)
+(defparameter *wm* ($clone *w0*))
+(reinforce-simple (cartpole-fixed-env) *wm* 100)
 
 (evaluate (cartpole-fixed-env) (selector *w*))
 
 ;; using auto differentiation of TH.
 
+(defparameter *backprop-grads* nil)
+
 (defun reinforce-bp (env w &optional (max-episodes 2000))
   (let ((gamma 0.99)
-        (lr 0.01)
+        (lr 0.001)
         (avg-score nil))
     (loop :repeat max-episodes
           :for e :from 1
@@ -135,9 +143,15 @@
                       :for gt :in (returns (reverse rewards) gamma T)
                       :for i :from 0
                       :for gm = (expt gamma i)
-                      :do (push ($- ($* gm logP gt)) losses)) ;; not sure on this
+                      :do (push ($- ($* gm logP gt)) losses)
+                          ;;:do (push ($* gm logP gt) losses)
+                      ) ;; not sure on this
                 (reduce #'$+ losses)
-                ($amgd! w lr)
+                (setf *backprop-grads* nil)
+                (loop :for f :in (th::$fns w)
+                      :do (push (funcall f) *backprop-grads*))
+                (setf *backprop-grads* (reverse *backprop-grads*))
+                ($gd! w lr)
                 (if (null avg-score)
                     (setf avg-score score)
                     (setf avg-score (+ (* 0.9 avg-score) (* 0.1 score))))
@@ -145,10 +159,25 @@
                   (prn (format nil "~5D: ~8,2F / ~8,2F" e score avg-score)))))
     avg-score))
 
-(defparameter *w* ($parameter ($clone *w0*)))
-(reinforce-bp (cartpole-fixed-env) *w* 1)
+(defparameter *wb* ($parameter ($clone *w0*)))
+(reinforce-bp (cartpole-fixed-env) *wb* 100)
+
+($- *wm* ($data *wb*))
 
 (evaluate (cartpole-fixed-env) (selector *w*))
+
+(prn (car *backprop-grads*))
+(prn (car *manual-grads*))
+(prn ($last *backprop-grads*))
+(prn ($last *manual-grads*))
+(prn ($2 *backprop-grads*))
+(prn ($2 *manual-grads*))
+(prn ($count *backprop-grads*) ($count *manual-grads*))
+(loop :for bg :in *backprop-grads*
+      :for mg :in *manual-grads*
+      :for d = ($- bg mg)
+      :summing ($scalar ($sum d)))
+(prn ($- ($last *backprop-grads*) ($last *manual-grads*)))
 
 ;;
 ;; SHORT CORRIDOR
