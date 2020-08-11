@@ -147,11 +147,15 @@
     output))
 
 (defmethod $square ((x node))
-  (node ($square ($data x))
-        :name :square
-        :link (link (to x (let ((dx ($clear ($data x))))
-                            (nn-square-update-grad-input ($data x) gv dx)
-                            dx)))))
+  (if ($tensorp ($data x))
+      (node ($square ($data x))
+            :name :square
+            :link (link (to x (let ((dx ($clear ($data x))))
+                                (nn-square-update-grad-input ($data x) gv dx)
+                                dx))))
+      (node ($square ($data x))
+            :name :square
+            :link (link (to x (* 2 ($data x) gv))))))
 
 (defgeneric $relu (x) (:documentation "RELU activation function."))
 (defgeneric $lrelu (x &optional nv) (:documentation "Leaky RELU activation function."))
