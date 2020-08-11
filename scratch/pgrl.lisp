@@ -12,10 +12,7 @@
 ;; to compare manual and autodiff
 (defparameter *w0* ($* 0.01 (rndn 4 2)))
 
-;; most simpliest implementation using CartPole-v0
-;; this does not uses auto differentiation of TH.
-
-(defun policy (state w) ($softmax ($@ ($unsqueeze state 0) w)))
+;; utility methods
 
 (defun softmax-grad (sm)
   (let ((s ($transpose sm)))
@@ -27,18 +24,6 @@
          (dl ($/ ds ($ ps 0 action))) ;; note that we're differentiating log(P(action))
          (dw ($@ ($transpose state) ($unsqueeze dl 0))))
     dw))
-
-(let* ((w0 (tensor '((0.01 -0.01) (-0.01 0.01) (0.01 -0.01) (-0.01 0.01))))
-       (w1 ($clone w0))
-       (w2 ($parameter ($clone w0))))
-  (let* ((s (tensor '(0.1 -0.1 0.2 -0.2)))
-         (a 0)
-         (p1 (policy s w1))
-         (p2 (policy s w2))
-         (lp2 ($log ($ p2 0 a))))
-    (list p1 p2 lp2
-          (policy-grad p1 0 s)
-          ($gradient w2))))
 
 (defun mean (xs) (/ (reduce #'+ xs) (length xs)))
 (defun variance (xs)
@@ -66,6 +51,25 @@
         (reverse)
         (z-scored standardizep))))
 
+;; our simple policy model
+(defun policy (state w) ($softmax ($@ ($unsqueeze state 0) w)))
+
+;; action selection
+(defun select-action (state w &optional greedy)
+  (let* ((probs (policy state w))
+         (action (if greedy
+                     ($argmax (if ($parameterp probs) ($data probs) probs) 1)
+                     ($multinomial (if ($parameterp probs) ($data probs) probs) 1))))
+    (list ($scalar action) ($gather probs 1 action) probs)))
+
+;; selector for evaluation
+(defun selector (w)
+  (lambda (state)
+    ($scalar ($argmax (policy state (if ($parameterp w) ($data w) w)) 1))))
+
+;; most simpliest implementation using CartPole-v0
+;; this does not uses auto differentiation of TH.
+
 (defun reinforce-simple (env w &optional (max-episodes 2000))
   (let ((gamma 0.99)
         (lr 0.001)
@@ -79,8 +83,7 @@
           :for done = nil
           :do (progn
                 (loop :while (not done)
-                      :for probs = (policy state w)
-                      :for action = ($scalar ($multinomial probs 1))
+                      :for (action prob probs) = (select-action state w T)
                       :for (_ next-state reward terminalp successp) = (env/step! env action)
                       :do (let ((grad (policy-grad probs action state)))
                             (push grad grads)
@@ -103,16 +106,9 @@
 (defparameter *w* ($clone *w0*))
 (reinforce-simple (cartpole-fixed-env) *w* 1)
 
-(evaluate (cartpole-fixed-env) (lambda (state) ($scalar ($argmax (policy state *w*) 1))))
+(evaluate (cartpole-fixed-env) (selector *w*))
 
 ;; using auto differentiation of TH.
-
-(defun policy (state w) ($softmax ($@ ($unsqueeze state 0) w)))
-
-(defun select-action (state w)
-  (let* ((probs (policy state w))
-         (action ($multinomial ($data probs) 1)))
-    (list ($scalar action) ($gather probs 1 action))))
 
 (defun reinforce-bp (env w &optional (max-episodes 2000))
   (let ((gamma 0.99)
@@ -127,7 +123,7 @@
           :for done = nil
           :do (let ((losses nil))
                 (loop :while (not done)
-                      :for (action prob) = (select-action state w)
+                      :for (action prob) = (select-action state w T)
                       :for (_ next-state reward terminalp successp) = (env/step! env action)
                       :do (let* ((logP ($log prob)))
                             (push logP logPs)
@@ -152,7 +148,7 @@
 (defparameter *w* ($parameter ($clone *w0*)))
 (reinforce-bp (cartpole-fixed-env) *w* 1)
 
-(evaluate (cartpole-fixed-env) (lambda (state) ($scalar ($argmax (policy state ($data *w*)) 1))))
+(evaluate (cartpole-fixed-env) (selector *w*))
 
 ;;
 ;; SHORT CORRIDOR
@@ -196,3 +192,16 @@
 
 (defparameter *w* (tensor '((-1.47 1.47))))
 (reinforce-corridor *w*)
+
+;; XXX gradient checking
+(let* ((w0 (tensor '((0.01 -0.01) (-0.01 0.01) (0.01 -0.01) (-0.01 0.01))))
+       (w1 ($clone w0))
+       (w2 ($parameter ($clone w0))))
+  (let* ((s (tensor '(0.1 -0.1 0.2 -0.2)))
+         (a 0)
+         (p1 (policy s w1))
+         (p2 (policy s w2))
+         (lp2 ($log ($ p2 0 a))))
+    (list p1 p2 lp2
+          (policy-grad p1 0 s)
+          ($gradient w2))))
