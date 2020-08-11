@@ -10,10 +10,10 @@
 (in-package :policy-gradient-comparison)
 
 ;; for comparison, we need same starting point
-(defparameter *w0* (tensor '((0.01 0.02)
-                             (-0.02 0.01)
-                             (-0.01 0.02)
-                             (0.01 -0.02))))
+(defparameter *w0* (tensor '((0.002 0.007)
+                             (-0.002 0.005)
+                             (-0.005 0.003)
+                             (0.004 -0.008))))
 
 ;; utility functions for manual gradient computation
 (defun softmax-grad (sm)
@@ -56,6 +56,10 @@
 
 ;; our the simple policy model for testing
 (defun policy (state w) ($softmax ($@ ($unsqueeze state 0) w)))
+(defun policy (state w)
+  (let* ((hs ($@ ($unsqueeze state 0) w))
+         (ss ($exp ($- hs ($max hs)))))
+    ($/ ss ($sum ss))))
 
 ;; action selection
 (defun select-action (state w &optional greedy)
@@ -156,8 +160,8 @@
 (defparameter *wm* ($clone *w0*))
 (defparameter *wb* ($parameter ($clone *w0*)))
 
-(reinforce-simple (cartpole-fixed-env 300) *wm* 10)
-(reinforce-bp (cartpole-fixed-env 300) *wb* 10)
+(reinforce-simple (cartpole-fixed-env 300) *wm* 1)
+(reinforce-bp (cartpole-fixed-env 300) *wb* 1)
 
 ;; check gradient values - the difference should be almost zero
 (eq ($count *backprop-grads*) ($count *manual-grads*))
