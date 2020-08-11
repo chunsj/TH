@@ -9,6 +9,9 @@
 
 (in-package :policy-gradient-related-scratchpad)
 
+;; to compare manual and autodiff
+(defparameter *w0* ($* 0.01 (rndn 4 2)))
+
 ;; most simpliest implementation using CartPole-v0
 ;; this does not uses auto differentiation of TH.
 
@@ -33,10 +36,8 @@
          (p1 (policy s w1))
          (p2 (policy s w2))
          (lp2 ($log ($ p2 0 a))))
-    (setf lp2 ($* lp2 1)) ;; XXX dummy operation
-    ;;(list ($mse p1 ($data p2)) ($mse (policy-grad p1 0 s) ($gradient w2)))
-    ($log ($ (policy s w2) 0 a))
-    (list (policy-grad p1 0 s)
+    (list p1 p2 lp2
+          (policy-grad p1 0 s)
           ($gradient w2))))
 
 (defun mean (xs) (/ (reduce #'+ xs) (length xs)))
@@ -65,10 +66,9 @@
         (reverse)
         (z-scored standardizep))))
 
-(defun reinforce-simple (w &optional (max-episodes 2000))
+(defun reinforce-simple (env w &optional (max-episodes 2000))
   (let ((gamma 0.99)
         (lr 0.001)
-        (env (cartpole-env :easy :reward 300))
         (avg-score nil))
     (loop :repeat max-episodes
           :for e :from 1
@@ -100,10 +100,10 @@
                   (prn (format nil "~5D: ~8,2F / ~8,2F" e score avg-score)))))
     avg-score))
 
-(defparameter *w* (rnd 4 2))
-(reinforce-simple *w*)
+(defparameter *w* ($clone *w0*))
+(reinforce-simple (cartpole-fixed-env) *w* 1)
 
-(evaluate (cartpole-env :eval) (lambda (state) ($scalar ($argmax (policy state *w*) 1))))
+(evaluate (cartpole-fixed-env) (lambda (state) ($scalar ($argmax (policy state *w*) 1))))
 
 ;; using auto differentiation of TH.
 
@@ -114,10 +114,9 @@
          (action ($multinomial ($data probs) 1)))
     (list ($scalar action) ($gather probs 1 action))))
 
-(defun reinforce-bp (w &optional (max-episodes 2000))
+(defun reinforce-bp (env w &optional (max-episodes 2000))
   (let ((gamma 0.99)
         (lr 0.01)
-        (env (cartpole-env :easy :reward 300))
         (avg-score nil))
     (loop :repeat max-episodes
           :for e :from 1
@@ -150,10 +149,10 @@
                   (prn (format nil "~5D: ~8,2F / ~8,2F" e score avg-score)))))
     avg-score))
 
-(defparameter *w* ($parameter (rnd 4 2)))
-(reinforce-bp *w*)
+(defparameter *w* ($parameter ($clone *w0*)))
+(reinforce-bp (cartpole-fixed-env) *w* 1)
 
-(evaluate (cartpole-env :eval) (lambda (state) ($scalar ($argmax (policy state ($data *w*)) 1))))
+(evaluate (cartpole-fixed-env) (lambda (state) ($scalar ($argmax (policy state ($data *w*)) 1))))
 
 ;;
 ;; SHORT CORRIDOR
