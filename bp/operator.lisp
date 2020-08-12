@@ -317,9 +317,9 @@
   (node ($min ($data x) dimension)
         :name :min
         :link (link (to x (let* ((xd ($data x)) (xs ($size xd)))
-                                    (if (< dimension 0)
-                                        (seteq! xd dv gv)
-                                        (seteq! xd ($expand dv xs) ($expand gv xs))))))))
+                            (if (< dimension 0)
+                                (seteq! xd dv gv)
+                                (seteq! xd ($expand dv xs) ($expand gv xs))))))))
 
 (defmethod $max ((x node) &optional (dimension -1))
   (node ($max ($data x) dimension)
