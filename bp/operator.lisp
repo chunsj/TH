@@ -24,17 +24,21 @@
 
 (defmethod $broadcast ((c number) (m node)) ($mul! ($one ($data m)) c))
 
+(defun fit (gv to)
+  (cond (($tensorp to) gv)
+        ((numberp to) ($sum gv))))
+
 (defmethod $add ((a node) (b node))
   (node ($add ($data a) ($data b))
         :name :add
         :link (link
-                (to a gv)
-                (to b gv))))
+                (to a (fit gv ($data a)))
+                (to b (fit gv ($data b))))))
 
 (defmethod $add ((a node) (b tensor))
   (node ($add ($data a) b)
         :name :add
-        :link (link (to a gv))))
+        :link (link (to a (fit gv ($data a))))))
 
 (defmethod $add ((a node) (b number))
   (node ($add ($data a) b)
@@ -55,13 +59,13 @@
   (node ($sub ($data a) ($data b))
         :name :sub
         :link (link
-                (to a gv)
-                (to b ($neg gv)))))
+                (to a (fit gv ($data a)))
+                (to b (fit ($neg gv) ($data b))))))
 
 (defmethod $sub ((a node) (b tensor))
   (node ($sub ($data a) b)
         :name :sub
-        :link (link (to a gv))))
+        :link (link (to a (fit gv ($data a))))))
 
 (defmethod $sub ((a node) (b number))
   (node ($sub ($data a) b)
@@ -71,7 +75,7 @@
 (defmethod $sub ((a tensor) (b node))
   (node ($sub a ($data b))
         :name :sub
-        :link (link (to b ($neg gv)))))
+        :link (link (to b (fit ($neg gv) ($data b))))))
 
 (defmethod $sub ((a number) (b node))
   (node ($sub a ($data b))
@@ -145,10 +149,6 @@
   (node ($mm a ($data b))
         :name :mm
         :link (link (to b ($tmm a gv)))))
-
-(defun fit (gv to)
-  (cond (($tensorp to) gv)
-        ((numberp to) ($sum gv))))
 
 (defmethod $mul ((a node) (b node))
   (node ($mul ($data a) ($data b))
