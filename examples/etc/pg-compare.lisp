@@ -160,8 +160,8 @@
 (defparameter *wm* ($clone *w0*))
 (defparameter *wb* ($parameter ($clone *w0*)))
 
-(reinforce-simple (cartpole-fixed-env 300) *wm* 1)
-(reinforce-bp (cartpole-fixed-env 300) *wb* 1)
+(reinforce-simple (cartpole-fixed-env 300) *wm* 10)
+(reinforce-bp (cartpole-fixed-env 300) *wb* 10)
 
 ;; check gradient values - the difference should be almost zero
 (eq ($count *backprop-grads*) ($count *manual-grads*))
