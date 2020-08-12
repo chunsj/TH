@@ -2102,7 +2102,8 @@
                (sz ($size matrix)))
            (cond ((eq nv ($ sz 1)) ($krows ($reshape vector nv) ($ sz 0)))
                  ((eq nv ($ sz 0)) ($kcols ($reshape vector nv) ($ sz 1)))
-                 (t (error "cannot broadcast automatically")))))))
+                 (t (error "cannot broadcast automatically")))))
+        ((equal ($size vector) ($size matrix)) vector)))
 
 (defmethod $broadcast ((c number) (m tensor)) ($mul! ($one m) c))
 
