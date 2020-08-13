@@ -12,34 +12,15 @@
 ;; current episode collection logic is invalid. though it seems to work but it's not correct.
 ;; XXX
 
-(defun mean (xs) (/ (reduce #'+ xs) (length xs)))
-(defun variance (xs)
-  (let* ((n (length xs))
-         (m (/ (reduce #'+ xs) n)))
-    (/ (reduce #'+ (mapcar (lambda (x)
-                             (expt (abs (- x m)) 2))
-                           xs))
-       n)))
-(defun sd (xs) (sqrt (variance xs)))
-
-(defun z-scored (vs fl)
-  (if fl
-      (let ((m (mean vs))
-            (s (sd vs)))
-        (mapcar (lambda (v) (/ (- v m) s)) vs))
-      vs))
-
-(defun discounted-rewards (rewards gamma &optional standardizep)
-  (let ((running 0))
-    (-> (loop :for r :in (reverse rewards)
-              :collect (progn
-                         (setf running ($+ r (* gamma running)))
-                         running))
-        (reverse)
-        (z-scored standardizep))))
-
 (defun train-env (&optional (max-steps 300)) (cartpole-env :easy :reward max-steps))
 (defun eval-env () (cartpole-env :eval))
+
+(defun clamp-probs (probs)
+  ($clamp probs
+          single-float-epsilon
+          (- 1 single-float-epsilon)))
+
+(defun $logPs (probs) ($log (clamp-probs probs)))
 
 ;;
 ;; REINFORCE
@@ -54,18 +35,17 @@
                         :activation :softmax))))
 
 (defun policy (m state &optional (trainp T))
-  ($execute m (if (eq ($ndim state) 1)
-                  ($unsqueeze state 0)
-                  state)
-            :trainp trainp))
+  (let ((s (if (eq ($ndim state) 1)
+               ($unsqueeze state 0)
+               state)))
+    ($execute m s :trainp trainp)))
 
-(defun select-action (m state)
-  (let* ((probs (policy m state))
-         (logPs ($log ($clamp probs
-                              single-float-epsilon
-                              (- 1 single-float-epsilon))))
-         (entropy ($- ($dot ($data probs) logPs)))
-         (action ($multinomial probs 1))
+(defun select-action (m state &optional (trainp T))
+  (let* ((probs (policy m state trainp))
+         (logPs ($logPs probs))
+         (ps (if ($parameterp probs) ($data probs) probs))
+         (entropy ($- ($dot ps logPs)))
+         (action ($multinomial ps 1))
          (logP ($gather logPs 1 action)))
     (list ($scalar action) logP entropy)))
 
@@ -75,8 +55,9 @@
       ($scalar ($argmax probs 1)))))
 
 (defun reinforce (m &optional (max-episodes 4000))
+  "REINFORCE updating per every episode."
   (let* ((gamma 0.99)
-         (lr 0.001)
+         (lr 0.01)
          (env (train-env))
          (avg-score nil)
          (success nil))
@@ -99,12 +80,15 @@
                             (setf state next-state
                                   done terminalp)))
                 (setf logPs (reverse logPs))
-                (setf rewards (discounted-rewards (reverse rewards) gamma))
+                (setf rewards (rewards (reverse rewards) gamma T))
                 (loop :for logP :in logPs
                       :for vt :in rewards
+                      :for i :from 0
+                      :for gm = (expt gamma i)
+                      :for l = ($- ($* gm logP vt))
                       ;; in practice, we don't have to collect losses.
                       ;; each loss has independent computational graph.
-                      :do (push ($- ($* logP vt)) losses))
+                      :do (push l losses))
                 ($amgd! m lr)
                 (if (null avg-score)
                     (setf avg-score score)
@@ -115,67 +99,75 @@
                     (prn (format nil "~5D: ~8,2F / ~5,0F" e avg-score escore))))))
     avg-score))
 
-(defun $logP (x) ($log ($clamp x single-float-epsilon (- 1 single-float-epsilon))))
+;; train with REINFORCE
+(defparameter *m* (model))
+(reinforce *m* 4000)
+
+;; evaluation
+(evaluate (eval-env) (action-selector *m*))
+
+
 (defun select-action (m state) ($scalar ($multinomial (policy m state nil) 1)))
 
-(defun select-action (m state)
-  (let* ((probs (policy m state nil))
-         (logPs ($log ($clamp probs
-                              single-float-epsilon
-                              (- 1 single-float-epsilon))))
-         (entropy ($- ($dot probs logPs)))
-         (action ($multinomial probs 1))
-         (logP ($gather logPs 1 action)))
-    (list ($scalar action) logP entropy)
-    ($scalar action)))
-
-(defun trace-episode (env m s0 gamma)
+(defun trace-episode (env m gamma &optional (nb 1))
+  "collect episode trajectories with given policy model"
   (let ((states nil)
         (actions nil)
         (rewards nil)
+        (gammas nil)
         (done nil)
         (score 0)
-        (state s0))
-    (loop :while (not done)
-          :for action = (select-action m state)
-          :for (_ next-state reward terminalp) = (env/step! env action)
+        (state nil))
+    (loop :repeat nb
           :do (progn
-                (push ($list state) states)
-                (push action actions)
-                (push reward rewards)
-                (incf score reward)
-                (setf state next-state
-                      done terminalp)))
+                (setf state (env/reset! env))
+                (loop :while (not done)
+                      :for action = (select-action m state)
+                      :for (_ next-state reward terminalp) = (env/step! env action)
+                      :for i :from 0
+                      :do (progn
+                            (push ($list state) states)
+                            (push action actions)
+                            (push reward rewards)
+                            (push (expt gamma i) gammas)
+                            (incf score reward)
+                            (setf state next-state
+                                  done terminalp)))
+                (setf done nil)))
     (let ((n ($count states)))
       (list (tensor (reverse states))
             (-> (tensor.long (reverse actions))
                 ($reshape! n 1))
-            (-> (discounted-rewards (reverse rewards) gamma T)
+            (-> (rewards (reverse rewards) gamma T)
                 (tensor)
                 ($reshape! n 1))
-            score))))
+            (-> (tensor (reverse gammas))
+                ($reshape! n 1))
+            (/ score nb)))))
 
-(defun compute-loss (m states actions rewards)
-  (let ((logPs ($gather ($logP (policy m states)) 1 actions)))
-    ($mean ($* -1 rewards logPs))))
+(defun compute-loss (m states actions rewards gammas)
+  (let ((logPs ($gather ($logPs (policy m states)) 1 actions)))
+    ($mean ($* -1 gammas rewards logPs))))
 
-(defun reinforce (m &optional (max-episodes 4000))
+(defun reinforce (m &optional (nbatch 5) (max-episodes 4000))
+  "REINFORCE with batch updating"
   (let* ((gamma 0.99)
-         (lr 0.01)
+         (lr 0.04)
          (env (train-env))
          (avg-score nil)
          (success nil))
     (loop :while (not success)
-          :repeat max-episodes
+          :repeat (round (/ max-episodes nbatch))
           :for e :from 1
-          :for state = (env/reset! env)
-          :do (let* ((res (trace-episode env m state gamma))
+          ;;:for state = (env/reset! env)
+          :do (let* ((res (trace-episode env m gamma nbatch))
                      (states ($0 res))
                      (actions ($1 res))
                      (rewards ($2 res))
-                     (score ($3 res))
+                     (gammas ($3 res))
+                     (score ($4 res))
                      (loss nil))
-                (setf loss (compute-loss m states actions rewards))
+                (setf loss (compute-loss m states actions rewards gammas))
                 ($amgd! m lr)
                 (if (null avg-score)
                     (setf avg-score score)
@@ -188,13 +180,10 @@
     avg-score))
 
 (defparameter *m* (model))
-(reinforce *m* 4000)
+(reinforce *m* 10 4000)
 
 (evaluate (eval-env) (action-selector *m*))
 
-(let ((actions (tensor.long '(0 1 0 1)))
-      (probs (tensor '((1 2) (1 2) (1 2) (1 2)))))
-  ($gather probs 1 ($reshape! actions 4 1)))
 
 ;;
 ;; VANILLA POLICY GRADIENT, VPG
