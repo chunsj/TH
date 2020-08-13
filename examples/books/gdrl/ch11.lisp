@@ -183,8 +183,6 @@
 
 (evaluate (eval-env) (action-selector *m*))
 
-;; XXX fix followings as well
-
 ;;
 ;; VANILLA POLICY GRADIENT, VPG
 ;;
@@ -205,11 +203,26 @@
      (affine-layer h no :weight-initializer :random-uniform
                         :activation :nil))))
 
+(defun select-action (m state &optional (trainp T))
+  (let* ((probs (policy m state trainp))
+         (logPs ($logPs probs))
+         (ps (if ($parameterp probs) ($data probs) probs))
+         (entropy ($- ($dot ps logPs)))
+         (action ($multinomial ps 1))
+         (logP ($gather logPs 1 action)))
+    (list ($scalar action) logP entropy)))
+
+(defun val (m state &optional (trainp T))
+  (let ((s (if (eq ($ndim state) 1)
+               ($unsqueeze state 0)
+               state)))
+    ($execute m s :trainp trainp)))
+
 (defun vpg (pm vm &optional (max-episodes 4000))
   (let* ((gamma 0.99)
          (beta 0.001)
-         (plr 0.001)
-         (vlr 0.001)
+         (plr 0.01)
+         (vlr 0.01)
          (env (train-env))
          (avg-score nil)
          (success nil))
@@ -228,7 +241,7 @@
                 (loop :while (not done)
                       :for (action logP entropy) = (select-action pm state)
                       :for (_ next-state reward terminalp) = (env/step! env action)
-                      :for v = ($execute vm ($unsqueeze state 0))
+                      :for v = (val vm state)
                       :do (progn
                             (push logP logPs)
                             (push reward rewards)
@@ -240,15 +253,17 @@
                 (setf logPs (reverse logPs)
                       entropies (reverse entropies)
                       vals (reverse vals))
-                (setf rewards (discounted-rewards (reverse rewards) gamma))
+                (setf rewards (rewards (reverse rewards) gamma T))
                 (loop :for logP :in logPs
                       :for vt :in rewards
                       :for et :in entropies
                       :for v :in vals
+                      :for i :from 0
+                      :for gm = (expt gamma i)
                       ;; in practice, we don't have to collect losses.
                       ;; each loss has independent computational graph.
                       :do (let ((adv ($- vt v)))
-                            (push ($- ($+ ($* logP ($data adv)) et)) plosses)
+                            (push ($- ($+ ($* gm logP ($data adv)) et)) plosses)
                             (push ($square adv) vlosses)))
                 ($amgd! pm plr)
                 ($amgd! vm vlr)
@@ -266,6 +281,8 @@
 (vpg *pm* *vm* 4000)
 
 (evaluate (eval-env) (action-selector *pm*))
+
+;; XXX fix followings as well
 
 ;; TODO/PLAN XXX
 ;;
