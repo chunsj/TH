@@ -55,10 +55,9 @@
         (z-scored standardizep))))
 
 ;; our the simple policy model for testing
-(defun policy (state w) ($softmax ($@ ($unsqueeze state 0) w)))
+;;(defun policy (state w) ($softmax ($@ ($unsqueeze state 0) w)))
 (defun policy (state w)
-  (let* ((hs ($@ ($unsqueeze state 0) w))
-         (ss ($exp ($- hs ($max hs)))))
+  (let ((ss ($exp ($@ ($unsqueeze state 0) w))))
     ($/ ss ($sum ss))))
 
 ;; action selection
@@ -76,11 +75,17 @@
 
 ;; to store gradient values for comparison
 (defparameter *manual-grads* nil)
+(defparameter *manual-probs* nil)
+(defparameter *manual-actions* nil)
+(defparameter *manual-gts* nil)
 (defparameter *backprop-grads* nil)
+(defparameter *backprop-probs* nil)
+(defparameter *backprop-actions* nil)
+(defparameter *backprop-gts* nil)
 
 ;; REINFORCE implementations - one with manual backprop, the other auto backprop
 (defun reinforce-simple (env w &optional (max-episodes 2000))
-  (let ((gamma 0.99)
+  (let ((gamma 1)
         (lr 0.01)
         (avg-score nil))
     (loop :repeat max-episodes
@@ -90,7 +95,10 @@
           :for rewards = '()
           :for score = 0
           :for done = nil
-          :do (progn
+          :do (let ((rts nil))
+                (setf *manual-grads* nil
+                      *manual-probs* nil
+                      *manual-actions* nil)
                 (loop :while (not done)
                       :for (action prob probs) = (select-action state w T)
                       :for (_ next-state reward terminalp successp) = (env/step! env action)
@@ -98,18 +106,21 @@
                             (push grad grads)
                             (push reward rewards)
                             (incf score reward)
+                            (push probs *manual-probs*)
+                            (push action *manual-actions*)
                             (setf state next-state
                                   done terminalp)))
-                (setf *manual-grads* nil)
+                (setf rts (returns (reverse rewards) gamma T))
+                (setf *manual-gts* rts)
                 (loop :for grad :in (reverse grads)
-                      :for gt :in (returns (reverse rewards) gamma T)
+                      :for gt :in rts
                       :for i :from 0
                       :for gm = (expt gamma i)
                       :for gv = ($* gm gt grad)
                       :do  (progn
                              ;; for comparison, store value without learning rate
                              (push gv *manual-grads*)
-                             ($set! w ($+ w ($* lr gv)))))
+                             ($add! w ($* lr gv))))
                 (if (null avg-score)
                     (setf avg-score score)
                     (setf avg-score (+ (* 0.9 avg-score) (* 0.1 score))))
@@ -118,7 +129,7 @@
     avg-score))
 
 (defun reinforce-bp (env w &optional (max-episodes 2000))
-  (let ((gamma 0.99)
+  (let ((gamma 1)
         (lr 0.01)
         (avg-score nil))
     (loop :repeat max-episodes
@@ -128,7 +139,11 @@
           :for logPs = '()
           :for score = 0
           :for done = nil
-          :do (let ((losses nil))
+          :do (let ((losses nil)
+                    (rts nil))
+                (setf *backprop-grads* nil
+                      *backprop-probs* nil
+                      *backprop-actions* nil)
                 (loop :while (not done)
                       :for (action prob probs) = (select-action state w T)
                       :for (_ next-state reward terminalp successp) = (env/step! env action)
@@ -136,15 +151,19 @@
                             (push logP logPs)
                             (push reward rewards)
                             (incf score reward)
+                            (push ($data probs) *backprop-probs*)
+                            (push action *backprop-actions*)
                             (setf state next-state
                                   done terminalp)))
+                (setf rts (returns (reverse rewards) gamma T))
+                (setf *backprop-gts* rts)
                 (loop :for logP :in (reverse logPs)
-                      :for gt :in (returns (reverse rewards) gamma T)
+                      :for gt :in rts
                       :for i :from 0
                       :for gm = (expt gamma i)
-                      :do (push ($- ($* gm logP gt)) losses))
+                      :for l = ($- ($* gm logP gt))
+                      :do (push l losses))
                 (reduce #'$+ losses)
-                (setf *backprop-grads* nil)
                 (loop :for f :in (th::$fns w)
                       :do (push (funcall f) *backprop-grads*))
                 (setf *backprop-grads* (reverse *backprop-grads*))
@@ -160,8 +179,8 @@
 (defparameter *wm* ($clone *w0*))
 (defparameter *wb* ($parameter ($clone *w0*)))
 
-(reinforce-simple (cartpole-fixed-env 300) *wm* 10)
-(reinforce-bp (cartpole-fixed-env 300) *wb* 10)
+(reinforce-simple (cartpole-fixed-env 1000) *wm* 13)
+(reinforce-bp (cartpole-fixed-env 1000) *wb* 13)
 
 ;; check gradient values - the difference should be almost zero
 (eq ($count *backprop-grads*) ($count *manual-grads*))
@@ -169,6 +188,29 @@
       :for mg :in *manual-grads*
       :for d = ($+ bg mg) ;; bg and mg has counter sign
       :summing ($scalar ($sum ($square d))))
+(loop :for bg :in *backprop-grads*
+      :for mg :in *manual-grads*
+      :for i :from 0
+      :for d = ($scalar ($sum ($square ($+ bg mg)))) ;; bg and mg has counter sign
+      :when (> d 0.000001)
+        :collect (list i bg mg))
+(loop :for bps :in *backprop-probs*
+      :for mps :in *manual-probs*
+      :for d = ($sum ($square ($- bps mps)))
+      :for i :from 0
+      :when (> d 0.000001)
+        :collect (list i bps mps))
+(loop :for ba :in *backprop-actions*
+      :for ma :in *manual-actions*
+      :for i :from 0
+      :when (not (eq ba ma))
+        :collect (list i ba ma))
+(loop :for bg :in *backprop-gts*
+      :for mg :in *manual-gts*
+      :for d = ($square (- bg mg))
+      :for i :from 0
+      :when (> d 0.000001)
+        :collect (list i bg mg))
 
 ;; compare trained results
 (defparameter *wm* ($clone *w0*))
