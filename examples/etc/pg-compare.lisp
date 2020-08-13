@@ -27,32 +27,7 @@
          (dw ($@ ($transpose state) ($unsqueeze dl 0))))
     dw))
 
-;; for normalization with z-score
-(defun mean (xs) (/ (reduce #'+ xs) (length xs)))
-(defun variance (xs)
-  (let* ((n (length xs))
-         (m (/ (reduce #'+ xs) n)))
-    (/ (reduce #'+ (mapcar (lambda (x)
-                             (expt (abs (- x m)) 2))
-                           xs))
-       n)))
-(defun sd (xs) (sqrt (variance xs)))
-
-(defun z-scored (vs fl)
-  (if fl
-      (let ((m (mean vs))
-            (s (sd vs)))
-        (mapcar (lambda (v) (/ (- v m) (if (> s 0) s 1))) vs))
-      vs))
-
-(defun returns (rewards gamma &optional standardizep)
-  (let ((running 0))
-    (-> (loop :for r :in (reverse rewards)
-              :collect (progn
-                         (setf running ($+ r (* gamma running)))
-                         running))
-        (reverse)
-        (z-scored standardizep))))
+(defun returns (rewards gamma &optional standardizep) (rewards rewards gamma standardizep))
 
 ;; our the simple policy model for testing
 ;;(defun policy (state w) ($softmax ($@ ($unsqueeze state 0) w)))
