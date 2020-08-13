@@ -8,10 +8,6 @@
 
 (in-package :gdrl-ch11)
 
-;; XXX
-;; current episode collection logic is invalid. though it seems to work but it's not correct.
-;; XXX
-
 (defun train-env (&optional (max-steps 300)) (cartpole-env :easy :reward max-steps))
 (defun eval-env () (cartpole-env :eval))
 
@@ -106,6 +102,9 @@
 ;; evaluation
 (evaluate (eval-env) (action-selector *m*))
 
+;;
+;; REINFORCE - batch updating
+;;
 
 (defun select-action (m state) ($scalar ($multinomial (policy m state nil) 1)))
 
@@ -180,7 +179,7 @@
     avg-score))
 
 (defparameter *m* (model))
-(reinforce *m* 10 4000)
+(reinforce *m* 10 4000) ;; more batch means large learning rate
 
 (evaluate (eval-env) (action-selector *m*))
 
