@@ -184,6 +184,7 @@
 
 (evaluate (eval-env) (action-selector *m*))
 
+;; XXX fix followings as well
 
 ;;
 ;; VANILLA POLICY GRADIENT, VPG
