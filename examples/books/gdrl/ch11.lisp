@@ -444,6 +444,7 @@
                             (push v vals)
                             (incf score reward)
                             (incf steps)
+                            ;; every at most max-steps, do train
                             (when (or terminalp (zerop (rem steps max-steps)))
                               (setf logPs (reverse logPs)
                                     entropies (reverse entropies)
