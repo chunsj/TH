@@ -487,3 +487,186 @@
 (acn *pm* *vm* 4000)
 
 (evaluate (eval-env) (action-selector *pm*))
+
+;;
+;; ACTOR-CRITIC - SHARED NETWORK MODEL
+;;
+
+(defun smodel (&optional (ns 4) (na 2) (nv 1))
+  (let ((h 16))
+    (let ((common-net (sequential-layer
+                       (affine-layer ns h :weight-initializer :random-uniform
+                                          :activation :relu)
+                       (affine-layer h h :weight-initializer :random-uniform
+                                         :activation :relu)))
+          (policy-net (affine-layer h na :weight-initializer :random-uniform
+                                         :activation :softmax))
+          (value-net (affine-layer h nv :weight-initializer :random-uniform
+                                        :activation :nil)))
+      (sequential-layer common-net
+                        (parallel-layer policy-net value-net)))))
+
+(defun policy-and-value (m state &optional (trainp T))
+  ($execute m ($unsqueeze state 0) :trainp trainp))
+
+(defun select-action (m state &optional (trainp T))
+  (let* ((out (policy-and-value m state))
+         (probs ($0 out))
+         (logPs ($logPs probs))
+         (val ($1 out))
+         (ps (if ($parameterp probs) ($data probs) probs))
+         (entropy ($- ($dot ps logPs)))
+         (action ($multinomial ps 1))
+         (logP ($gather logPs 1 action)))
+    (list ($scalar action) logP entropy val)))
+
+(defun action-selector (m)
+  (lambda (state)
+    (let* ((policy-and-value (policy-and-value m state nil))
+           (policy ($0 policy-and-value)))
+      ($scalar ($argmax policy 1)))))
+
+(defun acs (m &optional (max-episodes 4000))
+  (let* ((gamma 0.99)
+         (beta 0.001)
+         (lr 0.01)
+         (pw 1)
+         (vw 0.6)
+         (env (train-env))
+         (avg-score nil)
+         (success nil))
+    (loop :while (not success)
+          :repeat max-episodes
+          :for e :from 1
+          :for state = (env/reset! env)
+          :for rewards = '()
+          :for logPs = '()
+          :for entropies = '()
+          :for vals = '()
+          :for score = 0
+          :for done = nil
+          :do (let ((ploss 0)
+                    (vloss 0)
+                    (loss 0))
+                (loop :while (not done)
+                      :for (action logP entropy v) = (select-action m state)
+                      :for (_ next-state reward terminalp) = (env/step! env action)
+                      :do (progn
+                            (push logP logPs)
+                            (push reward rewards)
+                            (push ($* beta entropy) entropies)
+                            (push v vals)
+                            (incf score reward)
+                            (setf state next-state
+                                  done terminalp)))
+                (setf logPs (reverse logPs)
+                      entropies (reverse entropies)
+                      vals (reverse vals))
+                (setf rewards (rewards (reverse rewards) gamma T))
+                (loop :for logP :in logPs
+                      :for vt :in rewards
+                      :for et :in entropies
+                      :for v :in vals
+                      :for i :from 0
+                      :for gm = (expt gamma i)
+                      ;; in practice, we don't have to collect losses.
+                      ;; each loss has independent computational graph.
+                      :do (let ((adv ($- vt v)))
+                            (setf ploss ($- ploss ($+ ($* gm logP ($data adv)) et)))
+                            (setf vloss ($+ vloss ($square adv)))))
+                (setf loss ($+ ($* pw ploss) ($* vw vloss)))
+                ($amgd! m lr)
+                (if (null avg-score)
+                    (setf avg-score score)
+                    (setf avg-score (+ (* 0.9 avg-score) (* 0.1 score))))
+                (when (zerop (rem e 100))
+                  (let ((escore (cadr (evaluate (eval-env) (action-selector m)))))
+                    (if (and (>= avg-score (* 0.9 300)) (>= escore 3000)) (setf success T))
+                    (prn (format nil "~5D: ~8,2F / ~5,0F" e avg-score escore))))))
+    avg-score))
+
+(defparameter *sm* (smodel))
+(acs *sm* 4000)
+
+(evaluate (eval-env) (action-selector *sm*))
+
+;;
+;; ACTOR-CRITIC - SHARED N-STEP
+;;
+
+(defun acsn (m &optional (max-episodes 4000))
+  (let* ((gamma 0.99)
+         (beta 0.001)
+         (lr 0.01)
+         (pw 1)
+         (vw 0.6)
+         (max-steps 200)
+         (env (train-env))
+         (avg-score nil)
+         (success nil))
+    (loop :while (not success)
+          :repeat max-episodes
+          :for e :from 1
+          :for state = (env/reset! env)
+          :for rewards = '()
+          :for logPs = '()
+          :for entropies = '()
+          :for vals = '()
+          :for score = 0
+          :for steps = 0
+          :for done = nil
+          :do (let ((ploss 0)
+                    (vloss 0)
+                    (loss 0))
+                (loop :while (not done)
+                      :for (action logP entropy v) = (select-action m state)
+                      :for (_ next-state reward terminalp) = (env/step! env action)
+                      :do (progn
+                            (push logP logPs)
+                            (push reward rewards)
+                            (push ($* beta entropy) entropies)
+                            (push v vals)
+                            (incf score reward)
+                            (incf steps)
+                            (when (or terminalp (zerop (rem steps max-steps)))
+                              (setf logPs (reverse logPs)
+                                    entropies (reverse entropies)
+                                    vals (reverse vals))
+                              (if (> ($count rewards) 1)
+                                  (setf rewards (rewards (reverse rewards) gamma T))
+                                  (setf rewards (reverse rewards)))
+                              (loop :for logP :in logPs
+                                    :for vt :in rewards
+                                    :for et :in entropies
+                                    :for v :in vals
+                                    :for i :from 0
+                                    :for gm = (expt gamma i)
+                                    ;; in practice, we don't have to collect losses.
+                                    ;; each loss has independent computational graph.
+                                    :do (let ((adv ($- vt v)))
+                                          (setf ploss ($- ploss ($+ ($* gm logP ($data adv)) et)))
+                                          (setf vloss ($+ vloss ($square adv)))))
+                              (setf loss ($+ ($* pw ploss) ($* vw vloss)))
+                              ($amgd! m lr)
+                              (setf logPs nil
+                                    entropies nil
+                                    vals nil
+                                    rewards nil
+                                    ploss 0
+                                    vloss 0
+                                    loss 0))
+                            (setf state next-state
+                                  done terminalp)))
+                (if (null avg-score)
+                    (setf avg-score score)
+                    (setf avg-score (+ (* 0.9 avg-score) (* 0.1 score))))
+                (when (zerop (rem e 100))
+                  (let ((escore (cadr (evaluate (eval-env) (action-selector m)))))
+                    (if (and (>= avg-score (* 0.9 300)) (>= escore 3000)) (setf success T))
+                    (prn (format nil "~5D: ~8,2F / ~5,0F" e avg-score escore))))))
+    avg-score))
+
+(defparameter *sm* (smodel))
+(acsn *sm* 4000)
+
+(evaluate (eval-env) (action-selector *sm*))
