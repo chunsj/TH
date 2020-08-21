@@ -9,6 +9,11 @@
 (defgeneric $cnll (input target) (:documentation "Class negative log likelihood loss."))
 (defgeneric $cec (input target) (:documentation "Corss entropy loss with plain input."))
 
+;; bce wants probability (like sigmoid) input
+;; bce* wants raw scrores
+;; cee wants raw scores
+;; cnll wants probability
+
 (defmethod $bce ((a tensor) (b tensor))
   (let ((output ($resize! ($empty a) '(1))))
     (nn-bce-criterion-update-output a b output t nil)
