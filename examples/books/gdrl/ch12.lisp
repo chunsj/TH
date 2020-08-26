@@ -153,12 +153,15 @@
                              ($scalar ($mean rewards))))))))
 
 (let* ((env (pendulum-env))
-       (s (env/reset! env)))
-  (loop :repeat 100
+       (s (env/reset! env))
+       (n 100)
+       (score 0))
+  (loop :repeat n
         :for a = ($scalar (actor *am* s nil nil))
         :for tx = (env/step! env a)
         :for ns = (transition/next-state tx)
         :for r = (transition/reward tx)
-        :collect (progn
-                   (setf s ns)
-                   (list ns r))))
+        :do (progn
+              (setf s ns)
+              (incf score r)))
+  (* 1D0 (/ score n)))
