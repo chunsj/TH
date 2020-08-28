@@ -1221,7 +1221,7 @@
         (let ((probs ($softmax probs)))
           ($reshape! ($multinomial probs 1) ($size probs 0))))
       (let ((res ($max (if ($parameterp probabilities) ($data probabilities) probabilities) 1)))
-        ($reshape! (cadr res) ($size probabilities 0)))))
+        ($reshape! res ($size probabilities 0)))))
 
 (defmethod encoder-choose ((encoder character-encoder) probseqs &optional (temperature 1D0))
   (encoder-decode encoder (mapcar (lambda (probs) ($choose probs temperature)) probseqs)))
