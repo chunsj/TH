@@ -1215,13 +1215,14 @@
 
 (defun $choose (probabilities &optional (temperature 1D0))
   "select one of the index by their given relative probabilities"
-  (if (>= temperature 0)
-      (let ((probs ($div (if ($parameterp probabilities) ($data probabilities) probabilities)
-                         temperature)))
-        (let ((probs ($softmax probs)))
-          ($reshape! ($multinomial probs 1) ($size probs 0))))
-      (let ((res ($max (if ($parameterp probabilities) ($data probabilities) probabilities) 1)))
-        ($reshape! res ($size probabilities 0)))))
+  (let* ((dprobs (if ($parameterp probabilities) ($data probabilities) probabilities))
+         (szprobs ($size dprobs)))
+    (if (>= temperature 0)
+        (let ((nprobs ($div dprobs temperature)))
+          (let ((probs ($softmax nprobs)))
+            ($reshape! ($multinomial probs 1) (car szprobs))))
+        (let ((res ($argmax dprobs 1)))
+          ($reshape! res (car szprobs))))))
 
 (defmethod encoder-choose ((encoder character-encoder) probseqs &optional (temperature 1D0))
   (encoder-decode encoder (mapcar (lambda (probs) ($choose probs temperature)) probseqs)))
