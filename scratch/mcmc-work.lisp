@@ -15,9 +15,9 @@
 (defparameter *mu-obs* ($mean *observation*))
 
 (defun transition-model (x)
-  (tensor (list ($0 x) (max 1E-7 (random/normal ($1 x) 0.5)))))
+  (tensor (list ($0 x) ($abs (random/normal ($1 x) 0.5)))))
 
-(defun prior (x) (if (<= ($1 x) 0) 1E-7 0.9999999))
+(defun prior (x) (if (<= ($1 x) 0) 0 1))
 
 (defun manual-log-like-normal (x data)
   ($sum ($- ($+ ($log ($* ($1 x) (sqrt (* 2 pi))))
@@ -25,10 +25,8 @@
                     ($* 2 ($square ($1 x))))))))
 
 (defun acceptance (x xnew)
-  (if (> xnew x)
-      T
-      (let ((accept (random/uniform 0 1)))
-        (< ($log accept) ($- xnew x)))))
+  (let ((d (- xnew x)))
+    (if (> d 0) T (< (log (random 1D0)) d))))
 
 (defun metropolis-hastings (lfn prior transition pinit iterations data acceptance-rule)
   (let ((x pinit)
@@ -53,7 +51,7 @@
                                                  #'prior
                                                  #'transition-model
                                                  (tensor (list *mu-obs* 0.1))
-                                                 50000
+                                                 5000
                                                  *observation*
                                                  #'acceptance)))
 
@@ -67,4 +65,4 @@
        (vs (loop :for x :across avs :collect ($1 x)))
        (sum (reduce #'+ vs))
        (sd (* 1D0 (/ sum ($count vs)))))
-  sd)
+  (list sd ($sd *observation*)))
