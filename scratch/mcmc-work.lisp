@@ -1,7 +1,8 @@
 (defpackage :mcmc-work
   (:use #:common-lisp
         #:mu
-        #:th))
+        #:th
+        #:mplot))
 
 (in-package :mcmc-work)
 
@@ -73,3 +74,19 @@
        (thetas (subseq accepted sn))
        (esd (mean (mapcar #'cadr thetas))))
   (list esd ($sd *observation*)))
+
+;; accepted theta-sd, C-c C-i
+(mplot:plot-points (loop :for theta :in (simulation/accepted *simulation*)
+                         :for i :from 0
+                         :collect (list i (cadr theta))))
+
+;; check burn-in
+(mplot:plot-points (loop :for theta :in (simulation/accepted *simulation*)
+                         :for i :from 0 :below 1000
+                         :collect (list i (cadr theta))))
+
+;; last values
+(mplot:plot-points (loop :for theta :in (last (simulation/accepted *simulation*) 5000)
+                         :for i :from 0
+                         :collect (list i (cadr theta)))
+                   :yrange '(2.5 3.5))
