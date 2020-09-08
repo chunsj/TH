@@ -18,10 +18,8 @@
     (list mean (exp (random/normal (log sd) 0.01)))))
 
 (defun log-prior (theta)
-  (let ((sd (cadr theta)))
-    (if (<= sd 0)
-        -30
-        0)))
+  (declare (ignore theta))
+  (log 1))
 
 (defun log-likelihood-normal (theta data)
   (let ((mean (car theta))
@@ -52,8 +50,11 @@
                     (push theta-new accepted))
                   (push theta-new rejected)))
     (prn "ACCEPTED/REJECTED:" ($count accepted) "/" ($count rejected))
-    (list :accepted accepted
-          :rejected rejected)))
+    (list :accepted (reverse accepted)
+          :rejected (reverse rejected))))
+
+(defun simulation/accepted (simulation) (getf simulation :accepted))
+(defun simulation/rejected (simulation) (getf simulation :rejected))
 
 (defparameter *simulation* (time
                             (metropolis-hastings #'log-likelihood-normal
@@ -64,14 +65,11 @@
                                                  *observation*
                                                  #'acceptance)))
 
-(prn *simulation*)
-(prn ($count (getf *simulation* :accepted)))
-(prn ($count (getf *simulation* :rejected)))
+(defun mean (vs) (/ (reduce #'+ vs) ($count vs)))
 
-(let* ((n ($count (getf *simulation* :accepted)))
-       (m (round (/ n 4)))
-       (avs (subseq (reverse (getf *simulation* :accepted)) m))
-       (vs (loop :for x :in avs :collect (cadr x)))
-       (sum (reduce #'+ vs))
-       (sd (* 1D0 (/ sum ($count vs)))))
-  (list sd ($sd *observation*)))
+(let* ((accepted (simulation/accepted *simulation*))
+       (n ($count accepted))
+       (sn (round (* n 0.25)))
+       (thetas (subseq accepted sn))
+       (esd (mean (mapcar #'cadr thetas))))
+  (list esd ($sd *observation*)))
