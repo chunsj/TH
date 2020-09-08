@@ -1,10 +1,10 @@
-(defpackage :mcmc-work
+(defpackage :mcmc-simple
   (:use #:common-lisp
         #:mu
         #:th
         #:mplot))
 
-(in-package :mcmc-work)
+(in-package :mcmc-simple)
 
 ;; PROBLEM DESCRIPTION
 ;;
