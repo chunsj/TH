@@ -46,7 +46,7 @@
   (loop :for f :in ($fns node)
         :for fv = (funcall f)
         :do (cond (($tensorp ($gradientv node)) ($add! ($gradientv node) fv))
-                  ((numberp ($gradientv node)) (incf ($gradientv node) fv))
+                  ((numberp ($gradientv node)) (incf ($gradientv node) ($scalar fv)))
                   (T (error "unknown gradient value ~A" ($gradientv node))))))
 
 (defun compute-gradient (node)
