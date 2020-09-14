@@ -147,6 +147,16 @@
            #:$log!
            #:$log1p
            #:$log1p!
+           #:$lgamma
+           #:$lgamma!
+           #:$gamma
+           #:$gamma!
+           #:$beta
+           #:$beta!
+           #:$erf
+           #:$erf!
+           #:$erfc
+           #:$erfc!
            #:$neg
            #:$neg!
            #:$cinv

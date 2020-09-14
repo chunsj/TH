@@ -241,6 +241,21 @@
 (defgeneric $log (x) (:documentation "Returns log of the elements."))
 (defgeneric $log! (x) (:documentation "Return an in-place replaced log values."))
 
+(defgeneric $lgamma (x) (:documentation "Returns lgamma function of the elements."))
+(defgeneric $lgamma! (x) (:documentation "Return an in-place replaces lgamma function values."))
+
+(defgeneric $gamma (x) (:documentation "Returns gamma function of the elements."))
+(defgeneric $gamma! (x) (:documentation "Return an in-place replaces gamma function values."))
+
+(defgeneric $beta (x y) (:documentation "Returns beta function of the elements."))
+(defgeneric $beta! (x y) (:documentation "Return an in-place replaces beta function values."))
+
+(defgeneric $erf (x) (:documentation "Returns error function of the elements."))
+(defgeneric $erf! (x) (:documentation "Return an in-place replaces error function values."))
+
+(defgeneric $erfc (x) (:documentation "Returns erfc of the elements."))
+(defgeneric $erfc! (x) (:documentation "Return an in-place replaces erfc values."))
+
 (defgeneric $log1p (x) (:documentation "Returns log(1+x) of the elements."))
 (defgeneric $log1p! (x) (:documentation "Returns an in-place replaced log(1+x) values."))
 

@@ -21,3 +21,10 @@
 
 (let ((l 2))
   (mean (loop :repeat 1000 :collect (random/exponential (/ 1 l)))))
+
+;; XXX following functions should have derivative function implementations
+($lgamma (ones 10))
+($gamma (ones 10))
+($beta (ones 10) (ones 10))
+($erf (ones 10))
+($erfc (ones 10))

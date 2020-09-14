@@ -1123,6 +1123,26 @@
 (defmethod $log ((x tensor)) (tensor-log ($empty x) x))
 (defmethod $log! ((x tensor)) (tensor-log x x))
 
+(defmethod $lgamma ((x tensor)) (tensor-lgamma ($empty x) x))
+(defmethod $lgamma! ((x tensor)) (tensor-lgamma x x))
+
+(defmethod $gamma ((x tensor)) (tensor-gamma ($empty x) x))
+(defmethod $gamma! ((x tensor)) (tensor-gamma x x))
+
+(defmethod $beta ((x tensor) (y tensor))
+  ($div! ($mul ($gamma x) ($gamma y)) ($gamma ($add x y))))
+(defmethod $beta! ((x tensor) (y tensor))
+  (let ((gxy ($gamma ($add x y)))
+        (gx ($gamma! x))
+        (gy ($gamma y)))
+    ($div! ($mul! gx gy) gxy)))
+
+(defmethod $erf ((x tensor)) (tensor-erf ($empty x) x))
+(defmethod $erf! ((x tensor)) (tensor-erf x x))
+
+(defmethod $erfc ((x tensor)) (tensor-erfc ($empty x) x))
+(defmethod $erfc! ((x tensor)) (tensor-erfc x x))
+
 (defmethod $log1p ((x number)) (log (1+ x)))
 (defmethod $log1p! ((x number)) (log (1+ x)))
 
