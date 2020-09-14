@@ -1138,12 +1138,12 @@
     ($div! ($mul! gx gy) gxy)))
 
 (defmethod $lbeta ((x tensor) (y tensor))
-  (tensor-lbeta ($empty x) a b))
+  (tensor-lbeta ($clone x) x y))
 (defmethod $lbeta! ((a tensor) (b tensor))
   (tensor-lbeta a ($clone a) b))
 
 (defmethod $polygamma ((x tensor) n)
-  (tensor-polygamma ($mepty x) x n))
+  (tensor-polygamma ($clone x) x n))
 (defmethod $polygamma! ((x tensor) n)
   (tensor-polygamma x ($clone x) n))
 

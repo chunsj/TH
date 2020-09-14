@@ -26,6 +26,8 @@
 ($lgamma (ones 10))
 ($gamma (ones 10))
 ($beta (ones 10) (ones 10))
+($lbeta (ones 10) (ones 10))
+($polygamma (ones 10) 0)
 ($erf (ones 10))
 ($erfc (ones 10))
 
