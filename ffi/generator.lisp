@@ -93,3 +93,12 @@
 (cffi:defcfun ("THRandom_bernoulli" th-random-bernoulli) :double
   (generator th-generator-ptr)
   (p :double))
+
+(cffi:defcfun ("THRandom_gamma" th-random-gamma) :double
+  (generator th-generator-ptr)
+  (shape :double))
+
+(cffi:defcfun ("THRandom_beta" th-random-beta) :double
+  (generator th-generator-ptr)
+  (a :double)
+  (b :double))
