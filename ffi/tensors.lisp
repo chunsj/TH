@@ -361,6 +361,8 @@
     ("lgamma" lgamma :void (result tensorptr) (tensor tensorptr))
     ("erf" erf :void (result tensorptr) (tensor tensorptr))
     ("erfc" erfc :void (result tensorptr) (tensor tensorptr))
+    ("polygamma" polygamma :void (n :int) (input tensorptr) (output tensorptr))
+    ("lbeta" lbeta :void (a tensorptr) (b tensorptr) (output tensorptr))
     ("log1p" log1p :void (result tensorptr) (tensor tensorptr))
     ("exp" exp :void (result tensorptr) (tensor tensorptr))
     ("cos" cos :void (result tensorptr) (tensor tensorptr))

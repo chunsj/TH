@@ -157,6 +157,10 @@
            #:$erf!
            #:$erfc
            #:$erfc!
+           #:$lbeta
+           #:$lbeta!
+           #:$polygamma
+           #:$polygamma!
            #:$neg
            #:$neg!
            #:$cinv

@@ -1137,6 +1137,16 @@
         (gy ($gamma y)))
     ($div! ($mul! gx gy) gxy)))
 
+(defmethod $lbeta ((x tensor) (y tensor))
+  (tensor-lbeta ($empty x) a b))
+(defmethod $lbeta! ((a tensor) (b tensor))
+  (tensor-lbeta a ($clone a) b))
+
+(defmethod $polygamma ((x tensor) n)
+  (tensor-polygamma ($mepty x) x n))
+(defmethod $polygamma! ((x tensor) n)
+  (tensor-polygamma x ($clone x) n))
+
 (defmethod $erf ((x tensor)) (tensor-erf ($empty x) x))
 (defmethod $erf! ((x tensor)) (tensor-erf x x))
 

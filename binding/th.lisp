@@ -256,6 +256,12 @@
 (defgeneric $erfc (x) (:documentation "Returns erfc of the elements."))
 (defgeneric $erfc! (x) (:documentation "Return an in-place replaces erfc values."))
 
+(defgeneric $polygamma (x n))
+(defgeneric $polygamma! (x n))
+
+(defgeneric $lbeta (x y))
+(defgeneric $lbeta! (x y))
+
 (defgeneric $log1p (x) (:documentation "Returns log(1+x) of the elements."))
 (defgeneric $log1p! (x) (:documentation "Returns an in-place replaced log(1+x) values."))
 

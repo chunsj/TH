@@ -237,6 +237,8 @@
 (defgeneric tensor-lgamma (tensor src))
 (defgeneric tensor-erf (tensor src))
 (defgeneric tensor-erfc (tensor src))
+(defgeneric tensor-polygamma (tensor src n))
+(defgeneric tensor-lbeta (tensor a b))
 (defgeneric tensor-log1p (tensor src))
 (defgeneric tensor-exp (tensor src)
   (:documentation "returns element-wise exponential values"))

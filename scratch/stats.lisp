@@ -28,3 +28,6 @@
 ($beta (ones 10) (ones 10))
 ($erf (ones 10))
 ($erfc (ones 10))
+
+($gamma (tensor '(1/3)))
+($gamma (tensor '(4.8)))
