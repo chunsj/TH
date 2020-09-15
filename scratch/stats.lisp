@@ -33,3 +33,17 @@
 
 ($gamma (tensor '(1/3)))
 ($gamma (tensor '(4.8)))
+
+($gamma (tensor '(6)))
+($gamma (tensor '(5)))
+($/ ($- ($gamma (tensor (list (+ 5 1E-5)))) ($gamma (tensor '(5)))) 1E-5)
+($* ($gamma (tensor '(5))) ($polygamma (tensor '(5)) 0))
+
+($/ ($/ ($- ($gamma (tensor (list (+ 5 1E-5)))) ($gamma (tensor '(5)))) 1E-5) 24)
+
+
+($lgamma (tensor.double (list (+ 5 1E-6))))
+($lgamma (tensor.double '(5)))
+($- ($lgamma (tensor.double (list (+ 5 1E-6)))) ($lgamma (tensor.double '(5))))
+($polygamma (tensor '(5)) 0)
+($/ ($- ($lgamma (tensor (list (+ 5 1E-4)))) ($lgamma (tensor '(5)))) 1E-4)

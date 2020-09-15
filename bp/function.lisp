@@ -157,6 +157,74 @@
             :name :square
             :link (link (to x (* 2 ($data x) gv))))))
 
+(defmethod $gamma ((x number))
+  (let ((xt (tensor (list x))))
+    ($scalar ($gamma xt))))
+
+(defmethod $gamma ((x node))
+  (node ($gamma ($data x))
+        :name :gamma
+        :link (link (to x ($mul! ($mul dv ($polygamma ($data x) 0)) gv)))))
+
+(defmethod $lgamma ((x number))
+  (let ((xt (tensor (list x))))
+    ($scalar ($lgamma xt))))
+
+(defmethod $lgamma ((x node))
+  (node ($lgamma ($data x))
+        :name :lgamma
+        :link (link (to x ($mul! ($polygamma ($data x) 0) gv)))))
+
+(defmethod $beta ((x number) (y number))
+  (let ((xt (tensor (list x)))
+        (yt (tensor (list y))))
+    ($scalar ($beta xt yt))))
+
+(defmethod $beta ((x node) (y node))
+  (node ($beta ($data x) ($data y))
+        :name :beta
+        :link (link
+                (to x ($mul! ($mul dv ($sub ($polygamma ($data x) 0)
+                                            ($polygamma ($add ($data x) ($data y)) 0)))
+                             gv))
+                (to y ($mul! ($mul dv ($sub ($polygamma ($data y) 0)
+                                            ($polygamma ($add ($data x) ($data y)) 0)))
+                             gv)))))
+
+(defmethod $lbeta ((x number) (y number))
+  (let ((xt (tensor (list x)))
+        (yt (tensor (list y))))
+    ($scalar ($lbeta xt yt))))
+
+(defmethod $lbeta ((x node) (y node))
+  (node ($beta ($data x) ($data y))
+        :name :lbeta
+        :link (link
+                (to x ($mul! ($sub ($polygamma ($data x) 0)
+                                   ($polygamma ($add ($data x) ($data y)) 0))
+                             gv))
+                (to y ($mul! ($sub ($polygamma ($data y) 0)
+                                   ($polygamma ($add ($data x) ($data y)) 0))
+                             gv)))))
+
+(defmethod $erf ((x number))
+  (let ((xt (tensor (list x))))
+    ($scalar ($erf xt))))
+
+(defmethod $erf ((x node))
+  (node ($erf ($data x))
+        :name :erf
+        :link (link (to x ($mul! ($mul (/ 2 (sqrt pi)) ($exp ($- ($square x)))) gv)))))
+
+(defmethod $erfc ((x number))
+  (let ((xt (tensor (list x))))
+    ($scalar ($erfc xt))))
+
+(defmethod $erfc ((x node))
+  (node ($erf ($data x))
+        :name :erfc
+        :link (link (to x ($mul! ($mul (/ -2 (sqrt pi)) ($exp ($- ($square x)))) gv)))))
+
 (defgeneric $relu (x) (:documentation "RELU activation function."))
 (defgeneric $lrelu (x &optional nv) (:documentation "Leaky RELU activation function."))
 (defgeneric $elu (x &optional α) (:documentation "Exponential LU activation function."))
