@@ -84,13 +84,13 @@
 ;;     p must satisfy $0 < p < 1$.
 ;; */
 ;; int THRandom_geometric(THGenerator *_generator, double p);
-(cffi:defcfun ("THRandom_geometric" th-random-geometric) :double
+(cffi:defcfun ("THRandom_geometric" th-random-geometric) :int
   (generator th-generator-ptr)
   (p :double))
 
 ;; /* Returns true with probability $p$ and false with probability $1-p$ (p > 0). */
 ;; int THRandom_bernoulli(THGenerator *_generator, double p);
-(cffi:defcfun ("THRandom_bernoulli" th-random-bernoulli) :double
+(cffi:defcfun ("THRandom_bernoulli" th-random-bernoulli) :int
   (generator th-generator-ptr)
   (p :double))
 
