@@ -71,25 +71,32 @@
 
 (defmethod $parameters ((d distribution)) '())
 
+(defun pv (pv)
+  (if ($parameterp pv)
+      ($data pv)
+      pv))
+
 (defclass distribution/bernoulli (distribution)
-  ((p :initform ($parameter 0.5))))
+  ((p :initform 0.5)))
 
 (defun distribution/bernoulli (&optional (p 0.5D0))
   (let ((dist (make-instance 'distribution/bernoulli))
         (pin p))
     (with-slots (p) dist
-      (setf p ($parameter pin)))
+      (setf p pin))
     dist))
 
 (defmethod $parameters ((d distribution/bernoulli))
   (with-slots (p) d
-    (list p)))
+    (if ($parameterp p)
+        (list p)
+        '())))
 
 (defmethod $sample ((d distribution/bernoulli) &optional (n 1))
   (when (> n 0)
     (with-slots (p) d
-      (cond ((eq n 1) (random/bernoulli ($data p)))
-            (T ($bernoulli (tensor.byte n) ($data p)))))))
+      (cond ((eq n 1) (random/bernoulli (pv p)))
+            (T ($bernoulli (tensor.byte n) (pv p)))))))
 
 (defmethod $score ((d distribution/bernoulli) (data number))
   (with-slots (p) d
@@ -111,14 +118,14 @@
       ($add ($mul nt ($log p)) ($mul (- nd nt) ($log ($sub 1 p)))))))
 
 (defclass distribution/gaussian (distribution)
-  ((mu :initform ($parameter 0))
-   (sigma :initform ($parameter 1))))
+  ((mu :initform 0)
+   (sigma :initform 1)))
 
 (defun distribution/gaussian (&optional (mean 0) (stddev 1))
   (let ((dist (make-instance 'distribution/gaussian)))
     (with-slots (mu sigma) dist
-      (setf mu ($parameter mean)
-            sigma ($parameter stddev)))
+      (setf mu mean
+            sigma stddev))
     dist))
 
 (defun distribution/normal (&optional (mean 0) (stddev 1))
@@ -126,13 +133,16 @@
 
 (defmethod $parameters ((d distribution/gaussian))
   (with-slots (mu sigma) d
-    (list mu sigma)))
+    (let ((ps '()))
+      (when ($parameterp sigma) (push sigma ps))
+      (when ($parameterp mu) (push mu ps))
+      ps)))
 
 (defmethod $sample ((d distribution/gaussian) &optional (n 1))
   (when (> n 0)
     (with-slots (mu sigma) d
-      (cond ((eq n 1) (random/normal ($data mu) ($data sigma)))
-            (T ($normal (tensor n) ($data mu) ($data sigma)))))))
+      (cond ((eq n 1) (random/normal (pv mu) (pv sigma)))
+            (T ($normal (tensor n) (pv mu) (pv sigma)))))))
 
 (defmethod $score ((d distribution/gaussian) (data number))
   (with-slots (mu sigma) d
@@ -158,13 +168,13 @@
                             ($div ($square ($sub data mu))
                                   ($square sigma))))))))
 
-(let ((d (distribution/normal)))
-  ($score d ($sample d 10)))
+(let ((d (distribution/bernoulli 0.8)))
+  ($score d ($sample d 100)))
 
-(let ((original (distribution/normal 1 2)))
+(let ((original (distribution/bernoulli 0.8)))
   (let ((data ($sample original 1000)))
-    (let ((guess (distribution/gaussian)))
-      (prn "LOSS[0]:" ($neg ($score guess data)))
+    (let ((guess (distribution/bernoulli ($parameter 0.5))))
+      (prn "LOSS[0]" ($neg ($score guess data)))
       ($amgd! ($parameters guess) 0.01)
       (loop :repeat 5000
             :for i :from 1
@@ -173,3 +183,20 @@
                   (when (zerop (rem i 100)) (prn "LOSS" i l))
                   ($amgd! ($parameters guess) 0.01)))
       (prn ($parameters guess)))))
+
+(let ((d (distribution/normal)))
+  ($score d ($sample d 10)))
+
+(let ((original (distribution/normal 1 2)))
+  (let ((data ($sample original 1000)))
+    (let ((guess (distribution/gaussian ($parameter 0) ($parameter 1))))
+      (prn "LOSS[0]:" ($neg ($score guess data)))
+      ($amgd! ($parameters guess) 0.01)
+      (loop :repeat 5000
+            :for i :from 1
+            :for l = ($neg ($score guess data))
+            :do (progn
+                  (when (zerop (rem i 100)) (prn "LOSS" i l))
+                  ($amgd! ($parameters guess) 0.01)))
+      (prn ($parameters guess))
+      (prn ($mean data) ($sd data)))))
