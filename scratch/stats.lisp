@@ -60,6 +60,7 @@
 
 (defgeneric $sample (distribution &optional n))
 (defgeneric $score (distribution data))
+(defgeneric $parameter-names (distribution))
 
 (defclass distribution () ())
 
@@ -85,6 +86,9 @@
     (if ($parameterp p)
         (list p)
         '())))
+
+(defmethod $parameter-names ((d distribution/bernoulli))
+  (list :p))
 
 (defmethod $ ((d distribution/bernoulli) name &rest others-and-default)
   (declare (ignore others-and-default))
