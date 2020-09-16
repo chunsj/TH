@@ -54,9 +54,15 @@
        (u ($cholesky x)))
   ($sum ($abs ($- x ($@ ($transpose u) u)))))
 
-;; in anglican,
-;; sample - random sampling from distribution
-;; observe - likelihood computation
+;; XXX
+;; trying to follow the design of webppl
+;;
+
+;; parameters could be set by the user, for example set mu as optimizable parameter but
+;; not sigma. so following code should be modified
+
+;; more generic $data equivalent method is required for this.
+;; param -> $data, otherwise, just itself
 
 (defgeneric $sample (distribution &optional n))
 (defgeneric $score (distribution data))
