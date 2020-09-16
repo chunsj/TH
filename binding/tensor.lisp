@@ -1982,6 +1982,12 @@
   (tensor-potrf ch a up)
   ch)
 
+(defun $cholesky (a &optional (up t))
+  ($potrf a up))
+
+(defun $cholesky! (a &optional (up t))
+  ($potrf! a up))
+
 (defmethod $pstrf ((a tensor) &optional (up t))
   (let ((ch ($empty a))
         (piv (tensor.int)))

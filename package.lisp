@@ -297,6 +297,8 @@
            #:$trtrs!
            #:$potrf
            #:$potrf!
+           #:$cholesky
+           #:$cholesky!
            #:$pstrf
            #:$pstrf!
            #:$potrs
