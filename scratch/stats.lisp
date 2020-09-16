@@ -58,12 +58,6 @@
 ;; trying to follow the design of webppl
 ;;
 
-;; parameters could be set by the user, for example set mu as optimizable parameter but
-;; not sigma. so following code should be modified
-
-;; more generic $data equivalent method is required for this.
-;; param -> $data, otherwise, just itself
-
 (defgeneric $sample (distribution &optional n))
 (defgeneric $score (distribution data))
 
@@ -91,6 +85,19 @@
     (if ($parameterp p)
         (list p)
         '())))
+
+(defmethod $ ((d distribution/bernoulli) name &rest others-and-default)
+  (declare (ignore others-and-default))
+  (when (eq name :p)
+    (with-slots (p) d
+      p)))
+
+(defmethod (setf $) (value (d distribution/bernoulli) name &rest others)
+  (declare (ignore others))
+  (when (eq name :p)
+    (with-slots (p) d
+      (setf p value)
+      value)))
 
 (defmethod $sample ((d distribution/bernoulli) &optional (n 1))
   (when (> n 0)
