@@ -15,6 +15,7 @@
            #:parallel-layer
            #:affine-layer
            #:batch-normalization-layer
+           #:layer-normalization-layer
            #:convolution-2d-layer
            #:maxpool-2d-layer
            #:avgpool-2d-layer
@@ -213,6 +214,38 @@
         (if (and (not (eq 1 ($ndim x))) (not (eq 3 ($ndim x))) (not (eq 1 ($size x 0))))
             ($bn x ($data g) ($data e) rm rv)
             ($bnorm x ($data g) ($data e) rm rv)))))
+
+(defclass layer-normalization-layer (layer)
+  ((g :initform nil)
+   (b :initform nil)))
+
+(defun layer-normalization-layer (input-size)
+  (let ((n (make-instance 'layer-normalization-layer)))
+    (with-slots (g b) n
+      (setf g ($parameter (ones input-size))
+            b ($parameter (zeros input-size)))
+      n)))
+
+(defmethod $train-parameters ((l layer-normalization-layer))
+  (with-slots (g b) l
+    (list g b)))
+
+(defmethod $parameters ((l layer-normalization-layer))
+  (with-slots (g b) l
+    (list g b)))
+
+(defmethod $execute ((l layer-normalization-layer) x &key (trainp t))
+  (with-slots (g b) l
+    (let* ((xsz ($size x))
+           (d0 (car xsz))
+           (d1 (reduce #'* (cdr xsz)))
+           (xv ($view (if ($parameterp x) ($data x) x) d0 d1))
+           (mxv ($expand ($mean xv 1) ($size xv)))
+           (sxv ($expand ($sd xv 1) ($size xv)))
+           (gv ($expand (if trainp g ($data g)) ($size xv)))
+           (bv ($expand (if trainp b ($data b)) ($size xv)))
+           (ov ($+ ($/ ($* gv ($- xv mxv)) ($+ sxv 1E-7)) bv)))
+      (apply #'$reshape ov xsz))))
 
 (defun afn (activation)
   (cond ((eq activation :sigmoid) #'$sigmoid)
