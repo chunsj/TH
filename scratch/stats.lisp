@@ -64,6 +64,11 @@
 
 (defclass distribution () ())
 
+(defmethod $sample ((d distribtion)) nil)
+(defmethod $score ((d distribution) data)
+  (declare (ignore))
+  most-negative-single-float)
+(defmethod $parameter-names ((d distribution)) '())
 (defmethod $parameters ((d distribution)) '())
 
 (defun pv (pv)
@@ -148,6 +153,22 @@
       (when ($parameterp sigma) (push sigma ps))
       (when ($parameterp mu) (push mu ps))
       ps)))
+
+(defmethod $parameter-names ((d distribution/gaussian))
+  (list :mu :sigma))
+
+(defmethod $ ((d distribution/gaussian) name &rest others-and-default)
+  (declare (ignore others-and-default))
+  (with-slots (mu sigma) d
+    (cond ((eq name :mu) mu)
+          ((eq name :sigma) sigma))))
+
+(defmethod (setf $) (value (d distribution/gaussian) name &rest others)
+  (declare (ignore others))
+  (with-slots (mu sigma) d
+    (cond ((eq name :mu) (setf mu value))
+          ((eq name :sigma) (setf sigma value)))
+    value))
 
 (defmethod $sample ((d distribution/gaussian) &optional (n 1))
   (when (> n 0)
