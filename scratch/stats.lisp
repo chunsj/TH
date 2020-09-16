@@ -47,3 +47,5 @@
 ($- ($lgamma (tensor.double (list (+ 5 1E-6)))) ($lgamma (tensor.double '(5))))
 ($polygamma (tensor '(5)) 0)
 ($/ ($- ($lgamma (tensor (list (+ 5 1E-4)))) ($lgamma (tensor '(5)))) 1E-4)
+
+($scalar ($erf (tensor.double '(-1))))
