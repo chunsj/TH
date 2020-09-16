@@ -158,7 +158,7 @@
             :link (link (to x (* 2 ($data x) gv))))))
 
 (defmethod $gamma ((x number))
-  (let ((xt (tensor (list x))))
+  (let ((xt (tensor.double (list x))))
     ($scalar ($gamma xt))))
 
 (defmethod $gamma ((x node))
@@ -167,7 +167,7 @@
         :link (link (to x ($mul! ($mul dv ($polygamma ($data x) 0)) gv)))))
 
 (defmethod $lgamma ((x number))
-  (let ((xt (tensor (list x))))
+  (let ((xt (tensor.double (list x))))
     ($scalar ($lgamma xt))))
 
 (defmethod $lgamma ((x node))
@@ -176,8 +176,8 @@
         :link (link (to x ($mul! ($polygamma ($data x) 0) gv)))))
 
 (defmethod $beta ((x number) (y number))
-  (let ((xt (tensor (list x)))
-        (yt (tensor (list y))))
+  (let ((xt (tensor.double (list x)))
+        (yt (tensor.double (list y))))
     ($scalar ($beta xt yt))))
 
 (defmethod $beta ((x node) (y node))
@@ -192,8 +192,8 @@
                              gv)))))
 
 (defmethod $lbeta ((x number) (y number))
-  (let ((xt (tensor (list x)))
-        (yt (tensor (list y))))
+  (let ((xt (tensor.double (list x)))
+        (yt (tensor.double (list y))))
     ($scalar ($lbeta xt yt))))
 
 (defmethod $lbeta ((x node) (y node))
@@ -208,7 +208,7 @@
                              gv)))))
 
 (defmethod $erf ((x number))
-  (let ((xt (tensor (list x))))
+  (let ((xt (tensor.double (list x))))
     ($scalar ($erf xt))))
 
 (defmethod $erf ((x node))
@@ -217,7 +217,7 @@
         :link (link (to x ($mul! ($mul (/ 2 (sqrt pi)) ($exp ($- ($square x)))) gv)))))
 
 (defmethod $erfc ((x number))
-  (let ((xt (tensor (list x))))
+  (let ((xt (tensor.double (list x))))
     ($scalar ($erfc xt))))
 
 (defmethod $erfc ((x node))
