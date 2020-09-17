@@ -1827,7 +1827,17 @@
 
 (defmethod $normal ((x tensor) m sd)
   (let ((r ($resize! ($empty x) ($size x))))
-    (tensor-normal r m sd)))
+    (tensor-normal r m sd)
+    r))
+
+(defmethod $exponential! ((x tensor) lam)
+  (tensor-exponential x lam)
+  x)
+
+(defmethod $exponential ((x tensor) lam)
+  (let ((r ($resize! ($empty x) ($size x))))
+    (tensor-exponential r lam)
+    r))
 
 (defmethod $bernoulli! ((x tensor) p)
   (tensor-bernoulli x p)
@@ -1867,6 +1877,16 @@
 
 (defmethod $chisq! ((x tensor) df) ($gamma! x (/ df 2.0) 2.0))
 (defmethod $chisq ((x tensor) df) ($gamma x (/ df 2.0) 2.0))
+
+(defmethod $fdist! ((x tensor) n1 n2)
+  (let ((x2 ($div ($chisq x n2) n2))
+        (x1 ($div! ($chisq! x n1) n1)))
+    ($div! x1 x2)))
+
+(defmethod $fdist ((x tensor) n1 n2)
+  (let ((x2 ($div ($chisq x n2) n2))
+        (x1 ($div ($chisq x n1) n1)))
+    ($div! x1 x2)))
 
 (defmethod $norm ((x tensor) &optional (p 2) (dimension -1))
   (if (< dimension 0)

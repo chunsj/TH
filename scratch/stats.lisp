@@ -19,8 +19,11 @@
 (random/exponential 0.5)
 (random/exponential (/ 1 10))
 
-(let ((l 2))
-  (mean (loop :repeat 1000 :collect (random/exponential (/ 1 l)))))
+(time
+ (let ((l 2))
+   (mean (loop :repeat 1000 :collect (random/exponential (/ 1 l))))))
+
+(time ($mean ($exponential (tensor 1000) (/ 1 2))))
 
 ;; XXX following functions should have derivative function implementations
 ($lgammaf (ones 10))
@@ -243,3 +246,35 @@
 ($gamma (tensor 100) 1 1)
 
 ($uniform (tensor 10) 0 1)
+
+;; hypergeometric
+;; logistic distribution
+(defun rlogis (location scale &optional (generator th::*generator*))
+  (let ((u ($uniform generator 0 1)))
+    (+ location (* scale (log (/ u (- 1 u)))))))
+;; poisson
+;; negative binomial
+(defun rnbinom (size prob &optional (generator th::*generator*))
+  (cond ((eq prob 1) 0)
+        (T ($poisson generator ($gamma generator size (/ (- 1 prob) prob))))))
+;; negative chisq
+(defun rnchisq (df lam &optional (generator th::*generator*))
+  (if (zerop lam)
+      (cond ((zerop df) 0)
+            (T ($gamma generator (/ df 2.0) 2.0)))
+      (let ((r ($poisson generator (/ lam 2.0))))
+        (when (> r 0)
+          (setf f ($chisq generator (* 2.0 r))))
+        (when (> df 0)
+          (incf r ($gamma (/ df 2.0) 2.0)))
+        r)))
+;; t distribution
+(defun tdist (df &optional (generator th::*generator*))
+  (let ((n ($normal generator 0 1)))
+    (/ n (sqrt ($chisq generator df)) df)))
+
+(defun weibull (shape scale &optional (generator th::*generator*))
+  (* scale (expt (- (log ($uniform generator 0 1))) (/ 1.0 shape))))
+
+;; XXX different signature
+($multinomial (tensor '(0.1 0.2 0.7)))

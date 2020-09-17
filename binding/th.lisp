@@ -30,6 +30,8 @@
   (:documentation "Returns gamma random number."))
 (defgeneric $chisq (object df)
   (:documentation "Returns chisq random number."))
+(defgeneric $fdist (object n1 n2)
+  (:documentation "Returns f-distribution random number."))
 
 (defgeneric $storagep (object)
   (:documentation "Returns whether object is storage or not."))
@@ -458,6 +460,8 @@
   (:documentation "Returns tensor x filled with uniform random numbers."))
 (defgeneric $normal! (x m sd)
   (:documentation "Returns tensor x filled with normal random numbers."))
+(defgeneric $exponential! (x lam)
+  (:documentation "Returns tensor x filled with exponential random numbers."))
 (defgeneric $bernoulli! (x p)
   (:documentation "Returns tensor x filled with bernoulli random numbers."))
 (defgeneric $binomial! (x n p)

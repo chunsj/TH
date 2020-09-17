@@ -42,6 +42,7 @@
            #:$beta
            #:$gamma
            #:$chisq
+           #:$fdist
            #:random/random
            #:random/uniform
            #:random/normal
@@ -53,6 +54,8 @@
            #:random/binomial
            #:random/beta
            #:random/gamma
+           #:random/chisq
+           #:random/fdist
            #:$storagep
            #:$tensorp
            #:$empty
@@ -283,8 +286,11 @@
            #:$var!
            #:$uniform!
            #:$normal!
+           #:$exponential!
            #:$bernoulli!
            #:$binomial!
+           #:$chisq!
+           #:$fdist!
            #:$norm
            #:$norm!
            #:$renorm

@@ -63,6 +63,9 @@
 (defmethod $chisq ((generator generator) df)
   ($gamma generator (/ df 2.0) 2.0))
 
+(defmethod $fdist ((generator generator) n1 n2)
+  (/ (/ ($chisq generator n1) n1) (/ ($chisq generator n2) n2)))
+
 (defun random/random () ($random *generator*))
 (defun random/uniform (a b) ($uniform *generator* a b))
 (defun random/normal (m s) ($normal *generator* m s))
@@ -75,3 +78,4 @@
 (defun random/beta (a b) ($beta *generator* a b))
 (defun random/gamma (shape scale) ($gamma *generator* shape scale))
 (defun random/chisq (df) ($chisq *generator* df))
+(defun random/fdist (n1 n2) ($fdist *generator* n1 n2))
