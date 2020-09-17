@@ -22,6 +22,10 @@
   (:documentation "Returns geometric random number."))
 (defgeneric $bernoulli (object p)
   (:documentation "Returns bernoulli random number."))
+(defgeneric $beta (object a b)
+  (:documentation "Returns beta random number."))
+(defgeneric $gamma (object shape scale)
+  (:documentation "Returns gamma random number."))
 
 (defgeneric $storagep (object)
   (:documentation "Returns whether object is storage or not."))
@@ -241,14 +245,14 @@
 (defgeneric $log (x) (:documentation "Returns log of the elements."))
 (defgeneric $log! (x) (:documentation "Return an in-place replaced log values."))
 
-(defgeneric $lgamma (x) (:documentation "Returns lgamma function of the elements."))
-(defgeneric $lgamma! (x) (:documentation "Return an in-place replaces lgamma function values."))
+(defgeneric $lgammaf (x) (:documentation "Returns lgamma function of the elements."))
+(defgeneric $lgammaf! (x) (:documentation "Return an in-place replaces lgamma function values."))
 
-(defgeneric $gamma (x) (:documentation "Returns gamma function of the elements."))
-(defgeneric $gamma! (x) (:documentation "Return an in-place replaces gamma function values."))
+(defgeneric $gammaf (x) (:documentation "Returns gamma function of the elements."))
+(defgeneric $gammaf! (x) (:documentation "Return an in-place replaces gamma function values."))
 
-(defgeneric $beta (x y) (:documentation "Returns beta function of the elements."))
-(defgeneric $beta! (x y) (:documentation "Return an in-place replaces beta function values."))
+(defgeneric $betaf (x y) (:documentation "Returns beta function of the elements."))
+(defgeneric $betaf! (x y) (:documentation "Return an in-place replaces beta function values."))
 
 (defgeneric $erf (x) (:documentation "Returns error function of the elements."))
 (defgeneric $erf! (x) (:documentation "Return an in-place replaces error function values."))
@@ -259,8 +263,8 @@
 (defgeneric $polygamma (x n))
 (defgeneric $polygamma! (x n))
 
-(defgeneric $lbeta (x y))
-(defgeneric $lbeta! (x y))
+(defgeneric $lbetaf (x y))
+(defgeneric $lbetaf! (x y))
 
 (defgeneric $log1p (x) (:documentation "Returns log(1+x) of the elements."))
 (defgeneric $log1p! (x) (:documentation "Returns an in-place replaced log(1+x) values."))

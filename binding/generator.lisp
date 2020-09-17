@@ -49,6 +49,11 @@
   (th-random-bernoulli ($handle generator)
                        (coerce p 'double-float)))
 
+(defmethod $beta ((generator generator) a b)
+  (th-random-beta ($handle generator) (coerce a 'double-float) (coerce b 'double-float)))
+
+(defmethod $gamma ((generator generator) shape scale))
+
 (defun random/random () ($random *generator*))
 (defun random/uniform (a b) ($uniform *generator* a b))
 (defun random/normal (m s) ($normal *generator* m s))
@@ -57,3 +62,5 @@
 (defun random/lognormal (m s) ($lognormal *generator* m s))
 (defun random/geometric (p) ($geometric *generator* p))
 (defun random/bernoulli (p) ($bernoulli *generator* p))
+(defun random/beta (a b) ($beta *generator* a b))
+(defun random/gamma (shape scale) ($gamma *generator* shape scale))

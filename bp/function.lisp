@@ -157,32 +157,32 @@
             :name :square
             :link (link (to x (* 2 ($data x) gv))))))
 
-(defmethod $gamma ((x number))
+(defmethod $gammaf ((x number))
   (let ((xt (tensor.double (list x))))
-    ($scalar ($gamma xt))))
+    ($scalar ($gammaf xt))))
 
-(defmethod $gamma ((x node))
-  (node ($gamma ($data x))
-        :name :gamma
+(defmethod $gammaf ((x node))
+  (node ($gammaf ($data x))
+        :name :gammaf
         :link (link (to x ($mul! ($mul dv ($polygamma ($data x) 0)) gv)))))
 
-(defmethod $lgamma ((x number))
+(defmethod $lgammaf ((x number))
   (let ((xt (tensor.double (list x))))
-    ($scalar ($lgamma xt))))
+    ($scalar ($lgammaf xt))))
 
-(defmethod $lgamma ((x node))
-  (node ($lgamma ($data x))
-        :name :lgamma
+(defmethod $lgammaf ((x node))
+  (node ($lgammaf ($data x))
+        :name :lgammaf
         :link (link (to x ($mul! ($polygamma ($data x) 0) gv)))))
 
-(defmethod $beta ((x number) (y number))
+(defmethod $betaf ((x number) (y number))
   (let ((xt (tensor.double (list x)))
         (yt (tensor.double (list y))))
-    ($scalar ($beta xt yt))))
+    ($scalar ($betaf xt yt))))
 
-(defmethod $beta ((x node) (y node))
-  (node ($beta ($data x) ($data y))
-        :name :beta
+(defmethod $betaf ((x node) (y node))
+  (node ($betaf ($data x) ($data y))
+        :name :betaf
         :link (link
                 (to x ($mul! ($mul dv ($sub ($polygamma ($data x) 0)
                                             ($polygamma ($add ($data x) ($data y)) 0)))
@@ -191,14 +191,14 @@
                                             ($polygamma ($add ($data x) ($data y)) 0)))
                              gv)))))
 
-(defmethod $lbeta ((x number) (y number))
+(defmethod $lbetaf ((x number) (y number))
   (let ((xt (tensor.double (list x)))
         (yt (tensor.double (list y))))
-    ($scalar ($lbeta xt yt))))
+    ($scalar ($lbetaf xt yt))))
 
-(defmethod $lbeta ((x node) (y node))
+(defmethod $lbetaf ((x node) (y node))
   (node ($beta ($data x) ($data y))
-        :name :lbeta
+        :name :lbetaf
         :link (link
                 (to x ($mul! ($sub ($polygamma ($data x) 0)
                                    ($polygamma ($add ($data x) ($data y)) 0))
