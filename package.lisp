@@ -38,6 +38,8 @@
            #:$lognormal
            #:$geometric
            #:$bernoulli
+           #:$beta
+           #:$gamma
            #:random/random
            #:random/uniform
            #:random/normal
@@ -46,6 +48,8 @@
            #:random/lognormal
            #:random/geometric
            #:random/bernoulli
+           #:random/beta
+           #:random/gamma
            #:$storagep
            #:$tensorp
            #:$empty
@@ -147,18 +151,18 @@
            #:$log!
            #:$log1p
            #:$log1p!
-           #:$lgamma
-           #:$lgamma!
-           #:$gamma
-           #:$gamma!
-           #:$beta
-           #:$beta!
+           #:$lgammaf
+           #:$lgammaf!
+           #:$gammaf
+           #:$gammaf!
+           #:$betaf
+           #:$betaf!
            #:$erf
            #:$erf!
            #:$erfc
            #:$erfc!
-           #:$lbeta
-           #:$lbeta!
+           #:$lbetaf
+           #:$lbetaf!
            #:$polygamma
            #:$polygamma!
            #:$neg

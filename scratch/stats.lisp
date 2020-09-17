@@ -23,30 +23,30 @@
   (mean (loop :repeat 1000 :collect (random/exponential (/ 1 l)))))
 
 ;; XXX following functions should have derivative function implementations
-($lgamma (ones 10))
-($gamma (ones 10))
-($beta (ones 10) (ones 10))
-($lbeta (ones 10) (ones 10))
+($lgammaf (ones 10))
+($gammaf (ones 10))
+($betaf (ones 10) (ones 10))
+($lbetaf (ones 10) (ones 10))
 ($polygamma (ones 10) 0)
 ($erf (ones 10))
 ($erfc (ones 10))
 
-($gamma (tensor '(1/3)))
-($gamma (tensor '(4.8)))
+($gammaf (tensor '(1/3)))
+($gammaf (tensor '(4.8)))
 
-($gamma (tensor '(6)))
-($gamma (tensor '(5)))
-($/ ($- ($gamma (tensor (list (+ 5 1E-5)))) ($gamma (tensor '(5)))) 1E-5)
-($* ($gamma (tensor '(5))) ($polygamma (tensor '(5)) 0))
+($gammaf (tensor '(6)))
+($gammaf (tensor '(5)))
+($/ ($- ($gammaf (tensor (list (+ 5 1E-5)))) ($gammaf (tensor '(5)))) 1E-5)
+($* ($gammaf (tensor '(5))) ($polygamma (tensor '(5)) 0))
 
-($/ ($/ ($- ($gamma (tensor (list (+ 5 1E-5)))) ($gamma (tensor '(5)))) 1E-5) 24)
+($/ ($/ ($- ($gammaf (tensor (list (+ 5 1E-5)))) ($gammaf (tensor '(5)))) 1E-5) 24)
 
 
-($lgamma (tensor.double (list (+ 5 1E-6))))
-($lgamma (tensor.double '(5)))
-($- ($lgamma (tensor.double (list (+ 5 1E-6)))) ($lgamma (tensor.double '(5))))
+($lgammaf (tensor.double (list (+ 5 1E-6))))
+($lgammaf (tensor.double '(5)))
+($- ($lgammaf (tensor.double (list (+ 5 1E-6)))) ($lgammaf (tensor.double '(5))))
 ($polygamma (tensor '(5)) 0)
-($/ ($- ($lgamma (tensor (list (+ 5 1E-4)))) ($lgamma (tensor '(5)))) 1E-4)
+($/ ($- ($lgammaf (tensor (list (+ 5 1E-4)))) ($lgammaf (tensor '(5)))) 1E-4)
 
 ($scalar ($erf (tensor.double '(-1))))
 
@@ -232,3 +232,11 @@
                   ($amgd! ($parameters guess) 0.01)))
       (prn ($parameters guess))
       (prn ($mean data) ($sd data)))))
+
+(random/beta 1 2)
+(random/gamma 1 1)
+
+($beta (tensor 10) 1 1)
+($gamma (tensor 100) 1 1)
+
+($uniform (tensor 10) 0 1)

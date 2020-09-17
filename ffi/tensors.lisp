@@ -349,6 +349,10 @@
      (median :double) (sigma :double))
     ("logNormal" log-normal :void (tensor tensorptr) (generator th-generator-ptr)
      (mean :double) (stdv :double))
+    ("rbeta" rbeta :void (tensor tensorptr) (generator th-generator-ptr)
+     (a :double) (b :double))
+    ("rgamma" rgamma :void (tensor tensorptr) (generator th-generator-ptr)
+     (shape :double) (scale :double))
     ("multinomial" multinomial :void (tensor tensorptr) (generator th-generator-ptr)
      (prob-dist tensorptr) (n-sample :int) (replacement :int))
     ("multinomialAliasSetup" multinomial-alias-setup :void

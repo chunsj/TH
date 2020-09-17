@@ -52,7 +52,8 @@
 (defmethod $beta ((generator generator) a b)
   (th-random-beta ($handle generator) (coerce a 'double-float) (coerce b 'double-float)))
 
-(defmethod $gamma ((generator generator) shape scale))
+(defmethod $gamma ((generator generator) shape scale)
+  (th-random-gamma2 ($handle generator) (coerce shape 'double-float) (coerce scale 'double-float)))
 
 (defun random/random () ($random *generator*))
 (defun random/uniform (a b) ($uniform *generator* a b))

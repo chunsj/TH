@@ -456,6 +456,10 @@
   (:documentation "Returns tensor x filled with normal random numbers."))
 (defgeneric $bernoulli! (x p)
   (:documentation "Returns tensor x filled with bernoulli random numbers."))
+(defgeneric $beta! (x a b)
+  (:documentation "Returns tensor x filled with beta random numbers."))
+(defgeneric $gamma! (x shape scale)
+  (:documentation "Returns tensor x filled with gamma random numbers."))
 
 (defgeneric $norm (x &optional p dimension)
   (:documentation "Returns p-norm."))

@@ -1818,7 +1818,8 @@
 
 (defmethod $uniform ((x tensor) a b)
   (let ((r ($resize! ($empty x) ($size x))))
-    (tensor-uniform r a b)))
+    (tensor-uniform r a b)
+    r))
 
 (defmethod $normal! ((x tensor) m sd)
   (tensor-normal x m sd)
@@ -1834,7 +1835,26 @@
 
 (defmethod $bernoulli ((x tensor) p)
   (let ((r ($resize! ($empty x) ($size x))))
-    (tensor-bernoulli r p)))
+    (tensor-bernoulli r p)
+    r))
+
+(defmethod $beta! ((x tensor) a b)
+  (tensor-rbeta x a b)
+  x)
+
+(defmethod $beta ((x tensor) a b)
+  (let ((r ($resize! ($empty x) ($size x))))
+    (tensor-rbeta r a b)
+    r))
+
+(defmethod $gamma! ((x tensor) shape scale)
+  (tensor-rgamma x shape scale)
+  x)
+
+(defmethod $gamma ((x tensor) shape scale)
+  (let ((r ($resize! ($empty x) ($size x))))
+    (tensor-rgamma r shape scale)
+    r))
 
 (defmethod $norm ((x tensor) &optional (p 2) (dimension -1))
   (if (< dimension 0)

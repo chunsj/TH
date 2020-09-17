@@ -98,6 +98,11 @@
   (generator th-generator-ptr)
   (shape :double))
 
+(cffi:defcfun ("THRandom_gamma2" th-random-gamma2) :double
+  (generator th-generator-ptr)
+  (shape :double)
+  (scale :double))
+
 (cffi:defcfun ("THRandom_beta" th-random-beta) :double
   (generator th-generator-ptr)
   (a :double)
