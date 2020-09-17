@@ -25,6 +25,8 @@
 
 (time ($mean ($exponential (tensor 1000) (/ 1 2))))
 
+;; XXX at least sampling method and pdf method should be provided.
+
 ;; XXX following functions should have derivative function implementations
 ($lgammaf (ones 10))
 ($gammaf (ones 10))
