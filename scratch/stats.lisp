@@ -64,7 +64,7 @@
 
 (defclass distribution () ())
 
-(defmethod $sample ((d distribtion)) nil)
+(defmethod $sample ((d distribution) &optional (n 1)) (declare (ignore n)) nil)
 (defmethod $score ((d distribution) data)
   (declare (ignore))
   most-negative-single-float)
