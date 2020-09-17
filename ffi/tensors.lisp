@@ -107,6 +107,8 @@
     ("random" random :void (tensor tensorptr) (generator th-generator-ptr))
     ("geometric" geometric :void (tensor tensorptr) (generator th-generator-ptr) (p :double))
     ("bernoulli" bernoulli :void (tensor tensorptr) (generator th-generator-ptr) (p :double))
+    ("binomial" binomial :void (tensor tensorptr) (generator th-generator-ptr) (n :int)
+     (p :double))
     ("bernoulli_FloatTensor" bernoulli-float-tensor :void (tensor tensorptr)
      (generator th-generator-ptr) (p th-float-tensor-ptr))
     ("bernoulli_DoubleTensor" bernoulli-double-tensor :void (tensor tensorptr)

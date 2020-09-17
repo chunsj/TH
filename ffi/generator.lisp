@@ -107,3 +107,8 @@
   (generator th-generator-ptr)
   (a :double)
   (b :double))
+
+(cffi:defcfun ("THRandom_binomial" th-random-binomial) :int
+  (generator th-generator-ptr)
+  (n :int)
+  (p :double))

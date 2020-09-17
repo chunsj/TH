@@ -49,11 +49,19 @@
   (th-random-bernoulli ($handle generator)
                        (coerce p 'double-float)))
 
+(defmethod $binomial ((generator generator) n p)
+  (th-random-binomial ($handle generator)
+                      (coerce n 'integer)
+                      (coerce p 'double-float)))
+
 (defmethod $beta ((generator generator) a b)
   (th-random-beta ($handle generator) (coerce a 'double-float) (coerce b 'double-float)))
 
 (defmethod $gamma ((generator generator) shape scale)
   (th-random-gamma2 ($handle generator) (coerce shape 'double-float) (coerce scale 'double-float)))
+
+(defmethod $chisq ((generator generator) df)
+  ($gamma generator (/ df 2.0) 2.0))
 
 (defun random/random () ($random *generator*))
 (defun random/uniform (a b) ($uniform *generator* a b))
@@ -63,5 +71,7 @@
 (defun random/lognormal (m s) ($lognormal *generator* m s))
 (defun random/geometric (p) ($geometric *generator* p))
 (defun random/bernoulli (p) ($bernoulli *generator* p))
+(defun random/binomial (n p) ($binomial *generator* n p))
 (defun random/beta (a b) ($beta *generator* a b))
 (defun random/gamma (shape scale) ($gamma *generator* shape scale))
+(defun random/chisq (df) ($chisq *generator* df))

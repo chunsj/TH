@@ -236,6 +236,9 @@
 (random/beta 1 2)
 (random/gamma 1 1)
 
+(random/binomial 10 0.5)
+($mean ($binomial (tensor 10) 10 0.5))
+
 ($beta (tensor 10) 1 1)
 ($gamma (tensor 100) 1 1)
 

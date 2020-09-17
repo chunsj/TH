@@ -38,8 +38,10 @@
            #:$lognormal
            #:$geometric
            #:$bernoulli
+           #:$binomial
            #:$beta
            #:$gamma
+           #:$chisq
            #:random/random
            #:random/uniform
            #:random/normal
@@ -48,6 +50,7 @@
            #:random/lognormal
            #:random/geometric
            #:random/bernoulli
+           #:random/binomial
            #:random/beta
            #:random/gamma
            #:$storagep
@@ -281,6 +284,7 @@
            #:$uniform!
            #:$normal!
            #:$bernoulli!
+           #:$binomial!
            #:$norm
            #:$norm!
            #:$renorm

@@ -1838,6 +1838,15 @@
     (tensor-bernoulli r p)
     r))
 
+(defmethod $binomial! ((x tensor) n p)
+  (tensor-binomial x n p)
+  x)
+
+(defmethod $binomial ((x tensor) n p)
+  (let ((r ($resize! ($empty x) ($size x))))
+    (tensor-binomial r n p)
+    r))
+
 (defmethod $beta! ((x tensor) a b)
   (tensor-rbeta x a b)
   x)
@@ -1855,6 +1864,9 @@
   (let ((r ($resize! ($empty x) ($size x))))
     (tensor-rgamma r shape scale)
     r))
+
+(defmethod $chisq! ((x tensor) df) ($gamma! x (/ df 2.0) 2.0))
+(defmethod $chisq ((x tensor) df) ($gamma x (/ df 2.0) 2.0))
 
 (defmethod $norm ((x tensor) &optional (p 2) (dimension -1))
   (if (< dimension 0)

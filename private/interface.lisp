@@ -85,6 +85,8 @@
   (:documentation "returns geometric(p) element-wise"))
 (defgeneric tensor-bernoulli (tensor p &optional generator)
   (:documentation "returns bernoulli(p) element-wise"))
+(defgeneric tensor-binomial (tensor n p &optional generaor)
+  (:documentation "returns binomial(n,p) element-wise"))
 
 (defgeneric tensor-uniform (tensor a b &optional generator)
   (:documentation "returns tensor filled with number drawn from uniform distribution"))
