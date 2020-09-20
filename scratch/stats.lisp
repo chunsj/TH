@@ -62,6 +62,7 @@
 ;; XXX
 ;; trying to follow the design of webppl
 ;;
+;; refer pyro code under the refs directory as well
 
 (defgeneric $sample (distribution &optional n))
 (defgeneric $score (distribution data))
