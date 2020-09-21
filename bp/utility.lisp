@@ -624,12 +624,11 @@
     samples))
 
 (defmethod $scalar ((x tensor))
-  (when (eq 1 ($count x))
-    ($ ($storage x) 0)))
+  (if (eq 1 ($count x))
+      ($ ($storage x) 0)
+      (error "shape error in scalar ~A" ($size x))))
 
-(defmethod $scalar ((x node))
-  (when (eq 1 ($count ($data x)))
-    ($ ($storage ($data x)) 0)))
+(defmethod $scalar ((x node)) ($scalar ($data x)))
 
 (defmethod $scalar ((x T)) x)
 

@@ -160,12 +160,12 @@
 (defmethod $mul ((a node) (b T))
   (node ($mul ($data a) b)
         :name :mul
-        :link (link (to a ($mul b gv)))))
+        :link (link (to a (fit ($mul b gv) ($data a))))))
 
 (defmethod $mul ((a T) (b node))
   (node ($mul a ($data b))
         :name :mul
-        :link (link (to b ($mul a gv)))))
+        :link (link (to b (fit ($mul a gv) ($data b))))))
 
 (defmethod $bmm ((bx node) (by node))
   (node ($bmm ($data bx) ($data by))

@@ -182,4 +182,4 @@
 
 (defmethod $score ((d distribution/poisson) (data tensor))
   (with-slots (l) d
-    ($sub ($sub ($mul data ($log l)) l) (logfac data))))
+    ($sum ($sub ($sub ($mul data ($log l)) l) (logfac data)))))
