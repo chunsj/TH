@@ -17,23 +17,31 @@
 
 (defparameter *alpha* (/ 1D0 (mean *sms-data*)))
 
-(defun loglikelihood (l1 l2 tau)
+(defun loglikelihood (h l1 l2 tau)
   (if (and (> tau 0) (< tau *N*))
       (let ((tau (round tau)))
         (let ((d1 (subseq *sms-data* 0 tau))
               (d2 (subseq *sms-data* (1- tau))))
-          ($+ ($score l1 d1) ($score l2 d2))))
+          ($+ ($score l1 d1) ($score l2 d2)
+              ($score h ($scalar ($ l1 :l)))
+              ($score h ($scalar ($ l2 :l))))))
       most-negative-single-float))
+
+;; XXX needs implementation for parameter data
+($score (distribution/exponential *alpha*) ($parameter 10))
 
 ;; the solution from the original site
 (let ((r1 18)
       (r2 23)
-      (tau 45))
+      (tau 45)
+      (he (distribution/exponential *alpha*)))
   (let ((l1 (distribution/poisson r1))
         (l2 (distribution/poisson r2)))
     (let ((d1 (subseq *sms-data* 0 tau))
           (d2 (subseq *sms-data* tau)))
-      ($+ ($score l1 d1) ($score l2 d2)))))
+      ($+ ($score l1 d1) ($score l2 d2)
+          ($score he ($ l1 :l))
+          ($score he ($ l2 :l))))))
 
 ;; MCMC
 (time
@@ -45,7 +53,8 @@
    (let* ((r1 ($sample he))
           (r2 ($sample he))
           (tm (random *N*))
-          (oldlk (loglikelihood (distribution/poisson r1)
+          (oldlk (loglikelihood he
+                                (distribution/poisson r1)
                                 (distribution/poisson r2)
                                 tm)))
      (loop :repeat (+ N Nb)
@@ -53,7 +62,8 @@
            :for nr1 = (abs (random/normal r1 1))
            :for nr2 = (abs (random/normal r2 1))
            :for ntm = (round (abs (random/normal tm 1)))
-           :for newlk = (loglikelihood (distribution/poisson nr1)
+           :for newlk = (loglikelihood he
+                                       (distribution/poisson nr1)
                                        (distribution/poisson nr2)
                                        ntm)
            :do (let ((dl (- ($scalar newlk) ($scalar oldlk)))
@@ -82,7 +92,7 @@
           (l2 (distribution/poisson r2)))
       (loop :repeat 5000
             :for iter :from 1
-            :for loss = ($neg (loglikelihood l1 l2 tau))
+            :for loss = ($neg (loglikelihood he l1 l2 tau))
             :do (progn
                   (when (zerop (rem iter 1000)) (prn iter loss))
                   ($amgd! (append ($parameters l1) ($parameters l2))
