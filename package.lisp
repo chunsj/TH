@@ -34,9 +34,11 @@
            #:$uniform
            #:$normal
            #:$exponential
+           #:$poisson
            #:$cauchy
            #:$lognormal
            #:$geometric
+           #:$hypergeometric
            #:$bernoulli
            #:$binomial
            #:$beta
@@ -47,9 +49,11 @@
            #:random/uniform
            #:random/normal
            #:random/exponential
+           #:random/poisson
            #:random/cauchy
            #:random/lognormal
            #:random/geometric
+           #:random/hypergeometric
            #:random/bernoulli
            #:random/binomial
            #:random/beta
@@ -287,8 +291,11 @@
            #:$uniform!
            #:$normal!
            #:$exponential!
+           #:$poisson!
            #:$bernoulli!
            #:$binomial!
+           #:$geometric!
+           #:$hypergeometric!
            #:$chisq!
            #:$fdist!
            #:$norm

@@ -462,7 +462,7 @@
   (:documentation "Returns tensor x filled with normal random numbers."))
 (defgeneric $exponential! (x lam)
   (:documentation "Returns tensor x filled with exponential random numbers."))
-(defgeneric $poisson! (lam)
+(defgeneric $poisson! (x lam)
   (:documentation "Returns tensor x filled with poisson random numbers."))
 (defgeneric $bernoulli! (x p)
   (:documentation "Returns tensor x filled with bernoulli random numbers."))

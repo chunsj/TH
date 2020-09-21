@@ -87,7 +87,7 @@
   (:documentation "returns bernoulli(p) element-wise"))
 (defgeneric tensor-binomial (tensor n p &optional generaor)
   (:documentation "returns binomial(n,p) element-wise"))
-(defgeneric tensor-hypergeometric (tensor p nr nb k &optional generator)
+(defgeneric tensor-hypergeometric (tensor nr nb k &optional generator)
   (:documentation "returns hypergeometric(nr, nb, k) element-wise"))
 (defgeneric tensor-poisson (tensor mu &optional generator)
   (:documentation "returns poisson(mu) element-wise" ))

@@ -182,5 +182,3 @@
 (defmethod $score ((d distribution/poisson) (data list)))
 
 (defmethod $score ((d distribution/poisson) (data tensor)))
-
-($bernoulli)
