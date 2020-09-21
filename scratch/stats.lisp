@@ -32,7 +32,7 @@
   (if (and (> tau 0) (< tau *N*))
       (let ((tau (round tau)))
         (let ((d1 (subseq *sms-data* 0 tau))
-              (d2 (subseq *sms-data* tau)))
+              (d2 (subseq *sms-data* (1- tau))))
           ($+ ($score l1 d1) ($score l2 d2))))
       most-negative-single-float))
 
@@ -47,10 +47,11 @@
             :for iter :from 1
             :for loss = ($neg (loglikelihood l1 l2 tau))
             :do (progn
-                  (when (zerop (rem iter 100)) (prn iter loss))
+                  (when (zerop (rem iter 1000)) (prn iter loss))
                   ($amgd! (append ($parameters l1) ($parameters l2))
                           0.01)))
-      (prn (append ($parameters l1) ($parameters l2))))))
+      (prn "R1:" (round ($scalar ($ l1 :l))))
+      (prn "R2:" (round ($scalar ($ l2 :l)))))))
 
 (let ((r1 18)
       (r2 23)
@@ -62,34 +63,42 @@
       ($+ ($score l1 d1) ($score l2 d2)))))
 
 ;; MCMC
-(let ((he (distribution/exponential *alpha*))
-      (accepted '())
-      (rejected '()))
-  (let* ((r1 ($sample he))
-         (r2 ($sample he))
-         (tm (random *N*))
-         (oldlk (loglikelihood (distribution/poisson r1)
-                               (distribution/poisson r2)
-                               tm)))
-    (loop :repeat 50000
-          :for i :from 1
-          :for nr1 = (abs (random/normal r1 1))
-          :for nr2 = (abs (random/normal r2 1))
-          :for ntm = (round (abs (random/normal tm 1)))
-          :for newlk = (loglikelihood (distribution/poisson nr1)
-                                      (distribution/poisson nr2)
-                                      ntm)
-          :do (let ((dl (- ($scalar newlk) ($scalar oldlk)))
-                    (r (log (random 1D0))))
-                (if (< r dl)
-                    (progn
-                      (push (list nr1 nr2 ntm) accepted)
-                      (setf oldlk newlk
-                            r1 nr1
-                            r2 nr2
-                            tm ntm))
-                    (push (list nr1 nr2 ntm) rejected))))
-    (prn accepted)))
+(time
+ (let ((he (distribution/exponential *alpha*))
+       (N 50000)
+       (Nb 12500)
+       (accepted '())
+       (rejected '()))
+   (let* ((r1 ($sample he))
+          (r2 ($sample he))
+          (tm (random *N*))
+          (oldlk (loglikelihood (distribution/poisson r1)
+                                (distribution/poisson r2)
+                                tm)))
+     (loop :repeat (+ N Nb)
+           :for i :from 1
+           :for nr1 = (abs (random/normal r1 1))
+           :for nr2 = (abs (random/normal r2 1))
+           :for ntm = (round (abs (random/normal tm 1)))
+           :for newlk = (loglikelihood (distribution/poisson nr1)
+                                       (distribution/poisson nr2)
+                                       ntm)
+           :do (let ((dl (- ($scalar newlk) ($scalar oldlk)))
+                     (r (log (random 1D0))))
+                 (if (< r dl)
+                     (progn
+                       (when (>= i Nb) (push (list nr1 nr2 ntm) accepted))
+                       (setf oldlk newlk
+                             r1 nr1
+                             r2 nr2
+                             tm ntm))
+                     (when (>= i Nb) (push (list nr1 nr2 ntm) rejected)))))
+     (let ((na ($count accepted))
+           (nr ($count rejected)))
+       (prn "ACCEPTED:" na "/" "REJECTED:" nr)
+       (prn "R1:" (round (mean (mapcar #'$0 accepted))))
+       (prn "R2:" (round (mean (mapcar #'$1 accepted))))
+       (prn "TAU:" (round (mean (mapcar #'$2 accepted))))))))
 
 ($mean ($exponential (tensor 1000) *alpha*))
 (random/exponential *alpha*)

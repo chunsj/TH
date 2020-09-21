@@ -167,6 +167,19 @@
 (defmethod $parameter-names ((d distribution/poisson))
   (list :l))
 
+(defmethod $ ((d distribution/poisson) name &rest others-and-default)
+  (declare (ignore others-and-default))
+  (when (eq name :l)
+    (with-slots (l) d
+      l)))
+
+(defmethod (setf $) (value (d distribution/poisson) name &rest others)
+  (declare (ignore others))
+  (when (eq name :l)
+    (with-slots (l) d
+      (setf l value)))
+  value)
+
 (defmethod $sample ((d distribution/poisson) &optional (n 1))
   (when (> n 0)
     (with-slots (l) d
