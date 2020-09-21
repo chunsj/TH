@@ -17,6 +17,50 @@
 
 (defparameter *alpha* (/ 1D0 (mean *sms-data*)))
 
+(let ((he (distribution/exponential *alpha*))
+      (tau (let ((n (random *N*)))
+             (when (zerop n) (setf n 1))
+             (when (eq n *N*) (setf n (- n 1)))
+             n)))
+  (let ((l1 (distribution/poisson ($sample he)))
+        (l2 (distribution/poisson ($sample he))))
+    (let ((d1 (subseq *sms-data* 0 tau))
+          (d2 (subseq *sms-data* tau)))
+      ($add ($score l1 d1) ($score l2 d2)))))
+
+(defun loglikelihood (l1 l2 tau)
+  (let ((d1 (subseq *sms-data* 0 tau))
+        (d2 (subseq *sms-data* tau)))
+    ($+ ($score l1 d1) ($score l2 d2))))
+
+(let ((he (distribution/exponential *alpha*)))
+  (let ((r1 ($parameter ($sample he)))
+        (r2 ($parameter ($sample he)))
+        (tau 45))
+    (let ((l1 (distribution/poisson r1))
+          (l2 (distribution/poisson r2)))
+      (loop :repeat 5000
+            :for iter :from 1
+            :for loss = ($neg (loglikelihood l1 l2 tau))
+            :do (progn
+                  (when (zerop (rem iter 100)) (prn iter loss))
+                  ($amgd! (append ($parameters l1) ($parameters l2)) 0.01)))
+      (prn (append ($parameters l1) ($parameters l2))))))
+
+($log ($parameter 10))
+
+(let ((r1 18)
+      (r2 23)
+      (tau 45))
+  (let ((l1 (distribution/poisson r1))
+        (l2 (distribution/poisson r2)))
+    (let ((d1 (subseq *sms-data* 0 tau))
+          (d2 (subseq *sms-data* tau)))
+      ($+ ($score l1 d1) ($score l2 d2)))))
+
+($mean ($exponential (tensor 1000) *alpha*))
+(random/exponential *alpha*)
+
 (random/exponential 0.5)
 (random/exponential (/ 1 10))
 
