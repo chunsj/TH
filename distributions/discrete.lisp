@@ -100,11 +100,7 @@
         (cond ((eq nin 1) (random/binomial ($scalar n) ($scalar p)))
               (T ($binomial (tensor.int nin) ($scalar n) ($scalar p))))))))
 
-(defun logfac (n)
-  (when (< n 1) (setf n 1))
-  (loop :repeat n
-        :for x :from 1 :to n
-        :summing (log x)))
+(defun logfac (n) ($lgammaf ($+ 1 n)))
 
 (defun logbc (n x)
   (let ((m (if (< x (- n x)) x (- n x)))
@@ -174,11 +170,16 @@
 (defmethod $sample ((d distribution/poisson) &optional (n 1))
   (when (> n 0)
     (with-slots (l) d
-      (cond ((eq n 1) (random/poisson ($scalar n) ($scalar p)))
-            (T ($poisson (tensor.int n) ($scalar n) ($scalar p)))))))
+      (cond ((eq n 1) (random/poisson ($scalar l)))
+            (T ($poisson (tensor.int n) ($scalar l)))))))
 
-(defmethod $score ((d distribution/poisson) (data number)))
+(defmethod $score ((d distribution/poisson) (data number))
+  (with-slots (l) d
+    ($sub ($sub ($mul data ($log l)) l) (logfac data))))
 
-(defmethod $score ((d distribution/poisson) (data list)))
+(defmethod $score ((d distribution/poisson) (data list))
+  ($score d (tensor data)))
 
-(defmethod $score ((d distribution/poisson) (data tensor)))
+(defmethod $score ((d distribution/poisson) (data tensor))
+  (with-slots (l) d
+    ($sub ($sub ($mul data ($log l)) l) (logfac data))))
