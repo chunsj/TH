@@ -375,6 +375,7 @@
            #:$ftell
            #:$fclose
            #:$fname
+           #:node
            #:parameters
            #:$push
            #:$parameter

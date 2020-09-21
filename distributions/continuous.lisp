@@ -53,7 +53,7 @@
 (defmethod $score ((d distribution/beta) (data list))
   ($score d (tensor data)))
 
-(defmethod $score ((d distribution/beta) (data th::tensor))
+(defmethod $score ((d distribution/beta) (data tensor))
   (let ((nz ($sum ($le data 0)))
         (no ($sum ($ge data 1))))
     (if (and (zerop nz) (zerop no))
@@ -110,14 +110,14 @@
 (defmethod $score ((d distribution/exponential) (data list))
   ($score d (tensor data)))
 
-(defmethod $score ((d distribution/exponential) (data th::tensor))
+(defmethod $score ((d distribution/exponential) (data tensor))
   (let ((nn ($sum ($lt data 0))))
     (if (zerop nn)
         (with-slots (l) d
           ($sum ($sub ($log l) ($mul l data))))
         most-negative-single-float)))
 
-(defmethod $score ((d distribution/exponential) (data th::node))
+(defmethod $score ((d distribution/exponential) (data node))
   (let ((nn ($sum ($lt (if ($parameterp data) ($data data) data) 0))))
     (if (zerop nn)
         (with-slots (l) d
@@ -180,7 +180,7 @@
           ($* n ($- ($log ($- b a))))
           most-negative-single-float))))
 
-(defmethod $score ((d distribution/uniform) (data th::tensor))
+(defmethod $score ((d distribution/uniform) (data tensor))
   (with-slots (a b) d
     (let ((n ($count data))
           (nx ($gt data ($scalar b)))
@@ -248,7 +248,7 @@
                             ($div ($square ($sub (tensor data) mu))
                                   ($square sigma))))))))
 
-(defmethod $score ((d distribution/gaussian) (data th::tensor))
+(defmethod $score ((d distribution/gaussian) (data tensor))
   (with-slots (mu sigma) d
     ($sum ($mul -1/2
                 ($add ($log (* 2 pi))

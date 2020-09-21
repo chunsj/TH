@@ -51,7 +51,7 @@
       (loop :for d :in data :do (when (> d 0) (incf nt)))
       ($add ($mul nt ($log p)) ($mul (- nd nt) ($log ($sub 1 p)))))))
 
-(defmethod $score ((d distribution/bernoulli) (data th::tensor))
+(defmethod $score ((d distribution/bernoulli) (data tensor))
   (with-slots (p) d
     (let ((nd ($count data))
           (nt ($count ($nonzero data))))
@@ -135,7 +135,7 @@
                 most-negative-single-float)))
         most-negative-single-float)))
 
-(defmethod $score ((d distribution/binomial) (data th::tensor))
+(defmethod $score ((d distribution/binomial) (data tensor))
   (let ((cnt ($count data))
         (npos ($sum ($ge data 0))))
     (if (eq cnt npos)
