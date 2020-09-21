@@ -55,9 +55,9 @@
                                 tm)))
      (loop :repeat (+ N Nb)
            :for i :from 1
-           :for nr1 = (abs (random/normal r1 1))
-           :for nr2 = (abs (random/normal r2 1))
-           :for ntm = (round (abs (random/normal tm 1)))
+           :for nr1 = (abs (random/normal r1 0.1))
+           :for nr2 = (abs (random/normal r2 0.1))
+           :for ntm = (round (abs (random/normal tm 2)))
            :for newlk = (loglikelihood he
                                        (distribution/poisson nr1)
                                        (distribution/poisson nr2)
