@@ -117,6 +117,13 @@
           ($sum ($sub ($log l) ($mul l data))))
         most-negative-single-float)))
 
+(defmethod $score ((d distribution/exponential) (data th::node))
+  (let ((nn ($sum ($lt (if ($parameterp data) ($data data) data) 0))))
+    (if (zerop nn)
+        (with-slots (l) d
+          ($sum ($sub ($log l) ($mul l data))))
+        most-negative-single-float)))
+
 (defclass distribution/uniform (distribution)
   ((a :initform 0.0)
    (b :initform 1.0)))

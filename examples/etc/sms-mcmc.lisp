@@ -37,11 +37,7 @@
       (he (distribution/exponential *alpha*)))
   (let ((l1 (distribution/poisson r1))
         (l2 (distribution/poisson r2)))
-    (let ((d1 (subseq *sms-data* 0 tau))
-          (d2 (subseq *sms-data* tau)))
-      ($+ ($score l1 d1) ($score l2 d2)
-          ($score he ($ l1 :l))
-          ($score he ($ l2 :l))))))
+    (prn (loglikelihood he l1 l2 tau))))
 
 ;; MCMC
 (time
@@ -76,12 +72,19 @@
                              r2 nr2
                              tm ntm))
                      (when (>= i Nb) (push (list nr1 nr2 ntm) rejected)))))
-     (let ((na ($count accepted))
-           (nr ($count rejected)))
+     (let* ((na ($count accepted))
+            (nr ($count rejected))
+            (fr1 (round (mean (mapcar #'$0 accepted))))
+            (fr2 (round (mean (mapcar #'$1 accepted))))
+            (ftau (round (mean (mapcar #'$2 accepted)))))
        (prn "ACCEPTED:" na "/" "REJECTED:" nr)
-       (prn "R1:" (round (mean (mapcar #'$0 accepted))))
-       (prn "R2:" (round (mean (mapcar #'$1 accepted))))
-       (prn "TAU:" (round (mean (mapcar #'$2 accepted))))))))
+       (prn "R1:" fr1)
+       (prn "R2:" fr2)
+       (prn "TAU:" ftau)
+       (prn "LL:" (loglikelihood he
+                                 (distribution/poisson fr1)
+                                 (distribution/poisson fr2)
+                                 ftau))))))
 
 ;; XXX need discrete random to find tau
 (let ((he (distribution/exponential *alpha*)))
