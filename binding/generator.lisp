@@ -54,6 +54,16 @@
                       (coerce n 'integer)
                       (coerce p 'double-float)))
 
+(defmethod $hypergeometric ((generator generator) nr nb k)
+  (th-random-hypergeometric ($handle generator)
+                            (coerce (round nr) 'integer)
+                            (coerce (round nb) 'integer)
+                            (coerce (round k) 'integer)))
+
+(defmethod $poisson ((generator generator) mu)
+  (th-random-poisson ($handle generator)
+                     (coerce mu 'double-float)))
+
 (defmethod $beta ((generator generator) a b)
   (th-random-beta ($handle generator) (coerce a 'double-float) (coerce b 'double-float)))
 
@@ -73,6 +83,8 @@
 (defun random/cauchy (m s) ($cauchy *generator* m s))
 (defun random/lognormal (m s) ($lognormal *generator* m s))
 (defun random/geometric (p) ($geometric *generator* p))
+(defun random/hypergeometric (nr nb k) ($hypergeometric *generator* nr nb k))
+(defun random/poisson (mu) ($poisson *generator* mu))
 (defun random/bernoulli (p) ($bernoulli *generator* p))
 (defun random/binomial (n p) ($binomial *generator* n p))
 (defun random/beta (a b) ($beta *generator* a b))

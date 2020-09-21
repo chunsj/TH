@@ -63,6 +63,60 @@
               ($neg ($lbetaf a b))))
         most-negative-single-float)))
 
+(defclass distribution/exponential (distribution)
+  ((l :initform 1.0)))
+
+(defun distribution/exponential (&optional (l 1D0))
+  (let ((dist (make-instance 'distribution/exponential))
+        (lin l))
+    (with-slots (l) dist
+      (setf l lin))
+    dist))
+
+(defmethod $parameters ((d distribution/exponential))
+  (with-slots (l) d
+    (if ($parameterp l)
+        (list l)
+        nil)))
+
+(defmethod $parameter-names ((d distribution/exponential))
+  (list :l))
+
+(defmethod $ ((d distribution/exponential) name &rest others-and-default)
+  (declare (ignore others-and-default))
+  (with-slots (l) d
+    (when (eq name :l)
+      l)))
+
+(defmethod (setf $) (value (d distribution/exponential) name &rest others)
+  (declare (ignore others))
+  (with-slots (l) d
+    (when (eq name :l)
+      (setf l value)))
+  value)
+
+(defmethod $sample ((d distribution/exponential) &optional (n 1))
+  (when (> n 0)
+    (with-slots (l) d
+      (cond ((eq n 1) (random/exponential ($scalar l)))
+            (T ($exponential (tensor n) ($scalar l)))))))
+
+(defmethod $score ((d distribution/exponential) (data number))
+  (if (> data 0)
+      (with-slots (l) d
+        ($sub ($log l) ($mul l data)))
+      most-negative-single-float))
+
+(defmethod $score ((d distribution/exponential) (data list))
+  ($score d (tensor data)))
+
+(defmethod $score ((d distribution/exponential) (data th::tensor))
+  (let ((nn ($sum ($lt data 0))))
+    (if (zerop nn)
+        (with-slots (l) d
+          ($sum ($sub ($log l) ($mul l data))))
+        most-negative-single-float)))
+
 (defclass distribution/uniform (distribution)
   ((a :initform 0.0)
    (b :initform 1.0)))

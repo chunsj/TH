@@ -7,9 +7,12 @@
            #:$parameter-names
            #:distribution/bernoulli
            #:distribution/binomial
-           #:distribution/uniform
+           #:distribution/poisson
+           #:distribution/beta
+           #:distribution/exponential
            #:distribution/gaussian
-           #:distribution/normal))
+           #:distribution/normal
+           #:distribution/uniform))
 
 (in-package :th.distributions)
 

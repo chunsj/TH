@@ -94,10 +94,11 @@
   value)
 
 (defmethod $sample ((d distribution/binomial) &optional (n 1))
-  (when (> n 0)
-    (with-slots (n p) d
-      (cond ((eq n 1) (random/binomial ($scalar n) ($scalar p)))
-            (T ($binomial (tensor.int n) ($scalar n) ($scalar p)))))))
+  (let ((nin n))
+    (when (> nin 0)
+      (with-slots (n p) d
+        (cond ((eq nin 1) (random/binomial ($scalar n) ($scalar p)))
+              (T ($binomial (tensor.int nin) ($scalar n) ($scalar p))))))))
 
 (defun logfac (n)
   (when (< n 1) (setf n 1))
@@ -151,3 +152,35 @@
                   ($sum ($+ cs ($mul data lp) ($mul ($sub ($scalar n) data) lmp))))
                 most-negative-single-float)))
         most-negative-single-float)))
+
+(defclass distribution/poisson (distribution)
+  ((l :initform 1.0)))
+
+(defun distribution/poisson (&optional (l 1D0))
+  (let ((dist (make-instance 'distribution/poisson))
+        (lin l))
+    (with-slots (l) dist
+      (setf l lin))
+    dist))
+
+(defmethod $parameters ((d distribution/poisson))
+  (with-slots (l) d
+    (when ($parameterp l)
+      (list l))))
+
+(defmethod $parameter-names ((d distribution/poisson))
+  (list :l))
+
+(defmethod $sample ((d distribution/poisson) &optional (n 1))
+  (when (> n 0)
+    (with-slots (l) d
+      (cond ((eq n 1) (random/poisson ($scalar n) ($scalar p)))
+            (T ($poisson (tensor.int n) ($scalar n) ($scalar p)))))))
+
+(defmethod $score ((d distribution/poisson) (data number)))
+
+(defmethod $score ((d distribution/poisson) (data list)))
+
+(defmethod $score ((d distribution/poisson) (data tensor)))
+
+($bernoulli)

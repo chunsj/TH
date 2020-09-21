@@ -112,3 +112,13 @@
   (generator th-generator-ptr)
   (n :int)
   (p :double))
+
+(cffi:defcfun ("THRanom_hypergeomtric" th-random-hypergeometric) :int
+  (generator th-generator-ptr)
+  (nr :int)
+  (nb :int)
+  (k :int))
+
+(cffi:defcfun ("THRandom_poisson" th-random-poisson) :int
+  (generator th-generator-ptr)
+  (mu :double))

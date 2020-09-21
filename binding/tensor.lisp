@@ -1857,9 +1857,36 @@
     (tensor-binomial r n p)
     r))
 
+(defmethod $geometric! ((x tensor) p)
+  (tensor-geometric x p)
+  x)
+
+(defmethod $geometric ((x tensor) p)
+  (let ((r ($resize! ($empty x) ($size x))))
+    (tensor-geometric r p)
+    r))
+
+(defmethod $hypergeometric! ((x tensor) nr nb k)
+  (tensor-hypergeometric x nr nb k)
+  x)
+
+(defmethod $hypergeometric ((x tensor) nr nb k)
+  (let ((r ($resize! ($empty x) ($size x))))
+    (tensor-hypergeometric r nr nb k)
+    r))
+
 (defmethod $beta! ((x tensor) a b)
   (tensor-rbeta x a b)
   x)
+
+(defmethod $poisson! ((x tensor) mu)
+  (tensor-poisson x mu)
+  x)
+
+(defmethod $poisson ((x tensor) mu)
+  (let ((r ($resize! ($empty x) ($size x))))
+    (tensor-poisson r mu)
+    r))
 
 (defmethod $beta ((x tensor) a b)
   (let ((r ($resize! ($empty x) ($size x))))
