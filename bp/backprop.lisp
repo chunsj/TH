@@ -2,7 +2,8 @@
 
 (in-package :th)
 
-(defgeneric $parameter (object) (:documentation "Returns a wrapped, differentiable  object."))
+(defgeneric $parameter (object) (:documentation "Returns a wrapped, differentiable object."))
+(defgeneric $parameters (object) (:documentation "Returns parameters."))
 (defgeneric $parameterp (object) (:documentation "Returns whether object is a parameter or not."))
 (defgeneric $gradient (node) (:documentation "Returns gradient value."))
 (defgeneric $attr (node key &optional default) (:documentation "An attribute for key in node."))

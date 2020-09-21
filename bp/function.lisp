@@ -197,7 +197,7 @@
     ($scalar ($lbetaf xt yt))))
 
 (defmethod $lbetaf ((x node) (y node))
-  (node ($beta ($data x) ($data y))
+  (node ($lbetaf ($data x) ($data y))
         :name :lbetaf
         :link (link
                 (to x ($mul! ($sub ($polygamma ($data x) 0)
@@ -205,6 +205,22 @@
                              gv))
                 (to y ($mul! ($sub ($polygamma ($data y) 0)
                                    ($polygamma ($add ($data x) ($data y)) 0))
+                             gv)))))
+
+(defmethod $lbetaf ((x node) (y number))
+  (node ($lbetaf ($data x) y)
+        :name :lbetaf
+        :link (link
+                (to x ($mul! ($sub ($polygamma ($data x) 0)
+                                   ($polygamma ($add ($data x) y) 0))
+                             gv)))))
+
+(defmethod $lbetaf ((x number) (y node))
+  (node ($lbetaf x ($data y))
+        :name :lbetaf
+        :link (link
+                (to y ($mul! ($sub ($polygamma ($data y) 0)
+                                   ($polygamma ($add x ($data y)) 0))
                              gv)))))
 
 (defmethod $erf ((x number))

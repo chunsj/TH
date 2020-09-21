@@ -1,0 +1,153 @@
+(in-package :th.distributions)
+
+(defclass distribution/bernoulli (distribution)
+  ((p :initform 0.5)))
+
+(defun distribution/bernoulli (&optional (p 0.5D0))
+  (let ((dist (make-instance 'distribution/bernoulli))
+        (pin p))
+    (with-slots (p) dist
+      (setf p pin))
+    dist))
+
+(defmethod $parameters ((d distribution/bernoulli))
+  (with-slots (p) d
+    (if ($parameterp p)
+        (list p)
+        '())))
+
+(defmethod $parameter-names ((d distribution/bernoulli))
+  (list :p))
+
+(defmethod $ ((d distribution/bernoulli) name &rest others-and-default)
+  (declare (ignore others-and-default))
+  (when (eq name :p)
+    (with-slots (p) d
+      p)))
+
+(defmethod (setf $) (value (d distribution/bernoulli) name &rest others)
+  (declare (ignore others))
+  (when (eq name :p)
+    (with-slots (p) d
+      (setf p value)
+      value)))
+
+(defmethod $sample ((d distribution/bernoulli) &optional (n 1))
+  (when (> n 0)
+    (with-slots (p) d
+      (cond ((eq n 1) (random/bernoulli (pv p)))
+            (T ($bernoulli (tensor.byte n) (pv p)))))))
+
+(defmethod $score ((d distribution/bernoulli) (data number))
+  (with-slots (p) d
+    (if (> data 0)
+        ($log p)
+        ($log ($sub 1 p)))))
+
+(defmethod $score ((d distribution/bernoulli) (data list))
+  (with-slots (p) d
+    (let ((nd ($count data))
+          (nt 0))
+      (loop :for d :in data :do (when (> d 0) (incf nt)))
+      ($add ($mul nt ($log p)) ($mul (- nd nt) ($log ($sub 1 p)))))))
+
+(defmethod $score ((d distribution/bernoulli) (data th::tensor))
+  (with-slots (p) d
+    (let ((nd ($count data))
+          (nt ($count ($nonzero data))))
+      ($add ($mul nt ($log p)) ($mul (- nd nt) ($log ($sub 1 p)))))))
+
+(defclass distribution/binomial (distribution)
+  ((n :initform 1)
+   (p :initform 0.5)))
+
+(defun distribution/binomial (&optional (n 1) (p 0.5D0))
+  (let ((dist (make-instance 'distribution/binomial))
+        (nin n)
+        (pin p))
+    (with-slots (n p) dist
+      (setf n nin
+            p pin))
+    dist))
+
+(defmethod $parameters ((d distribution/binomial))
+  (with-slots (n p) d
+    (let ((ps '()))
+      (when ($parameterp p) (push p ps))
+      (when ($parameterp n) (push n ps))
+      ps)))
+
+(defmethod $parameter-names ((d distribution/binomial))
+  (list :n :p))
+
+(defmethod $ ((d distribution/binomial) name &rest others-and-default)
+  (declare (ignore others-and-default))
+  (with-slots (n p) d
+    (cond ((eq name :n) n)
+          ((eq name :p) p))))
+
+(defmethod (setf $) (value (d distribution/binomial) name &rest others)
+  (declare (ignore others))
+  (with-slots (n p) d
+    (cond ((eq name :n) (setf n value))
+          ((eq name :p) (Setf p value))))
+  value)
+
+(defmethod $sample ((d distribution/binomial) &optional (n 1))
+  (when (> n 0)
+    (with-slots (n p) d
+      (cond ((eq n 1) (random/binomial ($scalar n) ($scalar p)))
+            (T ($binomial (tensor.int n) ($scalar n) ($scalar p)))))))
+
+(defun logfac (n)
+  (when (< n 1) (setf n 1))
+  (loop :repeat n
+        :for x :from 1 :to n
+        :summing (log x)))
+
+(defun logbc (n x)
+  (let ((m (if (< x (- n x)) x (- n x)))
+        (o (if (< x (- n x)) (- n x) x))
+        (lp 0))
+    (loop :for i :from (+ o 1) :to n
+          :do (incf lp (log i)))
+    (- lp (logfac (coerce (round m) 'integer)))))
+
+(defmethod $score ((d distribution/binomial) (data number))
+  (if (>= data 0)
+      (with-slots (n p) d
+        (if (and (>= data 0) (<= data ($scalar n)))
+            ($+ (logbc ($scalar n) data)
+                (if (zerop data) 0 ($mul data ($log p)))
+                (if (zerop (- ($scalar n) data)) 0 ($mul (- ($scalar n) data) ($log ($sub 1 p)))))
+            most-negative-single-float))
+      most-negative-single-float))
+
+(defmethod $score ((d distribution/binomial) (data list))
+  (let ((cnt ($count data))
+        (npos ($count (filter (lambda (v) (>= v 0)) data))))
+    (if (eq cnt npos)
+        (with-slots (n p) d
+          (let ((nlim ($count (filter (lambda (v) (<= v ($scalar n))) data))))
+            (if (eq nlim cnt)
+                (let ((dt (tensor data))
+                      (lp ($log p))
+                      (lmp ($log ($sub 1 p)))
+                      (cs (tensor (mapcar (lambda (v) (logbc ($scalar n) v)) data))))
+                  ($sum ($+ cs ($mul dt lp) ($mul ($sub ($scalar n) dt) lmp))))
+                most-negative-single-float)))
+        most-negative-single-float)))
+
+(defmethod $score ((d distribution/binomial) (data th::tensor))
+  (let ((cnt ($count data))
+        (npos ($sum ($ge data 0))))
+    (if (eq cnt npos)
+        (with-slots (n p) d
+          (let ((nlim ($sum ($le data ($scalar n)))))
+            (if (eq nlim cnt)
+                (let ((lp ($log p))
+                      (lmp ($log ($sub 1 p)))
+                      (cs (tensor (mapcar (lambda (v) (logbc ($scalar n) v)) ($list data)))))
+                  ($sum ($+ cs ($mul data lp) ($mul ($sub ($scalar n) data) lmp))))
+                most-negative-single-float)))
+        most-negative-single-float)))

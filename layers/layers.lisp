@@ -8,7 +8,6 @@
            #:$execute
            #:$evaluate
            #:$train-parameters
-           #:$parameters
            #:$save-weights
            #:$load-weights
            #:sequential-layer
