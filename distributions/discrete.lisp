@@ -149,6 +149,66 @@
                 most-negative-single-float)))
         most-negative-single-float)))
 
+(defclass distribution/discrete (distribution)
+  ((ps :initform (tensor '(0.5 0.5)))))
+
+(defun distribution/discrete (&optional (ps (tensor '(0.5 0.5))))
+  (let ((dist (make-instance 'distribution/discrete))
+        (psin ps))
+    (with-slots (ps) dist
+      (setf ps psin))
+    dist))
+
+(defmethod $parameters ((d distribution/discrete))
+  (with-slots (ps) d
+    (when ($parameterp ps)
+      (list ps))))
+
+(defmethod $parameter-names ((d distribution/discrete))
+  (list :ps))
+
+(defmethod $ ((d distribution/discrete) name &rest others-and-default)
+  (declare (ignore others-and-default))
+  (when (eq name :ps)
+    (with-slots (ps) d
+      ps)))
+
+(defmethod (setf $) (value (d distribution/discrete) name &rest others)
+  (declare (ignore others))
+  (when (eq name :ps)
+    (with-slots (ps) d
+      (setf ps value)))
+  value)
+
+(defun sample-discrete (ps)
+  (let ((sum ($scalar ($sum ps)))
+        (rr (random 1D0))
+        (n ($count ps))
+        (accum 0))
+    (loop :for i :from 0 :below n
+          :for paccum = (let ((p ($ ps i)))
+                          (incf accum p)
+                          accum)
+          :when (< (* rr sum) paccum)
+            :return i)))
+
+(defmethod $sample ((d distribution/discrete) &optional (n 1))
+  (when (> n 0)
+    (with-slots (ps) d
+      (cond ((eq n 1) (sample-discrete ps))
+            (T (tensor.int (loop :repeat n :collect (sample-discrete ps))))))))
+
+(defmethod $score ((d distribution/discrete) (data number))
+  (with-slots (ps) d
+    ($log ($div ($ ps data) ($sum ps)))))
+
+(defmethod $score ((d distribution/discrete) (data list))
+  ($score d (tensor.long data)))
+
+(defmethod $score ((d distribution/discrete) (data tensor))
+  (with-slots (ps) d
+    ($sum ($log ($div ($gather ps 0 (tensor.long data)) ($sum ps))))))
+
 (defclass distribution/poisson (distribution)
   ((l :initform 1.0)))
 

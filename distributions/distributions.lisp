@@ -7,6 +7,7 @@
            #:$parameter-names
            #:distribution/bernoulli
            #:distribution/binomial
+           #:distribution/discrete
            #:distribution/poisson
            #:distribution/beta
            #:distribution/exponential
