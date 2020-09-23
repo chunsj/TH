@@ -375,6 +375,9 @@
            #:$ftell
            #:$fclose
            #:$fname
+           #:$percentile
+           #:$cv
+           #:$se
            #:node
            #:parameters
            #:$push

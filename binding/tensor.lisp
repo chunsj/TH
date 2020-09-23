@@ -2229,3 +2229,31 @@
          (instance (make-instance cls)))
     (allocate-tensor instance ($size tensor))
     instance))
+
+(defmethod $mean ((xs list) &optional (dimension -1))
+  ($mean (tensor xs) dimension))
+
+(defmethod $sd ((xs list) &optional (dimension -1) biased)
+  ($sd (tensor xs) dimension biased))
+
+(defmethod $median ((xs list) &optional (dimension -1))
+  ($median (tensor xs) dimension))
+
+(defmethod $mode ((xs list) &optional (dimension 0))
+  ($mode (tensor xs) dimension))
+
+(defmethod $percentile ((x tensor) q)
+  (let* ((n ($count x))
+         (k (1+ (round (* (- n 1) q 0.01D0)))))
+    (car ($kth ($view x n) k 0))))
+
+(defmethod $percentile ((xs list) q)
+  ($percentile (tensor xs) q))
+
+(defmethod $cv ((x tensor))
+  (* 100D0 (/ ($sd x) ($mean x))))
+
+(defmethod $cv ((xs list)) ($cv (tensor xs)))
+
+(defmethod $se ((x tensor)) (/ ($sd x) (sqrt ($count x))))
+(defmethod $se ((xs list)) ($se (tensor xs)))

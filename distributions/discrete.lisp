@@ -149,6 +149,19 @@
                 most-negative-single-float)))
         most-negative-single-float)))
 
+(defmethod $clt ((d distribution/binomial) (k number))
+  (let ((s 0D0)
+        (n ($scalar ($ d :n))))
+    (dotimes (i (round (min k (1+ n))) s)
+      (incf s ($exp ($score d i))))
+    s))
+
+(defmethod $clt ((d distribution/binomial) (ks list))
+  (mapcar (lambda (k) ($clt d k)) ks))
+
+(defmethod $clt ((d distribution/binomial) (ks tensor))
+  (tensor (mapcar (lambda (k) ($clt d k)) ($list ks))))
+
 (defclass distribution/discrete (distribution)
   ((ps :initform (tensor '(0.5 0.5)))))
 
@@ -256,3 +269,17 @@
 (defmethod $score ((d distribution/poisson) (data tensor))
   (with-slots (l) d
     ($sum ($sub ($sub ($mul data ($log l)) l) (logfac data)))))
+
+(defmethod $clt ((d distribution/poisson) (k number))
+  (if (< k 170)
+      (let ((sum 0D0))
+        (dotimes (x k sum)
+          (incf sum ($exp ($score d k)))))
+      (let ((mu ($scalar ($ d :l))))
+        (- 1D0 (gamma-incomplete (coerce k 'double-float) (coerce mu 'double-float))))))
+
+(defmethod $clt ((d distribution/poisson) (ks list))
+  (mapcar (lambda (k) ($clt d k)) ks))
+
+(defmethod $clt ((d distribution/poisson) (ks tensor))
+  (tensor (mapcar (lambda (k) ($clt d k)) ($list ks))))

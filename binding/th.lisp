@@ -601,3 +601,7 @@
 (defgeneric $fclose (file) (:documentation "Closes file."))
 
 (defgeneric $fname (file) (:documentation "Returns file name."))
+
+(defgeneric $percentile (x q) (:documentation "returns qth percentile."))
+(defgeneric $cv (x) (:documentation "returns coefficient of variation."))
+(defgeneric $se (x) (:documentation "returns standard error of the mean."))
