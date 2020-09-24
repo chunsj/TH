@@ -17,7 +17,7 @@
 (prn ($sum *observations-b*))
 (prn ($mean (tensor *observations-b*)))
 
-(defun likelihood (dist data) ($score dist data))
+(defun likelihood (dist data) ($ll dist data))
 
 (defun mcmc (p0 data)
   (let ((nll (likelihood (distribution/bernoulli p0) data))
