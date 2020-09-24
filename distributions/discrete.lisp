@@ -155,52 +155,6 @@
                 most-negative-single-float)))
         most-negative-single-float)))
 
-(defun binomial-probability (n k p)
-  "P(X=k) for X a binomial random variable with parameters n &
-p. Binomial expectations for seeing k events in N trials, each having
-probability p.  Use the Poisson approximation if N>100 and P<0.01."
-  (if (and (> n 100) (< p 0.01))
-      (let ((d (distribution/poisson (* n p))))
-        ($exp ($ll d k)))
-      (let ((p (coerce p 'double-float)))
-        (* (choose n k)
-           (expt p k)
-           (expt (- 1 p) (- n k))))))
-
-(defun binomial-cumulative-probability (n k p)
-  "P(X<k) for X a binomial random variable with parameters n &
-p. Bionomial expecations for fewer than k events in N trials, each
-having probability p."
-  (let ((sum-up-to-k-1 0d0))
-    (dotimes (i k sum-up-to-k-1)
-      (incf sum-up-to-k-1 (binomial-probability n i p)))))
-
-(defmethod $cdf ((d distribution/binomial) (k number))
-  (with-slots (n p) d
-    (binomial-cumulative-probability ($scalar n) k ($scalar p))))
-
-(defmethod $cdf ((d distribution/binomial) (ks list))
-  (mapcar (lambda (k) ($cdf d k)) ks))
-
-(defmethod $cdf ((d distribution/binomial) (ks tensor))
-  (tensor (mapcar (lambda (k) ($cdf d k)) ($list ks))))
-
-(defun ci/binomial (alpha n p &optional exactp)
-  (if (and (> (* n p (- 1 p)) 10) (not exactp))
-      (let ((difference (* (z (- 1 (/ alpha 2)))
-                           (sqrt (/ (* p (- 1 p)) n)))))
-        (values (- p difference) (+ p difference)))
-      (values (find-critical-value
-               (lambda (p1)
-                 (let ((d (distribution/binomial n p1)))
-                   ($cdf d (floor (* p n)))))
-               (- 1 (/ alpha 2)))
-              (find-critical-value
-               (lambda (p2)
-                 (let ((d (distribution/binomial n p2)))
-                   ($cdf d (1+ (floor (* p n))))))
-               (/ alpha 2)))))
-
 (defclass distribution/discrete (distribution)
   ((ps :initform (tensor '(0.5 0.5)))))
 
@@ -308,30 +262,3 @@ having probability p."
 (defmethod $ll ((d distribution/poisson) (data tensor))
   (with-slots (l) d
     ($sum ($sub ($sub ($mul data ($log l)) l) (logfac data)))))
-
-(defmethod $cdf ((d distribution/poisson) (k number))
-  (if (< k 170)
-      (let ((sum 0D0))
-        (dotimes (x k sum)
-          (incf sum ($exp ($ll d k)))))
-      (let ((mu ($scalar ($ d :l))))
-        (- 1D0 (gamma-incomplete (coerce k 'double-float) (coerce mu 'double-float))))))
-
-(defmethod $cdf ((d distribution/poisson) (ks list))
-  (mapcar (lambda (k) ($cdf d k)) ks))
-
-(defmethod $cdf ((d distribution/poisson) (ks tensor))
-  (tensor (mapcar (lambda (k) ($cdf d k)) ($list ks))))
-
-(defun ci/poisson (alpha k)
-  (values
-   (find-critical-value
-    (lambda (mu)
-      (let ((d (distribution/poisson mu)))
-        ($cdf d (1- k))))
-    (- 1 (/ alpha 2)))
-   (find-critical-value
-    (lambda (mu)
-      (let ((d (distribution/poisson mu)))
-        ($cdf d k)))
-    (/ alpha 2))))

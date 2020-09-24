@@ -256,19 +256,6 @@
                             ($div ($square ($sub data mu))
                                   ($square sigma))))))))
 
-(defun zscore (x m s) (/ (- x m) s))
-(defun mkzscore (d x) (zscore x ($scalar ($ d :mu)) ($scalar ($ d :sigma))))
-
-(defmethod $cdf ((d distribution/gaussian) (x number))
-  (let ((z (mkzscore d x)))
-    (* 0.5D0 (+ 1D0 ($erf (/ z (sqrt 2D0)))))))
-
-(defmethod $cdf ((d distribution/gaussian) (xs list))
-  (mapcar (lambda (x) ($cdf d x)) xs))
-
-(defmethod $cdf ((d distribution/gaussian) (xs tensor))
-  (tensor (mapcar (lambda (x) ($cdf d x)) ($list xs))))
-
 (defclass distribution/gamma (distribution)
   ((k :initform 1D0)
    (s :initform 1D0)))
@@ -312,16 +299,6 @@
     ($sum ($add ($neg ($add ($log ($gammaf k)) ($mul k ($log s))))
                 ($sub ($mul ($sub k 1) ($log data))
                       ($div data s))))))
-
-(defmethod $cdf ((d distribution/gamma) (x number))
-  (with-slots (k s) d
-    (* (/ 1D0 ($gammaf ($scalar k))) (gamma-incomplete ($scalar k) (/ x ($scalar s))))))
-
-(defmethod $cdf ((d distribution/gamma) (xs list))
-  (mapcar (lambda (x) ($cdf d x)) xs))
-
-(defmethod $cdf ((d distribution/gamma) (xs tensor))
-  (tensor (mapcar (lambda (x) ($cdf d x)) ($list xs))))
 
 (defclass distribution/t (distribution)
   ((df :initform 5)
@@ -395,15 +372,6 @@
            ($mul ($mul 0.5 ($add df 1))
                  ($log ($add 1 ($div ($square ($div ($sub data l) s)) df))))))))
 
-(defmethod $cdf ((d distribution/t) (x number))
-  (error "not yet implemented"))
-
-(defmethod $cdf ((d distribution/t) (xs list))
-  (error "not yet implemented"))
-
-(defmethod $cdf ((d distribution/t) (xs tensor))
-  (error "not yet implemented"))
-
 (defclass distribution/chisq (distribution)
   ((k :initform 1D0)))
 
@@ -459,14 +427,3 @@
       ($sum ($sub ($mul ($sub k2 1) ($log data))
                   ($add ($add x2 ($mul k2 (log 2)))
                         ($lgammaf k2)))))))
-
-(defmethod $cdf ((d distribution/chisq) (x number))
-  (with-slots (k) d
-    (* (/ ($gammaf (/ ($scalar k) 2))) (gamma-incomplete (/ ($scalar k) 2D0)
-                                                         (/ x 2D0)))))
-
-(defmethod $cdf ((d distribution/chisq) (xs list))
-  (mapcar (lambda (x) ($cdf d x)) xs))
-
-(defmethod $cdf ((d distribution/chisq) (xs tensor))
-  (tensor (mapcar (lambda (x) ($cdf d x)) ($list xs))))
