@@ -3,11 +3,12 @@
         #:mu
         #:th)
   (:export #:$sample
-           #:$score
-           #:$clt
+           #:$ll
+           #:$cdf
            #:$parameter-names
            #:distribution/bernoulli
            #:distribution/binomial
+           #:ci/binomial
            #:distribution/discrete
            #:distribution/poisson
            #:distribution/beta
@@ -20,18 +21,18 @@
 
 (in-package :th.distributions)
 
-(defgeneric $sample (distribution &optional n))
-(defgeneric $score (distribution data))
-(defgeneric $clt (distribution v))
-(defgeneric $parameter-names (distribution))
+(defgeneric $sample (distribution &optional n) (:documentation "returns random sample."))
+(defgeneric $ll (distribution data) (:documentation "returns log likelihood."))
+(defgeneric $cdf (distribution v) (:documentation "return cummulative density of x < v."))
+(defgeneric $parameter-names (distribution) (:documentation "returns a list of parameter names."))
 
 (defclass distribution () ())
 
 (defmethod $sample ((d distribution) &optional (n 1)) (declare (ignore n)) nil)
-(defmethod $score ((d distribution) data)
+(defmethod $ll ((d distribution) data)
   (declare (ignore data))
   most-negative-single-float)
-(defmethod $clt ((d distribution) v)
+(defmethod $cdf ((d distribution) v)
   (declare (ignore v))
   0)
 (defmethod $parameter-names ((d distribution)) '())
@@ -168,3 +169,108 @@ Instead, it just returns 0.0d0"
           (/ (* bt (betacf a b x)) a)
           ;; use continued fraction after making the symmetry transformation
           (- 1d0 (/ (* bt (betacf b a (- 1d0 x))) b))))))
+
+(defun t-significance (t-statistic dof &key (tails :both))
+  "Lookup table in Rosner; this is adopted from CLASP/Numeric
+Recipes (CLASP 1.4.3), http://eksl-www.cs.umass.edu/clasp.html"
+  (setf dof (float dof t-statistic))
+  (let ((a (beta-incomplete (* 0.5 dof) 0.5 (/ dof (+ dof ($square t-statistic))))))
+    ;; A is 2*Integral from (abs t-statistic) to Infinity of t-distribution
+    (ecase tails
+      (:both a)
+      (:positive (if (plusp t-statistic)
+                     (* .5 a)
+                     (- 1.0 (* .5 a))))
+      (:negative (if (plusp t-statistic)
+                     (- 1.0 (* .5 a))
+                     (* .5 a))))))
+
+(defun f-significance
+    (f-statistic numerator-dof denominator-dof &optional one-tailed-p)
+  "Adopted from CLASP, but changed to handle F < 1 correctly in the
+one-tailed case.  The `f-statistic' must be a positive number.  The
+degrees of freedom arguments must be positive integers.  The
+`one-tailed-p' argument is treated as a boolean.
+
+This implementation follows Numerical Recipes in C, section 6.3 and
+the `ftest' function in section 13.4."
+  (setq f-statistic (float f-statistic))
+  (let ((tail-area (beta-incomplete
+                    (* 0.5d0 denominator-dof)
+                    (* 0.5d0 numerator-dof)
+                    (float (/ denominator-dof
+                              (+ denominator-dof
+                                 (* numerator-dof f-statistic))) 1d0))))
+    (if one-tailed-p
+        (if (< f-statistic 1) (- 1 tail-area) tail-area)
+        (progn (setf tail-area (* 2.0 tail-area))
+               (if (> tail-area 1.0)
+                   (- 2.0 tail-area)
+                   tail-area)))))
+
+(defun find-critical-value
+    (p-function p-value &optional (x-tolerance .00001) (y-tolerance .00001))
+  "Adopted from CLASP 1.4.3, http://eksl-www.cs.umass.edu/clasp.html"
+  (let* ((x-low 0d0)
+         (fx-low 1d0)
+         (x-high 1d0)
+         (fx-high (coerce (funcall p-function x-high) 'double-float)))
+    ;; double up
+    (declare (type double-float x-low fx-low x-high fx-high))
+    (do () (nil)
+      ;; for general functions, we'd have to try the other way of bracketing,
+      ;; and probably have another way to terminate if, say, y is not in the
+      ;; range of f.
+      (when (>= fx-low p-value fx-high)
+	(return))
+      (setf x-low x-high
+            fx-low fx-high
+            x-high (* 2.0 x-high)
+            fx-high (funcall p-function x-high)))
+    ;; binary search
+    (do () (nil)
+      (let* ((x-mid  (/ (+ x-low x-high) 2.0))
+             (fx-mid (funcall p-function x-mid))
+             (y-diff (abs (- fx-mid p-value)))
+             (x-diff (- x-high x-low)))
+	(when (or (< x-diff x-tolerance)
+                  (< y-diff y-tolerance))
+          (return-from find-critical-value x-mid))
+	;; Because significance is monotonically decreasing with x, if the
+	;; function is above the desired p-value...
+	(if (< p-value fx-mid)
+            ;; then the critical x is in the upper half
+            (setf x-low x-mid
+                  fx-low fx-mid)
+            ;; otherwise, it's in the lower half
+            (setf x-high x-mid
+                  fx-high fx-mid))))))
+
+(defun phi (x)
+  "the CDF of standard normal distribution. Adopted from CLASP 1.4.3,
+see copyright notice at http://eksl-www.cs.umass.edu/clasp.html"
+  (* .5 (+ 1.0 ($erf (/ x (sqrt 2.0))))))
+
+(defun z (percentile &key (epsilon 1d-15))
+  "The inverse normal function, P(X<Zu) = u where X is distributed as
+the standard normal. Uses binary search."
+  (let ((target (coerce percentile 'double-float)))
+    (do ((min -9d0 min)
+         (max 9d0 max)
+         (guess 0d0 (+ min (/ (- max min) 2d0))))
+        ((< (- max min) epsilon) guess)
+      (let ((result (coerce (phi guess) 'double-float)))
+        (if (< result target)
+            (setq min guess)
+            (setq max guess))))))
+
+(defun factorial (number)
+  (if (not (and (integerp number) (>= number 0)))
+      (error "factorial: ~a is not a positive integer" number)
+      (labels ((fact (num) (if (= 0 num) 1 (* num (fact (1- num))))))
+        (fact number))))
+
+(defun choose (n k)
+  "How may ways to take n things taken k at a time, when order doesn't
+matter"
+  (/ (factorial n) (* (factorial k) (factorial (- n k)))))

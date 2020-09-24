@@ -42,7 +42,7 @@
       (cond ((eq n 1) (random/beta ($scalar a) ($scalar b)))
             (T ($beta (tensor n) ($scalar a) ($scalar b)))))))
 
-(defmethod $score ((d distribution/beta) (data number))
+(defmethod $ll ((d distribution/beta) (data number))
   (with-slots (a b) d
     (if (and (> data 0) (< data 1))
         ($+ ($mul ($sub a 1) ($log data))
@@ -50,10 +50,10 @@
             ($neg ($lbetaf a b)))
         most-negative-single-float)))
 
-(defmethod $score ((d distribution/beta) (data list))
-  ($score d (tensor data)))
+(defmethod $ll ((d distribution/beta) (data list))
+  ($ll d (tensor data)))
 
-(defmethod $score ((d distribution/beta) (data tensor))
+(defmethod $ll ((d distribution/beta) (data tensor))
   (let ((nz ($sum ($le data 0)))
         (no ($sum ($ge data 1))))
     (if (and (zerop nz) (zerop no))
@@ -101,23 +101,23 @@
       (cond ((eq n 1) (random/exponential ($scalar l)))
             (T ($exponential (tensor n) ($scalar l)))))))
 
-(defmethod $score ((d distribution/exponential) (data number))
+(defmethod $ll ((d distribution/exponential) (data number))
   (if (> data 0)
       (with-slots (l) d
         ($sub ($log l) ($mul l data)))
       most-negative-single-float))
 
-(defmethod $score ((d distribution/exponential) (data list))
-  ($score d (tensor data)))
+(defmethod $ll ((d distribution/exponential) (data list))
+  ($ll d (tensor data)))
 
-(defmethod $score ((d distribution/exponential) (data tensor))
+(defmethod $ll ((d distribution/exponential) (data tensor))
   (let ((nn ($sum ($lt data 0))))
     (if (zerop nn)
         (with-slots (l) d
           ($sum ($sub ($log l) ($mul l data))))
         most-negative-single-float)))
 
-(defmethod $score ((d distribution/exponential) (data node))
+(defmethod $ll ((d distribution/exponential) (data node))
   (let ((nn ($sum ($lt (if ($parameterp data) ($data data) data) 0))))
     (if (zerop nn)
         (with-slots (l) d
@@ -166,13 +166,13 @@
       (cond ((eq n 1) (random/uniform ($scalar a) ($scalar b)))
             (T ($uniform (tensor n) ($scalar a) ($scalar b)))))))
 
-(defmethod $score ((d distribution/uniform) (data number))
+(defmethod $ll ((d distribution/uniform) (data number))
   (with-slots (a b) d
     (if (and (<= data ($scalar b)) (>= data ($scalar a)))
         ($- ($log ($- b a)))
         most-negative-single-float)))
 
-(defmethod $score ((d distribution/uniform) (data list))
+(defmethod $ll ((d distribution/uniform) (data list))
   (with-slots (a b) d
     (let ((nf ($count (filter (lambda (v) (and (>= v ($scalar a)) (<= v ($scalar b)))) data)))
           (n ($count data)))
@@ -180,7 +180,7 @@
           ($* n ($- ($log ($- b a))))
           most-negative-single-float))))
 
-(defmethod $score ((d distribution/uniform) (data tensor))
+(defmethod $ll ((d distribution/uniform) (data tensor))
   (with-slots (a b) d
     (let ((n ($count data))
           (nx ($gt data ($scalar b)))
@@ -232,7 +232,7 @@
       (cond ((eq n 1) (random/normal (pv mu) (pv sigma)))
             (T ($normal (tensor n) (pv mu) (pv sigma)))))))
 
-(defmethod $score ((d distribution/gaussian) (data number))
+(defmethod $ll ((d distribution/gaussian) (data number))
   (with-slots (mu sigma) d
     ($mul -1/2
           ($add ($log (* 2 pi))
@@ -240,7 +240,7 @@
                       ($div ($square ($sub data mu))
                             ($square sigma)))))))
 
-(defmethod $score ((d distribution/gaussian) (data list))
+(defmethod $ll ((d distribution/gaussian) (data list))
   (with-slots (mu sigma) d
     ($sum ($mul -1/2
                 ($add ($log (* 2 pi))
@@ -248,7 +248,7 @@
                             ($div ($square ($sub (tensor data) mu))
                                   ($square sigma))))))))
 
-(defmethod $score ((d distribution/gaussian) (data tensor))
+(defmethod $ll ((d distribution/gaussian) (data tensor))
   (with-slots (mu sigma) d
     ($sum ($mul -1/2
                 ($add ($log (* 2 pi))
@@ -259,15 +259,15 @@
 (defun zscore (x m s) (/ (- x m) s))
 (defun mkzscore (d x) (zscore x ($scalar ($ d :mu)) ($scalar ($ d :sigma))))
 
-(defmethod $clt ((d distribution/gaussian) (x number))
+(defmethod $cdf ((d distribution/gaussian) (x number))
   (let ((z (mkzscore d x)))
     (* 0.5D0 (+ 1D0 ($erf (/ z (sqrt 2D0)))))))
 
-(defmethod $clt ((d distribution/gaussian) (xs list))
-  (mapcar (lambda (x) ($clt d x)) xs))
+(defmethod $cdf ((d distribution/gaussian) (xs list))
+  (mapcar (lambda (x) ($cdf d x)) xs))
 
-(defmethod $clt ((d distribution/gaussian) (xs tensor))
-  (tensor (mapcar (lambda (x) ($clt d x)) ($list xs))))
+(defmethod $cdf ((d distribution/gaussian) (xs tensor))
+  (tensor (mapcar (lambda (x) ($cdf d x)) ($list xs))))
 
 (defclass distribution/gamma (distribution)
   ((k :initform 1D0)
@@ -298,30 +298,30 @@
       (cond ((eq n 1) (random/gamma ($scalar k) ($scalar s)))
             (T ($gamma (tensor n) ($scalar k) ($scalar s)))))))
 
-(defmethod $score ((d distribution/gamma) (data number))
+(defmethod $ll ((d distribution/gamma) (data number))
   (with-slots (k s) d
     ($add ($neg ($add ($log ($gammaf k)) ($mul k ($log s))))
           ($sub ($mul ($sub k 1) ($log data))
                 ($div data s)))))
 
-(defmethod $score ((d distribution/gamma) (data list))
-  ($score d (tensor data)))
+(defmethod $ll ((d distribution/gamma) (data list))
+  ($ll d (tensor data)))
 
-(defmethod $score ((d distribution/gamma) (data tensor))
+(defmethod $ll ((d distribution/gamma) (data tensor))
   (with-slots (k s) d
     ($sum ($add ($neg ($add ($log ($gammaf k)) ($mul k ($log s))))
                 ($sub ($mul ($sub k 1) ($log data))
                       ($div data s))))))
 
-(defmethod $clt ((d distribution/gamma) (x number))
+(defmethod $cdf ((d distribution/gamma) (x number))
   (with-slots (k s) d
     (* (/ 1D0 ($gammaf ($scalar k))) (gamma-incomplete ($scalar k) (/ x ($scalar s))))))
 
-(defmethod $clt ((d distribution/gamma) (xs list))
-  (mapcar (lambda (x) ($clt d x)) xs))
+(defmethod $cdf ((d distribution/gamma) (xs list))
+  (mapcar (lambda (x) ($cdf d x)) xs))
 
-(defmethod $clt ((d distribution/gamma) (xs tensor))
-  (tensor (mapcar (lambda (x) ($clt d x)) ($list xs))))
+(defmethod $cdf ((d distribution/gamma) (xs tensor))
+  (tensor (mapcar (lambda (x) ($cdf d x)) ($list xs))))
 
 (defclass distribution/t (distribution)
   ((df :initform 5)
@@ -372,7 +372,7 @@
             (y ($sample (distribution/gamma (* 0.5 ($scalar df)) 2) n)))
         ($add ($scalar l) ($mul ($scalar s) ($div x ($sqrt ($div y ($scalar df))))))))))
 
-(defmethod $score ((d distribution/t) (data number))
+(defmethod $ll ((d distribution/t) (data number))
   (with-slots (df l s) d
     ($sub ($sub ($sub ($sub ($sub ($log ($gammaf ($div ($add df 1D0) 2D0)))
                                   ($log ($gammaf ($div df 2D0))))
@@ -382,9 +382,9 @@
           ($mul ($mul 0.5 ($add df 1))
                 ($log ($add 1 ($div ($square ($div ($sub data l) s)) df)))))))
 
-(defmethod $score ((d distribution/t) (data list)) ($score d (tensor data)))
+(defmethod $ll ((d distribution/t) (data list)) ($ll d (tensor data)))
 
-(defmethod $score ((d distribution/t) (data tensor))
+(defmethod $ll ((d distribution/t) (data tensor))
   (with-slots (df l s) d
     ($sum
      ($sub ($sub ($sub ($sub ($sub ($log ($gammaf ($div ($add df 1D0) 2D0)))
@@ -394,3 +394,79 @@
                  ($mul 0.5D0 ($log df)))
            ($mul ($mul 0.5 ($add df 1))
                  ($log ($add 1 ($div ($square ($div ($sub data l) s)) df))))))))
+
+(defmethod $cdf ((d distribution/t) (x number))
+  (error "not yet implemented"))
+
+(defmethod $cdf ((d distribution/t) (xs list))
+  (error "not yet implemented"))
+
+(defmethod $cdf ((d distribution/t) (xs tensor))
+  (error "not yet implemented"))
+
+(defclass distribution/chisq (distribution)
+  ((k :initform 1D0)))
+
+(defun distribution/chisq (&optional (k 1D0))
+  (let ((d (make-instance 'distribution/chisq))
+        (kin k))
+    (with-slots (k) d
+      (setf k kin))
+    d))
+
+(defmethod $parameters ((d distribution/chisq))
+  (let ((ps '()))
+    (with-slots (k) d
+      (when ($parameters k) (push k ps)))
+    ps))
+
+(defmethod $parameter-names ((d distribution/chisq))
+  (list :k))
+
+(defmethod $ ((d distribution/chisq) name &rest ig)
+  (declare (ignore ig))
+  (with-slots (k) d
+    (cond ((eq name :k) k))))
+
+(defmethod (setf $) (value (d distribution/chisq) name &rest ig)
+  (declare (ignore ig))
+  (with-slots (k) d
+    (cond ((eq name :k) (setf k value))))
+  value)
+
+(defmethod $sample ((d distribution/chisq) &optional (n 1))
+  (when (> n 0)
+    (with-slots (k) d
+      (let ((gk (/ ($scalar k) 2D0))
+            (s 2D0))
+        (cond ((eq n 1) (random/gamma gk s))
+              (T ($gamma (tensor n) gk s)))))))
+
+(defmethod $ll ((d distribution/chisq) (data number))
+  (with-slots (k) d
+    (let ((k2 ($div k 2))
+          (x2 (/ data 2)))
+      ($sub ($mul ($sub k2 1) ($log data))
+            ($add ($add x2 ($mul k2 (log 2)))
+                  ($lgammaf k2))))))
+
+(defmethod $ll ((d distribution/chisq) (data list)) ($ll d (tensor data)))
+
+(defmethod $ll ((d distribution/chisq) (data tensor))
+  (with-slots (k) d
+    (let ((k2 ($div k 2))
+          (x2 ($div data 2)))
+      ($sum ($sub ($mul ($sub k2 1) ($log data))
+                  ($add ($add x2 ($mul k2 (log 2)))
+                        ($lgammaf k2)))))))
+
+(defmethod $cdf ((d distribution/chisq) (x number))
+  (with-slots (k) d
+    (* (/ ($gammaf (/ ($scalar k) 2))) (gamma-incomplete (/ ($scalar k) 2D0)
+                                                         (/ x 2D0)))))
+
+(defmethod $cdf ((d distribution/chisq) (xs list))
+  (mapcar (lambda (x) ($cdf d x)) xs))
+
+(defmethod $cdf ((d distribution/chisq) (xs tensor))
+  (tensor (mapcar (lambda (x) ($cdf d x)) ($list xs))))

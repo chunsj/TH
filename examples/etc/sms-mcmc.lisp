@@ -27,14 +27,14 @@
       (let ((tau (round tau)))
         (let ((d1 (subseq *sms-data* 0 tau))
               (d2 (subseq *sms-data* (1- tau))))
-          ($+ ($score l1 d1) ($score l2 d2)
-              ($score h ($scalar ($ l1 :l)))
-              ($score h ($scalar ($ l2 :l)))
-              ($score dt tau))))
+          ($+ ($ll l1 d1) ($ll l2 d2)
+              ($ll h ($scalar ($ l1 :l)))
+              ($ll h ($scalar ($ l2 :l)))
+              ($ll dt tau))))
       most-negative-single-float))
 
 ;; XXX needs implementation for parameter data
-($score (distribution/exponential *alpha*) ($parameter 10))
+($ll (distribution/exponential *alpha*) ($parameter 10))
 
 ;; the solution from the original site
 (let ((r1 18)

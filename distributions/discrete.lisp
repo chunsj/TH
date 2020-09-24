@@ -38,20 +38,20 @@
       (cond ((eq n 1) (random/bernoulli (pv p)))
             (T ($bernoulli (tensor.byte n) (pv p)))))))
 
-(defmethod $score ((d distribution/bernoulli) (data number))
+(defmethod $ll ((d distribution/bernoulli) (data number))
   (with-slots (p) d
     (if (> data 0)
         ($log p)
         ($log ($sub 1 p)))))
 
-(defmethod $score ((d distribution/bernoulli) (data list))
+(defmethod $ll ((d distribution/bernoulli) (data list))
   (with-slots (p) d
     (let ((nd ($count data))
           (nt 0))
       (loop :for d :in data :do (when (> d 0) (incf nt)))
       ($add ($mul nt ($log p)) ($mul (- nd nt) ($log ($sub 1 p)))))))
 
-(defmethod $score ((d distribution/bernoulli) (data tensor))
+(defmethod $ll ((d distribution/bernoulli) (data tensor))
   (with-slots (p) d
     (let ((nd ($count data))
           (nt ($count ($nonzero data))))
@@ -110,17 +110,23 @@
           :do (incf lp (log i)))
     (- lp (logfac (coerce (round m) 'integer)))))
 
-(defmethod $score ((d distribution/binomial) (data number))
+(defmethod $ll ((d distribution/binomial) (data number))
   (if (>= data 0)
       (with-slots (n p) d
         (if (and (>= data 0) (<= data ($scalar n)))
             ($+ (logbc ($scalar n) data)
-                (if (zerop data) 0 ($mul data ($log p)))
-                (if (zerop (- ($scalar n) data)) 0 ($mul (- ($scalar n) data) ($log ($sub 1 p)))))
+                (if (zerop data)
+                    0
+                    ($mul data ($log p)))
+                (if (zerop (- ($scalar n) data))
+                    0
+                    (if (zerop (- ($scalar p) 1D0))
+                        0
+                        ($mul (- ($scalar n) data) ($log ($sub 1 p))))))
             most-negative-single-float))
       most-negative-single-float))
 
-(defmethod $score ((d distribution/binomial) (data list))
+(defmethod $ll ((d distribution/binomial) (data list))
   (let ((cnt ($count data))
         (npos ($count (filter (lambda (v) (>= v 0)) data))))
     (if (eq cnt npos)
@@ -135,7 +141,7 @@
                 most-negative-single-float)))
         most-negative-single-float)))
 
-(defmethod $score ((d distribution/binomial) (data tensor))
+(defmethod $ll ((d distribution/binomial) (data tensor))
   (let ((cnt ($count data))
         (npos ($sum ($ge data 0))))
     (if (eq cnt npos)
@@ -149,18 +155,51 @@
                 most-negative-single-float)))
         most-negative-single-float)))
 
-(defmethod $clt ((d distribution/binomial) (k number))
-  (let ((s 0D0)
-        (n ($scalar ($ d :n))))
-    (dotimes (i (round (min k (1+ n))) s)
-      (incf s ($exp ($score d i))))
-    s))
+(defun binomial-probability (n k p)
+  "P(X=k) for X a binomial random variable with parameters n &
+p. Binomial expectations for seeing k events in N trials, each having
+probability p.  Use the Poisson approximation if N>100 and P<0.01."
+  (if (and (> n 100) (< p 0.01))
+      (let ((d (distribution/poisson (* n p))))
+        ($exp ($ll d k)))
+      (let ((p (coerce p 'double-float)))
+        (* (choose n k)
+           (expt p k)
+           (expt (- 1 p) (- n k))))))
 
-(defmethod $clt ((d distribution/binomial) (ks list))
-  (mapcar (lambda (k) ($clt d k)) ks))
+(defun binomial-cumulative-probability (n k p)
+  "P(X<k) for X a binomial random variable with parameters n &
+p. Bionomial expecations for fewer than k events in N trials, each
+having probability p."
+  (let ((sum-up-to-k-1 0d0))
+    (dotimes (i k sum-up-to-k-1)
+      (incf sum-up-to-k-1 (binomial-probability n i p)))))
 
-(defmethod $clt ((d distribution/binomial) (ks tensor))
-  (tensor (mapcar (lambda (k) ($clt d k)) ($list ks))))
+(defmethod $cdf ((d distribution/binomial) (k number))
+  (with-slots (n p) d
+    (binomial-cumulative-probability ($scalar n) k ($scalar p))))
+
+(defmethod $cdf ((d distribution/binomial) (ks list))
+  (mapcar (lambda (k) ($cdf d k)) ks))
+
+(defmethod $cdf ((d distribution/binomial) (ks tensor))
+  (tensor (mapcar (lambda (k) ($cdf d k)) ($list ks))))
+
+(defun ci/binomial (alpha n p &optional exactp)
+  (if (and (> (* n p (- 1 p)) 10) (not exactp))
+      (let ((difference (* (z (- 1 (/ alpha 2)))
+                           (sqrt (/ (* p (- 1 p)) n)))))
+        (values (- p difference) (+ p difference)))
+      (values (find-critical-value
+               (lambda (p1)
+                 (let ((d (distribution/binomial n p1)))
+                   ($cdf d (floor (* p n)))))
+               (- 1 (/ alpha 2)))
+              (find-critical-value
+               (lambda (p2)
+                 (let ((d (distribution/binomial n p2)))
+                   ($cdf d (1+ (floor (* p n))))))
+               (/ alpha 2)))))
 
 (defclass distribution/discrete (distribution)
   ((ps :initform (tensor '(0.5 0.5)))))
@@ -211,14 +250,14 @@
       (cond ((eq n 1) (sample-discrete ps))
             (T (tensor.int (loop :repeat n :collect (sample-discrete ps))))))))
 
-(defmethod $score ((d distribution/discrete) (data number))
+(defmethod $ll ((d distribution/discrete) (data number))
   (with-slots (ps) d
     ($log ($div ($ ps data) ($sum ps)))))
 
-(defmethod $score ((d distribution/discrete) (data list))
-  ($score d (tensor.long data)))
+(defmethod $ll ((d distribution/discrete) (data list))
+  ($ll d (tensor.long data)))
 
-(defmethod $score ((d distribution/discrete) (data tensor))
+(defmethod $ll ((d distribution/discrete) (data tensor))
   (with-slots (ps) d
     ($sum ($log ($div ($gather ps 0 (tensor.long data)) ($sum ps))))))
 
@@ -259,27 +298,40 @@
       (cond ((eq n 1) (random/poisson ($scalar l)))
             (T ($poisson (tensor.int n) ($scalar l)))))))
 
-(defmethod $score ((d distribution/poisson) (data number))
+(defmethod $ll ((d distribution/poisson) (data number))
   (with-slots (l) d
     ($sub ($sub ($mul data ($log l)) l) (logfac data))))
 
-(defmethod $score ((d distribution/poisson) (data list))
-  ($score d (tensor data)))
+(defmethod $ll ((d distribution/poisson) (data list))
+  ($ll d (tensor data)))
 
-(defmethod $score ((d distribution/poisson) (data tensor))
+(defmethod $ll ((d distribution/poisson) (data tensor))
   (with-slots (l) d
     ($sum ($sub ($sub ($mul data ($log l)) l) (logfac data)))))
 
-(defmethod $clt ((d distribution/poisson) (k number))
+(defmethod $cdf ((d distribution/poisson) (k number))
   (if (< k 170)
       (let ((sum 0D0))
         (dotimes (x k sum)
-          (incf sum ($exp ($score d k)))))
+          (incf sum ($exp ($ll d k)))))
       (let ((mu ($scalar ($ d :l))))
         (- 1D0 (gamma-incomplete (coerce k 'double-float) (coerce mu 'double-float))))))
 
-(defmethod $clt ((d distribution/poisson) (ks list))
-  (mapcar (lambda (k) ($clt d k)) ks))
+(defmethod $cdf ((d distribution/poisson) (ks list))
+  (mapcar (lambda (k) ($cdf d k)) ks))
 
-(defmethod $clt ((d distribution/poisson) (ks tensor))
-  (tensor (mapcar (lambda (k) ($clt d k)) ($list ks))))
+(defmethod $cdf ((d distribution/poisson) (ks tensor))
+  (tensor (mapcar (lambda (k) ($cdf d k)) ($list ks))))
+
+(defun ci/poisson (alpha k)
+  (values
+   (find-critical-value
+    (lambda (mu)
+      (let ((d (distribution/poisson mu)))
+        ($cdf d (1- k))))
+    (- 1 (/ alpha 2)))
+   (find-critical-value
+    (lambda (mu)
+      (let ((d (distribution/poisson mu)))
+        ($cdf d k)))
+    (/ alpha 2))))
