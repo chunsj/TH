@@ -1,5 +1,69 @@
 (in-package :th.distributions)
 
+(defclass distribution/dice (distribution)
+  ((n :initform 6)))
+
+(defun distribution/dice (&optional (n 6))
+  (let ((d (make-instance 'distribution/dice))
+        (nin n))
+    (with-slots (n) d
+      (setf n nin))
+    d))
+
+(defmethod $parameters ((d distribution/dice))
+  (with-slots (n) d
+    (if ($parameterp n)
+        (list n)
+        '())))
+
+(defmethod $parameter-names ((d distribution/dice))
+  (list :n))
+
+(defmethod $ ((d distribution/dice) name &rest ig)
+  (declare (ignore ig))
+  (when (eq name :n)
+    (with-slots (n) d
+      n)))
+
+(defmethod (setf $) (value (d distribution/dice) name &rest ig)
+  (declare (ignore ig))
+  (when (eq name :n)
+    (with-slots (n) d
+      (setf n value))
+    value))
+
+(defmethod $sample ((d distribution/dice) &optional (nn 1))
+  (when (> nn 0)
+    (with-slots (n) d
+      (let ((nv (round ($scalar n))))
+        (cond ((eq nn 1) (1+ (random nv)))
+              (T (tensor.int (loop :repeat nn :collect (1+ (random nv))))))))))
+
+(defmethod $ll ((d distribution/dice) (data number))
+  (with-slots (n) d
+    (let ((nv (round ($scalar n))))
+      (if (and (>= data 1) (<= data nv))
+          ($log ($div 1 n))
+          most-negative-single-float))))
+
+(defmethod $ll ((d distribution/dice) (data list))
+  (with-slots (n) d
+    (let* ((nv (round ($scalar n)))
+           (nd ($count data))
+           (ne ($count (filter (lambda (v) (and (>= v 1) (<= v nv))) data))))
+      (if (eq nd ne)
+          ($mul ($count data) ($log ($div 1 n)))
+          most-negative-single-float))))
+
+(defmethod $ll ((d distribution/dice) (data tensor))
+  (with-slots (n) d
+    (let* ((nv (round ($scalar n)))
+           (nd ($count data))
+           (ne ($count (filter (lambda (v) (and (>= v 1) (<= v nv))) ($list data)))))
+      (if (eq nd ne)
+          ($mul ($count data) ($log ($div 1 n)))
+          most-negative-single-float))))
+
 (defclass distribution/bernoulli (distribution)
   ((p :initform 0.5)))
 

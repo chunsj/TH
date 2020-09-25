@@ -5,6 +5,7 @@
   (:export #:$sample
            #:$ll
            #:$parameter-names
+           #:distribution/dice
            #:distribution/bernoulli
            #:distribution/binomial
            #:distribution/discrete
