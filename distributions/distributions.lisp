@@ -15,6 +15,7 @@
            #:distribution/normal
            #:distribution/gamma
            #:distribution/t
+           #:distribution/chisq
            #:distribution/uniform))
 
 (in-package :th.distributions)
