@@ -1,10 +1,11 @@
 # My Deep Learning Library for Common Lisp using libTH/libTHNN
 
-## NEWS (2020-08-13)
-  Currently following Grokking Deep RL book with TH and TH.ENV. Some backprop bugs are fixed as well.
+## NEWS (2020-09-27)
+  My current interest is probabillistic programming. I'd like to build a framework like PyMC.
 
 ## OLD NEWS
-  * 20200430: New simple foreign memory management (trigger gc, tested with SBCL)
+  * 20200823: Done with Grokking Deep Reinforcement Learning Book.
+  * 20200430: New simple foreign memory management. (trigger gc, tested with SBCL)
   * 20200329: New RNN layer based APIs.
   * 20200120: I think current state of TH is generally usable. And yet, needs more examples.
   * 20191226: Clozure CL runs TH codes very well. Often, CCL does not yet show memory trashing problems.
