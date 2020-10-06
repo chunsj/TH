@@ -4,10 +4,10 @@
 
 (in-package :imdb-prep)
 
-(with-open-file (stream "/Users/Sungjin/IMDB/imdb_master.csv" :direction :input)
-  (with-open-file (frv "/Users/Sungjin/IMDB/reviews.txt" :direction :output
+(with-open-file (stream "/Users/me/IMDB/imdb_master.csv" :direction :input)
+  (with-open-file (frv "/Users/me/IMDB/reviews.txt" :direction :output
                                                          :if-exists :supersede)
-    (with-open-file (flbl "/Users/Sungjin/IMDB/labels.txt" :direction :output
+    (with-open-file (flbl "/Users/me/IMDB/labels.txt" :direction :output
                                                            :if-exists :supersede)
       (loop :for i :from 0 :to 100000
             :for line = (read-line stream nil)
@@ -26,16 +26,16 @@
 
 ;; make a smaller dataset
 (defparameter *small-size* 2000)
-(with-open-file (stream "/Users/Sungjin/IMDB/reviews.txt" :direction :input)
-  (with-open-file (frvs "/Users/Sungjin/IMDB/reviews-small.txt" :direction :output
+(with-open-file (stream "/Users/me/IMDB/reviews.txt" :direction :input)
+  (with-open-file (frvs "/Users/me/IMDB/reviews-small.txt" :direction :output
                                                                 :if-exists :supersede)
     (loop :for i :from 0 :to (+ 12500 *small-size*)
           :for line = (read-line stream nil)
           :do (when (and line (or (< i *small-size*) (> i 12500)))
                 (format frvs "~A~%" line)))))
 
-(with-open-file (stream "/Users/Sungjin/IMDB/labels.txt" :direction :input)
-  (with-open-file (frvs "/Users/Sungjin/IMDB/labels-small.txt" :direction :output
+(with-open-file (stream "/Users/me/IMDB/labels.txt" :direction :input)
+  (with-open-file (frvs "/Users/me/IMDB/labels-small.txt" :direction :output
                                                                :if-exists :supersede)
     (loop :for i :from 0 :to (+ 12500 *small-size*)
           :for line = (read-line stream nil)
@@ -44,8 +44,8 @@
 
 ;; a smaller test dataset as well
 (defparameter *small-test-size* 500)
-(with-open-file (stream "/Users/Sungjin/IMDB/reviews.txt" :direction :input)
-  (with-open-file (frvs "/Users/Sungjin/IMDB/reviews-small-test.txt" :direction :output
+(with-open-file (stream "/Users/me/IMDB/reviews.txt" :direction :input)
+  (with-open-file (frvs "/Users/me/IMDB/reviews-small-test.txt" :direction :output
                                                                      :if-exists :supersede)
     (loop :for i :from 0 :to (+ 12500 *small-size* *small-test-size*)
           :for line = (read-line stream nil)
@@ -54,8 +54,8 @@
                                   (and (> i (+ 12500 *small-size*)))))
                 (format frvs "~A~%" line)))))
 
-(with-open-file (stream "/Users/Sungjin/IMDB/labels.txt" :direction :input)
-  (with-open-file (frvs "/Users/Sungjin/IMDB/labels-small-test.txt" :direction :output
+(with-open-file (stream "/Users/me/IMDB/labels.txt" :direction :input)
+  (with-open-file (frvs "/Users/me/IMDB/labels-small-test.txt" :direction :output
                                                                     :if-exists :supersede)
     (loop :for i :from 0 :to (+ 12500 *small-size* *small-test-size*)
           :for line = (read-line stream nil)
