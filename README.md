@@ -1,7 +1,7 @@
 # My Deep Learning Library for Common Lisp using libTH/libTHNN
 
 ## NEWS (2020-09-27)
-  My current interest is probabillistic programming. I'd like to build a framework like PyMC.
+  My current interest is probabillistic programming. I'd like to build a framework like Church/PyMC.
 
 ## OLD NEWS
   * 20200823: Done with Grokking Deep Reinforcement Learning Book.
@@ -79,6 +79,7 @@
   25. Neural Fitted Q-iteration example: [25](examples/etc/cartpole-nfq.lisp) (refer github.com/seungjaeryanlee)
   26. Deep Q-Network/Double DQNN: [26-1](examples/etc/cartpole-dqn.lisp) [26-2](examples/etc/cartpole-ddqn.lisp)
   27. Simple Metropolis-Hastings: [27](examples/etc/mcmc-simple.lisp)
+  28. Simple Hamiltoniam Markov Chain: [28](examples/etc/hmc-work.lisp)
 
 ## Pretrained Models
   Though there's currently 5 models, VGG16, VGG19, ResNet50, DenseNet161 and SqueezeNet1.1 are
