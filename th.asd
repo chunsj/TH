@@ -58,4 +58,6 @@
                                        (:file "squeezenet11")))
                (:module distributions :components ((:file "distributions")
                                                    (:file "discrete")
-                                                   (:file "continuous")))))
+                                                   (:file "continuous")))
+               (:module mcmc :components ((:file "mcmc")
+                                          (:file "hmc")))))
