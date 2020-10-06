@@ -7,6 +7,7 @@
 (in-package :hmc-work)
 
 ;; potential is negative-log-likelihood function
+;; position is the parameter we want to compute
 
 (defun dvdq (potential position)
   (let ((position ($parameter position)))
@@ -49,10 +50,11 @@
                           samples))))
     (reverse samples)))
 
-(defparameter *data* ($sample (distribution/normal 2.5 1) 1000))
+(defparameter *data* ($sample (distribution/normal 2.5) 1000))
 
 (defun potential (position)
-  ($neg ($ll (distribution/normal position 1) *data*)))
+  ($neg ($ll (distribution/normal position) *data*)))
 
 (let ((samples (hmc 300 0 #'potential :step-size 0.05)))
+  ;; data mean vs computed parameter which is the mean of the normal distribution
   (list ($mean *data*) ($mean samples)))
