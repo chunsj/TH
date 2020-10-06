@@ -52,8 +52,7 @@
 (defparameter *data* ($sample (distribution/normal 2.5 1) 1000))
 
 (defun potential (position)
-  (let ((data *data*))
-    ($neg ($ll (distribution/normal position 1) data))))
+  ($neg ($ll (distribution/normal position 1) *data*)))
 
 (let ((samples (hmc 300 0 #'potential :step-size 0.05)))
   (list ($mean *data*) ($mean samples)))
