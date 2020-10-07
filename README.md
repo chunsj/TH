@@ -79,7 +79,7 @@
   25. Neural Fitted Q-iteration example: [25](examples/etc/cartpole-nfq.lisp) (refer github.com/seungjaeryanlee)
   26. Deep Q-Network/Double DQNN: [26-1](examples/etc/cartpole-dqn.lisp) [26-2](examples/etc/cartpole-ddqn.lisp)
   27. Simple Metropolis-Hastings: [27](examples/etc/mcmc-simple.lisp)
-  28. Simple Hamiltoniam Markov Chain: [28](examples/etc/hmc-work.lisp)
+  28. Simple Hamiltonian Monte Carlo: [28](examples/etc/hmc-work.lisp)
 
 ## Pretrained Models
   Though there's currently 5 models, VGG16, VGG19, ResNet50, DenseNet161 and SqueezeNet1.1 are
