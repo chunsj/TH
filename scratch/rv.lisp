@@ -44,3 +44,47 @@
 ($val (rv (distribution/normal)))
 ($reset! (rv (distribution/normal)))
 ($logp (rv (distribution/normal)))
+
+(defparameter *population* ($sample (distribution/normal 2.5) 5000))
+(defparameter *observation* (tensor (loop :repeat 1000
+                                          :collect ($ *population* (random 5000)))))
+
+($mean *population*)
+($mean *observation*)
+
+(defun potential (position)
+  ($- ($ll (distribution/normal position) *observation*)))
+
+(let ((samples (hmc 1000 0 #'potential :step-size 0.05)))
+  ;; data mean vs computed parameter which is the mean of the normal distribution
+  (list ($mean *population*) ($mean *observation*) ($mean samples)))
+
+;; model
+;;
+;; parameters
+;; distributions - parameters
+;; observations - distributions - parameters
+;; likelihood - observations - distributions - parameters
+
+(defclass mymodel ()
+  ((mu :initform 0)
+   (n :initform (distribution/normal 0))))
+
+(defmethod $ll ((m mymodel) data)
+  (with-slots (mu n) m
+    (setf ($ n :mu) mu)
+    ($ll n data)))
+
+(defun $nll (m mu data)
+  (let ((muin mu))
+    (with-slots (mu) m
+      (setf mu muin))
+    ($- ($ll m data))))
+
+(defparameter *model* (make-instance 'mymodel))
+
+(defun potential (position) ($nll *model* position *observation*))
+
+(let ((samples (hmc 1000 0 #'potential :step-size 0.05)))
+  ;; data mean vs computed parameter which is the mean of the normal distribution
+  (list ($mean *population*) ($mean *observation*) ($mean samples)))
