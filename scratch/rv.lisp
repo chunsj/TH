@@ -66,6 +66,12 @@
 ;; observations - distributions - parameters
 ;; likelihood - observations - distributions - parameters
 
+;; XXX
+;; bare functional log-likelihood and other functions should be in
+;; the th.distributions.
+;; current class based implementations should depends on them.
+
+
 (defclass mymodel ()
   ((mu :initform 0)
    (n :initform (distribution/normal 0))))
