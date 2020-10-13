@@ -31,10 +31,10 @@
   (let ((ne (filter (lambda (v) (<= v 0)) data)))
     (zerop ($count ne))))
 
-(defun $ll/exponential (data &optional (l 1))
+(defun $ll/exponential (data &optional (rate 1))
   (when (exponential-support-p data)
     (let ((data (fdt data)))
-      ($sum ($sub ($log l) ($mul l data))))))
+      ($sum ($sub ($log rate) ($mul rate data))))))
 
 (defgeneric uniform-support-p (data l u))
 (defmethod uniform-support-p ((data number) l u) (and (>= data l) (<= data u)))
@@ -131,8 +131,8 @@
   (let ((nz (filter (lambda (v) (< v 0)) data)))
     (zerop ($count nz))))
 
-(defun $ll/poisson (data &optional (l 1.0))
-  (when (and (> l 0) (poisson-support-p data))
+(defun $ll/poisson (data &optional (rate 1.0))
+  (when (and (> rate 0) (poisson-support-p data))
     (let ((data (fdt data)))
-      ($sum ($sub ($sub ($mul data ($log l)) l)
+      ($sum ($sub ($sub ($mul data ($log rate)) rate)
                   ($lgammaf ($add data 1)))))))

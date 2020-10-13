@@ -22,7 +22,6 @@
            #:distribution/binomial
            #:distribution/chisq
            #:distribution/dice
-           #:distribution/discrete
            #:distribution/exponential
            #:distribution/gamma
            #:distribution/gaussian
