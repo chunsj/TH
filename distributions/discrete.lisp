@@ -164,7 +164,7 @@
         (cond ((eq nin 1) (random/binomial ($scalar n) ($scalar p)))
               (T ($binomial (tensor.int nin) ($scalar n) ($scalar p))))))))
 
-(defun logfac (n) ($lgammaf ($+ 1 n)))
+(defun logfac (n) ($lgammaf ($add 1 n)))
 
 (defun logbc (n x)
   (let ((m (if (< x (- n x)) x (- n x)))

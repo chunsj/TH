@@ -1,7 +1,7 @@
 (defsystem th
   :name "th"
   :author "Sungjin Chun <chunsj@gmail.com>"
-  :version "1.65"
+  :version "1.66"
   :maintainer "Sungjin Chun <chunsj@gmail.com>"
   :license "GPL3"
   :description "common lisp tensor and deep learning library"
@@ -57,6 +57,7 @@
                                        (:file "densenet161")
                                        (:file "squeezenet11")))
                (:module distributions :components ((:file "distributions")
+                                                   (:file "likelihoods")
                                                    (:file "discrete")
                                                    (:file "continuous")))
                (:module mcmc :components ((:file "mcmc")

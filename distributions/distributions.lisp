@@ -2,21 +2,33 @@
   (:use #:common-lisp
         #:mu
         #:th)
-  (:export #:$sample
+  (:export #:$ll/bernoulli
+           #:$ll/beta
+           #:$ll/binomial
+           #:$ll/chisq
+           #:$ll/dice
+           #:$ll/exponential
+           #:$ll/gamma
+           #:$ll/gaussian
+           #:$ll/normal
+           #:$ll/poisson
+           #:$ll/t
+           #:$ll/uniform
+           #:$sample
            #:$ll
            #:$parameter-names
-           #:distribution/dice
            #:distribution/bernoulli
-           #:distribution/binomial
-           #:distribution/discrete
-           #:distribution/poisson
            #:distribution/beta
+           #:distribution/binomial
+           #:distribution/chisq
+           #:distribution/dice
+           #:distribution/discrete
            #:distribution/exponential
+           #:distribution/gamma
            #:distribution/gaussian
            #:distribution/normal
-           #:distribution/gamma
+           #:distribution/poisson
            #:distribution/t
-           #:distribution/chisq
            #:distribution/uniform))
 
 (in-package :th.distributions)

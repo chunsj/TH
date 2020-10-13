@@ -58,9 +58,9 @@
         (no ($sum ($ge data 1))))
     (if (and (zerop nz) (zerop no))
         (with-slots (a b) d
-          ($+ ($mul ($sub a 1) ($log data))
-              ($mul ($sub b 1) ($log ($- 1 data)))
-              ($neg ($lbetaf a b))))
+          ($sum ($+ ($mul ($sub a 1) ($log data))
+                    ($mul ($sub b 1) ($log ($- 1 data)))
+                    ($neg ($lbetaf a b)))))
         most-negative-single-float)))
 
 (defclass distribution/exponential (distribution)
