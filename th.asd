@@ -58,6 +58,7 @@
                                        (:file "squeezenet11")))
                (:module distributions :components ((:file "distributions")
                                                    (:file "likelihoods")
+                                                   (:file "samples")
                                                    (:file "discrete")
                                                    (:file "continuous")))
                (:module mcmc :components ((:file "mcmc")

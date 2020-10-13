@@ -14,8 +14,20 @@
            #:$ll/poisson
            #:$ll/t
            #:$ll/uniform
-           #:$sample
+           #:$sample/bernoulli
+           #:$sample/beta
+           #:$sample/binomial
+           #:$sample/chisq
+           #:$sample/dice
+           #:$sample/exponential
+           #:$sample/gamma
+           #:$sample/gaussian
+           #:$sample/normal
+           #:$sample/poisson
+           #:$sample/t
+           #:$sample/uniform
            #:$ll
+           #:$sample
            #:$parameter-names
            #:distribution/bernoulli
            #:distribution/beta
