@@ -1,5 +1,7 @@
 (in-package :th.distributions)
 
+(defmethod $count ((n number)) 1)
+
 (defgeneric beta-support-p (data))
 (defmethod beta-support-p ((data number)) (and (< data 1) (> data 0)))
 (defmethod beta-support-p ((data tensor))
@@ -85,7 +87,7 @@
 (defun $ll/chisq (data &optional (k 1)) ($ll/gamma data ($div k 2) 0.5))
 
 (defun $ll/dice (data &optional (n 6))
-  (when (and (> n 0) (uniform-support-p data 0.99 6.01))
+  (when (and (> n 0) (uniform-support-p data 0.99 (+ n 0.01)))
     (let ((data (fdt data)))
       ($mul ($count data) ($log ($div 1 n))))))
 
