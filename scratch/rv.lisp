@@ -86,6 +86,78 @@
   (with-slots (rate) rv
     ($add ($ll rv ($value rv)) ($logp rate))))
 
+(defclass rv/poisson (random-variable)
+  ((rate :initform 1D0)))
+
+(defun rv/poisson (&key (rate 1D0) observation)
+  (let ((rv (make-instance 'rv/poisson))
+        (l rate))
+    (with-slots (rate value) rv
+      (setf rate l)
+      (when observation (setf value observation)))
+    rv))
+
+(defmethod $value ((rv rv/poisson))
+  (with-slots (rate value) rv
+    (unless value
+      (setf value ($sample/poisson 1 ($value rate))))
+    value))
+
+(defmethod (setf $value) (observation (rv rv/poisson))
+  (with-slots (value) rv
+    (setf value observation)
+    observation))
+
+(defmethod $ll ((rv rv/poisson) data)
+  (with-slots (rate) rv
+    ($ll/poisson data ($value rate))))
+
+(defmethod $logp ((rv rv/poisson))
+  (with-slots (rate) rv
+    ($add ($ll rv ($value rv)) ($logp rate))))
+
+(defclass rv/dice (random-variable)
+  ((n :initform 6)))
+
+(defun rv/dice (&key (n 6) observation)
+  (let ((rv (make-instance 'rv/dice))
+        (nin n))
+    (with-slots (n value) rv
+      (setf n nin)
+      (when observation (setf value observation)))
+    rv))
+
+(defmethod $value ((rv rv/dice))
+  (with-slots (n value) rv
+    (unless value
+      (setf value ($sample/dice 1 ($value n))))
+    value))
+
+(defmethod (setf $value) (observation (rv rv/dice))
+  (with-slots (value) rv
+    (setf value observation)
+    observation))
+
+(defmethod $ll ((rv rv/dice) data)
+  (with-slots (n) rv
+    ($ll/dice data ($value n))))
+
+(defmethod $logp ((rv rv/dice))
+  (with-slots (n) rv
+    ($add ($ll rv ($value n)) ($logp n))))
+
+(defparameter *sms-data* (->> (slurp "./data/sms.txt")
+                              (mapcar #'parse-float)
+                              (mapcar #'round)))
+(defparameter *N* ($count *sms-data*))
+
+(defun mean (vs) (/ (reduce #'+ vs) ($count vs)))
+(defparameter *mean* (* 1D0 (mean *sms-data*)))
+(defparameter *alpha* (/ 1D0 *mean*))
+
+;; r1/r2/tau = 18/23/45
+
+
 (let ((rv (rv/gaussian))
       (observed (tensor '(0 0 0))))
   (setf ($value rv) observed)
