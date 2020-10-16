@@ -8,17 +8,23 @@
 (in-package :random-variable)
 
 (defgeneric $value (rv))
-(defgeneric (setf $value) (observation rv))
+(defgeneric (setf $value) (value rv))
+(defgeneric $observation (rv))
+(defgeneric (setf $observation) (observation rv))
 (defgeneric $logp (rv))
 
 (defmethod $value ((rv T)) rv)
+(defmethod $reset! ((rv T)))
+(defmethod $observation ((rv T)) rv)
 (defmethod $logp ((rv T)) 0D0) ;; when invalid, return nil as $ll
 
 (defclass random-variable ()
-  ((value :initform nil)))
+  ((value :initform nil)
+   (observedp :initform nil)))
 
 (defmethod print-object ((rv random-variable) stream)
-  (format stream "~A" ($value rv)))
+  (with-slots (observedp) rv
+    (format stream "~A~A" ($value rv) (if (not observedp) "?" ""))))
 
 (defclass rv/gaussian (random-variable)
   ((location :initform 0D0)
@@ -28,23 +34,36 @@
   (let ((rv (make-instance 'rv/gaussian))
         (l location)
         (s scale))
-    (with-slots (location scale value) rv
+    (with-slots (location scale value observedp) rv
       (setf location l
             scale s)
-      (when observation (setf value observation)))
+      (if observation
+          (setf value observation
+                observedp T)
+          (setf value ($sample/gaussian 1 ($value location) ($value scale))
+                observedp nil)))
     rv))
 (defun rv/normal (&key (location 0D0) (scale 1D0) observation)
   (rv/gaussian :location location :scale scale :observation observation))
 
 (defmethod $value ((rv rv/gaussian))
-  (with-slots (location scale value) rv
-    (unless value
-      (setf value ($sample/gaussian 1 ($value location) ($value scale))))
+  (with-slots (value) rv
     value))
 
-(defmethod (setf $value) (observation (rv rv/gaussian))
-  (with-slots (value) rv
-    (setf value observation)
+(defmethod (setf $value) (v (rv rv/gaussian))
+  (with-slots (value observedp) rv
+    (setf value v
+          observedp nil)
+    v))
+
+(defmethod $observation ((rv rv/gaussian))
+  (with-slots (value observedp) rv
+    (when observedp value)))
+
+(defmethod (setf $observation) (observation (rv rv/gaussian))
+  (with-slots (value observedp) rv
+    (setf value observation
+          observedp T)
     observation))
 
 (defmethod $ll ((rv rv/gaussian) data)
@@ -53,8 +72,11 @@
 
 (defmethod $logp ((rv rv/gaussian))
   (with-slots (location scale) rv
-    ($add ($ll rv ($value rv))
-          ($add ($logp location) ($logp scale)))))
+    (let ((ll ($ll rv ($value rv)))
+          (lp1 ($logp location))
+          (lp2 ($logp scale)))
+      (when (and ll lp1 lp2)
+        ($add ll ($add lp1 lp2))))))
 
 (defclass rv/exponential (random-variable)
   ((rate :initform 1D0)))
