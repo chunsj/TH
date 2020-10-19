@@ -24,12 +24,12 @@
 
 (let ((switch-point (r/discrete-uniform :lower 0 :upper (1- ($count *disasters*))))
       (early-mean (r/exponential :rate 1))
-      (late-mean (r/exponential :rate 1))
-      (rate (r/lambda (lambda (s e l)
-                        (let ((rates (tensor ($count *disasters*))))
-                          (loop :for i :from 0 :below s
-                                :do (setf ($ rates i) e))
-                          (loop :for i :from s :below ($count rates)
-                                :do (setf ($ rate i) l))
-                          rates))))
-      (disasters (r/poisson :rate rate :observation *disasters*))))
+      (late-mean (r/exponential :rate 1)))
+  (let ((rate (r/fn (lambda ()
+                      (let ((rates (tensor ($count *disasters*))))
+                        (loop :for i :from 0 :below switch-point
+                              :do (setf ($ rates i) early-mean))
+                        (loop :for i :from s :below ($count rates)
+                              :do (setf ($ rate i) late-mean))
+                        rates)))))
+    (let ((disasters (r/poisson :rate rate :observation *disasters*))))))
