@@ -7,9 +7,155 @@
 
 (in-package :random-variable)
 
+(defgeneric $value (rv))
+(defgeneric (setf $value) (observation rv))
+(defgeneric $logp (rv))
+
+(defmethod $value ((rv T)) rv)
+(defmethod $logp ((rv T)) 0D0) ;; when invalid, return nil as $ll
+
+(defclass random-variable ()
+  ((value :initform nil)))
+
+(defmethod print-object ((rv random-variable) stream)
+  (format stream "~A" ($value rv)))
+
+(defclass rv/gaussian (random-variable)
+  ((location :initform 0D0)
+   (scale :initform 1D0)))
+
+(defun rv/gaussian (&key (location 0D0) (scale 1D0) observation)
+  (let ((rv (make-instance 'rv/gaussian))
+        (l location)
+        (s scale))
+    (with-slots (location scale value) rv
+      (setf location l
+            scale s)
+      (when observation (setf value observation)))
+    rv))
+(defun rv/normal (&key (location 0D0) (scale 1D0) observation)
+  (rv/gaussian :location location :scale scale :observation observation))
+
+(defmethod $value ((rv rv/gaussian))
+  (with-slots (location scale value) rv
+    (unless value
+      (setf value ($sample/gaussian 1 ($value location) ($value scale))))
+    value))
+
+(defmethod (setf $value) (observation (rv rv/gaussian))
+  (with-slots (value) rv
+    (setf value observation)
+    observation))
+
+(defmethod $ll ((rv rv/gaussian) data)
+  (with-slots (location scale) rv
+    ($ll/gaussian data ($value location) ($value scale))))
+
+(defmethod $logp ((rv rv/gaussian))
+  (with-slots (location scale) rv
+    ($add ($ll rv ($value rv))
+          ($add ($logp location) ($logp scale)))))
+
+(defclass rv/exponential (random-variable)
+  ((rate :initform 1D0)))
+
+(defun rv/exponential (&key (rate 1D0) observation)
+  (let ((rv (make-instance 'rv/exponential))
+        (l rate))
+    (with-slots (rate value) rv
+      (setf rate l)
+      (when observation (setf value observation)))
+    rv))
+
+(defmethod $value ((rv rv/exponential))
+  (with-slots (rate value) rv
+    (unless value
+      (setf value ($sample/exponential 1 ($value rate))))
+    value))
+
+(defmethod (setf $value) (observation (rv rv/exponential))
+  (with-slots (value) rv
+    (setf value observation)
+    observation))
+
+(defmethod $ll ((rv rv/exponential) data)
+  (with-slots (rate) rv
+    ($ll/exponential data ($value rate))))
+
+(defmethod $logp ((rv rv/exponential))
+  (with-slots (rate) rv
+    ($add ($ll rv ($value rv)) ($logp rate))))
+
+(defclass rv/poisson (random-variable)
+  ((rate :initform 1D0)))
+
+(defun rv/poisson (&key (rate 1D0) observation)
+  (let ((rv (make-instance 'rv/poisson))
+        (l rate))
+    (with-slots (rate value) rv
+      (setf rate l)
+      (when observation (setf value observation)))
+    rv))
+
+(defmethod $value ((rv rv/poisson))
+  (with-slots (rate value) rv
+    (unless value
+      (setf value ($sample/poisson 1 ($value rate))))
+    value))
+
+(defmethod (setf $value) (observation (rv rv/poisson))
+  (with-slots (value) rv
+    (setf value observation)
+    observation))
+
+(defmethod $ll ((rv rv/poisson) data)
+  (with-slots (rate) rv
+    ($ll/poisson data ($value rate))))
+
+(defmethod $logp ((rv rv/poisson))
+  (with-slots (rate) rv
+    ($add ($ll rv ($value rv)) ($logp rate))))
+
+(defclass rv/dice (random-variable)
+  ((n :initform 6)))
+
+(defun rv/dice (&key (n 6) observation)
+  (let ((rv (make-instance 'rv/dice))
+        (nin n))
+    (with-slots (n value) rv
+      (setf n nin)
+      (when observation (setf value observation)))
+    rv))
+
+(defmethod $value ((rv rv/dice))
+  (with-slots (n value) rv
+    (unless value
+      (setf value ($sample/dice 1 ($value n))))
+    value))
+
+(defmethod (setf $value) (observation (rv rv/dice))
+  (with-slots (value) rv
+    (setf value observation)
+    observation))
+
+(defmethod $ll ((rv rv/dice) data)
+  (with-slots (n) rv
+    ($ll/dice data ($value n))))
+
+(defmethod $logp ((rv rv/dice))
+  (with-slots (n) rv
+    ($add ($ll rv ($value rv)) ($logp n))))
+
 (defparameter *sms-data* (->> (slurp "./data/sms.txt")
                               (mapcar #'parse-float)
                               (mapcar #'round)))
+;; (defparameter *sms-data* '(4 5 4 0 1 4 3 4 0 6 3 3 4 0 2 6
+;;                            3 3 5 4 5 3 1 4 4 1 5 5 3 4 2 5
+;;                            2 2 3 4 2 1 3 2 2 1 1 1 1 3 0 0
+;;                            1 0 1 1 0 0 3 1 0 3 2 2 0 1 1 1
+;;                            0 1 0 1 0 0 0 2 1 0 0 0 1 1 0 2
+;;                            3 3 1 1 2 1 1 1 1 2 4 2 0 0 1 4
+;;                            0 0 0 1 0 0 0 0 0 1 0 0 1 0 1))
 (defparameter *N* ($count *sms-data*))
 
 (defun mean (vs) (/ (reduce #'+ vs) ($count vs)))
@@ -59,7 +205,7 @@
   (when flag
     (setf ($value r1) *mean*
           ($value r2) *mean*
-          ($value tau) (/ *N* 2)))
+          ($value tau) (round (/ *N* 2))))
   (let ((l0 (sms-likelihood r1 r2 tau))
         (accepted nil)
         (proposed nil))
