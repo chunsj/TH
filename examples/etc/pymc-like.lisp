@@ -221,6 +221,7 @@
                     (setf done T)))))
     accepted))
 
+;; MLE: 41, 3, 1
 (let ((switch-point (r/discrete-uniform :lower 0 :upper (1- ($count *disasters*))))
       (early-mean (r/exponential :rate 2))
       (late-mean (r/exponential :rate 2)))
