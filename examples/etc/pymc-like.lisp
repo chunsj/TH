@@ -13,6 +13,7 @@
                       0 1 0 1 0 0 0 2 1 0 0 0 1 1 0 2
                       3 3 1 1 2 1 1 1 1 2 4 2 0 0 1 4
                       0 0 0 1 0 0 0 0 0 1 0 0 1 0 1))
+(defvar *rate* (/ 1D0 ($mean *disasters*)))
 
 (defgeneric $logp (rv))
 (defgeneric $loghr (rv))
@@ -223,8 +224,31 @@
 
 ;; MLE: 41, 3, 1
 (let ((switch-point (r/discrete-uniform :lower 0 :upper (1- ($count *disasters*))))
-      (early-mean (r/exponential :rate 2))
-      (late-mean (r/exponential :rate 2)))
+      (early-mean (r/exponential :rate *rate*))
+      (late-mean (r/exponential :rate *rate*)))
+  (let* ((accepted (mh 100000 (list switch-point early-mean late-mean) #'likelihood))
+         (na ($count accepted))
+         (ns (round (* 0.2 na)))
+         (selected (subseq accepted 0 ns)))
+    (prn "SELECTED:" ns "/" na)
+    (let ((ss (mapcar (lambda (ps) ($data ($0 ps))) selected))
+          (es (mapcar (lambda (ps) ($data ($1 ps))) selected))
+          (ls (mapcar (lambda (ps) ($data ($2 ps))) selected)))
+      (prn "P0:" (round ($mean ss)))
+      (prn "P1:" (round ($mean es)))
+      (prn "P2:" (round ($mean ls))))))
+
+;; FOR SMS example
+;; https://github.com/CamDavidsonPilon/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/blob/master/Chapter1_Introduction/Ch1_Introduction_PyMC2.ipynb
+(setf *disasters* (->> (slurp "./data/sms.txt")
+                       (mapcar #'parse-float)
+                       (mapcar #'round)))
+(setf *rate* (/ 1D0 ($mean *disasters*)))
+
+;; MLE: 45, 18, 23
+(let ((switch-point (r/discrete-uniform :lower 0 :upper (1- ($count *disasters*)) :ps 1))
+      (early-mean (r/exponential :rate *rate*))
+      (late-mean (r/exponential :rate *rate*)))
   (let* ((accepted (mh 100000 (list switch-point early-mean late-mean) #'likelihood))
          (na ($count accepted))
          (ns (round (* 0.2 na)))
