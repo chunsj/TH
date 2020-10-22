@@ -60,7 +60,9 @@
 
 (defmethod print-object ((rv r/variable) stream)
   (with-slots (observedp value) rv
-    (format stream "~A~A" value (if (not observedp) "?" ""))))
+    (if ($continuousp rv)
+        (format stream "~8F~A" value (if (not observedp) "?" ""))
+        (format stream "~8D~A" value (if (not observedp) "?" "")))))
 
 (defclass r/discrete-uniform (r/variable)
   ((lower :initform 0)
@@ -294,9 +296,9 @@
     (let ((ss (mapcar (lambda (ps) ($data ($0 ps))) selected))
           (es (mapcar (lambda (ps) ($data ($1 ps))) selected))
           (ls (mapcar (lambda (ps) ($data ($2 ps))) selected)))
-      (prn "MEAN[0]:" (round ($mean ss)))
-      (prn "MEAN[1]:" (round ($mean es)))
-      (prn "MEAN[2]:" (round ($mean ls))))))
+      (prn "MEAN/SD[0]:" (round ($mean ss)) "/" (format nil "~8F" ($sd ss)))
+      (prn "MEAN/SD[1]:" (round ($mean es)) "/" (format nil "~8F" ($sd es)))
+      (prn "MEAN/SD[2]:" (round ($mean ls)) "/" (format nil "~8F" ($sd ls))))))
 
 ;; FOR SMS example
 ;; https://github.com/CamDavidsonPilon/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/blob/master/Chapter1_Introduction/Ch1_Introduction_PyMC2.ipynb
@@ -309,7 +311,7 @@
 (let ((switch-point (r/discrete-uniform :lower 0 :upper (1- ($count *disasters*))))
       (early-mean (r/exponential :rate *rate*))
       (late-mean (r/exponential :rate *rate*)))
-  (let* ((accepted (mh 100000 (list switch-point early-mean late-mean) #'likelihood))
+  (let* ((accepted (mh 10000 (list switch-point early-mean late-mean) #'likelihood))
          (na ($count accepted))
          (ns (round (* 0.2 na)))
          (selected (subseq accepted 0 ns)))
@@ -317,6 +319,6 @@
     (let ((ss (mapcar (lambda (ps) ($data ($0 ps))) selected))
           (es (mapcar (lambda (ps) ($data ($1 ps))) selected))
           (ls (mapcar (lambda (ps) ($data ($2 ps))) selected)))
-      (prn "MEAN[0]:" (round ($mean ss)))
-      (prn "MEAN[1]:" (round ($mean es)))
-      (prn "MEAN[2]:" (round ($mean ls))))))
+      (prn "MEAN/SD[0]:" (round ($mean ss)) "/" (format nil "~8F" ($sd ss)))
+      (prn "MEAN/SD[1]:" (round ($mean es)) "/" (format nil "~8F" ($sd es)))
+      (prn "MEAN/SD[2]:" (round ($mean ls)) "/" (format nil "~8F" ($sd ls))))))
