@@ -60,6 +60,7 @@
                                                    (:file "likelihoods")
                                                    (:file "samples")
                                                    (:file "discrete")
-                                                   (:file "continuous")))
+                                                   (:file "continuous")
+                                                   (:file "rv")))
                (:module mcmc :components ((:file "mcmc")
                                           (:file "hmc")))))

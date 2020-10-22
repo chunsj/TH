@@ -40,7 +40,16 @@
            #:distribution/normal
            #:distribution/poisson
            #:distribution/t
-           #:distribution/uniform))
+           #:distribution/uniform
+           #:$logp
+           #:$observation
+           #:$continuousp
+           #:$propose
+           #:rv/variable
+           #:rv/discrete-uniform
+           #:rv/exponential
+           #:rv/poisson
+           #:mh))
 
 (in-package :th.distributions)
 

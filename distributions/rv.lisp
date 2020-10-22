@@ -19,6 +19,10 @@
   (with-slots (value) rv
     value))
 
+(defmethod (setf $data) (v (rv rv/variable))
+  (with-slots (value) rv
+    (setf value v)))
+
 (defmethod $clone ((rv rv/variable))
   (let ((n (make-instance (class-of rv))))
     (with-slots (value observedp) rv
