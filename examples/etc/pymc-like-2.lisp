@@ -17,15 +17,15 @@
 
 (defmethod $logp ((rv T)) 0)
 
-(defclass r/variable ()
+(defclass rv/variable ()
   ((value :initform nil)
    (observedp :initform nil)))
 
-(defmethod $data ((rv r/variable))
+(defmethod $data ((rv rv/variable))
   (with-slots (value) rv
     value))
 
-(defmethod $clone ((rv r/variable))
+(defmethod $clone ((rv rv/variable))
   (let ((n (make-instance (class-of rv))))
     (with-slots (value observedp) rv
       (let ((v value)
@@ -35,34 +35,34 @@
                 observedp o))))
     n))
 
-(defmethod $continuousp ((rv r/variable)) T)
+(defmethod $continuousp ((rv rv/variable)) T)
 
-(defmethod $observation ((rv r/variable))
+(defmethod $observation ((rv rv/variable))
   (with-slots (value observedp) rv
     (when observedp
       value)))
 
-(defmethod (setf $observation) (observation (rv r/variable))
+(defmethod (setf $observation) (observation (rv rv/variable))
   (when observation
     (with-slots (value observedp) rv
       (setf value observation
             observedp T))
     observation))
 
-(defmethod print-object ((rv r/variable) stream)
+(defmethod print-object ((rv rv/variable) stream)
   (with-slots (observedp value) rv
     (if ($continuousp rv)
         (format stream "~8F~A" value (if (not observedp) "?" ""))
         (format stream "~8D~A" value (if (not observedp) "?" "")))))
 
-(defclass r/discrete-uniform (r/variable)
+(defclass rv/discrete-uniform (rv/variable)
   ((lower :initform 0)
    (upper :initform 9)))
 
-(defun r/discrete-uniform (&key (lower 0) (upper 9) observation)
+(defun rv/discrete-uniform (&key (lower 0) (upper 9) observation)
   (let ((l lower)
         (u upper)
-        (n (make-instance 'r/discrete-uniform)))
+        (n (make-instance 'rv/discrete-uniform)))
     (setf ($observation n) observation)
     (with-slots (lower upper value) n
       (setf lower l
@@ -71,9 +71,9 @@
         (setf value (+ lower (1- ($sample/dice 1 (1+ (- ($data upper) ($data lower)))))))))
     n))
 
-(defmethod $continuousp ((rv r/discrete-uniform)) nil)
+(defmethod $continuousp ((rv rv/discrete-uniform)) nil)
 
-(defmethod $clone ((rv r/discrete-uniform))
+(defmethod $clone ((rv rv/discrete-uniform))
   (let ((n (call-next-method rv)))
     (with-slots (lower upper) rv
       (let ((l ($clone lower))
@@ -83,7 +83,7 @@
                 upper u))))
     n))
 
-(defmethod $logp ((rv r/discrete-uniform))
+(defmethod $logp ((rv rv/discrete-uniform))
   (with-slots (value lower upper) rv
     (let ((ll ($ll/uniform value ($data lower) ($data upper)))
           (llower ($logp lower))
@@ -91,12 +91,12 @@
       (when (and ll llower lupper)
         (+ ll llower lupper)))))
 
-(defclass r/exponential (r/variable)
+(defclass rv/exponential (rv/variable)
   ((rate :initform 1D0)))
 
-(defun r/exponential (&key (rate 1D0) observation)
+(defun rv/exponential (&key (rate 1D0) observation)
   (let ((r rate)
-        (n (make-instance 'r/exponential)))
+        (n (make-instance 'rv/exponential)))
     (setf ($observation n) observation)
     (with-slots (rate value) n
       (setf rate r)
@@ -104,7 +104,7 @@
         (setf value ($sample/exponential 1 rate))))
     n))
 
-(defmethod $clone ((rv r/exponential))
+(defmethod $clone ((rv rv/exponential))
   (let ((n (call-next-method rv)))
     (with-slots (rate) rv
       (let ((r ($clone rate)))
@@ -112,19 +112,19 @@
           (setf rate r))))
     n))
 
-(defmethod $logp ((rv r/exponential))
+(defmethod $logp ((rv rv/exponential))
   (with-slots (value rate) rv
     (let ((ll ($ll/exponential value ($data rate)))
           (lrate ($logp rate)))
       (when (and ll lrate)
         (+ ll lrate)))))
 
-(defclass r/poisson (r/variable)
+(defclass rv/poisson (rv/variable)
   ((rate :initform 1D0)))
 
-(defun r/poisson (&key (rate 1D0) observation)
+(defun rv/poisson (&key (rate 1D0) observation)
   (let ((r rate)
-        (n (make-instance 'r/poisson)))
+        (n (make-instance 'rv/poisson)))
     (setf ($observation n) observation)
     (with-slots (rate value) n
       (setf rate r)
@@ -132,7 +132,7 @@
         (setf value ($sample/poisson 1 ($data rate)))))
     n))
 
-(defmethod $clone ((rv r/poisson))
+(defmethod $clone ((rv rv/poisson))
   (let ((n (call-next-method rv)))
     (with-slots (rate) rv
       (let ((r ($clone rate)))
@@ -140,7 +140,7 @@
           (setf rate r))))
     n))
 
-(defmethod $logp ((rv r/poisson))
+(defmethod $logp ((rv rv/poisson))
   (with-slots (value rate) rv
     (let ((ll ($ll/poisson value ($data rate)))
           (lrate ($logp rate)))
@@ -172,7 +172,7 @@
       (setf scale s))
     n))
 
-(defmethod $propose ((proposal proposal/gaussian) (rv r/variable))
+(defmethod $propose ((proposal proposal/gaussian) (rv rv/variable))
   (let ((n ($clone rv)))
     (with-slots (scale factor) proposal
       (with-slots (value) n
@@ -205,7 +205,7 @@
             factor 1D0))
     n))
 
-(defmethod $propose ((proposal proposal/discrete-gaussian) (rv r/variable))
+(defmethod $propose ((proposal proposal/discrete-gaussian) (rv rv/variable))
   (let ((n ($clone rv)))
     (with-slots (scale factor) proposal
       (with-slots (value) n
@@ -213,7 +213,7 @@
           (setf value new-value))))
     (cons n 0D0)))
 
-(defun mh (nsamples parameters likelihoodfn &key (max-iterations 50000) (tune-steps 1000)
+(defun mh (nsamples parameters likelihoodfn &key (max-iterations 100000) (tune-steps 1000)
                                               verbose)
   (let ((old-likelihood (apply likelihoodfn parameters))
         (old-parameters (mapcar #'$clone parameters))
@@ -285,17 +285,17 @@
     (when ls
       (let ((disasters-early (subseq *disasters* 0 ($data switch-point)))
             (disasters-late (subseq *disasters* ($data switch-point))))
-        (let ((d1 (r/poisson :rate early-mean :observation disasters-early))
-              (d2 (r/poisson :rate late-mean :observation disasters-late)))
+        (let ((d1 (rv/poisson :rate early-mean :observation disasters-early))
+              (d2 (rv/poisson :rate late-mean :observation disasters-late)))
           (let ((ld1 ($logp d1))
                 (ld2 ($logp d2)))
             (when (and ls ld1 ld2)
               (+ ls ld1 ld2))))))))
 
 ;; MLE: 41, 3, 1
-(let ((switch-point (r/discrete-uniform :lower 0 :upper (1- ($count *disasters*))))
-      (early-mean (r/exponential :rate *rate*))
-      (late-mean (r/exponential :rate *rate*)))
+(let ((switch-point (rv/discrete-uniform :lower 0 :upper (1- ($count *disasters*))))
+      (early-mean (rv/exponential :rate *rate*))
+      (late-mean (rv/exponential :rate *rate*)))
   (let* ((accepted (mh 10000 (list switch-point early-mean late-mean) #'disaster-likelihood
                        :verbose T))
          (na ($count accepted))
@@ -310,7 +310,7 @@
       (prn "MEAN/SD[2]:" (round ($mean ls)) "/" (format nil "~8F" ($sd ls))))))
 
 ;; FOR SMS example
-;; https://github.com/CamDavidsonPilon/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/blob/master/Chapter1_Introduction/Ch1_Introduction_PyMC2.ipynb
+;; https://github.com/CamDavidsonPilon/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/blob/masterv/Chapter1_Introduction/Ch1_Introduction_PyMC2.ipynb
 (defvar *sms* (->> (slurp "./data/sms.txt")
                    (mapcar #'parse-float)
                    (mapcar #'round)))
@@ -321,17 +321,17 @@
     (when ls
       (let ((disasters-early (subseq *sms* 0 ($data switch-point)))
             (disasters-late (subseq *sms* ($data switch-point))))
-        (let ((d1 (r/poisson :rate early-mean :observation disasters-early))
-              (d2 (r/poisson :rate late-mean :observation disasters-late)))
+        (let ((d1 (rv/poisson :rate early-mean :observation disasters-early))
+              (d2 (rv/poisson :rate late-mean :observation disasters-late)))
           (let ((ld1 ($logp d1))
                 (ld2 ($logp d2)))
             (when (and ls ld1 ld2)
               (+ ls ld1 ld2))))))))
 
 ;; MLE: 45, 18, 23
-(let ((switch-point (r/discrete-uniform :lower 0 :upper (1- ($count *sms*))))
-      (early-mean (r/exponential :rate *srate*))
-      (late-mean (r/exponential :rate *srate*)))
+(let ((switch-point (rv/discrete-uniform :lower 0 :upper (1- ($count *sms*))))
+      (early-mean (rv/exponential :rate *srate*))
+      (late-mean (rv/exponential :rate *srate*)))
   (let* ((accepted (mh 10000 (list switch-point early-mean late-mean) #'sms-likelihood
                        :verbose T))
          (na ($count accepted))
