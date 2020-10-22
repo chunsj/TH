@@ -20,6 +20,8 @@
    (attrs :initform #{} :accessor $attrs))
   (:documentation "Represents a computational node for differentiable parameter."))
 
+(defmethod $data ((n T)) n)
+
 (defmethod print-object ((node node) stream)
   (format stream "[~A] ~A" ($name node) ($data node)))
 
