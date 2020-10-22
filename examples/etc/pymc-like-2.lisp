@@ -213,7 +213,8 @@
           (setf value new-value))))
     (cons n 0D0)))
 
-(defun mh (nsamples parameters likelihoodfn &key (max-iterations 50000) (tune-steps 1000))
+(defun mh (nsamples parameters likelihoodfn &key (max-iterations 50000) (tune-steps 1000)
+                                              verbose)
   (let ((old-likelihood (apply likelihoodfn parameters))
         (old-parameters (mapcar #'$clone parameters))
         (proposals (mapcar (lambda (p)
@@ -224,9 +225,11 @@
         (accepted nil)
         (naccepted 0)
         (max-likelihood most-negative-single-float)
+        (mle-parameters parameters)
         (done nil))
-    (prn (format nil "*    START MLE: ~10,4F" old-likelihood))
-    (prn (format nil "            ~{~A ~}" old-parameters))
+    (when verbose
+      (prn (format nil "*    START MLE: ~10,4F" old-likelihood))
+      (prn (format nil "            ~{~A ~}" old-parameters)))
     (when old-likelihood
       (loop :while (not done)
             :repeat (max nsamples max-iterations)
@@ -250,9 +253,11 @@
                           (setf old-parameters new-parameters
                                 old-likelihood new-likelihood)
                           (when (> new-likelihood max-likelihood)
-                            (setf max-likelihood new-likelihood)
-                            (prn (format nil "* ~8,D MLE: ~10,4F" naccepted max-likelihood))
-                            (prn (format nil "            ~{~A ~}" new-parameters)))
+                            (setf max-likelihood new-likelihood
+                                  mle-parameters new-parameters)
+                            (when verbose
+                              (prn (format nil "* ~8,D MLE: ~10,4F" naccepted max-likelihood))
+                              (prn (format nil "            ~{~A ~}" new-parameters))))
                           (loop :for proposal :in proposals
                                 :do ($accepted! proposal))
                           (when (>= naccepted nsamples) (setf done T))))
@@ -261,6 +266,9 @@
                   (when (zerop (rem iter tune-steps))
                     (loop :for proposal :in proposals
                           :do ($tune! proposal))))))
+    (when verbose
+      (prn "* MLE PARAMETERS")
+      (prn (format nil "~{~A ~}" mle-parameters)))
     accepted))
 
 (defvar *disasters* '(4 5 4 0 1 4 3 4 0 6 3 3 4 0 2 6
@@ -288,7 +296,8 @@
 (let ((switch-point (r/discrete-uniform :lower 0 :upper (1- ($count *disasters*))))
       (early-mean (r/exponential :rate *rate*))
       (late-mean (r/exponential :rate *rate*)))
-  (let* ((accepted (mh 10000 (list switch-point early-mean late-mean) #'disaster-likelihood))
+  (let* ((accepted (mh 10000 (list switch-point early-mean late-mean) #'disaster-likelihood
+                       :verbose T))
          (na ($count accepted))
          (ns (round (* 0.2 na)))
          (selected (subseq accepted 0 ns)))
@@ -323,7 +332,8 @@
 (let ((switch-point (r/discrete-uniform :lower 0 :upper (1- ($count *sms*))))
       (early-mean (r/exponential :rate *srate*))
       (late-mean (r/exponential :rate *srate*)))
-  (let* ((accepted (mh 10000 (list switch-point early-mean late-mean) #'sms-likelihood))
+  (let* ((accepted (mh 10000 (list switch-point early-mean late-mean) #'sms-likelihood
+                       :verbose T))
          (na ($count accepted))
          (ns (round (* 0.2 na)))
          (selected (subseq accepted 0 ns)))
