@@ -4,6 +4,38 @@
         #:th
         #:th.distributions))
 
+(in-package :th.distributions)
+
+(defclass rv/poissons (rv/variable)
+  ((rates :initform '(1D0))))
+
+(defun rv/poissons (&key (rates '(1D0)) observation)
+  (let ((r rates)
+        (n (make-instance 'rv/poissons)))
+    (setf ($observation n) observation)
+    (with-slots (rates value) n
+      (setf rates r)
+      (unless value
+        (setf value (mapcar (lambda (r) ($sample/poisson 1 ($data r))) rates))))
+    n))
+
+(defmethod $clone ((rv rv/poissons))
+  (let ((n (call-next-method rv)))
+    (with-slots (rates) rv
+      (let ((rs (mapcar (lambda (r) ($clone r)) rates)))
+        (with-slots (rates) n
+          (setf rates rs))))
+    n))
+
+(defmethod $logp ((rv rv/poissons))
+  (with-slots (value rates) rv
+    (let ((lrates (reduce (lambda (s v) (when (and s v) (+ s v)))
+                          (mapcar #'$logp rates)))
+          (lls (reduce (lambda (s v) (when (and s v) (+ s v)))
+                       (mapcar (lambda (v r) ($ll/poisson v ($data r))) value rates))))
+      (when (and lls lrates)
+        (+ lls 0)))))
+
 (in-package :rv-play)
 
 (defvar *disasters* '(4 5 4 0 1 4 3 4 0 6 3 3 4 0 2 6
@@ -14,6 +46,41 @@
                       3 3 1 1 2 1 1 1 1 2 4 2 0 0 1 4
                       0 0 0 1 0 0 0 0 0 1 0 0 1 0 1))
 (defvar *rate* (/ 1D0 ($mean *disasters*)))
+
+(let ((switch-point (rv/discrete-uniform :lower 0 :upper (1- ($count *disasters*))))
+      (early-mean (rv/exponential :rate *rate*))
+      (late-mean (rv/exponential :rate *rate*)))
+  (setf ($data switch-point) 41
+        ($data early-mean) 3
+        ($data late-mean) 1)
+  (list (disaster-likelihood switch-point early-mean late-mean)
+        (disaster-likelihood2 switch-point early-mean late-mean)))
+
+(let* ((lsw ($ll/uniform 41 0 (- ($count *disasters*) 1)))
+       (lem ($ll/exponential 3 *rate*))
+       (llm ($ll/exponential 1 *rate*))
+       (lDe (reduce #'+ (mapcar (lambda (dv) ($ll/poisson dv 3)) (subseq *disasters* 0 41))))
+       (lDl (reduce #'+ (mapcar (lambda (dv) ($ll/poisson dv 1)) (subseq *disasters* 41)))))
+  (+ lsw lem llm lDe lDl))
+
+($count (subseq *disasters* 0 41))
+(->> (loop :for i :from 0 :below ($count *disasters*)
+           :collect (if (< i 41)
+                        1
+                        0))
+     (filter (lambda (i) (eq i 1)))
+     ($count))
+
+(defun disaster-likelihood2 (switch-point early-mean late-mean)
+  (let ((ls ($logp switch-point)))
+    (when ls
+      (let* ((rates (loop :for i :from 0 :below ($count *disasters*)
+                          :collect (if (< i ($data switch-point))
+                                       early-mean
+                                       late-mean)))
+             (D (th.distributions::rv/poissons :rates rates :observation *disasters*))
+             (lD ($logp D)))
+        (when (and ls lD) (+ ls lD ($logp early-mean) ($logp late-mean)))))))
 
 (defun disaster-likelihood (switch-point early-mean late-mean)
   (let ((ls ($logp switch-point)))
@@ -31,6 +98,9 @@
 (let ((switch-point (rv/discrete-uniform :lower 0 :upper (1- ($count *disasters*))))
       (early-mean (rv/exponential :rate *rate*))
       (late-mean (rv/exponential :rate *rate*)))
+  (setf ($data switch-point) 41
+        ($data early-mean) 3
+        ($data late-mean) 1)
   (let* ((accepted (mh 10000 (list switch-point early-mean late-mean) #'disaster-likelihood
                        :verbose T))
          (na ($count accepted))
@@ -94,8 +164,6 @@
                                       xs))
             :collect (cons minx nx)))))
 
-(mplot:plot-boxes (loop :for i :from 0 :below 10 :collect (cons i (1+ i))))
-($count *disasters*)
 (-> (loop :for yr :from 1851
           :for o :in *disasters*
           :collect (cons yr o))
