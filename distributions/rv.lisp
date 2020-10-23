@@ -3,6 +3,7 @@
 (defgeneric $logp (rv))
 (defgeneric $observation (rv))
 (defgeneric $continuousp (rv))
+(defgeneric $sample! (rv))
 
 (defgeneric $propose (proposal rv))
 (defgeneric $accepted! (proposal))
@@ -10,6 +11,13 @@
 (defgeneric $tune! (proposal))
 
 (defmethod $logp ((rv T)) 0)
+(defmethod $sample! ((rv T)) rv)
+
+(defmethod $logp ((rvs list))
+  (loop :for rv :in (remove-duplicates rvs)
+        :for logp = ($logp rv)
+        :when logp
+          :summing logp))
 
 (defclass rv/variable ()
   ((value :initform nil)
@@ -32,6 +40,9 @@
           (setf value v
                 observedp o))))
     n))
+
+(defmethod $logp ((rv rv/variable)) nil)
+(defmethod $sample! ((rv rv/variable)) nil)
 
 (defmethod $continuousp ((rv rv/variable)) T)
 
@@ -62,11 +73,10 @@
         (u upper)
         (n (make-instance 'rv/discrete-uniform)))
     (setf ($observation n) observation)
-    (with-slots (lower upper value) n
+    (with-slots (lower upper) n
       (setf lower l
             upper u)
-      (unless value
-        (setf value (+ lower (1- ($sample/dice 1 (1+ (- ($data upper) ($data lower)))))))))
+      ($sample! n))
     n))
 
 (defmethod $continuousp ((rv rv/discrete-uniform)) nil)
@@ -81,9 +91,31 @@
                 upper u))))
     n))
 
+(defun sample-discrete-uniform (lower upper)
+  (+ ($data lower) (1- ($sample/dice 1 (1+ (- ($data upper) ($data lower)))))))
+
+(defmethod $sample! ((rv rv/discrete-uniform))
+  (with-slots (value observedp lower upper) rv
+    (unless observedp
+      (cond ((and (listp lower) (listp upper) (= ($count lower) ($count upper)))
+             (setf value (mapcar (lambda (l u) (sample-discrete-uniform l u)) lower upper)))
+            (T (setf value (sample-discrete-uniform lower upper))))
+      value)))
+
+(defun logp-discrete-uniform (value lower upper)
+  (cond ((and (listp value) (listp lower) (listp upper)
+              (= ($count value) ($count lower) ($count upper)))
+         (loop :for v :in value
+               :for l :in lower
+               :for u :in upper
+               :for ll = ($ll/uniform v ($data l) ($data u))
+               :when ll
+                 :summing ll))
+        (T ($ll/uniform value ($data lower) ($data upper)))))
+
 (defmethod $logp ((rv rv/discrete-uniform))
   (with-slots (value lower upper) rv
-    (let ((ll ($ll/uniform value ($data lower) ($data upper)))
+    (let ((ll (logp-discrete-uniform value lower upper))
           (llower ($logp lower))
           (lupper ($logp upper)))
       (when (and ll llower lupper)

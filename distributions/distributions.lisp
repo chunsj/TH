@@ -41,6 +41,7 @@
            #:distribution/poisson
            #:distribution/t
            #:distribution/uniform
+           #:$sample!
            #:$logp
            #:$observation
            #:$continuousp
