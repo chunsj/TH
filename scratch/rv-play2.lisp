@@ -30,11 +30,11 @@
 (defmethod $logp ((rv rv/poissons))
   (with-slots (value rates) rv
     (let ((lrates (reduce (lambda (s v) (when (and s v) (+ s v)))
-                          (mapcar #'$logp rates)))
+                          (mapcar #'$logp (remove-duplicates rates))))
           (lls (reduce (lambda (s v) (when (and s v) (+ s v)))
                        (mapcar (lambda (v r) ($ll/poisson v ($data r))) value rates))))
       (when (and lls lrates)
-        (+ lls 0)))))
+        (+ lls lrates)))))
 
 (in-package :rv-play)
 
@@ -63,14 +63,6 @@
        (lDl (reduce #'+ (mapcar (lambda (dv) ($ll/poisson dv 1)) (subseq *disasters* 41)))))
   (+ lsw lem llm lDe lDl))
 
-($count (subseq *disasters* 0 41))
-(->> (loop :for i :from 0 :below ($count *disasters*)
-           :collect (if (< i 41)
-                        1
-                        0))
-     (filter (lambda (i) (eq i 1)))
-     ($count))
-
 (defun disaster-likelihood2 (switch-point early-mean late-mean)
   (let ((ls ($logp switch-point)))
     (when ls
@@ -80,7 +72,7 @@
                                        late-mean)))
              (D (th.distributions::rv/poissons :rates rates :observation *disasters*))
              (lD ($logp D)))
-        (when (and ls lD) (+ ls lD ($logp early-mean) ($logp late-mean)))))))
+        (when (and ls lD) (+ ls lD))))))
 
 (defun disaster-likelihood (switch-point early-mean late-mean)
   (let ((ls ($logp switch-point)))
