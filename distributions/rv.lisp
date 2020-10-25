@@ -1,5 +1,8 @@
 (in-package th.distributions)
 
+;; XXX DO NOT ADD LOGP EXCEPT NIL -> IF ANY NIL, IT SHOULD BE NIL
+;; XXX MORE COLLECTION BASED IMPLEMENTATIO CHANGES; START FROM EXPONENTIAL
+
 (defgeneric $logp (rv))
 (defgeneric $observation (rv))
 (defgeneric $continuousp (rv))
