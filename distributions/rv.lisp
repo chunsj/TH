@@ -294,6 +294,7 @@
     (cons n 0D0)))
 
 (defun mh (nsamples parameters likelihoodfn &key (max-iterations 50000) (tune-steps 1000)
+                                              (burn-ins 1000)
                                               verbose)
   (let ((old-likelihood (apply likelihoodfn parameters))
         (old-parameters (mapcar #'$clone parameters))
@@ -304,6 +305,8 @@
                            parameters))
         (accepted nil)
         (naccepted 0)
+        (rejected nil)
+        (nrejected 0)
         (max-likelihood most-negative-single-float)
         (mle-parameters parameters)
         (done nil))
@@ -328,10 +331,11 @@
                       (let ((lmh (+ (- new-likelihood old-likelihood) log-hastings-ratio))
                             (lu (log (random 1D0))))
                         (when (> lmh lu)
-                          (push (mapcar #'$clone new-parameters) accepted)
-                          (incf naccepted)
-                          (setf old-parameters new-parameters
-                                old-likelihood new-likelihood)
+                          (when (>= iter burn-ins)
+                            (push (mapcar #'$clone new-parameters) accepted)
+                            (incf naccepted)
+                            (setf old-parameters new-parameters
+                                  old-likelihood new-likelihood))
                           (when (> new-likelihood max-likelihood)
                             (setf max-likelihood new-likelihood
                                   mle-parameters new-parameters)
@@ -339,10 +343,19 @@
                               (prn (format nil "* ~8,D MLE: ~10,4F" naccepted max-likelihood))
                               (prn (format nil "            ~{~A ~}" new-parameters))))
                           (loop :for proposal :in proposals
-                                :do ($accepted! proposal))
-                          (when (>= naccepted nsamples) (setf done T))))
-                      (loop :for proposal :in proposals
-                            :do ($rejected! proposal)))
+                                :do ($accepted! proposal)))
+                        (when (<= lmh lu)
+                          (when (>= iter burn-ins)
+                            (push (mapcar #'$clone old-parameters) accepted)
+                            (incf naccepted))
+                          (loop :for proposal :in proposals
+                                :do ($rejected! proposal)))
+                        (when (>= naccepted nsamples) (setf done T)))
+                      (progn
+                        (push (mapcar #'$clone new-parameters) rejected)
+                        (incf nrejected)
+                        (loop :for proposal :in proposals
+                              :do ($rejected! proposal))))
                   (when (zerop (rem iter tune-steps))
                     (loop :for proposal :in proposals
                           :do ($tune! proposal))))))
