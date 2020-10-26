@@ -53,6 +53,8 @@
   (setf ($data switch-point) 41
         ($data early-mean) 3
         ($data late-mean) 1)
+  (time (loop :repeat 10000 :do (disaster-likelihood switch-point early-mean late-mean)))
+  (time (loop :repeat 10000 :do (disaster-likelihood2 switch-point early-mean late-mean)))
   (list (disaster-likelihood switch-point early-mean late-mean)
         (disaster-likelihood2 switch-point early-mean late-mean)))
 
@@ -66,11 +68,11 @@
 (defun disaster-likelihood2 (switch-point early-mean late-mean)
   (let ((ls ($logp switch-point)))
     (when ls
-      (let* ((rates (loop :for i :from 0 :below ($count *disasters*)
-                          :collect (if (< i ($data switch-point))
-                                       early-mean
-                                       late-mean)))
-             (D (th.distributions::rv/poissons :rates rates :observation *disasters*))
+      (let* ((rate (loop :for i :from 0 :below ($count *disasters*)
+                         :collect (if (< i ($data switch-point))
+                                      early-mean
+                                      late-mean)))
+             (D (rv/poisson :rate rate :observation *disasters*))
              (lD ($logp D)))
         (when (and ls lD) (+ ls lD))))))
 
@@ -93,7 +95,7 @@
   (setf ($data switch-point) 41
         ($data early-mean) 3
         ($data late-mean) 1)
-  (let* ((accepted (mh 10000 (list switch-point early-mean late-mean) #'disaster-likelihood
+  (let* ((accepted (mh 10000 (list switch-point early-mean late-mean) #'disaster-likelihood2
                        :verbose T))
          (na ($count accepted))
          (ns (round (* 0.2 na)))

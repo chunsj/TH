@@ -1,8 +1,5 @@
 (in-package th.distributions)
 
-;; XXX DO NOT ADD LOGP EXCEPT NIL -> IF ANY NIL, IT SHOULD BE NIL
-;; XXX MORE COLLECTION BASED IMPLEMENTATIO CHANGES; START FROM EXPONENTIAL
-
 (defgeneric $logp (rv))
 (defgeneric $observation (rv))
 (defgeneric $continuousp (rv))
@@ -17,10 +14,15 @@
 (defmethod $sample! ((rv T)) rv)
 
 (defmethod $logp ((rvs list))
-  (loop :for rv :in (remove-duplicates rvs)
-        :for logp = ($logp rv)
-        :when logp
-          :summing logp))
+  (let ((sll 0))
+    (loop :for rv :in (remove-duplicates rvs)
+          :for logp = ($logp rv)
+          :do (if logp
+                  (incf sll logp)
+                  (progn
+                    (setf sll nil)
+                    (return))))
+    sll))
 
 (defclass rv/variable ()
   ((value :initform nil)
@@ -108,12 +110,17 @@
 (defun logp-discrete-uniform (value lower upper)
   (cond ((and (listp value) (listp lower) (listp upper)
               (= ($count value) ($count lower) ($count upper)))
-         (loop :for v :in value
-               :for l :in lower
-               :for u :in upper
-               :for ll = ($ll/uniform v ($data l) ($data u))
-               :when ll
-                 :summing ll))
+         (let ((sll 0))
+           (loop :for v :in value
+                 :for l :in lower
+                 :for u :in upper
+                 :for ll = ($ll/uniform v ($data l) ($data u))
+                 :do (if ll
+                         (incf sll ll)
+                         (progn
+                           (setf sll nil)
+                           (return))))
+           sll))
         (T ($ll/uniform value ($data lower) ($data upper)))))
 
 (defmethod $logp ((rv rv/discrete-uniform))
@@ -133,8 +140,7 @@
     (setf ($observation n) observation)
     (with-slots (rate value) n
       (setf rate r)
-      (unless value
-        (setf value ($sample/exponential 1 rate))))
+      ($sample! n))
     n))
 
 (defmethod $clone ((rv rv/exponential))
@@ -145,9 +151,30 @@
           (setf rate r))))
     n))
 
+(defmethod $sample! ((rv rv/exponential))
+  (with-slots (value observedp rate) rv
+    (unless observedp
+      (cond ((listp rate) (setf value (mapcar (lambda (r) ($sample/exponential 1 r)) rate)))
+            (T (setf value ($sample/exponential 1 rate))))
+      value)))
+
+(defun logp-exponential (value rate)
+  (cond ((and (listp value) (listp rate) (= ($count value) ($count rate)))
+         (let ((sll 0))
+           (loop :for v :in value
+                 :for r :in rate
+                 :for ll = ($ll/exponential v ($data r))
+                 :do (if ll
+                         (incf sll ll)
+                         (progn
+                           (setf sll nil)
+                           (return))))
+           sll))
+        (T ($ll/exponential value ($data rate)))))
+
 (defmethod $logp ((rv rv/exponential))
   (with-slots (value rate) rv
-    (let ((ll ($ll/exponential value ($data rate)))
+    (let ((ll (logp-exponential value rate))
           (lrate ($logp rate)))
       (when (and ll lrate)
         (+ ll lrate)))))
@@ -161,8 +188,7 @@
     (setf ($observation n) observation)
     (with-slots (rate value) n
       (setf rate r)
-      (unless value
-        (setf value ($sample/poisson 1 ($data rate)))))
+      ($sample! n))
     n))
 
 (defmethod $clone ((rv rv/poisson))
@@ -173,9 +199,30 @@
           (setf rate r))))
     n))
 
+(defmethod $sample! ((rv rv/poisson))
+  (with-slots (value observedp rate) rv
+    (unless observedp
+      (cond ((listp rate) (setf value (mapcar (lambda (r) ($sample/poisson 1 r)) rate)))
+            (T (setf value ($sample/poisson 1 rate))))
+      value)))
+
+(defun logp-poisson (value rate)
+  (cond ((and (listp value) (listp rate) (= ($count value) ($count rate)))
+         (let ((sll 0))
+           (loop :for v :in value
+                 :for r :in rate
+                 :for ll = ($ll/poisson v ($data r))
+                 :do (if ll
+                         (incf sll ll)
+                         (progn
+                           (setf sll nil)
+                           (return))))
+           sll))
+        (T ($ll/poisson value ($data rate)))))
+
 (defmethod $logp ((rv rv/poisson))
   (with-slots (value rate) rv
-    (let ((ll ($ll/poisson value ($data rate)))
+    (let ((ll (logp-poisson value rate))
           (lrate ($logp rate)))
       (when (and ll lrate)
         (+ ll lrate)))))
