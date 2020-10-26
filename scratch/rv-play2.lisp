@@ -89,13 +89,13 @@
               (+ ls ld1 ld2))))))))
 
 ;; MLE: 41, 3, 1
-(let ((switch-point (rv/discrete-uniform :lower 0 :upper (1- ($count *disasters*))))
+(let ((switch-point (rv/discrete-uniform :lower 1 :upper (- ($count *disasters*) 2)))
       (early-mean (rv/exponential :rate *rate*))
       (late-mean (rv/exponential :rate *rate*)))
   (setf ($data switch-point) 41
         ($data early-mean) 3
         ($data late-mean) 1)
-  (let* ((accepted (mh 10000 (list switch-point early-mean late-mean) #'disaster-likelihood2
+  (let* ((accepted (mh 10000 (list switch-point early-mean late-mean) #'disaster-likelihood
                        :verbose T))
          (na ($count accepted))
          (ns (round (* 0.2 na)))
@@ -128,7 +128,7 @@
               (+ ls ld1 ld2))))))))
 
 ;; MLE: 45, 18, 23
-(let ((switch-point (rv/discrete-uniform :lower 0 :upper (1- ($count *sms*))))
+(let ((switch-point (rv/discrete-uniform :lower 1 :upper (- ($count *sms*) 2)))
       (early-mean (rv/exponential :rate *srate*))
       (late-mean (rv/exponential :rate *srate*)))
   (let* ((accepted (mh 10000 (list switch-point early-mean late-mean) #'sms-likelihood
