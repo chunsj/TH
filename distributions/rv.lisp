@@ -4,6 +4,8 @@
 (defgeneric $observation (rv))
 (defgeneric $continuousp (rv))
 (defgeneric $sample! (rv))
+(defgeneric $supportp (rv v))
+(defgeneric $supportedp (rv))
 
 (defgeneric $propose (proposal rv))
 (defgeneric $accepted! (proposal))
@@ -12,17 +14,13 @@
 
 (defmethod $logp ((rv T)) 0)
 (defmethod $sample! ((rv T)) rv)
+(defmethod $supportp ((rv T) v) T)
+(defmethod $supportedp ((rv T)) T)
 
 (defmethod $logp ((rvs list))
-  (let ((sll 0))
-    (loop :for rv :in (remove-duplicates rvs)
-          :for logp = ($logp rv)
-          :do (if logp
-                  (incf sll logp)
-                  (progn
-                    (setf sll nil)
-                    (return))))
-    sll))
+  (let ((rvs0 (remove-duplicates rvs)))
+    (unless (some (lambda (r) (not ($supportedp r))) rvs0)
+      (loop :for rv :in rvs0 :summing ($logp rv)))))
 
 (defclass rv/variable ()
   ((value :initform nil)
@@ -69,6 +67,10 @@
         (format stream "~8F~A" value (if (not observedp) "?" ""))
         (format stream "~8D~A" value (if (not observedp) "?" "")))))
 
+(defmethod $supportedp ((rv rv/variable))
+  (with-slots (value) rv
+    ($supportp rv value)))
+
 (defclass rv/discrete-uniform (rv/variable)
   ((lower :initform 0)
    (upper :initform 9)))
@@ -96,6 +98,20 @@
                 upper u))))
     n))
 
+(defun supportp-discrete-uniform (lower upper v)
+  (cond ((listp v)
+         (cond ((and (listp lower) (listp upper)
+                     (= ($count v) ($count lower) ($count upper)))
+                (not (some (lambda (val l u) (or (< val ($data l)) (> val ($data u))))
+                           v lower upper)))
+               (T (not (some (lambda (val) (or (< val ($data lower)) (> val ($data upper))))
+                             v)))))
+        (T (and (>= v ($data lower)) (<= v ($data upper))))))
+
+(defmethod $supportp ((rv rv/discrete-uniform) v)
+  (with-slots (lower upper) rv
+    (supportp-discrete-uniform lower upper v)))
+
 (defun sample-discrete-uniform (lower upper)
   (+ ($data lower) (1- ($sample/dice 1 (1+ (- ($data upper) ($data lower)))))))
 
@@ -108,20 +124,14 @@
       value)))
 
 (defun logp-discrete-uniform (value lower upper)
-  (cond ((and (listp value) (listp lower) (listp upper)
-              (= ($count value) ($count lower) ($count upper)))
-         (let ((sll 0))
+  (when (supportp-discrete-uniform lower upper value)
+    (cond ((and (listp value) (listp lower) (listp upper)
+                (= ($count value) ($count lower) ($count upper)))
            (loop :for v :in value
                  :for l :in lower
                  :for u :in upper
-                 :for ll = ($ll/uniform v ($data l) ($data u))
-                 :do (if ll
-                         (incf sll ll)
-                         (progn
-                           (setf sll nil)
-                           (return))))
-           sll))
-        (T ($ll/uniform value ($data lower) ($data upper)))))
+                 :summing ($ll/uniform v ($data l) ($data u))))
+          (T ($ll/uniform value ($data lower) ($data upper))))))
 
 (defmethod $logp ((rv rv/discrete-uniform))
   (with-slots (value lower upper) rv
@@ -151,6 +161,12 @@
           (setf rate r))))
     n))
 
+(defun supportp-exponential (v)
+  (cond ((listp v) (not (some (lambda (val) (<= val 0)) v))
+         T (> v 0))))
+
+(defmethod $supportp ((rv rv/exponential) v) (supportp-exponential v))
+
 (defmethod $sample! ((rv rv/exponential))
   (with-slots (value observedp rate) rv
     (unless observedp
@@ -159,18 +175,12 @@
       value)))
 
 (defun logp-exponential (value rate)
-  (cond ((and (listp value) (listp rate) (= ($count value) ($count rate)))
-         (let ((sll 0))
+  (when (supportp-exponential value)
+    (cond ((and (listp value) (listp rate) (= ($count value) ($count rate)))
            (loop :for v :in value
                  :for r :in rate
-                 :for ll = ($ll/exponential v ($data r))
-                 :do (if ll
-                         (incf sll ll)
-                         (progn
-                           (setf sll nil)
-                           (return))))
-           sll))
-        (T ($ll/exponential value ($data rate)))))
+                 :summing ($ll/exponential v ($data r))))
+          (T ($ll/exponential value ($data rate))))))
 
 (defmethod $logp ((rv rv/exponential))
   (with-slots (value rate) rv
@@ -206,19 +216,19 @@
             (T (setf value ($sample/poisson 1 rate))))
       value)))
 
+(defun supportp-poisson (v)
+  (cond ((listp v) (not (some (lambda (val) (<= val 0)) v))
+         T (> v 0))))
+
+(defmethod $supportp ((rv rv/poisson) v) (supportp-poisson v))
+
 (defun logp-poisson (value rate)
-  (cond ((and (listp value) (listp rate) (= ($count value) ($count rate)))
-         (let ((sll 0))
+  (when (supportp-poisson value)
+    (cond ((and (listp value) (listp rate) (= ($count value) ($count rate)))
            (loop :for v :in value
                  :for r :in rate
-                 :for ll = ($ll/poisson v ($data r))
-                 :do (if ll
-                         (incf sll ll)
-                         (progn
-                           (setf sll nil)
-                           (return))))
-           sll))
-        (T ($ll/poisson value ($data rate)))))
+                 :summing ($ll/poisson v ($data r))))
+          (T ($ll/poisson value ($data rate))))))
 
 (defmethod $logp ((rv rv/poisson))
   (with-slots (value rate) rv
