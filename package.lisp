@@ -159,6 +159,8 @@
            #:$floor!
            #:$log
            #:$log!
+           #:$logit
+           #:$invlogit
            #:$log1p
            #:$log1p!
            #:$lgammaf

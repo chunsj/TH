@@ -2,6 +2,32 @@
 
 (in-package :th)
 
+(defgeneric $logit (p))
+(defgeneric $invlogit (x))
+
+(defmethod $logit ((p number))
+  (log (/ p (- 1.0 p))))
+
+(defmethod $logit ((p tensor))
+  ($log ($div p ($sub 1.0 p))))
+
+(defmethod $logit ((p node))
+  (node ($logit ($data p))
+        :name :logit
+        :link (link (to p ($mul! ($add ($div 1 ($data p)) ($div 1 ($sub 1.0 ($data p))))
+                                 gv)))))
+
+(defmethod $invlogit ((x number))
+  (/ 1.0 (+ 1.0 (exp (- x)))))
+
+(defmethod $invlogit ((x tensor))
+  ($div 1.0 ($add 1.0 ($exp ($neg x)))))
+
+(defmethod $invlogit ((x node))
+  (node ($invlogit ($data x))
+        :name :invlogit
+        :link (link (to x ($mul! ($mul dv ($sub 1 dv)) gv)))))
+
 (defmethod $abs ((x node))
   (let ((out ($clear ($data x))))
     (nn-abs-update-output ($data x) out)
