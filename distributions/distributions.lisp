@@ -50,6 +50,11 @@
            #:rv/discrete-uniform
            #:rv/exponential
            #:rv/poisson
+           #:$mcmc/trace
+           #:$mcmc/mle
+           #:$mcmc/mean
+           #:$mcmc/sd
+           #:$mcmc/count
            #:mh))
 
 (in-package :th.distributions)

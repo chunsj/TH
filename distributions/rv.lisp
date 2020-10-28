@@ -162,8 +162,8 @@
     n))
 
 (defun supportp-exponential (v)
-  (cond ((listp v) (not (some (lambda (val) (<= val 0)) v))
-         T (> v 0))))
+  (cond ((listp v) (not (some (lambda (val) (< val 0)) v)))
+        (T (> v 0))))
 
 (defmethod $supportp ((rv rv/exponential) v) (supportp-exponential v))
 
@@ -217,8 +217,8 @@
       value)))
 
 (defun supportp-poisson (v)
-  (cond ((listp v) (not (some (lambda (val) (<= val 0)) v))
-         T (> v 0))))
+  (cond ((listp v) (not (some (lambda (val) (< val 0)) v)))
+        (T (> v 0))))
 
 (defmethod $supportp ((rv rv/poisson) v) (supportp-poisson v))
 
@@ -253,7 +253,7 @@
 
 (defclass proposal/gaussian (proposal)
   ((scale :initform 1D0)
-   (factor :initform 0.1D0)))
+   (factor :initform 1D0)))
 
 (defun proposal/gaussian (&optional (scale 1D0))
   (let ((n (make-instance 'proposal/gaussian))
@@ -303,9 +303,66 @@
           (setf value new-value))))
     (cons n 0D0)))
 
-(defun mh (nsamples parameters likelihoodfn &key (max-iterations 50000) (tune-steps 1000)
-                                              (burn-ins 1000)
-                                              verbose)
+(defgeneric $mcmc/trace (trace))
+(defgeneric $mcmc/push! (data trace))
+(defgeneric $mcmc/mle (trace))
+(defgeneric $mcmc/mean (trace))
+(defgeneric $mcmc/sd (trace))
+(defgeneric $mcmc/count (trace))
+
+(defclass mcmc/trace ()
+  ((traces :initform nil)
+   (burn-ins :initform 0)
+   (thin :initform 0)
+   (mlev :initform nil)))
+
+(defun mcmc/trace (rv &key (burn-ins 0) (thin 1))
+  (let ((n (make-instance 'mcmc/trace))
+        (nb burn-ins)
+        (th thin))
+    (with-slots (burn-ins thin mlev) n
+      (setf burn-ins nb
+            thin th
+            mlev rv))
+    n))
+
+(defmethod $mcmc/trace ((trace mcmc/trace))
+  (with-slots (traces burn-ins thin) trace
+    (let ((rtraces (nthcdr burn-ins (reverse traces))))
+      (loop :for lst :on rtraces :by (lambda (l) (nthcdr thin l))
+            :collect (car lst)))))
+
+(defmethod $mcmc/push! (data (trace mcmc/trace))
+  (with-slots (traces) trace
+    (push data traces))
+  data)
+
+(defmethod $count ((trace mcmc/trace))
+  (with-slots (traces) trace
+    ($count traces)))
+
+(defun set-mlev! (trace v)
+  (with-slots (mlev) trace
+    (setf mlev v)))
+
+(defmethod $mcmc/mle ((trace mcmc/trace))
+  (with-slots (mlev) trace
+    mlev))
+
+(defmethod $mcmc/mean ((trace mcmc/trace))
+  (let ((trc ($mcmc/trace trace)))
+    ($mean (mapcar #'$data trc))))
+
+(defmethod $mcmc/sd ((trace mcmc/trace))
+  (let ((trc ($mcmc/trace trace)))
+    ($sd (mapcar #'$data trc))))
+
+(defmethod $mcmc/count ((trace mcmc/trace))
+  ($count ($mcmc/trace trace)))
+
+(defun mh (parameters likelihoodfn &key (iterations 50000) (tune-steps 100)
+                                     (burn-ins 1000) (thin 1)
+                                     verbose)
   (let ((old-likelihood (apply likelihoodfn parameters))
         (old-parameters (mapcar #'$clone parameters))
         (proposals (mapcar (lambda (p)
@@ -313,63 +370,45 @@
                                  (proposal/gaussian)
                                  (proposal/discrete-gaussian)))
                            parameters))
-        (accepted nil)
-        (naccepted 0)
-        (rejected nil)
-        (nrejected 0)
-        (max-likelihood most-negative-single-float)
-        (mle-parameters parameters)
-        (done nil))
-    (when verbose
-      (prn (format nil "*    START MLE: ~10,4F" old-likelihood))
-      (prn (format nil "            ~{~A ~}" old-parameters)))
+        (traces (mapcar (lambda (p) (mcmc/trace ($clone p) :burn-ins burn-ins :thin thin)) parameters))
+        (max-likelihood most-negative-single-float))
     (when old-likelihood
-      (loop :while (not done)
-            :repeat (max nsamples max-iterations)
+      (loop :repeat (+ iterations burn-ins)
             :for iter :from 1
-            :for proposed = (mapcar (lambda (proposal parameter)
-                                      ($propose proposal parameter))
-                                    proposals
-                                    old-parameters)
-            :for new-parameters = (mapcar #'car proposed)
-            :for log-hastings-ratio = (reduce (lambda (s lhr)
-                                                (when lhr (+ s lhr)))
-                                              (mapcar #'cdr proposed))
-            :for new-likelihood = (apply likelihoodfn new-parameters)
-            :do (let ((valid-result (and log-hastings-ratio new-likelihood)))
-                  (if valid-result
-                      (let ((lmh (+ (- new-likelihood old-likelihood) log-hastings-ratio))
-                            (lu (log (random 1D0))))
-                        (when (> lmh lu)
-                          (when (>= iter burn-ins)
-                            (push (mapcar #'$clone new-parameters) accepted)
-                            (incf naccepted)
-                            (setf old-parameters new-parameters
-                                  old-likelihood new-likelihood))
-                          (when (> new-likelihood max-likelihood)
-                            (setf max-likelihood new-likelihood
-                                  mle-parameters new-parameters)
-                            (when verbose
-                              (prn (format nil "* ~8,D MLE: ~10,4F" naccepted max-likelihood))
-                              (prn (format nil "            ~{~A ~}" new-parameters))))
-                          (loop :for proposal :in proposals
-                                :do ($accepted! proposal)))
-                        (when (<= lmh lu)
-                          (when (>= iter burn-ins)
-                            (push (mapcar #'$clone old-parameters) accepted)
-                            (incf naccepted))
-                          (loop :for proposal :in proposals
-                                :do ($rejected! proposal)))
-                        (when (>= naccepted nsamples) (setf done T)))
-                      (progn
-                        (push (mapcar #'$clone new-parameters) rejected)
-                        (incf nrejected)
-                        (loop :for proposal :in proposals
-                              :do ($rejected! proposal))))
-                  (when (zerop (rem iter tune-steps))
+            :do (let ((can-tune (and (> iter 1) (<= iter burn-ins) (zerop (rem iter tune-steps)))))
+                  (when can-tune
                     (loop :for proposal :in proposals
-                          :do ($tune! proposal))))))
+                          :do ($tune! proposal)))
+                  (loop :for proposal :in proposals
+                        :for parameter :in old-parameters
+                        :for trace :in traces
+                        :for proposed = ($propose proposal parameter)
+                        :for new-parameter = (car proposed)
+                        :for log-hastings-ratio = (cdr proposed)
+                        :for parameter-index :from 0
+                        :for ps = (loop :for p :in old-parameters
+                                        :for i :from 0
+                                        :collect (if (eq i parameter-index)
+                                                     new-parameter
+                                                     p))
+                        :for new-likelihood = (apply likelihoodfn ps)
+                        :do (let ((acceptable (and log-hastings-ratio
+                                                   new-likelihood
+                                                   (> (+ (- new-likelihood old-likelihood)
+                                                         log-hastings-ratio)
+                                                      (log (random 1D0))))))
+                              (when acceptable
+                                ($mcmc/push! ($clone new-parameter) trace)
+                                (setf ($ old-parameters parameter-index) new-parameter
+                                      old-likelihood new-likelihood)
+                                ($accepted! proposal)
+                                (when (> new-likelihood max-likelihood)
+                                  (set-mlev! trace ($clone new-parameter))
+                                  (setf max-likelihood new-likelihood)))
+                              (unless acceptable
+                                ($mcmc/push! ($clone parameter) trace)
+                                ($rejected! proposal)))))))
     (when verbose
       (prn "* MLE PARAMETERS")
-      (prn (format nil "~{~A ~}" mle-parameters)))
-    accepted))
+      (prn (format nil "~{~A ~}" (mapcar #'$mcmc/mle traces))))
+    traces))
