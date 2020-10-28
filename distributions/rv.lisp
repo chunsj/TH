@@ -365,6 +365,7 @@
 (defmethod $mcmc/count ((trace mcmc/trace))
   ($count ($mcmc/trace trace)))
 
+;; XXX CHECK DIVERGENCE AND OTHER STATS
 (defun mh (parameters likelihoodfn &key (iterations 50000) (tune-steps 100)
                                      (burn-ins 1000) (thin 1)
                                      verbose)
