@@ -316,6 +316,11 @@
    (thin :initform 0)
    (mlev :initform nil)))
 
+(defmethod print-object ((trc mcmc/trace) stream)
+  (with-slots (traces burn-ins thin mlev) trc
+    (cond ((null mlev) (format stream "<MCMC/TRACE UNINITIALIZED>"))
+          (T (format stream "<MCMC/TRACE [~A/~A] ~A>" burn-ins thin mlev)))))
+
 (defun mcmc/trace (rv &key (burn-ins 0) (thin 1))
   (let ((n (make-instance 'mcmc/trace))
         (nb burn-ins)
