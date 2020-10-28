@@ -31,18 +31,14 @@
 (let ((switch-point (rv/discrete-uniform :lower 1 :upper (- ($count *disasters*) 2)))
       (early-mean (rv/exponential :rate *rate*))
       (late-mean (rv/exponential :rate *rate*)))
-  (let* ((accepted (mh 10000 (list switch-point early-mean late-mean) #'disaster-likelihood
-                       :verbose T))
-         (na ($count accepted))
-         (ns (round (* 0.2 na)))
-         (selected (subseq accepted 0 ns)))
-    (prn "SELECTED:" ns "/" na)
-    (let ((ss (mapcar (lambda (ps) ($data ($0 ps))) selected))
-          (es (mapcar (lambda (ps) ($data ($1 ps))) selected))
-          (ls (mapcar (lambda (ps) ($data ($2 ps))) selected)))
-      (prn "MEAN/SD[0]:" (round ($mean ss)) "/" (format nil "~8F" ($sd ss)))
-      (prn "MEAN/SD[1]:" (round ($mean es)) "/" (format nil "~8F" ($sd es)))
-      (prn "MEAN/SD[2]:" (round ($mean ls)) "/" (format nil "~8F" ($sd ls))))))
+  (let* ((traces (mh (list switch-point early-mean late-mean) #'disaster-likelihood
+                     :iterations 10000
+                     :thin 5
+                     :verbose T)))
+    (loop :for trc :in traces
+          :do (prn (format nil "~A/~A ~8F ~8F ~8F" ($mcmc/count trc) ($count trc)
+                           ($mcmc/mle trc) ($mcmc/mean trc) ($mcmc/sd trc))))))
+
 
 ;; FOR SMS example
 ;; https://github.com/CamDavidsonPilon/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/blob/masterv/Chapter1_Introduction/Ch1_Introduction_PyMC2.ipynb
@@ -67,15 +63,10 @@
 (let ((switch-point (rv/discrete-uniform :lower 1 :upper (- ($count *sms*) 2)))
       (early-mean (rv/exponential :rate *srate*))
       (late-mean (rv/exponential :rate *srate*)))
-  (let* ((accepted (mh 10000 (list switch-point early-mean late-mean) #'sms-likelihood
-                       :verbose T))
-         (na ($count accepted))
-         (ns (round (* 0.2 na)))
-         (selected (subseq accepted 0 ns)))
-    (prn "SELECTED:" ns "/" na)
-    (let ((ss (mapcar (lambda (ps) ($data ($0 ps))) selected))
-          (es (mapcar (lambda (ps) ($data ($1 ps))) selected))
-          (ls (mapcar (lambda (ps) ($data ($2 ps))) selected)))
-      (prn "MEAN/SD[0]:" (round ($mean ss)) "/" (format nil "~8F" ($sd ss)))
-      (prn "MEAN/SD[1]:" (round ($mean es)) "/" (format nil "~8F" ($sd es)))
-      (prn "MEAN/SD[2]:" (round ($mean ls)) "/" (format nil "~8F" ($sd ls))))))
+  (let* ((traces (mh (list switch-point early-mean late-mean) #'sms-likelihood
+                     :iterations 10000
+                     :thin 5
+                     :verbose T)))
+    (loop :for trc :in traces
+          :do (prn (format nil "~A/~A ~8F ~8F ~8F" ($mcmc/count trc) ($count trc)
+                           ($mcmc/mle trc) ($mcmc/mean trc) ($mcmc/sd trc))))))
