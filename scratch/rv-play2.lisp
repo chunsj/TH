@@ -30,37 +30,28 @@
 ;; MLE: 41, 3, 1
 (let ((switch-point (rv/discrete-uniform :lower 1 :upper (- ($count *disasters*) 2)))
       (early-mean (rv/exponential :rate *rate*))
-      (late-mean (rv/exponential :rate *rate*)))
+      (late-mean (rv/exponential :rate *rate*))
+      (lfn #'disaster-likelihood))
   (multiple-value-bind (traces deviance)
-      (mh (list switch-point early-mean late-mean) #'disaster-likelihood
+      (mh (list switch-point early-mean late-mean) lfn
           :iterations 10000
           :thin 5
           :verbose T)
     (loop :for trc :in traces
-          :do (prn ($mcmc/mle trc)))
-    (loop :for trc :in traces
           :do (prn ($mcmc/summary trc)))
     (prn "AIC" ($mcmc/aic deviance 3))
-    (prn "DIC" ($mcmc/dic traces deviance #'disaster-likelihood))))
+    (prn "DIC" ($mcmc/dic traces deviance lfn))))
 
-
-;; MLE: 41, 3, 1
-(let ((switch-point (rv/discrete-uniform :lower 1 :upper (- ($count *disasters*) 2)))
-      (early-mean (rv/exponential :rate *rate*))
-      (late-mean (rv/exponential :rate *rate*)))
-  (let* ((traces (mh (list switch-point early-mean late-mean) #'disaster-likelihood
-                     :iterations 10000
-                     :thin 5
-                     :verbose T)))
-    (loop :for trc :in traces
-          :do (progn
-                (prn ($count trc) ($mcmc/count trc)
-                     ($mcmc/mle trc) ($mcmc/mean trc) ($mcmc/sd trc))
-                (prn ($mcmc/autocorrelation trc))
-                (prn ($mcmc/quantiles trc))
-                (prn ($mcmc/error trc))
-                (prn ($mcmc/hpd trc 0.95))
-                (prn ($mcmc/geweke trc))))))
+(let ((acrs '(1.0d0 0.16686886853883606d0 0.05296233695178226d0 0.02513048977104168d0
+              -0.026768236953095763d0 -0.009666847281365994d0 -0.01467972172316531d0
+              0.022914797557304512d0 0.021270699559253998d0 -3.657343736521337d-4
+              -0.02459088733309092d0 -0.007301008988125245d0 -0.005805687306320726d0
+              0.031353524721021986d0 -0.022714435743048055d0 0.004213554410337965d0
+              0.018790940857874604d0 -0.01914321221664786d0 -9.254498978603177d-4
+              0.015455073341770462d0 -0.0034004425214771835d0)))
+  (mplot:plot-boxes (loop :for i :from 0
+                          :for v :in acrs
+                          :collect (cons i v))))
 
 ;; FOR SMS example
 ;; https://github.com/CamDavidsonPilon/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/blob/masterv/Chapter1_Introduction/Ch1_Introduction_PyMC2.ipynb
@@ -82,6 +73,20 @@
               (+ ls ld1 ld2))))))))
 
 ;; MLE: 45, 18, 23
+(let ((switch-point (rv/discrete-uniform :lower 1 :upper (- ($count *sms*) 2)))
+      (early-mean (rv/exponential :rate *srate*))
+      (late-mean (rv/exponential :rate *srate*))
+      (lfn #'sms-likelihood))
+  (multiple-value-bind (traces deviance)
+      (mh (list switch-point early-mean late-mean) lfn
+          :iterations 10000
+          :thin 5
+          :verbose T)
+    (loop :for trc :in traces
+          :do (prn ($mcmc/summary trc)))
+    (prn "AIC" ($mcmc/aic deviance 3))
+    (prn "DIC" ($mcmc/dic traces deviance lfn))))
+
 (let ((switch-point (rv/discrete-uniform :lower 1 :upper (- ($count *sms*) 2)))
       (early-mean (rv/exponential :rate *srate*))
       (late-mean (rv/exponential :rate *srate*)))
