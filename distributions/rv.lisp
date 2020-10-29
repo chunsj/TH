@@ -26,6 +26,14 @@
   ((value :initform nil)
    (observedp :initform nil)))
 
+(defun rv/variable (v &key observedp)
+  (let ((n (make-instance 'rv/variable))
+        (obp observedp))
+    (with-slots (value observedp) n
+      (setf value v
+            observedp obp))
+    n))
+
 (defmethod $data ((rv rv/variable))
   (with-slots (value) rv
     value))
@@ -239,9 +247,22 @@
 
 (defclass proposal ()
   ((accepted :initform 0)
-   (rejected :initform 0)))
+   (rejected :initform 0)
+   (factor :initform 1D0)))
 
-(defmethod $tune! ((p proposal)))
+(defmethod $tune! ((proposal proposal))
+  (with-slots (accepted rejected factor) proposal
+    (let ((total (+ accepted rejected)))
+      (when (> total 0)
+        (let ((r (/ accepted total)))
+          (cond ((< r 0.001) (setf factor (* factor 0.1)))
+                ((< r 0.05) (setf factor (* factor 0.5)))
+                ((< r 0.2) (setf factor (* factor 0.9)))
+                ((> r 0.95) (setf factor (* factor 10.0)))
+                ((> r 0.75) (setf factor (* factor 2.0)))
+                ((> r 0.5) (setf factor (* factor 1.1))))
+          (setf accepted 0
+                rejected 0))))))
 
 (defmethod $accepted! ((p proposal))
   (with-slots (accepted) p
@@ -251,9 +272,28 @@
   (with-slots (rejected) p
     (incf rejected)))
 
+(defclass proposal/uniform (proposal)
+  ((scale :initform 1D0)))
+
+(defun proposal/uniform (&optional (scale 1D0))
+  (let ((n (make-instance 'proposal/uniform))
+        (s scale))
+    (with-slots (scale) n
+      (setf scale s))
+    n))
+
+(defmethod $propose ((proposal proposal/uniform) (rv rv/variable))
+  (let ((n ($clone rv)))
+    (with-slots (scale factor) proposal
+      (with-slots (value) n
+        (let ((new-value ($sample/uniform 1
+                                          (+ value (* -1 factor scale))
+                                          (+ value (* factor scale)))))
+          (setf value new-value))))
+    (cons n 0D0)))
+
 (defclass proposal/gaussian (proposal)
-  ((scale :initform 1D0)
-   (factor :initform 1D0)))
+  ((scale :initform 1D0)))
 
 (defun proposal/gaussian (&optional (scale 1D0))
   (let ((n (make-instance 'proposal/gaussian))
@@ -269,20 +309,6 @@
         (let ((new-value ($sample/gaussian 1 value (* factor scale))))
           (setf value new-value))))
     (cons n 0D0)))
-
-(defmethod $tune! ((proposal proposal/gaussian))
-  (with-slots (accepted rejected factor) proposal
-    (let ((total (+ accepted rejected)))
-      (when (> total 0)
-        (let ((r (/ accepted total)))
-          (cond ((< r 0.001) (setf factor (* factor 0.1)))
-                ((< r 0.05) (setf factor (* factor 0.5)))
-                ((< r 0.2) (setf factor (* factor 0.9)))
-                ((> r 0.95) (setf factor (* factor 10.0)))
-                ((> r 0.75) (setf factor (* factor 2.0)))
-                ((> r 0.5) (setf factor (* factor 1.1))))
-          (setf accepted 0
-                rejected 0))))))
 
 (defclass proposal/discrete-gaussian (proposal/gaussian)
   ())
@@ -303,12 +329,67 @@
           (setf value new-value))))
     (cons n 0D0)))
 
+(defun autocov (series &optional (lag 1) divnk)
+  (let ((n ($count series))
+        (zbar ($mean series))
+        (lseries (nthcdr lag series)))
+    (/ (loop :for i :from 0 :below (- n lag)
+             :for v :in series
+             :for lv :in lseries
+             :for vz = (- v zbar)
+             :for lz = (- lv zbar)
+             :summing (* vz lz))
+       (if divnk (- n lag) n))))
+
+(defun autocorr (series &optional (lag 1))
+  (/ (autocov series lag) (autocov series 0)))
+
+(defun min-interval (vs alpha)
+  (let* ((mn nil)
+         (mx nil)
+         (n ($count vs))
+         (start 0)
+         (end (round (* n (- 1 alpha))))
+         (min-width most-positive-single-float))
+    (loop :while (< end n)
+          :for hi = ($ vs end)
+          :for lo = ($ vs start)
+          :for width = (- hi lo)
+          :do (progn
+                (when (< width min-width)
+                  (setf min-width width
+                        mn lo
+                        mx hi))
+                (incf start)
+                (incf end)))
+    (cons mn mx)))
+
+(defun interval-zscores (vs a b &optional (intervals 20))
+  (let* ((end (1- ($count vs)))
+         (hend (/ end 2))
+         (sindices (loop :for i :from 0 :below (round hend) :by (round (/ hend intervals))
+                         :collect i)))
+    (loop :for start :in sindices
+          :for slice-a = (subseq vs start (+ start (round (* a (- end start)))))
+          :for slice-b = (subseq vs (round (- end (* b (- end start)))))
+          :for zn = (- ($mean slice-a) ($mean slice-b))
+          :for zd = (+ ($square ($sd slice-a)) ($square ($sd slice-b)))
+          :collect (cons start (/ zn zd)))))
+
 (defgeneric $mcmc/trace (trace))
 (defgeneric $mcmc/push! (data trace))
 (defgeneric $mcmc/mle (trace))
 (defgeneric $mcmc/mean (trace))
 (defgeneric $mcmc/sd (trace))
 (defgeneric $mcmc/count (trace))
+(defgeneric $mcmc/error (trace))
+(defgeneric $mcmc/autocorrelation (trace &key maxlag))
+(defgeneric $mcmc/quantiles (trace))
+(defgeneric $mcmc/hpd (trace alpha))
+(defgeneric $mcmc/geweke (trace &key first last intervals))
+(defgeneric $mcmc/summary (trace))
+(defgeneric $mcmc/aic (deviance k))
+(defgeneric $mcmc/dic (traces deviance likelihoodfn))
 
 (defclass mcmc/trace ()
   ((traces :initform nil)
@@ -362,10 +443,92 @@
   (let ((trc ($mcmc/trace trace)))
     ($sd (mapcar #'$data trc))))
 
+(defmethod $mcmc/error ((trace mcmc/trace))
+  (let ((n ($mcmc/count trace))
+        (sd ($mcmc/sd trace)))
+    (when (>= n 1) (/ sd (sqrt n)))))
+
 (defmethod $mcmc/count ((trace mcmc/trace))
   ($count ($mcmc/trace trace)))
 
-;; XXX CHECK DIVERGENCE AND OTHER STATS
+(defmethod $mcmc/autocorrelation ((trace mcmc/trace) &key (maxlag 100))
+  (let ((trcvs (mapcar #'$data ($mcmc/trace trace))))
+    (loop :for k :from 0 :below (1+ maxlag)
+          :collect (autocorr trcvs k))))
+
+(defmethod $mcmc/quantiles ((trace mcmc/trace))
+  (let* ((trcvs (mapcar #'$data ($mcmc/trace trace)))
+         (n ($count trcvs))
+         (qlist '(2.5 25 50 75 97.5)))
+    (when (> n 10)
+      (let ((vs (sort trcvs #'<)))
+        (loop :for q :in qlist
+              :for ridx = (round (* n (/ q 100)))
+              :collect (let ((i ridx))
+                         (when (< i 0) (setf i 0))
+                         (when (> i (1- n)) n)
+                         (cons q ($ vs i))))))))
+
+(defmethod $mcmc/hpd ((trace mcmc/trace) alpha)
+  (let ((vs (sort (mapcar #'$data ($mcmc/trace trace)) #'<)))
+    (when (> ($count vs) 10)
+      (min-interval vs alpha))))
+
+(defmethod $mcmc/geweke ((trace mcmc/trace) &key (first 0.1) (last 0.5) (intervals 20))
+  (when (< (+ first last))
+    (let ((vs (mapcar #'$data ($mcmc/trace trace))))
+      (when (> ($count vs) intervals)
+        (interval-zscores vs first last intervals)))))
+
+(defmethod $mcmc/summary ((trace mcmc/trace))
+  (let ((quantiles ($mcmc/quantiles trace))
+        (n ($mcmc/count trace))
+        (sd ($mcmc/sd trace))
+        (m ($mcmc/mean trace))
+        (err ($mcmc/error trace))
+        (hpd ($mcmc/hpd trace 0.05))
+        (acr ($mcmc/autocorrelation trace))
+        (geweke ($mcmc/geweke trace)))
+    (list :count n
+          :sd sd
+          :mean m
+          :error err
+          :hpd-95 hpd
+          :quantiles quantiles
+          :autocurrelation acr
+          :geweke geweke)))
+
+(defmethod $mcmc/aic ((deviance mcmc/trace) k)
+  (let ((quantiles (loop :for qi :in ($mcmc/quantiles deviance)
+                         :for q = (car qi)
+                         :for v = (+ (* 2 k) (cdr qi))
+                         :collect (cons q v)))
+        (n ($mcmc/count deviance))
+        (sd ($mcmc/sd deviance))
+        (m ($mcmc/mean deviance))
+        (err ($mcmc/error deviance))
+        (hpd (let ((mi ($mcmc/hpd deviance 0.05)))
+               (cons (+ (* 2 k) (car mi))
+                     (+ (* 2 k) (cdr mi))))))
+    (list :count n
+          :sd sd
+          :mean m
+          :error err
+          :hpd-95 hpd
+          :quantiles quantiles)))
+
+(defmethod $mcmc/dic ((traces list) (deviance mcmc/trace) likelihoodfn)
+  (let ((parameters (mapcar (lambda (trc) ($clone (car ($mcmc/trace trc)))) traces))
+        (means (mapcar (lambda (trc) ($mcmc/mean trc)) traces)))
+    (loop :for p :in parameters
+          :for m :in means
+          :do (setf ($data p) (if ($continuousp p) m (round m))))
+    (let ((mean-deviance ($mcmc/mean deviance))
+          (ll (apply likelihoodfn parameters)))
+      (when ll
+        (+ (* 2 mean-deviance)
+           (* 2 ll))))))
+
 (defun mh (parameters likelihoodfn &key (iterations 50000) (tune-steps 100)
                                      (burn-ins 1000) (thin 1)
                                      verbose)
@@ -377,8 +540,11 @@
                                  (proposal/discrete-gaussian)))
                            parameters))
         (traces (mapcar (lambda (p) (mcmc/trace ($clone p) :burn-ins burn-ins :thin thin)) parameters))
+        (deviance nil)
         (max-likelihood most-negative-single-float))
     (when old-likelihood
+      (setf deviance (mcmc/trace (rv/variable (* -2 old-likelihood))
+                                 :burn-ins burn-ins :thin thin))
       (loop :repeat (+ iterations burn-ins)
             :for iter :from 1
             :do (let ((can-tune (and (> iter 1) (<= iter burn-ins) (zerop (rem iter tune-steps)))))
@@ -413,8 +579,9 @@
                                   (setf max-likelihood new-likelihood)))
                               (unless acceptable
                                 ($mcmc/push! ($clone parameter) trace)
-                                ($rejected! proposal)))))))
+                                ($rejected! proposal))))
+                  ($mcmc/push! (rv/variable (* -2 old-likelihood)) deviance))))
     (when verbose
       (prn "* MLE PARAMETERS")
       (prn (format nil "~{~A ~}" (mapcar #'$mcmc/mle traces))))
-    traces))
+    (values traces deviance)))

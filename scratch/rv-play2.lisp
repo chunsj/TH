@@ -31,13 +31,36 @@
 (let ((switch-point (rv/discrete-uniform :lower 1 :upper (- ($count *disasters*) 2)))
       (early-mean (rv/exponential :rate *rate*))
       (late-mean (rv/exponential :rate *rate*)))
+  (multiple-value-bind (traces deviance)
+      (mh (list switch-point early-mean late-mean) #'disaster-likelihood
+          :iterations 10000
+          :thin 5
+          :verbose T)
+    (loop :for trc :in traces
+          :do (prn ($mcmc/mle trc)))
+    (loop :for trc :in traces
+          :do (prn ($mcmc/summary trc)))
+    (prn "AIC" ($mcmc/aic deviance 3))
+    (prn "DIC" ($mcmc/dic traces deviance #'disaster-likelihood))))
+
+
+;; MLE: 41, 3, 1
+(let ((switch-point (rv/discrete-uniform :lower 1 :upper (- ($count *disasters*) 2)))
+      (early-mean (rv/exponential :rate *rate*))
+      (late-mean (rv/exponential :rate *rate*)))
   (let* ((traces (mh (list switch-point early-mean late-mean) #'disaster-likelihood
                      :iterations 10000
                      :thin 5
                      :verbose T)))
     (loop :for trc :in traces
-          :do (prn ($count trc) ($mcmc/count trc)
-                   ($mcmc/mle trc) ($mcmc/mean trc) ($mcmc/sd trc)))))
+          :do (progn
+                (prn ($count trc) ($mcmc/count trc)
+                     ($mcmc/mle trc) ($mcmc/mean trc) ($mcmc/sd trc))
+                (prn ($mcmc/autocorrelation trc))
+                (prn ($mcmc/quantiles trc))
+                (prn ($mcmc/error trc))
+                (prn ($mcmc/hpd trc 0.95))
+                (prn ($mcmc/geweke trc))))))
 
 ;; FOR SMS example
 ;; https://github.com/CamDavidsonPilon/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/blob/masterv/Chapter1_Introduction/Ch1_Introduction_PyMC2.ipynb

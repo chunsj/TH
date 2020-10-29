@@ -54,7 +54,15 @@
            #:$mcmc/mle
            #:$mcmc/mean
            #:$mcmc/sd
+           #:$mcmc/error
            #:$mcmc/count
+           #:$mcmc/autocorrelation
+           #:$mcmc/quantiles
+           #:$mcmc/hpd
+           #:$mcmc/geweke
+           #:$mcmc/summary
+           #:$mcmc/aic
+           #:$mcmc/dic
            #:mh))
 
 (in-package :th.distributions)
