@@ -55,8 +55,7 @@
           :do (prn ($mcmc/summary trc)))
     (prn "AIC" ($mcmc/aic deviance 3))
     (prn "DIC" ($mcmc/dic traces deviance lfn))
-    (prn "GOF" (let ((gofs (tensor ($mcmc/collect 1000 traces gofn))))
-                 ($mean gofs 0)))))
+    (prn "GOF" ($mcmc/gof ($mcmc/sample 1000 traces gofn)))))
 
 (let ((acrs '(1.0d0 0.16686886853883606d0 0.05296233695178226d0 0.02513048977104168d0
               -0.026768236953095763d0 -0.009666847281365994d0 -0.01467972172316531d0

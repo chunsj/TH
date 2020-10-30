@@ -450,7 +450,7 @@
 (defgeneric $mcmc/summary (trace))
 (defgeneric $mcmc/aic (deviance k))
 (defgeneric $mcmc/dic (traces deviance likelihoodfn))
-(defgeneric $mcmc/gof (traces likelihoodfn))
+(defgeneric $mcmc/sample (n traces fn))
 
 (defclass mcmc/trace ()
   ((traces :initform nil)
@@ -593,33 +593,14 @@
         (+ (* 2 mean-deviance)
            (* 2 ll))))))
 
-;; XXX WRONG, THERE'S NO GOF FOR PARAMETERS
-(defmethod $mcmc/gof ((traces list) likelihoodfn)
-  (let ((ns (loop :repeat ($count traces) :collect 0))
-        (ss (loop :repeat ($count traces) :collect 0)))
-    (loop :for i :from 0 :below ($mcmc/count (car traces))
-          :for params = (loop :for trace :in traces
-                              :collect ($ ($mcmc/trace trace) i))
-          :for ll = (apply likelihoodfn params)
-          :for gofs = (mapcar #'$gof params)
-          :do (loop :for gof :in gofs
-                    :for j :from 0
-                    :do (if gof
-                            (let ((sv (car gof))
-                                  (ov (cadr gof)))
-                              (incf ($ ns j))
-                              (when (> sv ov)
-                                (incf ($ ss j)))))))
-    (loop :for n :in ns
-          :for s :in ss
-          :collect (when (> n 0) (* 1D0 (/ s n))))))
-
-(defmethod $mcmc/collect (iterations (traces list) fn)
+(defmethod $mcmc/sample (iterations (traces list) fn)
   (loop :repeat iterations
         :for parameters = (loop :for trace :in traces
                                 :collect (let ((n ($mcmc/count trace)))
                                            ($ ($mcmc/trace trace) (random n))))
         :collect (apply fn parameters)))
+
+(defun $mcmc/gof (gofs) ($mean (tensor gofs) 0))
 
 (defun mh (parameters likelihoodfn &key (iterations 50000) (tune-steps 100)
                                      (burn-ins 1000) (thin 1)
