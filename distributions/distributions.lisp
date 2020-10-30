@@ -63,6 +63,7 @@
            #:$mcmc/summary
            #:$mcmc/aic
            #:$mcmc/dic
+           #:$mcmc/gof
            #:mh))
 
 (in-package :th.distributions)

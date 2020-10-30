@@ -6,6 +6,7 @@
 (defgeneric $sample! (rv))
 (defgeneric $supportp (rv v))
 (defgeneric $supportedp (rv))
+(defgeneric $gof (rv))
 
 (defgeneric $propose (proposal rv))
 (defgeneric $accepted! (proposal))
@@ -16,6 +17,7 @@
 (defmethod $sample! ((rv T)) rv)
 (defmethod $supportp ((rv T) v) T)
 (defmethod $supportedp ((rv T)) T)
+(defmethod $gof ((rv T)) nil)
 
 (defmethod $logp ((rvs list))
   (let ((rvs0 (remove-duplicates rvs)))
@@ -79,6 +81,27 @@
   (with-slots (value) rv
     ($supportp rv value)))
 
+(defmethod $random ((rv rv/variable)) nil)
+
+(defmethod $mean ((rv rv/variable) &optional dimension)
+  (declare (ignore dimension))
+  nil)
+
+(defun gof-loss (vs ev)
+  (cond ((and (numberp vs) (numberp ev)) ($square (- vs ev)))
+        ((and (numberp vs) (listp ev)) ($sum (mapcar (lambda (e) ($square (- vs e))) ev)))
+        ((and (listp vs) (numberp ev)) ($sum (mapcar (lambda (v) ($square (- v ev))) vs)))
+        ((and (listp vs) (listp ev)) ($sum (mapcar (lambda (v e) ($square (- v e))) vs ev)))))
+
+(Defmethod $gof ((rv rv/variable))
+  (with-slots (observedp value) rv
+    (when observedp
+      (let ((rs ($random rv)))
+        (when rs
+          (let ((ev ($mean rv)))
+            (list (gof-loss rs ev)
+                  (gof-loss value ev ))))))))
+
 (defclass rv/discrete-uniform (rv/variable)
   ((lower :initform 0)
    (upper :initform 9)))
@@ -122,6 +145,19 @@
 
 (defun sample-discrete-uniform (lower upper)
   (+ ($data lower) (1- ($sample/dice 1 (1+ (- ($data upper) ($data lower)))))))
+
+(defmethod $random ((rv rv/discrete-uniform))
+  (with-slots (lower upper) rv
+    (cond ((and (listp upper) (listp lower))
+           (mapcar (lambda (l u) (sample-discrete-uniform l u)) lower upper))
+          (T (sample-discrete-uniform lower upper)))))
+
+(defmethod $mean ((rv rv/discrete-uniform) &optional dimension)
+  (declare (ignore dimension))
+  (with-slots (lower upper) rv
+    (cond ((and (listp upper) (listp lower))
+           (mapcar (lambda (l u) (/ (- u l) 2D0)) lower upper))
+          (T (/ (- upper lower) 2D0)))))
 
 (defmethod $sample! ((rv rv/discrete-uniform))
   (with-slots (value observedp lower upper) rv
@@ -175,6 +211,16 @@
 
 (defmethod $supportp ((rv rv/exponential) v) (supportp-exponential v))
 
+(defmethod $random ((rv rv/exponential))
+  (with-slots (rate) rv
+    (cond ((listp rate) (mapcar (lambda (r) ($sample/exponential 1 r)) rate))
+          (T ($sample/exponential 1 rate)))))
+
+(defmethod $mean ((rv rv/exponential) &optional dimension)
+  (declare (ignore dimension))
+  (with-slots (rate) rv
+    rate))
+
 (defmethod $sample! ((rv rv/exponential))
   (with-slots (value observedp rate) rv
     (unless observedp
@@ -216,6 +262,16 @@
         (with-slots (rate) n
           (setf rate r))))
     n))
+
+(defmethod $random ((rv rv/poisson))
+  (with-slots (rate) rv
+    (cond ((listp rate) (mapcar (lambda (r) ($sample/poisson 1 r)) rate))
+          (T ($sample/poisson 1 rate)))))
+
+(defmethod $mean ((rv rv/poisson) &optional dimension)
+  (declare (ignore dimension))
+  (with-slots (rate) rv
+    rate))
 
 (defmethod $sample! ((rv rv/poisson))
   (with-slots (value observedp rate) rv
@@ -390,6 +446,7 @@
 (defgeneric $mcmc/summary (trace))
 (defgeneric $mcmc/aic (deviance k))
 (defgeneric $mcmc/dic (traces deviance likelihoodfn))
+(defgeneric $mcmc/gof (traces likelihoodfn))
 
 (defclass mcmc/trace ()
   ((traces :initform nil)
@@ -531,6 +588,27 @@
       (when ll
         (+ (* 2 mean-deviance)
            (* 2 ll))))))
+
+;; XXX WRONG, THERE'S NO GOF FOR PARAMETERS
+(defmethod $mcmc/gof ((traces list) likelihoodfn)
+  (let ((ns (loop :repeat ($count traces) :collect 0))
+        (ss (loop :repeat ($count traces) :collect 0)))
+    (loop :for i :from 0 :below ($mcmc/count (car traces))
+          :for params = (loop :for trace :in traces
+                              :collect ($ ($mcmc/trace trace) i))
+          :for ll = (apply likelihoodfn params)
+          :for gofs = (mapcar #'$gof params)
+          :do (loop :for gof :in gofs
+                    :for j :from 0
+                    :do (if gof
+                            (let ((sv (car gof))
+                                  (ov (cadr gof)))
+                              (incf ($ ns j))
+                              (when (> sv ov)
+                                (incf ($ ss j)))))))
+    (loop :for n :in ns
+          :for s :in ss
+          :collect (when (> n 0) (* 1D0 (/ s n))))))
 
 (defun mh (parameters likelihoodfn &key (iterations 50000) (tune-steps 100)
                                      (burn-ins 1000) (thin 1)
