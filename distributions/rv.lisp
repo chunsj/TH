@@ -488,7 +488,7 @@
         (m ($mcmc/mean trace))
         (err ($mcmc/error trace))
         (hpd ($mcmc/hpd trace 0.05))
-        (acr ($mcmc/autocorrelation trace))
+        (acr ($mean (subseq ($mcmc/autocorrelation trace) 1)))
         (geweke (let ((gvs (mapcar #'cdr ($mcmc/geweke trace))))
                   (cons (apply #'min gvs) (apply #'max gvs)))))
     (list :count n
@@ -498,8 +498,8 @@
           :error err
           :hpd-95 hpd
           :quantiles quantiles
-          :autocurrelation (subseq acr 0 (min 21 ($count acr)))
-          :geweke geweke)))
+          :ac-mean acr
+          :geweke-range geweke)))
 
 (defmethod $mcmc/aic ((deviance mcmc/trace) k)
   (let ((quantiles (loop :for qi :in ($mcmc/quantiles deviance)
