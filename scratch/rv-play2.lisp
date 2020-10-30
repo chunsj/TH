@@ -27,11 +27,25 @@
             (when (and ls ld1 ld2)
               (+ ls ld1 ld2))))))))
 
+(defun disaster-gof (switch-point early-mean late-mean)
+  (let ((ls ($logp switch-point)))
+    (when ls
+      (let ((disasters-early (subseq *disasters* 0 ($data switch-point)))
+            (disasters-late (subseq *disasters* ($data switch-point))))
+        (let ((d1 (rv/poisson :rate early-mean :observation disasters-early))
+              (d2 (rv/poisson :rate late-mean :observation disasters-late)))
+          (let ((ld1 ($logp d1))
+                (ld2 ($logp d2)))
+            (when (and ls ld1 ld2)
+              (list (th.distributions::$gof d1)
+                    (th.distributions::$gof d2)))))))))
+
 ;; MLE: 41, 3, 1
 (let ((switch-point (rv/discrete-uniform :lower 1 :upper (- ($count *disasters*) 2)))
       (early-mean (rv/exponential :rate *rate*))
       (late-mean (rv/exponential :rate *rate*))
-      (lfn #'disaster-likelihood))
+      (lfn #'disaster-likelihood)
+      (gofn #'disaster-gof))
   (multiple-value-bind (traces deviance)
       (mh (list switch-point early-mean late-mean) lfn
           :iterations 10000
@@ -40,7 +54,9 @@
     (loop :for trc :in traces
           :do (prn ($mcmc/summary trc)))
     (prn "AIC" ($mcmc/aic deviance 3))
-    (prn "DIC" ($mcmc/dic traces deviance lfn))))
+    (prn "DIC" ($mcmc/dic traces deviance lfn))
+    (prn "GOF" (let ((gofs (tensor ($mcmc/collect 1000 traces gofn))))
+                 ($mean gofs 0)))))
 
 (let ((acrs '(1.0d0 0.16686886853883606d0 0.05296233695178226d0 0.02513048977104168d0
               -0.026768236953095763d0 -0.009666847281365994d0 -0.01467972172316531d0

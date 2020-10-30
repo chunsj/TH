@@ -64,6 +64,7 @@
            #:$mcmc/aic
            #:$mcmc/dic
            #:$mcmc/gof
+           #:$mcmc/collect
            #:mh))
 
 (in-package :th.distributions)
