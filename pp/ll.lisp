@@ -70,6 +70,11 @@
 (defmethod probability-p ((n node))
   (probability-p ($data n)))
 
+;; XXX check possible type combination
+;; data can be a single number or multiple values
+;; parameter can be a single number
+;; should i consider the case of multipl valued parameters?
+
 (defmethod ll/beta ((data number) (alpha number) (beta number))
   (when (and (probability-p data) (positive-p alpha) (positive-p beta))
     (+ (* (- alpha 1) (log data))
@@ -117,8 +122,14 @@
 (defmethod ll/beta ((data list) (alpha tensor) (beta tensor))
   (ll/beta (tensor data) alpha beta))
 
+(defmethod ll/beta ((data list) (alpha number) (beta node))
+  (ll/beta (tensor data) (tensor alpha) beta))
+
 (defmethod ll/beta ((data list) (alpha list) (beta node))
   (ll/beta (tensor data) (tensor alpha) beta))
+
+(defmethod ll/beta ((data list) (alpha node) (beta number))
+  (ll/beta (tensor data) alpha (tensor beta)))
 
 (defmethod ll/beta ((data list) (alpha node) (beta list))
   (ll/beta (tensor data) alpha (tensor beta)))
