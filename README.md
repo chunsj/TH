@@ -1,9 +1,10 @@
 # My Deep Learning Library for Common Lisp using libTH/libTHNN
 
-## NEWS (2020-09-27)
-  My current interest is probabillistic programming. I'd like to build a framework like Church/PyMC.
+## NEWS (2020-11-06)
+  Current experiments of distributions and others might be changed heavily for better PPL.
 
 ## OLD NEWS
+  * 20200927: Want to build a probabilistic programming support.
   * 20200823: Done with Grokking Deep Reinforcement Learning Book.
   * 20200430: New simple foreign memory management. (trigger gc, tested with SBCL)
   * 20200329: New RNN layer based APIs.
