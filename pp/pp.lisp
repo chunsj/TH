@@ -4,16 +4,20 @@
         #:th)
   (:export #:ll/bernoulli
            #:ll/binomial
+           #:ll/categorical
            #:ll/poisson
            #:ll/beta
+           #:ll/cauchy
            #:ll/exponential
            #:ll/gaussian
            #:ll/normal
            #:ll/uniform
            #:sample/bernoulli
            #:sample/binomial
+           #:sample/categorical
            #:sample/poisson
            #:sample/beta
+           #:sample/cauchy
            #:sample/exponential
            #:sample/gaussian
            #:sample/normal
