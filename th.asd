@@ -1,7 +1,7 @@
 (defsystem th
   :name "th"
   :author "Sungjin Chun <chunsj@gmail.com>"
-  :version "1.66"
+  :version "1.67"
   :maintainer "Sungjin Chun <chunsj@gmail.com>"
   :license "GPL3"
   :description "common lisp tensor and deep learning library"
@@ -56,14 +56,6 @@
                                        (:file "resnet152")
                                        (:file "densenet161")
                                        (:file "squeezenet11")))
-               (:module distributions :components ((:file "distributions")
-                                                   (:file "likelihoods")
-                                                   (:file "samples")
-                                                   (:file "discrete")
-                                                   (:file "continuous")
-                                                   (:file "rv")))
-               (:module mcmc :components ((:file "mcmc")
-                                          (:file "hmc")))
                (:module pp :components ((:file "pp")
                                         (:file "cs")
                                         (:file "bernoulli")
@@ -72,4 +64,12 @@
                                         (:file "beta")
                                         (:file "exponential")
                                         (:file "gaussian")
-                                        (:file "uniform")))))
+                                        (:file "uniform")))
+               (:module distributions :components ((:file "distributions")
+                                                   (:file "likelihoods")
+                                                   (:file "samples")
+                                                   (:file "discrete")
+                                                   (:file "continuous")
+                                                   (:file "rv")))
+               (:module mcmc :components ((:file "mcmc")
+                                          (:file "hmc")))))
