@@ -1894,6 +1894,10 @@
     (tensor-rbeta r a b)
     r))
 
+(defmethod $beta! ((x tensor) a b)
+  (tensor-rbeta x a b)
+  x)
+
 (defmethod $gamma! ((x tensor) shape scale)
   (tensor-rgamma x shape scale)
   x)

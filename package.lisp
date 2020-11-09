@@ -296,6 +296,8 @@
            #:$poisson!
            #:$bernoulli!
            #:$binomial!
+           #:$beta!
+           #:$gamma!
            #:$geometric!
            #:$hypergeometric!
            #:$chisq!
