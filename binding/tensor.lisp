@@ -1817,10 +1817,22 @@
   (tensor-uniform x a b)
   x)
 
+(defmethod $discrete-uniform! ((x tensor) a b)
+  (let* ((n ($count x))
+         (v (tensor (loop :repeat n :collect (+ a (random (1+ (- b a))))))))
+    ($set! x (apply #'$reshape! v ($size x))))
+  x)
+
 (defmethod $uniform ((x tensor) a b)
   (let ((r ($resize! ($empty x) ($size x))))
     (tensor-uniform r a b)
     r))
+
+(defmethod $discrete-uniform ((x tensor) a b)
+  (let* ((n ($count x))
+         (v (tensor (loop :repeat n :collect (+ a (random (1+ (- b a))))))))
+    (apply #'$reshape! v ($size x))
+    v))
 
 (defmethod $normal! ((x tensor) m sd)
   (tensor-normal x m sd)

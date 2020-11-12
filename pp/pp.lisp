@@ -5,6 +5,7 @@
   (:export #:ll/bernoulli
            #:ll/binomial
            #:ll/categorical
+           #:ll/discrete-uniform
            #:ll/poisson
            #:ll/beta
            #:ll/cauchy
@@ -15,6 +16,7 @@
            #:sample/bernoulli
            #:sample/binomial
            #:sample/categorical
+           #:sample/discrete-uniform
            #:sample/poisson
            #:sample/beta
            #:sample/cauchy

@@ -32,6 +32,7 @@
            #:$seed
            #:$random
            #:$uniform
+           #:$discrete-uniform
            #:$normal
            #:$exponential
            #:$poisson
@@ -47,6 +48,7 @@
            #:$fdist
            #:random/random
            #:random/uniform
+           #:random/discrete-uniform
            #:random/normal
            #:random/exponential
            #:random/poisson
@@ -291,6 +293,7 @@
            #:$var
            #:$var!
            #:$uniform!
+           #:$discrete-uniform!
            #:$normal!
            #:$exponential!
            #:$poisson!

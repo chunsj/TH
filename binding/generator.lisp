@@ -78,6 +78,7 @@
 
 (defun random/random () ($random *generator*))
 (defun random/uniform (a b) ($uniform *generator* a b))
+(defun random/discrete-uniform (a b) (+ a (random (1+ (- b a)))))
 (defun random/normal (m s) ($normal *generator* m s))
 (defun random/exponential (l) ($exponential *generator* l))
 (defun random/cauchy (m s) ($cauchy *generator* m s))

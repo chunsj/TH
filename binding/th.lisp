@@ -10,6 +10,7 @@
 
 (defgeneric $uniform (object a b)
   (:documentation "Returns uniform random number between a and b."))
+(defgeneric $discrete-uniform (object a b))
 (defgeneric $normal (object mean stdv)
   (:documentation "Returns normal random number from N(mean,stdv)."))
 (defgeneric $exponential (object lam)
@@ -458,6 +459,7 @@
 
 (defgeneric $uniform! (x a b)
   (:documentation "Returns tensor x filled with uniform random numbers."))
+(defgeneric $discrete-uniform! (x a b))
 (defgeneric $normal! (x m sd)
   (:documentation "Returns tensor x filled with normal random numbers."))
 (defgeneric $exponential! (x lam)
