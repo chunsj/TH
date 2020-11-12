@@ -32,3 +32,23 @@
 (defmethod sample/poisson ((rate node) &optional (n 1))
   (cond ((= n 1) (random/poisson ($data rate)))
         ((> n 1) ($poisson! (tensor n) ($data rate)))))
+
+(defclass r/poisson (r/discrete)
+  ((rate :initform 1)))
+
+(defun r/poisson (&key (rate 1) observation)
+  (let ((r rate)
+        (rv (make-instance 'r/poisson)))
+    (with-slots (rate) rv
+      (setf rate r))
+    (r/set-observation! rv observation)
+    (r/set-sample! rv)
+    rv))
+
+(defmethod r/sample ((rv r/poisson))
+  (with-slots (rate) rv
+    (sample/poisson rate)))
+
+(defmethod r/logp ((rv r/poisson))
+  (with-slots (rate) rv
+    (ll/poisson (r/value rv) rate)))

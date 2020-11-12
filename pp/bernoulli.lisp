@@ -32,3 +32,23 @@
 (defmethod sample/bernoulli ((p node) &optional (n 1))
   (cond ((= n 1) (random/bernoulli ($data p)))
         ((> n 1) ($bernoulli! (tensor n) ($data p)))))
+
+(defclass r/bernoulli (r/discrete)
+  ((p :initform 0.5)))
+
+(defun r/bernoulli (&key (p 0.5) observation)
+  (let ((prob p)
+        (rv (make-instance 'r/bernoulli)))
+    (with-slots (p) rv
+      (setf p prob))
+    (r/set-observation! rv observation)
+    (r/set-sample! rv)
+    rv))
+
+(defmethod r/sample ((rv r/bernoulli))
+  (with-slots (p) rv
+    (sample/bernoulli p)))
+
+(defmethod r/logp ((rv r/bernoulli))
+  (with-slots (p) rv
+    (ll/bernoulli (r/value rv) p)))

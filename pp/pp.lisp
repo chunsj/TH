@@ -23,4 +23,18 @@
            #:sample/exponential
            #:sample/gaussian
            #:sample/normal
-           #:sample/uniform))
+           #:sample/uniform
+           #:r/bernoulli
+           #:r/binomial
+           #:r/categorical
+           #:r/discrete-uniform
+           #:r/poisson
+           #:r/beta
+           #:r/cauchy
+           #:r/exponential
+           #:r/gaussian
+           #:r/normal
+           #:r/uniform
+           #:r/logp
+           #:r/sample
+           #:r/value))

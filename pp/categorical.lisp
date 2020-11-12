@@ -32,3 +32,23 @@
   (let ((s ($multinomial ($data probs) n)))
     (cond ((= n 1) ($0 s))
           ((> n 1) s))))
+
+(defclass r/categorical (r/discrete)
+  ((ps :initform (tensor '(0.5 0.5)))))
+
+(defun r/categorical (&key (ps (tensor '(0.5 0.5))) observation)
+  (let ((probs ps)
+        (rv (make-instance 'r/categorical)))
+    (with-slots (ps) rv
+      (setf ps probs))
+    (r/set-observation! rv observation)
+    (r/set-sample! rv)
+    rv))
+
+(defmethod r/sample ((rv r/categorical))
+  (with-slots (ps) rv
+    (sample/categorical ps)))
+
+(defmethod r/logp ((rv r/categorical))
+  (with-slots (ps) rv
+    (ll/categorical (r/value rv) ps)))

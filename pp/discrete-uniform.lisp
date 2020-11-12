@@ -76,6 +76,6 @@
   (with-slots (lower upper) rv
     (sample/discrete-uniform lower upper)))
 
-(defmethod $logp ((rv r/discrete-uniform))
+(defmethod r/logp ((rv r/discrete-uniform))
   (with-slots (lower upper) rv
     (ll/discrete-uniform (r/value rv) lower upper)))

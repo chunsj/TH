@@ -69,3 +69,18 @@
 (defmethod sample/beta ((alpha node) (beta node) &optional (n 1))
   (cond ((= n 1) (random/beta ($data alpha) ($data beta)))
         ((> n 1) ($beta! (tensor n) ($data alpha) ($data beta)))))
+
+(defclass r/beta (r/continuous)
+  ((alpha :initform 1)
+   (beta :initform 1)))
+
+(defun r/beta (&key (alpha 1) (beta 1) observation)
+  (let ((a alpha)
+        (b beta)
+        (rv (make-instance 'r/beta)))
+    (with-slots (alpha beta) rv
+      (setf alpha a
+            beta b))
+    (r/set-observation! rv observation)
+    (r/set-sample! rv)
+    rv))

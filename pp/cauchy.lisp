@@ -88,3 +88,26 @@
         ((> n 1) (tensor (loop :repeat n
                                :for u = (tan (* pi (- (random 1D0) 0.5D0)))
                                :collect (+ ($data location) (* ($data scale) u)))))))
+
+(defclass r/cauchy (r/continuous)
+  ((location :initform 0)
+   (scale :initform 1)))
+
+(defun r/cauchy (&key (location 0) (scale 1) observation)
+  (let ((l location)
+        (s scale)
+        (rv (make-instance 'r/cauchy)))
+    (with-slots (location scale) rv
+      (setf location l
+            scale s))
+    (r/set-observation! rv observation)
+    (r/set-sample! rv)
+    rv))
+
+(defmethod r/sample ((rv r/cauchy))
+  (with-slots (location scale) rv
+    (sample/cauchy location scale)))
+
+(defmethod r/logp ((rv r/cauchy))
+  (with-slots (location scale) rv
+    (ll/cauchy (r/value rv) location scale)))
