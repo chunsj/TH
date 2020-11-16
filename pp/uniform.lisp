@@ -76,6 +76,6 @@
   (with-slots (lower upper) rv
     (sample/uniform lower upper)))
 
-(defmethod r/logp ((rv r/uniform))
+(defmethod r/score ((rv r/uniform))
   (with-slots (lower upper) rv
     (ll/uniform (r/value rv) lower upper)))

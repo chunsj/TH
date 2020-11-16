@@ -45,6 +45,6 @@
   (with-slots (rate) rv
     (sample/exponential rate)))
 
-(defmethod r/logp ((rv r/exponential))
+(defmethod r/score ((rv r/exponential))
   (with-slots (rate) rv
     (ll/exponential (r/value rv) rate)))

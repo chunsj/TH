@@ -3,7 +3,7 @@
 (defgeneric r/continuousp (rv))
 (defgeneric r/discretep (rv))
 (defgeneric r/sample (rv))
-(defgeneric r/logp (rv))
+(defgeneric r/score (rv))
 
 (defclass r/variable () ())
 
@@ -30,7 +30,7 @@
       (setf value (r/sample rv))))
   rv)
 
-(defmethod r/logp ((rv r/var)) nil)
+(defmethod r/score ((rv r/var)) nil)
 (defmethod r/continuousp ((rv r/var)) nil)
 (defmethod r/discretep ((rv r/var)) nil)
 (defmethod r/sample ((rv r/var)) nil)

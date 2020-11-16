@@ -49,6 +49,6 @@
   (with-slots (ps) rv
     (sample/categorical ps)))
 
-(defmethod r/logp ((rv r/categorical))
+(defmethod r/score ((rv r/categorical))
   (with-slots (ps) rv
     (ll/categorical (r/value rv) ps)))

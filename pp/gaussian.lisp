@@ -114,6 +114,6 @@
   (with-slots (mean sd) rv
     (sample/gaussian mean sd)))
 
-(defmethod r/logp ((rv r/gaussian))
+(defmethod r/score ((rv r/gaussian))
   (with-slots (mean sd) rv
     (ll/gaussian (r/value rv) mean sd)))

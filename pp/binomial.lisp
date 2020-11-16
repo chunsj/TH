@@ -67,6 +67,6 @@
   (with-slots (p n) rv
     (sample/binomial p n)))
 
-(defmethod r/logp ((rv r/binomial))
+(defmethod r/score ((rv r/binomial))
   (with-slots (p n) rv
     (ll/binomial (r/value rv) p n)))

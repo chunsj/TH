@@ -35,6 +35,6 @@
            #:r/gaussian
            #:r/normal
            #:r/uniform
-           #:r/logp
+           #:r/score
            #:r/sample
            #:r/value))

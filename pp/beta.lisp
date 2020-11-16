@@ -1,54 +1,54 @@
 (in-package :th.pp)
 
-(defgeneric ll/beta (data alpha beta))
+(defgeneric score/beta (data alpha beta))
 (defgeneric sample/beta (alpha beta &optional n))
 
 (defun of-beta-p (data alpha beta)
   (and (of-unit-interval-p data) (of-plusp alpha) (of-plusp beta)))
 
-(defmethod ll/beta ((data number) (alpha number) (beta number))
+(defmethod score/beta ((data number) (alpha number) (beta number))
   (when (of-beta-p data alpha beta)
     (+ (* (- alpha 1) (log data))
        (* (- beta 1) (log (- 1 data)))
        (- ($lbetaf alpha beta)))))
 
-(defmethod ll/beta ((data number) (alpha node) (beta number))
+(defmethod score/beta ((data number) (alpha node) (beta number))
   (when (of-beta-p data ($data alpha) beta)
     ($sub ($add ($mul ($sub alpha 1) (log data))
                 (* (- beta 1) (log (- 1 data))))
           ($lbetaf alpha beta))))
 
-(defmethod ll/beta ((data number) (alpha number) (beta node))
+(defmethod score/beta ((data number) (alpha number) (beta node))
   (when (of-beta-p data alpha ($data beta))
     ($sub ($add (* (- alpha 1) (log data))
                 ($mul ($sub beta 1) (log (- 1 data))))
           ($lbetaf alpha beta))))
 
-(defmethod ll/beta ((data number) (alpha node) (beta node))
+(defmethod score/beta ((data number) (alpha node) (beta node))
   (when (of-beta-p data ($data alpha) ($data beta))
     ($sub ($add ($mul ($sub alpha 1) (log data))
                 ($mul ($sub beta 1) (log (- 1 data))))
           ($lbetaf alpha beta))))
 
-(defmethod ll/beta ((data tensor) (alpha number) (beta number))
+(defmethod score/beta ((data tensor) (alpha number) (beta number))
   (when (of-beta-p data alpha beta)
     ($sum ($sub ($add ($mul (- alpha 1) ($log data))
                       ($mul (- beta 1) ($log ($sub 1 data))))
                 ($lbetaf alpha beta)))))
 
-(defmethod ll/beta ((data tensor) (alpha node) (beta number))
+(defmethod score/beta ((data tensor) (alpha node) (beta number))
   (when (of-beta-p data ($data alpha) beta)
     ($sum ($sub ($add ($mul ($sub alpha 1) ($log data))
                       ($mul (- beta 1) ($log ($sub 1 data))))
                 ($lbetaf alpha beta)))))
 
-(defmethod ll/beta ((data tensor) (alpha number) (beta node))
+(defmethod score/beta ((data tensor) (alpha number) (beta node))
   (when (of-beta-p data alpha ($data beta))
     ($sum ($sub ($add ($mul (- alpha 1) ($log data))
                       ($mul ($sub beta 1) ($log ($sub 1 data))))
                 ($lbetaf alpha beta)))))
 
-(defmethod ll/beta ((data tensor) (alpha node) (beta node))
+(defmethod score/beta ((data tensor) (alpha node) (beta node))
   (when (of-beta-p data ($data alpha) ($data beta))
     ($sum ($sub ($add ($mul ($sub alpha 1) ($log data))
                       ($mul ($sub beta 1) ($log ($sub 1 data))))
@@ -84,3 +84,11 @@
     (r/set-observation! rv observation)
     (r/set-sample! rv)
     rv))
+
+(defmethod r/sample ((rv r/beta))
+  (with-slots (alpha beta) rv
+    (sample/beta alpha beta)))
+
+(defmethod r/score ((rv r/beta))
+  (with-slots (alpha beta) rv
+    (score/beta (r/value rv) alpha beta)))

@@ -49,6 +49,6 @@
   (with-slots (p) rv
     (sample/bernoulli p)))
 
-(defmethod r/logp ((rv r/bernoulli))
+(defmethod r/score ((rv r/bernoulli))
   (with-slots (p) rv
     (ll/bernoulli (r/value rv) p)))

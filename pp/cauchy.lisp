@@ -108,6 +108,6 @@
   (with-slots (location scale) rv
     (sample/cauchy location scale)))
 
-(defmethod r/logp ((rv r/cauchy))
+(defmethod r/score ((rv r/cauchy))
   (with-slots (location scale) rv
     (ll/cauchy (r/value rv) location scale)))

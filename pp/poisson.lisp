@@ -49,6 +49,6 @@
   (with-slots (rate) rv
     (sample/poisson rate)))
 
-(defmethod r/logp ((rv r/poisson))
+(defmethod r/score ((rv r/poisson))
   (with-slots (rate) rv
     (ll/poisson (r/value rv) rate)))
