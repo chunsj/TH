@@ -1,26 +1,26 @@
 (in-package :th.pp)
 
-(defgeneric ll/poisson (data rate))
+(defgeneric score/poisson (data rate))
 (defgeneric sample/poisson (rate &optional n))
 
 (defun of-poisson-p (data rate) (and (of-plusp rate) (of-ge data 0)))
 
-(defmethod ll/poisson ((data number) (rate number))
+(defmethod score/poisson ((data number) (rate number))
   (when (of-poisson-p data rate)
     (let ((lfac ($lgammaf (+ 1 data))))
       (- (* data (log rate)) (+ rate lfac)))))
 
-(defmethod ll/poisson ((data number) (rate node))
+(defmethod score/poisson ((data number) (rate node))
   (when (of-poisson-p data ($data rate))
     (let ((lfac ($lgammaf (+ 1 data))))
       ($sub ($mul data ($log rate)) ($add rate lfac)))))
 
-(defmethod ll/poisson ((data tensor) (rate number))
+(defmethod score/poisson ((data tensor) (rate number))
   (when (of-poisson-p data rate)
     (let ((lfac ($lgammaf ($add 1 data))))
       ($sum ($sub ($mul data (log rate)) ($add rate lfac))))))
 
-(defmethod ll/poisson ((data tensor) (rate node))
+(defmethod score/poisson ((data tensor) (rate node))
   (when (of-poisson-p data ($data rate))
     (let ((lfac ($lgammaf ($add 1 data))))
       ($sum ($sub ($mul data ($log rate)) ($add rate lfac))))))
@@ -51,4 +51,4 @@
 
 (defmethod r/score ((rv r/poisson))
   (with-slots (rate) rv
-    (ll/poisson (r/value rv) rate)))
+    (score/poisson (r/value rv) rate)))

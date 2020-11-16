@@ -1,14 +1,14 @@
 (in-package :th.pp)
 
-(defgeneric ll/gaussian (data mean sd))
+(defgeneric score/gaussian (data mean sd))
 (defgeneric sample/gaussian (mean sd &optional n))
 
-(defun ll/normal (data mean sd) (ll/gaussian data mean sd))
+(defun score/normal (data mean sd) (score/gaussian data mean sd))
 (defun sample/normal (mean sd &optional (n 1)) (sample/gaussian mean sd n))
 
 (defun of-gaussian-p (sd) (of-plusp sd))
 
-(defmethod ll/gaussian ((data number) (mean number) (sd number))
+(defmethod score/gaussian ((data number) (mean number) (sd number))
   (when (of-gaussian-p sd)
     (let ((c (- (log (sqrt (* 2 pi)))))
           (var2 (* 2 ($square sd)))
@@ -16,7 +16,7 @@
           (z (- data mean)))
       (- c lsd (/ ($square z) var2)))))
 
-(defmethod ll/gaussian ((data number) (mean node) (sd number))
+(defmethod score/gaussian ((data number) (mean node) (sd number))
   (when (of-gaussian-p sd)
     (let ((c (- (log (sqrt (* 2 pi)))))
           (var2 (* 2 ($square sd)))
@@ -24,7 +24,7 @@
           (z ($sub data mean)))
       ($sub (- c lsd) ($div ($square z) var2)))))
 
-(defmethod ll/gaussian ((data number) (mean number) (sd node))
+(defmethod score/gaussian ((data number) (mean number) (sd node))
   (when (of-gaussian-p ($data sd))
     (let ((c (- (log (sqrt (* 2 pi)))))
           (var2 ($mul 2 ($square sd)))
@@ -32,7 +32,7 @@
           (z (- data mean)))
       ($sub ($sub c lsd) ($div ($square z) var2)))))
 
-(defmethod ll/gaussian ((data number) (mean node) (sd node))
+(defmethod score/gaussian ((data number) (mean node) (sd node))
   (when (of-gaussian-p ($data sd))
     (let ((c (- (log (sqrt (* 2 pi)))))
           (var2 ($mul 2 ($square sd)))
@@ -40,7 +40,7 @@
           (z ($sub data mean)))
       ($sub ($sub c lsd) ($div ($square z) var2)))))
 
-(defmethod ll/gaussian ((data tensor) (mean number) (sd number))
+(defmethod score/gaussian ((data tensor) (mean number) (sd number))
   (when (of-gaussian-p sd)
     (let ((c (- (log (sqrt (* 2 pi)))))
           (var2 (* 2 ($square sd)))
@@ -49,7 +49,7 @@
           (n ($count data)))
       ($sub (* n (- c lsd)) ($div ($sum ($square z)) var2)))))
 
-(defmethod ll/gaussian ((data tensor) (mean node) (sd number))
+(defmethod score/gaussian ((data tensor) (mean node) (sd number))
   (when (of-gaussian-p sd)
     (let ((c (- (log (sqrt (* 2 pi)))))
           (var2 (* 2 ($square sd)))
@@ -58,7 +58,7 @@
           (n ($count data )))
       ($sub (* n (- c lsd)) ($div ($sum ($square z)) var2)))))
 
-(defmethod ll/gaussian ((data tensor) (mean number) (sd node))
+(defmethod score/gaussian ((data tensor) (mean number) (sd node))
   (when (of-gaussian-p ($data sd))
     (let ((c (- (log (sqrt (* 2 pi)))))
           (var2 ($mul 2 ($square sd)))
@@ -67,7 +67,7 @@
           (n ($count data)))
       ($sub ($mul n ($sub c lsd)) ($div ($sum ($square z)) var2)))))
 
-(defmethod ll/gaussian ((data tensor) (mean node) (sd node))
+(defmethod score/gaussian ((data tensor) (mean node) (sd node))
   (when (of-gaussian-p ($data sd))
     (let ((c (- (log (sqrt (* 2 pi)))))
           (var2 ($mul 2 ($square sd)))
@@ -116,4 +116,4 @@
 
 (defmethod r/score ((rv r/gaussian))
   (with-slots (mean sd) rv
-    (ll/gaussian (r/value rv) mean sd)))
+    (score/gaussian (r/value rv) mean sd)))

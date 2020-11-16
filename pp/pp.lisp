@@ -2,17 +2,17 @@
   (:use #:common-lisp
         #:mu
         #:th)
-  (:export #:ll/bernoulli
-           #:ll/binomial
-           #:ll/categorical
-           #:ll/discrete-uniform
-           #:ll/poisson
-           #:ll/beta
-           #:ll/cauchy
-           #:ll/exponential
-           #:ll/gaussian
-           #:ll/normal
-           #:ll/uniform
+  (:export #:score/bernoulli
+           #:score/binomial
+           #:score/categorical
+           #:score/discrete-uniform
+           #:score/poisson
+           #:score/beta
+           #:score/cauchy
+           #:score/exponential
+           #:score/gaussian
+           #:score/normal
+           #:score/uniform
            #:sample/bernoulli
            #:sample/binomial
            #:sample/categorical

@@ -1,23 +1,23 @@
 (in-package :th.pp)
 
-(defgeneric ll/exponential (data rate))
+(defgeneric score/exponential (data rate))
 (defgeneric sample/exponential (rate &optional n))
 
 (defun of-exponential-p (data rate) (and (of-plusp data) (of-plusp rate)))
 
-(defmethod ll/exponential ((data number) (rate number))
+(defmethod score/exponential ((data number) (rate number))
   (when (of-exponential-p data rate)
     (- (log rate) (* rate data))))
 
-(defmethod ll/exponential ((data number) (rate node))
+(defmethod score/exponential ((data number) (rate node))
   (when (of-exponential-p data ($data rate))
     ($sub ($log rate) ($mul rate data))))
 
-(defmethod ll/exponential ((data tensor) (rate number))
+(defmethod score/exponential ((data tensor) (rate number))
   (when (of-exponential-p data rate)
     ($sum ($sub ($log rate) ($mul rate data)))))
 
-(defmethod ll/exponential ((data tensor) (rate node))
+(defmethod score/exponential ((data tensor) (rate node))
   (when (of-exponential-p data ($data rate))
     ($sum ($sub ($log rate) ($mul rate data)))))
 
@@ -47,4 +47,4 @@
 
 (defmethod r/score ((rv r/exponential))
   (with-slots (rate) rv
-    (ll/exponential (r/value rv) rate)))
+    (score/exponential (r/value rv) rate)))

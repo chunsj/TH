@@ -1,42 +1,42 @@
 (in-package :th.pp)
 
-(defgeneric ll/uniform (data lower upper))
+(defgeneric score/uniform (data lower upper))
 (defgeneric sample/uniform (lower upper &optional n))
 
 (defun of-uniform-p (data lower upper) (and (> upper lower) (of-ie data lower upper)))
 
-(defmethod ll/uniform ((data number) (lower number) (upper number))
+(defmethod score/uniform ((data number) (lower number) (upper number))
   (when (of-uniform-p data lower upper)
     (- (log (- upper lower)))))
 
-(defmethod ll/uniform ((data number) (lower node) (upper number))
+(defmethod score/uniform ((data number) (lower node) (upper number))
   (when (of-uniform-p data ($data lower) upper)
     ($neg ($log ($sub upper lower)))))
 
-(defmethod ll/uniform ((data number) (lower number) (upper node))
+(defmethod score/uniform ((data number) (lower number) (upper node))
   (when (of-uniform-p data lower ($data upper))
     ($neg ($log ($sub upper lower)))))
 
-(defmethod ll/uniform ((data number) (lower node) (upper node))
+(defmethod score/uniform ((data number) (lower node) (upper node))
   (when (of-uniform-p data ($data lower) ($data upper))
     ($neg ($log ($sub upper lower)))))
 
-(defmethod ll/uniform ((data tensor) (lower number) (upper number))
+(defmethod score/uniform ((data tensor) (lower number) (upper number))
   (when (of-uniform-p data lower upper)
     (let ((n ($count data)))
       ($mul (- n) ($log ($sub upper lower))))))
 
-(defmethod ll/uniform ((data tensor) (lower node) (upper number))
+(defmethod score/uniform ((data tensor) (lower node) (upper number))
   (when (of-uniform-p data ($data lower) upper)
     (let ((n ($count data)))
       ($mul (- n) ($log ($sub upper lower))))))
 
-(defmethod ll/uniform ((data tensor) (lower number) (upper node))
+(defmethod score/uniform ((data tensor) (lower number) (upper node))
   (when (of-uniform-p data lower ($data upper))
     (let ((n ($count data)))
       ($mul (- n) ($log ($sub upper lower))))))
 
-(defmethod ll/uniform ((data tensor) (lower node) (upper node))
+(defmethod score/uniform ((data tensor) (lower node) (upper node))
   (when (of-uniform-p data ($data lower) ($data upper))
     (let ((n ($count data)))
       ($mul (- n) ($log ($sub upper lower))))))
@@ -78,4 +78,4 @@
 
 (defmethod r/score ((rv r/uniform))
   (with-slots (lower upper) rv
-    (ll/uniform (r/value rv) lower upper)))
+    (score/uniform (r/value rv) lower upper)))

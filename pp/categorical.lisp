@@ -1,25 +1,25 @@
 (in-package :th.pp)
 
-(defgeneric ll/categorical (data probs))
+(defgeneric score/categorical (data probs))
 (defgeneric sample/categorical (probs &optional n))
 
 (defun of-categorical-p (data probs)
   (let ((n ($count probs)))
     (and (of-ie data 0 (- n 1)) (of-ie probs 0 1))))
 
-(defmethod ll/categorical ((data number) (probs tensor))
+(defmethod score/categorical ((data number) (probs tensor))
   (when (of-categorical-p data probs)
     ($sum ($gather ($log probs) 0 (tensor.long (list data))))))
 
-(defmethod ll/categorical ((data number) (probs node))
+(defmethod score/categorical ((data number) (probs node))
   (when (of-categorical-p data ($data probs))
     ($sum ($gather ($log probs) 0 (tensor.long (list data))))))
 
-(defmethod ll/categorical ((data tensor) (probs tensor))
+(defmethod score/categorical ((data tensor) (probs tensor))
   (when (of-categorical-p data probs)
     ($sum ($gather ($log probs) 0 (tensor.long data)))))
 
-(defmethod ll/categorical ((data tensor) (probs node))
+(defmethod score/categorical ((data tensor) (probs node))
   (when (of-categorical-p data ($data probs))
     ($sum ($gather ($log probs) 0 (tensor.long data)))))
 
@@ -51,4 +51,4 @@
 
 (defmethod r/score ((rv r/categorical))
   (with-slots (ps) rv
-    (ll/categorical (r/value rv) ps)))
+    (score/categorical (r/value rv) ps)))

@@ -1,6 +1,6 @@
 (in-package :th.pp)
 
-(defgeneric ll/bernoulli (data p))
+(defgeneric score/bernoulli (data p))
 (defgeneric sample/bernoulli (p &optional n))
 
 (defun of-bernoulli-p (data p)
@@ -9,19 +9,19 @@
            (of-it p 0 1))
       (and (or (= data 0) (= data 1)) (of-it p 0 1))))
 
-(defmethod ll/bernoulli ((data number) (p number))
+(defmethod score/bernoulli ((data number) (p number))
   (when (of-bernoulli-p data p)
     (+ (* data (log p)) (* (- 1 data) (log (- 1 p))))))
 
-(defmethod ll/bernoulli ((data number) (p node))
+(defmethod score/bernoulli ((data number) (p node))
   (when (of-bernoulli-p data ($data p))
     ($add ($mul data ($log p)) ($mul (- 1 data) ($log ($sub 1 p))))))
 
-(defmethod ll/bernoulli ((data tensor) (p number))
+(defmethod score/bernoulli ((data tensor) (p number))
   (when (of-bernoulli-p data p)
     ($sum ($add ($mul data (log p)) ($mul ($sub 1 data) (log (- 1 p)))))))
 
-(defmethod ll/bernoulli ((data tensor) (p node))
+(defmethod score/bernoulli ((data tensor) (p node))
   (when (of-bernoulli-p data ($data p))
     ($sum ($add ($mul data ($log p)) ($mul ($sub 1 data) ($log ($sub 1 p)))))))
 
@@ -51,4 +51,4 @@
 
 (defmethod r/score ((rv r/bernoulli))
   (with-slots (p) rv
-    (ll/bernoulli (r/value rv) p)))
+    (score/bernoulli (r/value rv) p)))
