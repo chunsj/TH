@@ -68,4 +68,6 @@
                                         (:file "cauchy")
                                         (:file "exponential")
                                         (:file "gaussian")
-                                        (:file "uniform")))))
+                                        (:file "uniform")
+                                        (:file "mcmc")
+                                        (:file "mcmc-mh")))))
