@@ -1,7 +1,7 @@
 (defsystem th
   :name "th"
   :author "Sungjin Chun <chunsj@gmail.com>"
-  :version "1.67"
+  :version "1.68"
   :maintainer "Sungjin Chun <chunsj@gmail.com>"
   :license "GPL3"
   :description "common lisp tensor and deep learning library"
@@ -68,12 +68,4 @@
                                         (:file "cauchy")
                                         (:file "exponential")
                                         (:file "gaussian")
-                                        (:file "uniform")))
-               (:module distributions :components ((:file "distributions")
-                                                   (:file "likelihoods")
-                                                   (:file "samples")
-                                                   (:file "discrete")
-                                                   (:file "continuous")
-                                                   (:file "rv")))
-               (:module mcmc :components ((:file "mcmc")
-                                          (:file "hmc")))))
+                                        (:file "uniform")))))
