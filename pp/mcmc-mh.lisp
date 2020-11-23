@@ -1,13 +1,12 @@
 (in-package :th.pp)
 
 (defgeneric proposal/tune! (proposal))
-(defgeneric proposal/accepted! (proposal))
-(defgeneric proposal/rejected! (proposal))
-(defgeneric proposal/propose! (proposal rv))
-(defgeneric proposal/revert! (proposal rv))
+(defgeneric proposal/accepted! (proposal acceptedp))
 (defgeneric proposal/propose (proposal value))
 
 (defgeneric r/proposal (rv))
+(defgeneric r/propose! (rv proposal))
+(defgeneric r/revert! (rv proposal))
 
 (defclass mcmc/proposal ()
   ((accepted :initform 0)
@@ -29,15 +28,14 @@
           (setf accepted 0
                 rejected 0))))))
 
-(defmethod proposal/accepted! ((proposal mcmc/proposal))
-  (with-slots (accepted) proposal
-    (incf accepted)))
+(defmethod proposal/accepted! ((proposal mcmc/proposal) acceptedp)
+  (with-slots (accepted rejected) proposal
+    (if acceptedp
+        (incf accepted)
+        (incf rejected))
+    proposal))
 
-(defmethod proposal/rejected! ((proposal mcmc/proposal))
-  (with-slots (rejected) proposal
-    (incf rejected)))
-
-(defmethod proposal/propose! ((proposal mcmc/proposal) (rv r/var))
+(defmethod r/propose! ((rv r/var) (proposal mcmc/proposal))
   (let ((ratio 0D0))
     (with-slots (pvalue) proposal
       (with-slots (value) rv
@@ -45,13 +43,14 @@
         (let ((proposed (proposal/propose proposal value)))
           (setf value (car proposed))
           (setf ratio (cdr proposed)))))
-    (cons rv ratio)))
+    ratio))
 
-(defmethod proposal/revert! ((proposal mcmc/proposal) (rv r/var))
+(defmethod r/revert! ((rv r/var) (proposal mcmc/proposal))
   (with-slots (pvalue) proposal
     (when pvalue
       (with-slots (value) rv
-        (setf value pvalue)))
+        (setf value pvalue))
+      (setf pvalue nil))
     rv))
 
 (defclass proposal/gaussian (mcmc/proposal)
@@ -85,18 +84,31 @@
 (defmethod r/proposal ((rv r/discrete)) (proposal/discrete-gaussian))
 (defmethod r/proposal ((rv r/continuous)) (proposal/gaussian))
 
-(defun mcmc/mh (parameters likelihoodfn &key (iterations 50000) (tune-steps 100)
-                                          (burn-in 1000) (thin 1) verbose)
-  (labels ((likelihood (params) (funcall likelihoodfn params)))
-    (when-let ((proposals (mapcar #'r/proposal parameters))
-               (parameters (mapcar #'$clone parameters))
-               (traces (loop :repeat ($count parameters)
-                             :collect (mcmc/trace :burn-ins burn-in :thin thin)))
-               (lk (likelihood parameters)))
-      (loop :repeat (+ iterations burn-ins)
-            :for iter :from 1
-            :do (let ((tuneable (and (> iter 1) (<= iter burn-ins) (zerop (rem iter tune-steps)))))
-                  (when tuneable
-                    (loop :for proposal :in proposals :do (proposal/tune! proposal)))
-                  (loop :for proposal :in proposals
-                        :for ))))))
+(defun mcmc/mh (parameters likelihoodfn
+                &key (iterations 50000) (tune-steps 100) (burn-in 1000) (thin 1))
+  (let ((lk (funcall likelihoodfn parameters)))
+    (when lk
+      (labels ((likelihood (params) (funcall likelihoodfn params)))
+        (let ((proposals (mapcar #'r/proposal parameters))
+              (parameters (mapcar #'$clone parameters))
+              (traces (mcmc/traces ($count parameters) :burn-in burn-in :thin thin)))
+          (loop :repeat (+ iterations burn-in)
+                :for iter :from 1
+                :for burning = (<= iter burn-in)
+                :for tuneable = (zerop (rem iter tune-steps))
+                :do (let ((tune (and (> iter 1) burning tuneable)))
+                      (when tune
+                        (loop :for proposal :in proposals :do (proposal/tune! proposal)))
+                      (loop :for proposal :in proposals
+                            :for parameter :in parameters
+                            :for trace :in traces
+                            :for lhr = (r/propose! parameter proposal)
+                            :for nlk = (likelihood parameters)
+                            :for u = (log (random 1D0))
+                            :do (let ((accepted (and lhr nlk (> (+ (- nlk lk) lhr) u))))
+                                  (proposal/accepted! proposal accepted)
+                                  (if accepted
+                                      (setf lk nlk)
+                                      (r/revert! parameter proposal))
+                                  (trace/push! parameter trace)))))
+          traces)))))
