@@ -61,7 +61,7 @@
     (when lk
       (labels ((likelihood (params) (funcall likelihoodfn params)))
         (let ((parameters (mapcar #'$clone parameters))
-              (traces (mcmc/traces ($count parameters) :burn-in burn-in :thin thin)))
+              (traces (mcmc/traces np :burn-in burn-in :thin thin)))
           (loop :repeat nsize
                 :for momentums = (sample/normal m sd np)
                 :for lp = (- lk (score/normal momentums m sd))
