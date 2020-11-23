@@ -1,6 +1,7 @@
 # My Deep Learning Library for Common Lisp using libTH/libTHNN
 
-## NEWS (2020-11-06)
+## NEWS (2020-11-23)
+  MCMC related examples will not work.
   Current experiments of distributions and others might be changed heavily for better PPL.
 
 ## OLD NEWS
