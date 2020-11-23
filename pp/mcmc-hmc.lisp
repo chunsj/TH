@@ -53,22 +53,22 @@
 
 (defun mcmc/hmc (parameters likelihoodfn
                  &key (iterations 50000) (burn-in 1000) (thin 1) (path-length 1) (step-size 0.1))
-  (let ((nsize (+ burn-in iterations))
-        (np ($count parameters))
-        (lk (funcall likelihoodfn parameters))
-        (m 0)
-        (sd 1))
-    (when lk
-      (labels ((likelihood (params) (funcall likelihoodfn params)))
+  (labels ((potential (params) (* -1 (funcall likelihoodfn params))))
+    (let ((nsize (+ burn-in iterations))
+          (np ($count parameters))
+          (lk (potential parameters))
+          (m 0)
+          (sd 1))
+      (when lk
         (let ((parameters (mapcar #'$clone parameters))
               (traces (mcmc/traces np :burn-in burn-in :thin thin)))
           (loop :repeat nsize
                 :for momentums = (sample/normal m sd np)
                 :for lp = (- lk (score/normal momentums m sd))
-                :for irs = (leapfrog parameters momentums likelihoodfn path-length step-size)
+                :for irs = (leapfrog parameters momentums #'potential path-length step-size)
                 :for new-parameters = ($0 irs)
                 :for new-momentums = ($1 irs)
-                :for lpn = (- (likelihood new-parameters) (score/normal new-momentums m sd))
+                :for lpn = (- (potential new-parameters) (score/normal new-momentums m sd))
                 :for lu = (log (random 1D0))
                 :do (let ((accept (< lu (- lp lpn))))
                       (when accept
