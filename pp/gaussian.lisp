@@ -117,3 +117,13 @@
 (defmethod r/score ((rv r/gaussian))
   (with-slots (mean sd) rv
     (score/gaussian (r/value rv) mean sd)))
+
+(defmethod $clone ((rv r/gaussian))
+  (let ((nrv (call-next-method)))
+    (with-slots (mean sd) rv
+      (let ((m ($clone mean))
+            (s ($clone sd)))
+        (with-slots (mean sd) nrv
+          (setf mean m
+                sd s))))
+    nrv))

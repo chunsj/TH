@@ -48,3 +48,11 @@
 (defmethod r/score ((rv r/exponential))
   (with-slots (rate) rv
     (score/exponential (r/value rv) rate)))
+
+(defmethod $clone ((rv r/exponential))
+  (let ((nrv (call-next-method)))
+    (with-slots (rate) rv
+      (let ((r ($clone rate)))
+        (with-slots (rate) nrv
+          (setf rate r))))
+    nrv))

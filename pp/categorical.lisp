@@ -52,3 +52,11 @@
 (defmethod r/score ((rv r/categorical))
   (with-slots (ps) rv
     (score/categorical (r/value rv) ps)))
+
+(defmethod $clone ((rv r/categorical))
+  (let ((nrv (call-next-method)))
+    (with-slots (ps) rv
+      (let ((nps ($clone ps)))
+        (with-slots (ps) nrv
+          (setf ps nps))))
+    nrv))

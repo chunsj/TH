@@ -79,3 +79,13 @@
 (defmethod r/score ((rv r/uniform))
   (with-slots (lower upper) rv
     (score/uniform (r/value rv) lower upper)))
+
+(defmethod $clone ((rv r/uniform))
+  (let ((nrv (call-next-method)))
+    (with-slots (lower upper) rv
+      (let ((l ($clone lower))
+            (u ($clone upper)))
+        (with-slots (lower upper) nrv
+          (setf lower l
+                upper u))))
+    nrv))

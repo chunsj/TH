@@ -52,3 +52,11 @@
 (defmethod r/score ((rv r/poisson))
   (with-slots (rate) rv
     (score/poisson (r/value rv) rate)))
+
+(defmethod $clone ((rv r/poisson))
+  (let ((nrv (call-next-method)))
+    (with-slots (rate) rv
+      (let ((r ($clone rate)))
+        (with-slots (rate) nrv
+          (setf rate r))))
+    nrv))

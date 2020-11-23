@@ -7,6 +7,8 @@
 
 (defclass r/variable () ())
 
+(defmethod $clone ((rv r/variable)) (make-instance (class-of rv)))
+
 (defclass r/var (r/variable)
   ((value :initform nil :accessor r/value)
    (observedp :initform nil :accessor r/observedp)))
@@ -16,6 +18,16 @@
     (if (r/continuousp rv)
         (format stream "~8F~A" value (if (not observedp) "?" ""))
         (format stream "~8D~A" value (if (not observedp) "?" "")))))
+
+(defmethod $clone ((rv r/var))
+  (let ((n (call-next-method)))
+    (with-slots (value observedp) rv
+      (let ((v value)
+            (o observedp))
+        (with-slots (value observedp) n
+          (setf value ($clone v)
+                observedp o))))
+    n))
 
 (defun r/set-observation! (rv observation)
   (when observation

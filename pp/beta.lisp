@@ -92,3 +92,13 @@
 (defmethod r/score ((rv r/beta))
   (with-slots (alpha beta) rv
     (score/beta (r/value rv) alpha beta)))
+
+(defmethod $clone ((rv r/beta))
+  (let ((n (call-next-method)))
+    (with-slots (alpha beta) rv
+      (let ((a ($clone alpha))
+            (b ($clone beta)))
+        (with-slots (alpha beta) n
+          (setf alpha a
+                beta b))))
+    n))

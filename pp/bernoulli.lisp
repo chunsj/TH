@@ -52,3 +52,11 @@
 (defmethod r/score ((rv r/bernoulli))
   (with-slots (p) rv
     (score/bernoulli (r/value rv) p)))
+
+(defmethod $clone ((rv r/bernoulli))
+  (let ((n (call-next-method)))
+    (with-slots (p) rv
+      (let ((np ($clone p)))
+        (with-slots (p) n
+          (setf p np))))
+    n))

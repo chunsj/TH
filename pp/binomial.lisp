@@ -70,3 +70,13 @@
 (defmethod r/score ((rv r/binomial))
   (with-slots (p n) rv
     (score/binomial (r/value rv) p n)))
+
+(defmethod $clone ((rv r/binomial))
+  (let ((nrv (call-next-method)))
+    (with-slots (p n) rv
+      (let ((np ($clone p))
+            (nn ($clone n)))
+        (with-slots (p n) nrv
+          (setf p np
+                n nn))))
+    nrv))

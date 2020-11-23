@@ -111,3 +111,13 @@
 (defmethod r/score ((rv r/cauchy))
   (with-slots (location scale) rv
     (score/cauchy (r/value rv) location scale)))
+
+(defmethod $clone ((rv r/cauchy))
+  (let ((nrv (call-next-method)))
+    (with-slots (location scale) rv
+      (let ((l ($clone location))
+            (s ($clone scale)))
+        (with-slots (location scale) nrv
+          (setf location l
+                scale s))))
+    nrv))
