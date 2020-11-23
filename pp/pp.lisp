@@ -37,4 +37,5 @@
            #:r/uniform
            #:r/score
            #:r/sample
-           #:r/value))
+           #:r/value
+           #:g))
