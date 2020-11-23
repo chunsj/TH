@@ -70,4 +70,5 @@
                                         (:file "gaussian")
                                         (:file "uniform")
                                         (:file "mcmc")
-                                        (:file "mcmc-mh")))))
+                                        (:file "mcmc-mh")
+                                        (:file "mcmc-hmc")))))

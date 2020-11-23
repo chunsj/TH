@@ -37,4 +37,16 @@
            #:r/uniform
            #:r/score
            #:r/sample
-           #:r/value))
+           #:r/value
+           #:mcmc/mh
+           #:mcmc/hmc
+           #:trace/values
+           #:trace/mean
+           #:trace/sd
+           #:trace/quantiles
+           #:trace/error
+           #:trace/hpd
+           #:trace/autocorrelation
+           #:trace/geweke
+           #:trace/summary
+           #:trace/sample))
