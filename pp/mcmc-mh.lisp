@@ -6,7 +6,7 @@
 
 (defgeneric r/proposal (rv))
 (defgeneric r/propose! (rv proposal))
-(defgeneric r/revert! (rv proposal))
+(defgeneric r/accept! (rv proposal acceptedp))
 
 (defclass mcmc/proposal ()
   ((accepted :initform 0)
@@ -45,13 +45,16 @@
           (setf ratio (cdr proposed)))))
     ratio))
 
-(defmethod r/revert! ((rv r/var) (proposal mcmc/proposal))
-  (with-slots (pvalue) proposal
-    (when pvalue
-      (with-slots (value) rv
-        (setf value pvalue))
-      (setf pvalue nil))
-    rv))
+(defmethod r/accept! ((rv r/var) (proposal mcmc/proposal) acceptedp)
+  (proposal/accepted! proposal acceptedp)
+  (unless acceptedp
+    (with-slots (pvalue) proposal
+      (when pvalue
+        (with-slots (value) rv
+          (setf value pvalue
+                pvalue nil)))
+      rv))
+  rv)
 
 (defclass proposal/gaussian (mcmc/proposal)
   ((scale :initform 1D0)))
@@ -84,14 +87,21 @@
 (defmethod r/proposal ((rv r/discrete)) (proposal/discrete-gaussian))
 (defmethod r/proposal ((rv r/continuous)) (proposal/gaussian))
 
-(defun mcmc/mh (parameters likelihoodfn
+(defun mh/accepted (prob nprob log-hastings-ratio)
+  (when (and prob nprob log-hastings-ratio)
+    (let ((alpha (+ (- nprob prob) log-hastings-ratio)))
+      (> alpha (log (random 1D0))))))
+
+(defun mcmc/mh (parameters posterior-function
                 &key (iterations 50000) (tune-steps 100) (burn-in 1000) (thin 1))
-  (let ((lk (funcall likelihoodfn parameters)))
-    (when lk
-      (labels ((likelihood (params) (funcall likelihoodfn params)))
+  (labels ((posterior (vs) (funcall posterior-function vs))
+           (vals (parameters) (mapcar #'r/value parameters)))
+    (let ((prob (posterior (vals parameters)))
+          (np ($count parameters)))
+      (when prob
         (let ((proposals (mapcar #'r/proposal parameters))
-              (parameters (mapcar #'$clone parameters))
-              (traces (mcmc/traces ($count parameters) :burn-in burn-in :thin thin)))
+              (traces (mcmc/traces np :burn-in burn-in :thin thin))
+              (candidates (mapcar #'$clone parameters)))
           (loop :repeat (+ iterations burn-in)
                 :for iter :from 1
                 :for burning = (<= iter burn-in)
@@ -100,15 +110,12 @@
                       (when tune
                         (loop :for proposal :in proposals :do (proposal/tune! proposal)))
                       (loop :for proposal :in proposals
-                            :for parameter :in parameters
+                            :for candidate :in candidates
                             :for trace :in traces
-                            :for lhr = (r/propose! parameter proposal)
-                            :for nlk = (likelihood parameters)
-                            :for u = (log (random 1D0))
-                            :do (let ((accepted (and lhr nlk (> (+ (- nlk lk) lhr) u))))
-                                  (proposal/accepted! proposal accepted)
-                                  (if accepted
-                                      (setf lk nlk)
-                                      (r/revert! parameter proposal))
-                                  (trace/push! parameter trace)))))
+                            :for lhr = (r/propose! candidate proposal)
+                            :for nprob = (posterior (vals candidates))
+                            :do (let ((accepted (mh/accepted prob nprob lhr)))
+                                  (r/accept! candidate proposal accepted)
+                                  (trace/push! (r/value candidate) trace)
+                                  (when accepted (setf prob nprob))))))
           traces)))))

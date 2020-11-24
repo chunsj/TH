@@ -1,83 +1,82 @@
 (in-package :th.pp)
 
-(defgeneric r/parameter! (rv &optional revert))
-(defgeneric r/gradient (rv))
+(defun r/momentum (rv m sd)
+  (let ((v (r/value rv)))
+    (cond (($tensorp v) ($resize! (sample/normal m sd ($count v)) v))
+          (T (sample/gaussian m sd)))))
 
-(defmethod r/parameter! ((rv r/var) &optional revert)
-  (when (r/continuousp rv)
-    (with-slots (value) rv
-      (if (null revert)
-          (unless ($parameterp value)
-            (setf value ($parameter value)))
-          (when ($parameterp value)
-            (setf value ($data value))))))
-  rv)
-
-(defmethod r/gradient ((rv r/var))
-  (when (r/continuousp rv)
-    (with-slots (value) rv
-      (when ($parameterp value)
-        ($gradient value)))))
+(defun momentum-score (ms m sd)
+  (loop :for momentum :in ms
+        :summing (score/gaussian momentum m sd)))
 
 (defun dvdq (potential parameters)
-  (let ((ps (mapcar #'r/parameter! parameters)))
+  (let ((ps (->> parameters
+                 (mapcar (lambda (p)
+                           (if (r/continuousp p)
+                               ($parameter (r/value p))
+                               (r/value p)))))))
     (funcall potential ps)
-    (let ((gradients (mapcar #'r/gradient ps)))
-      (mapcar (lambda (p) (r/parameter! p T)) ps)
-      gradients)))
+    (->> ps
+         (mapcar (lambda (p)
+                   (if ($parameterp p)
+                       ($gradient p)
+                       ($zero p)))))))
 
 (defun update-parameters! (parameters momentums step-size)
   (loop :for p :in parameters
-        :for i :from 0
+        :for m :in momentums
         :do (when (r/continuousp p)
-              (setf (r/value p) ($+ (r/value p) ($* step-size ($ momentums i)))))))
+              ($add! (r/value p) ($* step-size m)))))
 
 (defun update-momentums! (momentums gradients step-size)
   (loop :for g :in gradients
-        :for i :from 0
-        :do (when g (setf ($ momentums i) ($- ($ momentums i) ($* step-size g))))))
+        :for m :in momentums
+        :do ($sub! m ($* step-size g))))
 
-(defun leapfrog (position momentums potential path-length step-size)
+(defun leapfrog (candidates momentums potential path-length step-size)
   (let ((half-step-size (/ step-size 2))
-        (parameters (mapcar #'$clone position)))
-    (update-momentums! momentums (dvdq potential parameters) half-step-size)
+        (cs (mapcar #'$clone candidates)))
+    (update-momentums! momentums (dvdq potential cs) half-step-size)
     (loop :repeat (1- (round (/ path-length step-size)))
           :do (progn
-                (update-parameters! parameters momentums step-size)
-                (update-momentums! momentums (dvdq potential parameters) step-size)))
-    (update-parameters! parameters momentums step-size)
-    (update-momentums! momentums (dvdq potential parameters) half-step-size)
-    (loop :for i :from 0 :below ($count momentums)
-          :do (setf ($ momentums i) ($neg ($ momentums i))))
-    (list parameters momentums)))
+                (update-parameters! cs momentums step-size)
+                (update-momentums! momentums (dvdq potential cs) step-size)))
+    (update-parameters! cs momentums step-size)
+    (update-momentums! momentums (dvdq potential cs) half-step-size)
+    (loop :for m :in momentums :do ($neg! m))
+    (list (funcall potential (mapcar #'r/value cs)) cs momentums)))
 
-(defun mcmc/hmc (parameters likelihoodfn
+(defun hmc/accepted (h sm nh nsm)
+  (when (and h sm nh nsm)
+    (< (log (random 1D0)) (- (- h sm) (- nh nsm)))))
+
+(defun mcmc/hmc (parameters posterior-function
                  &key (iterations 50000) (burn-in 1000) (thin 1) (path-length 1) (step-size 0.1))
-  (labels ((potential (params) (* -1 (funcall likelihoodfn params))))
+  (labels ((potential (vs) ($neg (funcall posterior-function vs)))
+           (vals (parameters) (mapcar #'r/value parameters)))
     (let ((nsize (+ burn-in iterations))
+          (h (potential (vals parameters)))
           (np ($count parameters))
-          (lk (potential parameters))
           (m 0)
           (sd 1))
-      (when lk
-        (let ((parameters (mapcar #'$clone parameters))
+      (when h
+        (let ((cs (mapcar #'$clone parameters))
               (traces (mcmc/traces np :burn-in burn-in :thin thin)))
           (loop :repeat nsize
-                :for momentums = (sample/normal m sd np)
-                :for lp = (- lk (score/normal momentums m sd))
-                :for irs = (leapfrog parameters momentums #'potential path-length step-size)
-                :for new-parameters = ($0 irs)
-                :for new-momentums = ($1 irs)
-                :for lpn = (- (potential new-parameters) (score/normal new-momentums m sd))
-                :for lu = (log (random 1D0))
-                :do (let ((accept (< lu (- lp lpn))))
+                :for ms = (->> cs
+                               (mapcar (lambda (c) (r/momentum c m sd))))
+                :for sm = (momentum-score ms m sd)
+                :for (nh ncs nms) = (leapfrog cs ms #'potential path-length step-size)
+                :for nsm = (momentum-score nms m sd)
+                :do (let ((accept (hmc/accepted h sm nh nsm)))
                       (when accept
                         (loop :for tr :in traces
-                              :for p :in new-parameters
-                              :do (trace/push! ($clone p) tr))
-                        (setf parameters new-parameters))
+                              :for c :in ncs
+                              :do (trace/push! (r/value c) tr))
+                        (setf cs ncs)
+                        (setf h nh))
                       (unless accept
                         (loop :for tr :in traces
-                              :for p :in parameters
-                              :do (trace/push! ($clone p) tr)))))
+                              :for c :in cs
+                              :do (trace/push! (r/value c) tr)))))
           traces)))))

@@ -21,28 +21,22 @@
 (defun mcmc/traces (n &key (burn-in 0) (thin 0))
   (loop :repeat n :collect (mcmc-trace :burn-in burn-in :thin thin)))
 
-(defun trace/push! (rv trace)
+(defun trace/push! (val trace)
   (with-slots (traces) trace
-    (push ($clone rv) traces))
-  rv)
-
-(defun trace/trace (trace)
-  (with-slots (collection burn-ins thin) trace
-    (let ((rtraces (nthcdr burn-ins (reverse collection))))
-      (loop :for lst :on rtraces :by (lambda (l) (nthcdr thin l))
-            :collect (car lst)))))
+    (push ($clone val) traces))
+  val)
 
 (defun trace/values (trace)
   (with-slots (collection burn-ins thin) trace
     (let ((rtraces (nthcdr burn-ins (reverse collection))))
       (loop :for lst :on rtraces :by (lambda (l) (nthcdr thin l))
-            :collect (r/value (car lst))))))
+            :collect (car lst)))))
 
 (defun trace/mean (trace) ($mean (trace/values trace)))
 
 (defun trace/sd (trace) ($sd (trace/values trace)))
 
-(defun trace/count (trace) ($count (trace/trace trace)))
+(defun trace/count (trace) ($count (trace/values trace)))
 
 (defun trace/error (trace)
   (let ((trc (trace/values trace)))
@@ -146,7 +140,7 @@
           :gwkrng geweke)))
 
 (defun trace/sample (traces &key (n 1) transform)
-  (let ((trcs (loop :for trace :in traces :collect (trace/trace trace)))
+  (let ((trcs (loop :for trace :in traces :collect (trace/values trace)))
         (ntrcs (loop :for trace :in traces :collect (trace/count trace))))
     (loop :repeat n
           :for parameters = (loop :for trc :in trcs
