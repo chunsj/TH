@@ -43,7 +43,7 @@
                           #'disaster-posterior)))
      (loop :for trc :in traces
            :for lbl :in '(:switch-point :early-mean :late-mean)
-           :do (prn lbl (trace/map trc))))))
+           :do (prn lbl trc)))))
 
 (time
  (let ((r/switch-point (r/variable (round (* 0.5 ($count *disasters*))) :discrete))
@@ -53,4 +53,4 @@
                            #'disaster-posterior)))
      (loop :for trc :in traces
            :for lbl :in '(:switch-point :early-mean :late-mean)
-           :do (prn lbl (trace/map trc))))))
+           :do (prn lbl trc)))))

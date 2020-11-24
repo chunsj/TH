@@ -6,6 +6,9 @@
    (burn-ins :initform 0)
    (thin :initform 0)))
 
+(defmethod print-object ((trace mcmc/trace) stream)
+  (format stream "<TRACE ~A>" (trace/map trace)))
+
 (defmethod $count ((trace mcmc/trace))
   (with-slots (collection) trace
     ($count collection)))
