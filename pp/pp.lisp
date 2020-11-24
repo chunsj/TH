@@ -24,20 +24,7 @@
            #:sample/gaussian
            #:sample/normal
            #:sample/uniform
-           #:r/bernoulli
-           #:r/binomial
-           #:r/categorical
-           #:r/discrete-uniform
-           #:r/poisson
-           #:r/beta
-           #:r/cauchy
-           #:r/exponential
-           #:r/gaussian
-           #:r/normal
-           #:r/uniform
-           #:r/score
-           #:r/sample
-           #:r/value
+           #:r/variable
            #:mcmc/mh
            #:mcmc/hmc
            #:trace/values

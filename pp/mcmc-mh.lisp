@@ -12,7 +12,7 @@
   ((accepted :initform 0)
    (rejected :initform 0)
    (factor :initform 1D0)
-   (pvalue :initform nil)))
+   (pvalue :initform nil :accessor $data)))
 
 (defmethod proposal/tune! ((proposal mcmc/proposal))
   (with-slots (accepted rejected factor) proposal
@@ -35,25 +35,18 @@
         (incf rejected))
     proposal))
 
-(defmethod r/propose! ((rv r/var) (proposal mcmc/proposal))
-  (let ((ratio 0D0))
-    (with-slots (pvalue) proposal
-      (with-slots (value) rv
-        (setf pvalue value)
-        (let ((proposed (proposal/propose proposal value)))
-          (setf value (car proposed))
-          (setf ratio (cdr proposed)))))
-    ratio))
+(defmethod r/propose! ((rv r/variable) (proposal mcmc/proposal))
+  (let ((proposed (proposal/propose proposal ($data rv))))
+    (setf ($data proposal) ($data rv))
+    (setf ($data rv) (car proposed))
+    (cdr proposed)))
 
-(defmethod r/accept! ((rv r/var) (proposal mcmc/proposal) acceptedp)
+(defmethod r/accept! ((rv r/variable) (proposal mcmc/proposal) acceptedp)
   (proposal/accepted! proposal acceptedp)
   (unless acceptedp
-    (with-slots (pvalue) proposal
-      (when pvalue
-        (with-slots (value) rv
-          (setf value pvalue
-                pvalue nil)))
-      rv))
+    (when-let ((pvalue ($data proposal)))
+      (setf ($data rv) pvalue)
+      (setf ($data proposal) nil)))
   rv)
 
 (defclass proposal/gaussian (mcmc/proposal)
@@ -80,7 +73,7 @@
       (setf scale s))
     n))
 
-(defmethod proposal/propose ((proposal proposal/gaussian) value)
+(defmethod proposal/propose ((proposal proposal/discrete-gaussian) value)
   (with-slots (scale factor) proposal
     (cons (round (sample/gaussian value (* factor scale))) 0D0)))
 
@@ -94,8 +87,8 @@
 
 (defun mcmc/mh (parameters posterior-function
                 &key (iterations 50000) (tune-steps 100) (burn-in 1000) (thin 1))
-  (labels ((posterior (vs) (funcall posterior-function vs))
-           (vals (parameters) (mapcar #'r/value parameters)))
+  (labels ((posterior (vs) (apply posterior-function vs))
+           (vals (parameters) (mapcar #'$data parameters)))
     (let ((prob (posterior (vals parameters)))
           (np ($count parameters)))
       (when prob
@@ -116,6 +109,6 @@
                             :for nprob = (posterior (vals candidates))
                             :do (let ((accepted (mh/accepted prob nprob lhr)))
                                   (r/accept! candidate proposal accepted)
-                                  (trace/push! (r/value candidate) trace)
+                                  (trace/push! ($data candidate) trace)
                                   (when accepted (setf prob nprob))))))
           traces)))))

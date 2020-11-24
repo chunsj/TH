@@ -22,8 +22,8 @@
   (loop :repeat n :collect (mcmc-trace :burn-in burn-in :thin thin)))
 
 (defun trace/push! (val trace)
-  (with-slots (traces) trace
-    (push ($clone val) traces))
+  (with-slots (collection) trace
+    (push ($clone val) collection))
   val)
 
 (defun trace/values (trace)
