@@ -27,6 +27,7 @@
            #:r/variable
            #:mcmc/mh
            #:mcmc/hmc
+           #:trace/map
            #:trace/values
            #:trace/mean
            #:trace/sd

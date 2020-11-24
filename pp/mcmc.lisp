@@ -2,6 +2,7 @@
 
 (defclass mcmc/trace ()
   ((collection :initform nil)
+   (mval :initform nil :reader trace/map)
    (burn-ins :initform 0)
    (thin :initform 0)))
 
@@ -25,6 +26,11 @@
   (with-slots (collection) trace
     (push ($clone val) collection))
   val)
+
+(defun trace/map! (trace v)
+  (with-slots (mval) trace
+    (setf mval ($clone v)))
+  v)
 
 (defun trace/values (trace)
   (with-slots (collection burn-ins thin) trace

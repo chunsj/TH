@@ -67,8 +67,10 @@
         (let ((proposals (mapcar #'r/proposal parameters))
               (cs (mapcar #'$clone parameters))
               (traces (mcmc/traces np :burn-in burn-in :thin thin))
-              (maxprob ($neg h))
-              (maxvs (mapcar #'$clone (vals parameters))))
+              (maxprob ($neg h)))
+          (loop :for trace :in traces
+                :for candidate :in cs
+                :do (trace/map! trace ($data candidate)))
           (loop :repeat nsize
                 :for iter :from 1
                 :for burning = (<= iter burn-in)
@@ -91,7 +93,10 @@
                         (setf h nh)
                         (when (> ($neg h) maxprob)
                           (setf maxprob ($neg h))
-                          (setf maxvs (mapcar #'$clone (vals cs)))))
+                          (loop :for trace :in traces
+                                :for candidate :in cs
+                                :do (when (r/continuousp candidate)
+                                      (trace/map! trace ($data candidate))))))
                       (unless accept
                         (loop :for tr :in traces
                               :for c :in cs
@@ -110,7 +115,5 @@
                                       (setf h ($neg nprob))
                                       (when (> nprob maxprob)
                                         (setf maxprob nprob)
-                                        (setf maxvs (mapcar #'$clone (vals cs))))))))))
-          (prn "MAXLP:" maxprob)
-          (prn "MAXVS" maxvs)
+                                        (trace/map! trace ($data candidate)))))))))
           traces)))))

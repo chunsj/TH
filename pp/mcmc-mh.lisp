@@ -98,6 +98,9 @@
               (nsize (+ iterations burn-in))
               (maxprob prob)
               (maxvs (mapcar #'$clone (vals parameters))))
+          (loop :for trace :in traces
+                :for candidate :in candidates
+                :do (trace/map! trace ($data candidate)))
           (loop :repeat nsize
                 :for iter :from 1
                 :for burning = (<= iter burn-in)
@@ -117,7 +120,5 @@
                                     (setf prob nprob)
                                     (when (> prob maxprob)
                                       (setf maxprob prob)
-                                      (setf maxvs (mapcar #'$clone (vals candidates)))))))))
-          (prn "MAXLP:" maxprob)
-          (prn "MAXVS" maxvs)
+                                      (trace/map! trace ($data candidate))))))))
           traces)))))
