@@ -94,8 +94,11 @@
       (when prob
         (let ((proposals (mapcar #'r/proposal parameters))
               (traces (mcmc/traces np :burn-in burn-in :thin thin))
-              (candidates (mapcar #'$clone parameters)))
-          (loop :repeat (+ iterations burn-in)
+              (candidates (mapcar #'$clone parameters))
+              (nsize (+ iterations burn-in))
+              (maxprob prob)
+              (maxvs (mapcar #'$clone (vals parameters))))
+          (loop :repeat nsize
                 :for iter :from 1
                 :for burning = (<= iter burn-in)
                 :for tuneable = (zerop (rem iter tune-steps))
@@ -110,5 +113,11 @@
                             :do (let ((accepted (mh/accepted prob nprob lhr)))
                                   (r/accept! candidate proposal accepted)
                                   (trace/push! ($data candidate) trace)
-                                  (when accepted (setf prob nprob))))))
+                                  (when accepted
+                                    (setf prob nprob)
+                                    (when (> prob maxprob)
+                                      (setf maxprob prob)
+                                      (setf maxvs (mapcar #'$clone (vals candidates)))))))))
+          (prn "MAXLP:" maxprob)
+          (prn "MAXVS" maxvs)
           traces)))))

@@ -23,8 +23,8 @@
     (when (and prior-switch-point
                prior-early-mean
                prior-late-mean)
-      (let ((disasters-early (tensor (subseq *disasters* 0 switch-point)))
-            (disasters-late (tensor (subseq *disasters* switch-point))))
+      (let ((disasters-early (tensor (subseq *disasters* 0 ($data switch-point))))
+            (disasters-late (tensor (subseq *disasters* ($data switch-point)))))
         (let ((likelihood-early-mean (score/poisson disasters-early early-mean))
               (likelihood-late-mean (score/poisson disasters-late late-mean)))
           (when (and likelihood-early-mean
@@ -35,13 +35,21 @@
                 likelihood-early-mean
                 likelihood-late-mean)))))))
 
-(let ((r/switch-point (r/variable (round (* 0.5 ($count *disasters*))) :discrete))
-      (r/early-mean (r/variable *mean*))
-      (r/late-mean (r/variable *mean*)))
-  (let ((traces (mcmc/mh (list r/switch-point r/early-mean r/late-mean)
-                         #'disaster-posterior
-                         :iterations 20000
-                         :burn-in 5000
-                         :thin 5)))
-    (loop :for trc :in traces
-          :do (prn (trace/mean trc) (trace/hpd trc 0.05)))))
+(time
+ (let ((r/switch-point (r/variable (round (* 0.5 ($count *disasters*))) :discrete))
+       (r/early-mean (r/variable *mean*))
+       (r/late-mean (r/variable *mean*)))
+   (let ((traces (mcmc/mh (list r/switch-point r/early-mean r/late-mean)
+                          #'disaster-posterior)))
+     (loop :for trc :in traces
+           :do (prn (trace/mean trc))))))
+
+(time
+ (let ((r/switch-point (r/variable (round (* 0.5 ($count *disasters*))) :discrete))
+       (r/early-mean (r/variable *mean*))
+       (r/late-mean (r/variable *mean*)))
+   (let ((traces (mcmc/hmc (list r/switch-point r/early-mean r/late-mean)
+                           #'disaster-posterior
+                           :iterations 10000)))
+     (loop :for trc :in traces
+           :do (prn (trace/mean trc))))))

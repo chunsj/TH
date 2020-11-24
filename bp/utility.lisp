@@ -632,8 +632,8 @@
 
 (defmethod $scalar ((x T)) x)
 
-(defmacro $incf (place &optional (delta 1)) `(setf ,place ($+ ,place ,delta)))
-(defmacro $decf (place &optional (delta 1)) `(setf ,place ($- ,place ,delta)))
+(defmacro $incf (place &optional (delta 1)) `(setf ,place ($add ,place ,delta)))
+(defmacro $decf (place &optional (delta 1)) `(setf ,place ($sub ,place ,delta)))
 
 (defmethod $diagflat ((x tensor))
   ($diag ($reshape x ($count x))))

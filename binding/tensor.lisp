@@ -2239,6 +2239,8 @@
 
 (defmethod $broadcast ((c number) (m tensor)) ($mul! ($one m) c))
 
+(defmethod $broadcast ((c number) (m number)) c)
+
 (defgeneric $clear (tensor) (:documentation "new tensor allocated as given one."))
 
 (defmethod $clear ((tensor tensor))
