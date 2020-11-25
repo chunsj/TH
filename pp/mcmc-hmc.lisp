@@ -76,7 +76,7 @@
   (with-slots (mu target-ratio gamma l kappa errsum lavgstep) sizer
     (let ((logstep nil)
           (eta nil)
-          (min-step 0.2))
+          (min-step 0.02))
       (incf errsum (- target-ratio paccept))
       (setf logstep (- mu (/ errsum (* (sqrt l) gamma))))
       (setf eta (expt l (- kappa)))
