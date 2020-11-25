@@ -18,8 +18,8 @@
 
 (let ((r/theta (r/variable 0.5)))
   (let ((traces (mcmc/mh (list r/theta) #'binomial-posterior)))
-    traces))
+    (prn traces)))
 
 (let ((r/theta (r/variable 0.5)))
   (let ((traces (mcmc/hmc (list r/theta) #'binomial-posterior)))
-    traces))
+    (prn traces)))

@@ -33,7 +33,7 @@
         :for i :from 0
         :do ($decf ($ momentums i) ($* step-size g))))
 
-(defun leapfrog (candidates momentums potential path-length step-size)
+(defun leapfrog-old (candidates momentums potential path-length step-size)
   (let ((half-step-size (/ step-size 2))
         (cs (mapcar #'$clone candidates))
         (nr (max 0 (1- (round (/ path-length step-size))))))
@@ -46,6 +46,37 @@
     (update-momentums! momentums (hmc/dvdq potential cs) half-step-size)
     (loop :for m :in momentums :do ($neg! m))
     (list (funcall potential (mapcar #'$data cs)) cs momentums)))
+
+(defun leapfrog (candidates momentums potential path-length step-size)
+  (let ((half-step-size (/ step-size 2))
+        (cs (mapcar #'$clone candidates))
+        (ps (->> candidates
+                 (mapcar (lambda (c)
+                           (if (r/continuousp c)
+                               ($parameter ($data c))
+                               ($data c))))))
+        (nr (max 0 (1- (round (/ path-length step-size))))))
+    (labels ((dvdq (cs)
+               (loop :for c :in cs
+                     :for p :in ps
+                     :do (when (r/continuousp c)
+                           ($cg! p)
+                           (setf ($data p) ($data c))))
+               (funcall potential ps)
+               (->> ps
+                    (mapcar (lambda (p)
+                              (if ($parameterp p)
+                                  ($gradient p)
+                                  ($zero p)))))))
+      (update-momentums! momentums (dvdq cs) half-step-size)
+      (loop :repeat nr
+            :do (progn
+                  (update-parameters! cs momentums step-size)
+                  (update-momentums! momentums (dvdq cs) step-size)))
+      (update-parameters! cs momentums step-size)
+      (update-momentums! momentums (dvdq cs) half-step-size)
+      (loop :for m :in momentums :do ($neg! m))
+      (list (funcall potential (mapcar #'$data cs)) cs momentums))))
 
 (defun hmc/accepted (h sm nh nsm)
   (when (and h sm nh nsm)
@@ -173,4 +204,5 @@
                                         (setf maxprob nprob)
                                         (trace/map! trace ($data candidate)))))))))
           (prns (format nil " FINISHED]~%"))
+          (prn step)
           traces)))))
