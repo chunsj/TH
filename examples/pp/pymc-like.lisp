@@ -2,7 +2,7 @@
   (:use #:common-lisp
         #:mu
         #:th
-        #:th.distributions))
+        #:th.pp))
 
 (in-package :pymc-like)
 
@@ -20,22 +20,20 @@
 (defgeneric $loghr! (rv))
 (defgeneric $propose (rv))
 
-(defmethod $data ((rv T)) rv)
-(defmethod $clone ((rv T)) rv)
 (defmethod $logp ((rv T)) 0)
 (defmethod $loghr ((rv T)) 0)
 
-(defclass r/variable ()
+(defclass rv/var ()
   ((value :initform nil)
    (observedp :initform nil)
    (ps :initform 0.1D0)
    (loghr :initform 0)))
 
-(defmethod $data ((rv r/variable))
+(defmethod $data ((rv rv/var))
   (with-slots (value) rv
     value))
 
-(defmethod $clone ((rv r/variable))
+(defmethod $clone ((rv rv/var))
   (let ((n (make-instance (class-of rv))))
     (with-slots (value observedp ps) rv
       (let ((v value)
@@ -47,19 +45,19 @@
                 ps p))))
     n))
 
-(defmethod $propose ((rv r/variable))
+(defmethod $propose ((rv rv/var))
   (let ((n ($clone rv)))
     (with-slots (value ps loghr) n
-      (let ((new-value ($sample/gaussian 1 value ps)))
+      (let ((new-value (sample/gaussian value ps)))
         (setf value new-value
               loghr 0)))
     n))
 
-(defmethod $loghr ((rv r/variable))
+(defmethod $loghr ((rv rv/var))
   (with-slots (loghr) rv
     loghr))
 
-(defmethod $loghr! ((rv r/variable))
+(defmethod $loghr! ((rv rv/var))
   (with-slots (loghr) rv
     (setf loghr 0))
   rv)
@@ -70,29 +68,29 @@
       (setf value observation
             observedp T))))
 
-(defmethod print-object ((rv r/variable) stream)
+(defmethod print-object ((rv rv/var) stream)
   (with-slots (observedp value) rv
     (format stream "~A~A" value (if (not observedp) "?" ""))))
 
-(defclass r/discrete-uniform (r/variable)
+(defclass rv/discrete-uniform (rv/var)
   ((lower :initform 0)
    (upper :initform 9)))
 
-(defun r/discrete-uniform (&key (lower 0) (upper 9) (ps 2) observation)
+(defun rv/discrete-uniform (&key (lower 0) (upper 9) (ps 2) observation)
   (let ((l lower)
         (u upper)
         (s ps)
-        (n (make-instance 'r/discrete-uniform)))
+        (n (make-instance 'rv/discrete-uniform)))
     (with-slots (lower upper value ps) n
       (set-observation n observation)
       (setf lower l
             upper u
             ps s)
       (unless value
-        (setf value (+ lower (1- ($sample/dice 1 (1+ (- ($data upper) ($data lower)))))))))
+        (setf value (sample/discrete-uniform lower upper))))
     n))
 
-(defmethod $clone ((rv r/discrete-uniform))
+(defmethod $clone ((rv rv/discrete-uniform))
   (let ((n (call-next-method rv)))
     (with-slots (lower upper) rv
       (let ((l ($clone lower))
@@ -102,36 +100,36 @@
                 upper u))))
     n))
 
-(defmethod $propose ((rv r/discrete-uniform))
+(defmethod $propose ((rv rv/discrete-uniform))
   (let ((n ($clone rv)))
     (with-slots (value ps loghr) n
-      (let ((new-value (round ($sample/gaussian 1 value ps))))
+      (let ((new-value (round (sample/gaussian value ps))))
         (setf value new-value
               loghr 0)))
     n))
 
-(defmethod $logp ((rv r/discrete-uniform))
+(defmethod $logp ((rv rv/discrete-uniform))
   (with-slots (value lower upper) rv
-    (let ((ll ($ll/uniform value ($data lower) ($data upper)))
+    (let ((ll (score/discrete-uniform value ($data lower) ($data upper)))
           (llower ($logp lower))
           (lupper ($logp upper)))
       (when (and ll llower lupper)
         (+ ll llower lupper)))))
 
-(defclass r/exponential (r/variable)
+(defclass rv/exponential (rv/var)
   ((rate :initform 1D0)))
 
-(defun r/exponential (&key (rate 1D0) observation)
+(defun rv/exponential (&key (rate 1D0) observation)
   (let ((r rate)
-        (n (make-instance 'r/exponential)))
+        (n (make-instance 'rv/exponential)))
     (with-slots (rate value) n
       (set-observation n observation)
       (setf rate r)
       (unless value
-        (setf value ($sample/exponential 1 rate))))
+        (setf value (sample/exponential rate))))
     n))
 
-(defmethod $clone ((rv r/exponential))
+(defmethod $clone ((rv rv/exponential))
   (let ((n (call-next-method rv)))
     (with-slots (rate) rv
       (let ((r ($clone rate)))
@@ -139,27 +137,27 @@
           (setf rate r))))
     n))
 
-(defmethod $logp ((rv r/exponential))
+(defmethod $logp ((rv rv/exponential))
   (with-slots (value rate) rv
-    (let ((ll ($ll/exponential value ($data rate)))
+    (let ((ll (score/exponential value ($data rate)))
           (lrate ($logp rate)))
       (when (and ll lrate)
         (+ ll lrate)))))
 
-(defclass r/poisson (r/variable)
+(defclass rv/poisson (rv/var)
   ((rate :initform 1D0)))
 
-(defun r/poisson (&key (rate 1D0) observation)
+(defun rv/poisson (&key (rate 1D0) observation)
   (let ((r rate)
-        (n (make-instance 'r/poisson)))
+        (n (make-instance 'rv/poisson)))
     (with-slots (rate value) n
       (set-observation n observation)
       (setf rate r)
       (unless value
-        (setf value ($sample/poisson 1 ($data rate)))))
+        (setf value (sample/poisson ($data rate)))))
     n))
 
-(defmethod $clone ((rv r/poisson))
+(defmethod $clone ((rv rv/poisson))
   (let ((n (call-next-method rv)))
     (with-slots (rate) rv
       (let ((r ($clone rate)))
@@ -167,9 +165,9 @@
           (setf rate r))))
     n))
 
-(defmethod $logp ((rv r/poisson))
+(defmethod $logp ((rv rv/poisson))
   (with-slots (value rate) rv
-    (let ((ll ($ll/poisson value ($data rate)))
+    (let ((ll (score/poisson value ($data rate)))
           (lrate ($logp rate)))
       (when (and ll lrate)
         (+ ll lrate)))))
@@ -177,10 +175,10 @@
 (defun likelihood (switch-point early-mean late-mean)
   (let ((ls ($logp switch-point)))
     (when ls
-      (let ((disasters-early (subseq *disasters* 0 ($data switch-point)))
-            (disasters-late (subseq *disasters* ($data switch-point))))
-        (let ((d1 (r/poisson :rate early-mean :observation disasters-early))
-              (d2 (r/poisson :rate late-mean :observation disasters-late)))
+      (let ((disasters-early (tensor (subseq *disasters* 0 ($data switch-point))))
+            (disasters-late (tensor (subseq *disasters* ($data switch-point)))))
+        (let ((d1 (rv/poisson :rate early-mean :observation disasters-early))
+              (d2 (rv/poisson :rate late-mean :observation disasters-late)))
           (let ((ld1 ($logp d1))
                 (ld2 ($logp d2)))
             (when (and ls ld1 ld2)
@@ -223,40 +221,42 @@
     accepted))
 
 ;; MLE: 41, 3, 1
-(let ((switch-point (r/discrete-uniform :lower 0 :upper (1- ($count *disasters*))))
-      (early-mean (r/exponential :rate *rate*))
-      (late-mean (r/exponential :rate *rate*)))
-  (let* ((accepted (mh 100000 (list switch-point early-mean late-mean) #'likelihood))
-         (na ($count accepted))
-         (ns (round (* 0.2 na)))
-         (selected (subseq accepted 0 ns)))
-    (prn "SELECTED:" ns "/" na)
-    (let ((ss (mapcar (lambda (ps) ($data ($0 ps))) selected))
-          (es (mapcar (lambda (ps) ($data ($1 ps))) selected))
-          (ls (mapcar (lambda (ps) ($data ($2 ps))) selected)))
-      (prn "P0:" (round ($mean ss)))
-      (prn "P1:" (round ($mean es)))
-      (prn "P2:" (round ($mean ls))))))
+(time
+ (let ((switch-point (rv/discrete-uniform :lower 0 :upper (1- ($count *disasters*))))
+       (early-mean (rv/exponential :rate *rate*))
+       (late-mean (rv/exponential :rate *rate*)))
+   (let* ((accepted (mh 100000 (list switch-point early-mean late-mean) #'likelihood))
+          (na ($count accepted))
+          (ns (round (* 0.2 na)))
+          (selected (subseq accepted 0 ns)))
+     (prn "SELECTED:" ns "/" na)
+     (let ((ss (mapcar (lambda (ps) ($data ($0 ps))) selected))
+           (es (mapcar (lambda (ps) ($data ($1 ps))) selected))
+           (ls (mapcar (lambda (ps) ($data ($2 ps))) selected)))
+       (prn "P0:" (round ($mean ss)))
+       (prn "P1:" (round ($mean es)))
+       (prn "P2:" (round ($mean ls)))))))
 
 ;; FOR SMS example
-;; https://github.com/CamDavidsonPilon/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/blob/master/Chapter1_Introduction/Ch1_Introduction_PyMC2.ipynb
+;; https://github.com/CamDavidsonPilon/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/blob/masterv/Chapter1_Introduction/Ch1_Introduction_PyMC2.ipynb
 (setf *disasters* (->> (slurp "./data/sms.txt")
                        (mapcar #'parse-float)
                        (mapcar #'round)))
 (setf *rate* (/ 1D0 ($mean *disasters*)))
 
 ;; MLE: 45, 18, 23
-(let ((switch-point (r/discrete-uniform :lower 0 :upper (1- ($count *disasters*)) :ps 1))
-      (early-mean (r/exponential :rate *rate*))
-      (late-mean (r/exponential :rate *rate*)))
-  (let* ((accepted (mh 100000 (list switch-point early-mean late-mean) #'likelihood))
-         (na ($count accepted))
-         (ns (round (* 0.2 na)))
-         (selected (subseq accepted 0 ns)))
-    (prn "SELECTED:" ns "/" na)
-    (let ((ss (mapcar (lambda (ps) ($data ($0 ps))) selected))
-          (es (mapcar (lambda (ps) ($data ($1 ps))) selected))
-          (ls (mapcar (lambda (ps) ($data ($2 ps))) selected)))
-      (prn "P0:" (round ($mean ss)))
-      (prn "P1:" (round ($mean es)))
-      (prn "P2:" (round ($mean ls))))))
+(time
+ (let ((switch-point (rv/discrete-uniform :lower 0 :upper (1- ($count *disasters*)) :ps 1))
+       (early-mean (rv/exponential :rate *rate*))
+       (late-mean (rv/exponential :rate *rate*)))
+   (let* ((accepted (mh 100000 (list switch-point early-mean late-mean) #'likelihood))
+          (na ($count accepted))
+          (ns (round (* 0.2 na)))
+          (selected (subseq accepted 0 ns)))
+     (prn "SELECTED:" ns "/" na)
+     (let ((ss (mapcar (lambda (ps) ($data ($0 ps))) selected))
+           (es (mapcar (lambda (ps) ($data ($1 ps))) selected))
+           (ls (mapcar (lambda (ps) ($data ($2 ps))) selected)))
+       (prn "P0:" (round ($mean ss)))
+       (prn "P1:" (round ($mean es)))
+       (prn "P2:" (round ($mean ls)))))))
