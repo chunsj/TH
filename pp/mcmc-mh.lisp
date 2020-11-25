@@ -101,7 +101,7 @@
               (nsize (+ iterations burn-in))
               (maxprob prob)
               (tuning-done nil))
-          (prns (format nil "[MCMC/MH: TUNING..."))
+          (prn (format nil "[MCMC/MH: TUNING..."))
           (loop :for trace :in traces
                 :for candidate :in candidates
                 :do (trace/map! trace ($data candidate)))

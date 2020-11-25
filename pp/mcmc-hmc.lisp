@@ -109,7 +109,7 @@
               (fstep step-size)
               (sizer (hmc/step-sizer step-size))
               (tuning-done nil))
-          (prns (format nil "[MCMC/HMC: TUNING..."))
+          (prn (format nil "[MCMC/HMC: TUNING..."))
           (loop :for trace :in traces
                 :for candidate :in cs
                 :do (trace/map! trace ($data candidate)))
