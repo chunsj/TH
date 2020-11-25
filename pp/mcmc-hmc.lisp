@@ -75,13 +75,14 @@
 (defun hmc/update-step-sizer! (sizer paccept)
   (with-slots (mu target-ratio gamma l kappa errsum lavgstep) sizer
     (let ((logstep nil)
-          (eta nil))
+          (eta nil)
+          (min-step 0.2))
       (incf errsum (- target-ratio paccept))
       (setf logstep (- mu (/ errsum (* (sqrt l) gamma))))
       (setf eta (expt l (- kappa)))
       (setf lavgstep (+ (* eta logstep) (* (- 1 eta) lavgstep)))
       (incf l)
-      (list (max 0.02 (exp logstep)) (max 0.02 (exp lavgstep))))))
+      (list (max min-step (exp logstep)) (max min-step (exp lavgstep))))))
 
 (defun mcmc/hmc (parameters posterior-function
                  &key (iterations 2000) (tune-steps 100) (burn-in 1000) (thin 1))
