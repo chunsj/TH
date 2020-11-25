@@ -5,7 +5,7 @@
 
 (defun of-bernoulli-p (data p)
   (if ($tensorp data)
-      (and (= ($count data) (+ ($sum ($eq data 0) ($eq data 1))))
+      (and (= ($count data) ($+ ($sum ($eq data 0)) ($sum ($eq data 1))))
            (of-it p 0 1))
       (and (or (= data 0) (= data 1)) (of-it p 0 1))))
 
