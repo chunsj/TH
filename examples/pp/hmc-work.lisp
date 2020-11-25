@@ -6,13 +6,10 @@
 
 (in-package :hmc-work)
 
-;; potential is negative-log-likelihood function
-;; position is the parameter we want to compute
-
 (defparameter *data* (th.pp:sample/gaussian 2.5 1 1000))
 
-(defun likelihood (position)
-  (score/gaussian *data* position 1))
+(defun likelihood (mu)
+  (score/gaussian *data* mu 1))
 
 (let ((traces (mcmc/hmc (list (r/variable 0)) #'likelihood)))
   (prn "TRACES:" traces)
