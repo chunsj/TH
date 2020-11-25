@@ -2,19 +2,18 @@
   (:use #:common-lisp
         #:mu
         #:th
-        #:th.distributions
-        #:th.mcmc))
+        #:th.pp))
 
 (in-package :hmc-work)
 
 ;; potential is negative-log-likelihood function
 ;; position is the parameter we want to compute
 
-(defparameter *data* ($sample (distribution/normal 2.5) 1000))
+(defparameter *data* (th.pp:sample/gaussian 2.5 1 1000))
 
-(defun potential (position)
-  ($- ($ll (distribution/normal position) *data*)))
+(defun likelihood (position)
+  (score/gaussian *data* position 1))
 
-(let ((samples (hmc 300 0 #'potential :step-size 0.05)))
-  ;; data mean vs computed parameter which is the mean of the normal distribution
-  (list ($mean *data*) ($mean samples)))
+(let ((traces (mcmc/hmc (list (r/variable 0)) #'likelihood)))
+  (prn "TRACES:" traces)
+  (prn "DMEAN:" ($mean *data*)))

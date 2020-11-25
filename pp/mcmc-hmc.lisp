@@ -50,6 +50,38 @@
   (when (and h sm nh nsm)
     (< (log (random 1D0)) (- (- h sm) (- nh nsm)))))
 
+(defclass hmc/step-sizer ()
+  ((mu :initform nil)
+   (target-ratio :initform nil)
+   (gamma :initform nil)
+   (l :initform nil)
+   (kappa :initform nil)
+   (errsum :initform 0)
+   (lavgstep :initform 0)))
+
+(defun hmc/step-sizer (step-size0 &key (tr 0.65) (g 0.05) (l0 10D0) (k 0.75))
+  (let ((n (make-instance 'hmc/step-sizer)))
+    (with-slots (mu target-ratio gamma l kappa errsum lavgstep) n
+      (setf mu (log (* 10 step-size0))
+            target-ratio tr
+            gamma g
+            l l0
+            kappa k
+            errsum 0
+            lavgstep 0))
+    n))
+
+(defun hmc/update-step-sizer! (sizer paccept)
+  (with-slots (mu target-ratio gamma l kappa errsum lavgstep) sizer
+    (let ((logstep nil)
+          (eta nil))
+      (incf errsum (- target-ratio paccept))
+      (setf logstep (- mu (/ errsum (* (sqrt l) gamma))))
+      (setf eta (expt l (- kappa)))
+      (setf lavgstep (+ (* eta logstep) (* (- 1 eta) lavgstep)))
+      (incf l)
+      (list (exp logstep) (exp lavgstep)))))
+
 (defun mcmc/hmc (parameters posterior-function
                  &key (iterations 10000) (tune-steps 100) (burn-in 1000) (thin 1)
                    (path-length 1) (step-size 0.1))
@@ -67,7 +99,12 @@
         (let ((proposals (mapcar #'r/proposal parameters))
               (cs (mapcar #'$clone parameters))
               (traces (mcmc/traces np :burn-in burn-in :thin thin))
-              (maxprob ($neg h)))
+              (maxprob ($neg h))
+              (naccepted 0)
+              (nrejected 0)
+              (step step-size)
+              (fstep step-size)
+              (sizer (hmc/step-sizer step-size)))
           (loop :for trace :in traces
                 :for candidate :in cs
                 :do (trace/map! trace ($data candidate)))
@@ -78,13 +115,23 @@
                 :for ms = (->> cs
                                (mapcar (lambda (c) (hmc/momentum c m sd))))
                 :for sm = (hmc/momentum-score ms m sd)
-                :for (nh ncs nms) = (leapfrog cs ms #'potential path-length step-size)
+                :for (nh ncs nms) = (leapfrog cs ms #'potential path-length step)
                 :for nsm = (hmc/momentum-score nms m sd)
                 :do (let ((accept (hmc/accepted h sm nh nsm))
                           (tune (and (> iter 1) burning tuneable)))
                       (when tune
-                        (loop :for proposal :in proposals :do (proposal/tune! proposal)))
+                        (loop :for proposal :in proposals :do (proposal/tune! proposal))
+                        (let* ((r (* 1D0 (/ naccepted (+ 1 naccepted nrejected))))
+                               (stune (hmc/update-step-sizer! sizer r)))
+                          (setf step (car stune)
+                                fstep (cadr stune))
+                          (setf naccepted 0
+                                nrejected 0)))
+                      (unless burning
+                        (unless (= step fstep)
+                          (setf step fstep)))
                       (when accept
+                        (incf naccepted)
                         (loop :for tr :in traces
                               :for c :in ncs
                               :do (when (r/continuousp c)
@@ -98,6 +145,7 @@
                                 :do (when (r/continuousp candidate)
                                       (trace/map! trace ($data candidate))))))
                       (unless accept
+                        (incf nrejected)
                         (loop :for tr :in traces
                               :for c :in cs
                               :do (when (r/continuousp c)
