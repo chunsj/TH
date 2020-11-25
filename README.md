@@ -82,6 +82,7 @@
   26. Deep Q-Network/Double DQNN: [26-1](examples/rl/cartpole-dqn.lisp) [26-2](examples/rl/cartpole-ddqn.lisp)
   27. Simple Metropolis-Hastings: [27](examples/pp/mcmc-simple.lisp)
   28. Simple Hamiltonian Monte Carlo: [28](examples/pp/hmc-work.lisp)
+  29. Mining Diaster Example with MCMC/MH and MCMC/HMC: [29](examples/pp/pp-disaster.lisp)
 
 ## Pretrained Models
   Though there's currently 5 models, VGG16, VGG19, ResNet50, DenseNet161 and SqueezeNet1.1 are
