@@ -23,6 +23,14 @@
   (when (of-categorical-p data ($data probs))
     ($sum ($gather ($log probs) 0 (tensor.long data)))))
 
+(defmethod score/categorical ((data node) (probs tensor))
+  (when (of-categorical-p ($data data) probs)
+    ($sum ($gather ($log probs) 0 (tensor.long data)))))
+
+(defmethod score/categorical ((data node) (probs node))
+  (when (of-categorical-p ($data data) ($data probs))
+    ($sum ($gather ($log probs) 0 (tensor.long data)))))
+
 (defmethod sample/categorical ((probs tensor) &optional (n 1))
   (let ((s ($multinomial probs n)))
     (cond ((= n 1) ($0 s))
@@ -32,31 +40,3 @@
   (let ((s ($multinomial ($data probs) n)))
     (cond ((= n 1) ($0 s))
           ((> n 1) s))))
-
-(defclass r/categorical (r/discrete)
-  ((ps :initform (tensor '(0.5 0.5)))))
-
-(defun r/categorical (&key (ps (tensor '(0.5 0.5))) observation)
-  (let ((probs ps)
-        (rv (make-instance 'r/categorical)))
-    (with-slots (ps) rv
-      (setf ps probs))
-    (r/set-observation! rv observation)
-    (r/set-sample! rv)
-    rv))
-
-(defmethod r/sample ((rv r/categorical))
-  (with-slots (ps) rv
-    (sample/categorical ps)))
-
-(defmethod r/score ((rv r/categorical))
-  (with-slots (ps) rv
-    (score/categorical (r/value rv) ps)))
-
-(defmethod $clone ((rv r/categorical))
-  (let ((nrv (call-next-method)))
-    (with-slots (ps) rv
-      (let ((nps ($clone ps)))
-        (with-slots (ps) nrv
-          (setf ps nps))))
-    nrv))

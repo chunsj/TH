@@ -25,6 +25,14 @@
   (when (of-bernoulli-p data ($data p))
     ($sum ($add ($mul data ($log p)) ($mul ($sub 1 data) ($log ($sub 1 p)))))))
 
+(defmethod score/bernoulli ((data node) (p number))
+  (when (of-bernoulli-p ($data data) p)
+    ($sum ($add ($mul data (log p)) ($mul ($sub 1 data) (log (- 1 p)))))))
+
+(defmethod score/bernoulli ((data node) (p node))
+  (when (of-bernoulli-p ($data data) ($data p))
+    ($sum ($add ($mul data ($log p)) ($mul ($sub 1 data) ($log ($sub 1 p)))))))
+
 (defmethod sample/bernoulli ((p number) &optional (n 1))
   (cond ((= n 1) (random/bernoulli p))
         ((> n 1) ($bernoulli! (tensor n) p))))
@@ -32,31 +40,3 @@
 (defmethod sample/bernoulli ((p node) &optional (n 1))
   (cond ((= n 1) (random/bernoulli ($data p)))
         ((> n 1) ($bernoulli! (tensor n) ($data p)))))
-
-(defclass r/bernoulli (r/discrete)
-  ((p :initform 0.5)))
-
-(defun r/bernoulli (&key (p 0.5) observation)
-  (let ((prob p)
-        (rv (make-instance 'r/bernoulli)))
-    (with-slots (p) rv
-      (setf p prob))
-    (r/set-observation! rv observation)
-    (r/set-sample! rv)
-    rv))
-
-(defmethod r/sample ((rv r/bernoulli))
-  (with-slots (p) rv
-    (sample/bernoulli p)))
-
-(defmethod r/score ((rv r/bernoulli))
-  (with-slots (p) rv
-    (score/bernoulli (r/value rv) p)))
-
-(defmethod $clone ((rv r/bernoulli))
-  (let ((n (call-next-method)))
-    (with-slots (p) rv
-      (let ((np ($clone p)))
-        (with-slots (p) n
-          (setf p np))))
-    n))

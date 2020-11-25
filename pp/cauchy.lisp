@@ -61,6 +61,34 @@
           (z ($div ($sub data location) scale)))
       ($sum ($sub lpi ($add ls ($log1p ($square z))))))))
 
+(defmethod score/cauchy ((data node) (location number) (scale number))
+  (when (of-cauchy-p scale)
+    (let ((lpi (log pi))
+          (ls (log scale))
+          (z ($div ($sub data location) scale)))
+      ($sum ($sub lpi ($add ls ($log1p ($square z))))))))
+
+(defmethod score/cauchy ((data node) (location node) (scale number))
+  (when (of-cauchy-p scale)
+    (let ((lpi (log pi))
+          (ls (log scale))
+          (z ($div ($sub data location) scale)))
+      ($sum ($sub lpi ($add ls ($log1p ($square z))))))))
+
+(defmethod score/cauchy ((data node) (location number) (scale node))
+  (when (of-cauchy-p ($data scale))
+    (let ((lpi (log pi))
+          (ls (log scale))
+          (z ($div ($sub data location) scale)))
+      ($sum ($sub lpi ($add ls ($log1p ($square z))))))))
+
+(defmethod score/cauchy ((data node) (location node) (scale node))
+  (when (of-cauchy-p ($data scale))
+    (let ((lpi (log pi))
+          (ls (log scale))
+          (z ($div ($sub data location) scale)))
+      ($sum ($sub lpi ($add ls ($log1p ($square z))))))))
+
 (defmethod sample/cauchy ((location number) (scale number) &optional (n 1))
   (cond ((= n 1) (+ location
                     (* scale (tan (* pi (- (random 1D0) 0.5D0))))))
@@ -88,36 +116,3 @@
         ((> n 1) (tensor (loop :repeat n
                                :for u = (tan (* pi (- (random 1D0) 0.5D0)))
                                :collect (+ ($data location) (* ($data scale) u)))))))
-
-(defclass r/cauchy (r/continuous)
-  ((location :initform 0)
-   (scale :initform 1)))
-
-(defun r/cauchy (&key (location 0) (scale 1) observation)
-  (let ((l location)
-        (s scale)
-        (rv (make-instance 'r/cauchy)))
-    (with-slots (location scale) rv
-      (setf location l
-            scale s))
-    (r/set-observation! rv observation)
-    (r/set-sample! rv)
-    rv))
-
-(defmethod r/sample ((rv r/cauchy))
-  (with-slots (location scale) rv
-    (sample/cauchy location scale)))
-
-(defmethod r/score ((rv r/cauchy))
-  (with-slots (location scale) rv
-    (score/cauchy (r/value rv) location scale)))
-
-(defmethod $clone ((rv r/cauchy))
-  (let ((nrv (call-next-method)))
-    (with-slots (location scale) rv
-      (let ((l ($clone location))
-            (s ($clone scale)))
-        (with-slots (location scale) nrv
-          (setf location l
-                scale s))))
-    nrv))

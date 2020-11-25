@@ -54,6 +54,30 @@
                       ($mul ($sub beta 1) ($log ($sub 1 data))))
                 ($lbetaf alpha beta)))))
 
+(defmethod score/beta ((data node) (alpha number) (beta number))
+  (when (of-beta-p ($data data) alpha beta)
+    ($sum ($sub ($add ($mul (- alpha 1) ($log data))
+                      ($mul (- beta 1) ($log ($sub 1 data))))
+                ($lbetaf alpha beta)))))
+
+(defmethod score/beta ((data node) (alpha node) (beta number))
+  (when (of-beta-p ($data data) ($data alpha) beta)
+    ($sum ($sub ($add ($mul ($sub alpha 1) ($log data))
+                      ($mul (- beta 1) ($log ($sub 1 data))))
+                ($lbetaf alpha beta)))))
+
+(defmethod score/beta ((data node) (alpha number) (beta node))
+  (when (of-beta-p ($data data) alpha ($data beta))
+    ($sum ($sub ($add ($mul (- alpha 1) ($log data))
+                      ($mul ($sub beta 1) ($log ($sub 1 data))))
+                ($lbetaf alpha beta)))))
+
+(defmethod score/beta ((data node) (alpha node) (beta node))
+  (when (of-beta-p ($data data) ($data alpha) ($data beta))
+    ($sum ($sub ($add ($mul ($sub alpha 1) ($log data))
+                      ($mul ($sub beta 1) ($log ($sub 1 data))))
+                ($lbetaf alpha beta)))))
+
 (defmethod sample/beta ((alpha number) (beta number) &optional (n 1))
   (cond ((= n 1) (random/beta alpha beta))
         ((> n 1) ($beta! (tensor n) alpha beta))))
@@ -69,36 +93,3 @@
 (defmethod sample/beta ((alpha node) (beta node) &optional (n 1))
   (cond ((= n 1) (random/beta ($data alpha) ($data beta)))
         ((> n 1) ($beta! (tensor n) ($data alpha) ($data beta)))))
-
-(defclass r/beta (r/continuous)
-  ((alpha :initform 1)
-   (beta :initform 1)))
-
-(defun r/beta (&key (alpha 1) (beta 1) observation)
-  (let ((a alpha)
-        (b beta)
-        (rv (make-instance 'r/beta)))
-    (with-slots (alpha beta) rv
-      (setf alpha a
-            beta b))
-    (r/set-observation! rv observation)
-    (r/set-sample! rv)
-    rv))
-
-(defmethod r/sample ((rv r/beta))
-  (with-slots (alpha beta) rv
-    (sample/beta alpha beta)))
-
-(defmethod r/score ((rv r/beta))
-  (with-slots (alpha beta) rv
-    (score/beta (r/value rv) alpha beta)))
-
-(defmethod $clone ((rv r/beta))
-  (let ((n (call-next-method)))
-    (with-slots (alpha beta) rv
-      (let ((a ($clone alpha))
-            (b ($clone beta)))
-        (with-slots (alpha beta) n
-          (setf alpha a
-                beta b))))
-    n))
