@@ -1,8 +1,7 @@
 # My Deep Learning Library for Common Lisp using libTH/libTHNN
 
-## NEWS (2020-11-23)
-  MCMC related examples will not work.
-  Current experiments of distributions and others might be changed heavily for better PPL.
+## NEWS (2020-11-25)
+  Crude, preliminary probabilistic programming examples added.
 
 ## OLD NEWS
   * 20200927: Want to build a probabilistic programming support.
@@ -81,7 +80,7 @@
   25. Neural Fitted Q-iteration example: [25](examples/rl/cartpole-nfq.lisp) (refer github.com/seungjaeryanlee)
   26. Deep Q-Network/Double DQNN: [26-1](examples/rl/cartpole-dqn.lisp) [26-2](examples/rl/cartpole-ddqn.lisp)
   27. Simple Metropolis-Hastings: [27](examples/pp/mcmc-simple.lisp)
-  28. Simple Hamiltonian Monte Carlo: [28](examples/pp/hmc-work.lisp)
+  28. A Simple Example of Hamiltonian Monte Carlo: [28](examples/pp/hmc-work.lisp)
   29. Mining Diaster Example with MCMC/MH and MCMC/HMC: [29](examples/pp/pp-disaster.lisp)
 
 ## Pretrained Models
