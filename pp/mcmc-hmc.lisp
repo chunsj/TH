@@ -123,10 +123,8 @@
                         (loop :for proposal :in proposals :do (proposal/tune! proposal))
                         (let* ((r (* 1D0 (/ naccepted (+ 1 naccepted nrejected))))
                                (stune (hmc/update-step-sizer! sizer r)))
-                          (setf step (car stune)
-                                fstep (cadr stune))
-                          (setf naccepted 0
-                                nrejected 0)))
+                          (setf fstep (cadr stune))
+                          (setf step (car stune))))
                       (unless burning
                         (unless (= step fstep)
                           (setf step fstep)))
