@@ -35,9 +35,10 @@
 
 (defun leapfrog (candidates momentums potential path-length step-size)
   (let ((half-step-size (/ step-size 2))
-        (cs (mapcar #'$clone candidates)))
+        (cs (mapcar #'$clone candidates))
+        (nr (max 0 (1- (round (/ path-length step-size))))))
     (update-momentums! momentums (hmc/dvdq potential cs) half-step-size)
-    (loop :repeat (1- (round (/ path-length step-size)))
+    (loop :repeat nr
           :do (progn
                 (update-parameters! cs momentums step-size)
                 (update-momentums! momentums (hmc/dvdq potential cs) step-size)))
@@ -80,11 +81,10 @@
       (setf eta (expt l (- kappa)))
       (setf lavgstep (+ (* eta logstep) (* (- 1 eta) lavgstep)))
       (incf l)
-      (list (exp logstep) (exp lavgstep)))))
+      (list (max 0.02 (exp logstep)) (max 0.02 (exp lavgstep))))))
 
 (defun mcmc/hmc (parameters posterior-function
-                 &key (iterations 10000) (tune-steps 100) (burn-in 1000) (thin 1)
-                   (path-length 1) (step-size 0.1))
+                 &key (iterations 2000) (tune-steps 100) (burn-in 1000) (thin 1))
   (labels ((potential (vs)
              (let ((p (apply posterior-function vs)))
                (when p ($neg p))))
@@ -94,7 +94,9 @@
           (h (potential (vals parameters)))
           (np ($count parameters))
           (m 0)
-          (sd 1))
+          (sd 1)
+          (path-length 1D0)
+          (step-size 0.1D0))
       (when h
         (let ((proposals (mapcar #'r/proposal parameters))
               (cs (mapcar #'$clone parameters))
@@ -104,7 +106,9 @@
               (nrejected 0)
               (step step-size)
               (fstep step-size)
-              (sizer (hmc/step-sizer step-size)))
+              (sizer (hmc/step-sizer step-size))
+              (tuning-done nil))
+          (prns (format nil "[MCMC/HMC: TUNING..."))
           (loop :for trace :in traces
                 :for candidate :in cs
                 :do (trace/map! trace ($data candidate)))
@@ -120,12 +124,17 @@
                 :do (let ((accept (hmc/accepted h sm nh nsm))
                           (tune (and (> iter 1) burning tuneable)))
                       (when tune
-                        (loop :for proposal :in proposals :do (proposal/tune! proposal))
-                        (let* ((r (* 1D0 (/ naccepted (+ 1 naccepted nrejected))))
-                               (stune (hmc/update-step-sizer! sizer r)))
-                          (setf fstep (cadr stune))
-                          (setf step (car stune))))
+                        (loop :for proposal :in proposals :do (proposal/tune! proposal)))
+                      (when burning
+                        (let ((r (* 1D0 (/ naccepted (+ 1 naccepted nrejected)))))
+                          (unless (and (> r 0.6) (< r 0.7))
+                            (let ((stune (hmc/update-step-sizer! sizer r)))
+                              (setf fstep (car stune))
+                              (setf step (car stune))))))
                       (unless burning
+                        (unless tuning-done
+                          (prns (format nil " DONE. SAMPLING..."))
+                          (setf tuning-done T))
                         (unless (= step fstep)
                           (setf step fstep)))
                       (when accept
@@ -162,4 +171,5 @@
                                       (when (> nprob maxprob)
                                         (setf maxprob nprob)
                                         (trace/map! trace ($data candidate)))))))))
+          (prns (format nil " FINISHED]~%"))
           traces)))))

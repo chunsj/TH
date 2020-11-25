@@ -11,6 +11,7 @@
 (defun likelihood (mu)
   (score/gaussian *data* mu 1))
 
-(let ((traces (mcmc/hmc (list (r/variable 0)) #'likelihood)))
-  (prn "TRACES:" traces)
-  (prn "DMEAN:" ($mean *data*)))
+(time
+ (let ((traces (mcmc/hmc (list (r/variable 0)) #'likelihood)))
+   (prn "TRACE:" traces)
+   (prn "DMEAN:" ($mean *data*))))

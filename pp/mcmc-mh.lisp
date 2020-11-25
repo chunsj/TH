@@ -44,9 +44,8 @@
 (defmethod r/accept! ((rv r/variable) (proposal mcmc/proposal) acceptedp)
   (proposal/accepted! proposal acceptedp)
   (unless acceptedp
-    (when-let ((pvalue ($data proposal)))
-      (setf ($data rv) pvalue)
-      (setf ($data proposal) nil)))
+    (setf ($data rv) ($data proposal)
+          ($data proposal) nil))
   rv)
 
 (defclass proposal/gaussian (mcmc/proposal)
@@ -85,8 +84,12 @@
     (let ((alpha (+ (- nprob prob) log-hastings-ratio)))
       (> alpha (log (random 1D0))))))
 
+(defun prns (s)
+  (format *standard-output* "~A" s)
+  (finish-output *standard-output*))
+
 (defun mcmc/mh (parameters posterior-function
-                &key (iterations 50000) (tune-steps 100) (burn-in 1000) (thin 1))
+                &key (iterations 4000) (tune-steps 100) (burn-in 1000) (thin 1))
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
     (let ((prob (posterior (vals parameters)))
@@ -97,7 +100,8 @@
               (candidates (mapcar #'$clone parameters))
               (nsize (+ iterations burn-in))
               (maxprob prob)
-              (maxvs (mapcar #'$clone (vals parameters))))
+              (tuning-done nil))
+          (prns (format nil "[MCMC/MH: TUNING..."))
           (loop :for trace :in traces
                 :for candidate :in candidates
                 :do (trace/map! trace ($data candidate)))
@@ -108,6 +112,10 @@
                 :do (let ((tune (and (> iter 1) burning tuneable)))
                       (when tune
                         (loop :for proposal :in proposals :do (proposal/tune! proposal)))
+                      (unless burning
+                        (unless tuning-done
+                          (prns (format nil " DONE. SAMPLING..."))
+                          (setf tuning-done T)))
                       (loop :for proposal :in proposals
                             :for candidate :in candidates
                             :for trace :in traces
@@ -121,4 +129,5 @@
                                     (when (> prob maxprob)
                                       (setf maxprob prob)
                                       (trace/map! trace ($data candidate))))))))
+          (prns (format nil " FINISHED]~%"))
           traces)))))
