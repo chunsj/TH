@@ -139,7 +139,8 @@
               (step step-size)
               (fstep step-size)
               (sizer (hmc/step-sizer step-size))
-              (tuning-done nil))
+              (tuning-done nil)
+              (failed nil))
           (prn (format nil "[MCMC/HMC: TUNING..."))
           (loop :for trace :in traces
                 :for candidate :in cs
@@ -153,22 +154,26 @@
                 :for sm = (hmc/momentum-score ms m sd)
                 :for (nh ncs nms) = (leapfrog cs ms #'potential path-length step)
                 :for nsm = (hmc/momentum-score nms m sd)
+                :while (not failed)
                 :do (let ((accept (hmc/accepted h sm nh nsm))
                           (tune (and (> iter 1) burning tuneable)))
                       (when tune
                         (loop :for proposal :in proposals :do (proposal/tune! proposal)))
                       (when burning
-                        (let ((r (* 1D0 (/ naccepted (+ 1 naccepted nrejected)))))
-                          (unless (and (> r 0.6) (< r 0.7))
-                            (let ((stune (hmc/update-step-sizer! sizer r)))
-                              (setf fstep (car stune))
-                              (setf step (car stune))))))
+                        (let ((r (* 1D0 (/ naccepted (+ 1E-7 naccepted nrejected)))))
+                          (let ((stune (hmc/update-step-sizer! sizer r)))
+                            (setf fstep (car stune))
+                            (setf step (car stune)))))
                       (unless burning
                         (unless tuning-done
                           (prns (format nil " DONE. SAMPLING..."))
                           (setf tuning-done T))
                         (unless (= step fstep)
                           (setf step fstep)))
+                      (when tuning-done
+                        (unless burning
+                          (when (zerop naccepted)
+                            (setf failed T))))
                       (when accept
                         (incf naccepted)
                         (loop :for tr :in traces

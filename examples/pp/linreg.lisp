@@ -12,17 +12,26 @@
 (defun lr-posterior (b0 b1 s)
   (let ((prior-b0 (score/normal b0 0 1))
         (prior-b1 (score/normal b1 1 1))
-        (prior-s (score/normal s 0 1)))
+        (prior-s (score/normal s 0 0.1)))
     (when (and prior-b0 prior-b1 prior-s)
       (let ((likelihood-ys (score/mvn *ys* ($+ ($* b1 *xs*) b0) ($* ($exp s) (eye ($count *xs*))))))
         (when likelihood-ys
-          ($+ prior-b0 prior-b1 likelihood-ys))))))
+          ($+ prior-b0 prior-b1 prior-s likelihood-ys))))))
+
+(defun lr-posterior (b0 b1 s)
+  (let ((prior-b0 (score/normal b0 0 1))
+        (prior-b1 (score/normal b1 1 1))
+        (prior-s (score/exponential s 10)))
+    (when (and prior-b0 prior-b1 prior-s)
+      (let ((likelihood-ys (score/mvn *ys* ($+ ($* b1 *xs*) b0) ($* s (eye ($count *xs*))))))
+        (when likelihood-ys
+          ($+ prior-b0 prior-b1 prior-s likelihood-ys))))))
 
 (let ((traces (mcmc/mh (list (r/variable 0) (r/variable 0) (r/variable 0.5))
                        #'lr-posterior)))
   (prn traces))
 
 ;; XXX does not work
-(let ((traces (mcmc/hmc (list (r/variable 0) (r/variable 0) (r/variable 0.5))
+(let ((traces (mcmc/hmc (list (r/variable 0) (r/variable 1) (r/variable 0.1))
                         #'lr-posterior)))
   (prn traces))
