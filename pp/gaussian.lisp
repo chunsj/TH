@@ -82,7 +82,7 @@
           (var2 (* 2 ($square sd)))
           (lsd (log sd))
           (z ($sub data mean))
-          (n ($count data)))
+          (n (if ($tensorp data) ($count data) 1)))
       ($sub (* n (- c lsd)) ($div ($sum ($square z)) var2)))))
 
 (defmethod score/gaussian ((data node) (mean node) (sd number))
@@ -91,7 +91,7 @@
           (var2 (* 2 ($square sd)))
           (lsd (log sd))
           (z ($sub data mean))
-          (n ($count data )))
+          (n (if ($tensorp data) ($count data) 1)))
       ($sub (* n (- c lsd)) ($div ($sum ($square z)) var2)))))
 
 (defmethod score/gaussian ((data node) (mean number) (sd node))
@@ -100,7 +100,7 @@
           (var2 ($mul 2 ($square sd)))
           (lsd ($log sd))
           (z ($sub data mean))
-          (n ($count data)))
+          (n (if ($tensorp data) ($count data) 1)))
       ($sub ($mul n ($sub c lsd)) ($div ($sum ($square z)) var2)))))
 
 (defmethod score/gaussian ((data node) (mean node) (sd node))
@@ -109,7 +109,7 @@
           (var2 ($mul 2 ($square sd)))
           (lsd ($log sd))
           (z ($sub data mean))
-          (n ($count data)))
+          (n (if ($tensorp data) ($count data) 1)))
       ($sub ($mul n ($sub c lsd)) ($div ($sum ($square z)) var2)))))
 
 (defmethod sample/gaussian ((mean number) (sd number) &optional (n 1))

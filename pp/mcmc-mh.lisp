@@ -100,6 +100,7 @@
               (candidates (mapcar #'$clone parameters))
               (nsize (+ iterations burn-in))
               (maxprob prob)
+              (naccepted 0)
               (tuning-done nil))
           (prn (format nil "[MCMC/MH: TUNING..."))
           (loop :for trace :in traces
@@ -125,9 +126,12 @@
                                   (r/accept! candidate proposal accepted)
                                   (trace/push! ($data candidate) trace)
                                   (when accepted
+                                    (incf naccepted)
                                     (setf prob nprob)
                                     (when (> prob maxprob)
                                       (setf maxprob prob)
                                       (trace/map! trace ($data candidate))))))))
-          (prns (format nil " FINISHED]~%"))
+          (if (zerop naccepted)
+              (prns (format nil " FAILED]~%"))
+              (prns (format nil " FINISHED]~%")))
           traces)))))

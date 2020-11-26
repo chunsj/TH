@@ -69,6 +69,7 @@
                                         (:file "exponential")
                                         (:file "gaussian")
                                         (:file "uniform")
+                                        (:file "mvn")
                                         (:file "mcmc")
                                         (:file "mcmc-mh")
                                         (:file "mcmc-hmc")))))

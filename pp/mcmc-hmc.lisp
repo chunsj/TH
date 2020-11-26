@@ -107,7 +107,7 @@
   (with-slots (mu target-ratio gamma l kappa errsum lavgstep) sizer
     (let ((logstep nil)
           (eta nil)
-          (min-step 0.02))
+          (min-step 0.01))
       (incf errsum (- target-ratio paccept))
       (setf logstep (- mu (/ errsum (* (sqrt l) gamma))))
       (setf eta (expt l (- kappa)))
@@ -203,6 +203,7 @@
                                       (when (> nprob maxprob)
                                         (setf maxprob nprob)
                                         (trace/map! trace ($data candidate)))))))))
-          (prns (format nil " FINISHED]~%"))
-          (prn step)
+          (if (zerop naccepted)
+              (prns (format nil " FAILED]~%"))
+              (prns (format nil " FINISHED]~%")))
           traces)))))

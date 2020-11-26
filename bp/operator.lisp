@@ -475,3 +475,11 @@
         :link (link (to x (let ((g ($zero ($data x))))
                             ($scatter! g dimension indices gv)
                             g)))))
+
+(defmethod $diag ((x node) &optional k)
+  (declare (ignore k))
+  (node ($diag ($data x))
+        :name :diag
+        :link (link (to x ($mul! (eye ($count dv))
+                                 ($mm (ones ($count dv) 1)
+                                      ($reshape gv 1 ($count dv))))))))

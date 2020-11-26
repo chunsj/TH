@@ -1,7 +1,7 @@
 # My Deep Learning Library for Common Lisp using libTH/libTHNN
 
 ## NEWS (2020-11-25)
-  Crude, preliminary probabilistic programming examples added.
+  Crude, preliminary probabilistic programming examples added. HMC does not work well.
 
 ## OLD NEWS
   * 20200927: Want to build a probabilistic programming support.
