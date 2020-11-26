@@ -24,6 +24,7 @@
                        #'lr-posterior)))
   (prn traces))
 
-(let ((traces (mcmc/hmc (list (r/variable 0) (r/variable 2) (r/variable 0.5))
+;; XXX does not work
+(let ((traces (mcmc/hmc (list (r/variable 0) (r/variable 0) (r/variable 0.5))
                         #'lr-posterior)))
   (prn traces))
