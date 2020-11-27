@@ -30,3 +30,14 @@
 (defun of-plusp (n) (of-gt n 0))
 (defun of-minusp (n) (of-lt n 0))
 (defun of-unit-interval-p (n) (of-ie n 0 1))
+
+(defmacro with-node ((self) &body body)
+  `(lambda ()
+     (let ((dv ($data ,self))
+           (gv ($gradient ,self)))
+       (declare (ignorable dv gv))
+       ,@body)))
+
+(defmacro to (target &body body) `(th::$pfn! ,target (with-node (self) ,@body)))
+
+(defmacro link (&body body) `(lambda (self) ,@body))
