@@ -127,7 +127,7 @@
           (np ($count parameters))
           (m 0)
           (sd 1)
-          (path-length 100D0)
+          (path-length 1D0)
           (step-size 0.1D0))
       (when h
         (let ((proposals (mapcar #'r/proposal parameters))
