@@ -1,4 +1,4 @@
-(in-package :th.pp)
+(in-package :th)
 
 (defvar *mvnc* (log (* 2 pi)))
 

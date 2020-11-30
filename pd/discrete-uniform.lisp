@@ -1,4 +1,4 @@
-(in-package :th.pp)
+(in-package :th)
 
 (defgeneric score/discrete-uniform (data lower upper))
 (defgeneric sample/discrete-uniform (lower upper &optional n))

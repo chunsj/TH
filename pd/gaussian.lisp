@@ -1,4 +1,4 @@
-(in-package :th.pp)
+(in-package :th)
 
 (defgeneric score/gaussian (data mean sd))
 (defgeneric sample/gaussian (mean sd &optional n))

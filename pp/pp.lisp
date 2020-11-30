@@ -2,31 +2,7 @@
   (:use #:common-lisp
         #:mu
         #:th)
-  (:export #:score/bernoulli
-           #:score/binomial
-           #:score/categorical
-           #:score/discrete-uniform
-           #:score/poisson
-           #:score/beta
-           #:score/cauchy
-           #:score/exponential
-           #:score/gaussian
-           #:score/normal
-           #:score/uniform
-           #:score/mvn
-           #:sample/bernoulli
-           #:sample/binomial
-           #:sample/categorical
-           #:sample/discrete-uniform
-           #:sample/poisson
-           #:sample/beta
-           #:sample/cauchy
-           #:sample/exponential
-           #:sample/gaussian
-           #:sample/normal
-           #:sample/uniform
-           #:sample/mvn
-           #:r/variable
+  (:export #:r/variable
            #:mcmc/mh
            #:mcmc/hmc
            #:trace/map

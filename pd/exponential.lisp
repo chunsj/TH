@@ -1,4 +1,4 @@
-(in-package :th.pp)
+(in-package :th)
 
 (defgeneric score/exponential (data rate))
 (defgeneric sample/exponential (rate &optional n))

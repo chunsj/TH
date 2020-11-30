@@ -1,4 +1,4 @@
-(in-package :th.pp)
+(in-package :th)
 
 (defgeneric score/cauchy (data location scale))
 (defgeneric sample/cauchy (location scale &optional n))

@@ -1,4 +1,4 @@
-(in-package :th.pp)
+(in-package :th)
 
 (defgeneric score/bernoulli (data p))
 (defgeneric sample/bernoulli (p &optional n))

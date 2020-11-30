@@ -1,4 +1,4 @@
-(in-package :th.pp)
+(in-package :th)
 
 (defgeneric score/poisson (data rate))
 (defgeneric sample/poisson (rate &optional n))

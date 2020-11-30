@@ -1,4 +1,4 @@
-(in-package :th.pp)
+(in-package :th)
 
 (defgeneric score/beta (data alpha beta))
 (defgeneric sample/beta (alpha beta &optional n))

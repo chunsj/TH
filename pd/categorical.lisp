@@ -1,4 +1,4 @@
-(in-package :th.pp)
+(in-package :th)
 
 (defgeneric score/categorical (data probs))
 (defgeneric sample/categorical (probs &optional n))

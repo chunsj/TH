@@ -1,4 +1,4 @@
-(in-package :th.pp)
+(in-package :th)
 
 (defgeneric score/binomial (data p n))
 (defgeneric sample/binomial (p nt &optional n))
