@@ -45,54 +45,61 @@
 
 (defmethod score/mvn ((data tensor) (mean node) (tril tensor))
   (let ((res (log-mvn data ($data mean) tril)))
-    (node (car res)
-          :name :mvn
-          :link (link (to mean ($mul! (apply #'dlog-mvn/dmean (cdr res)) gv))))))
+    (when res
+      (node (car res)
+            :name :mvn
+            :link (link (to mean ($mul! (apply #'dlog-mvn/dmean (cdr res)) gv)))))))
 
 (defmethod score/mvn ((data tensor) (mean tensor) (tril node))
   (let ((res (log-mvn data mean ($data tril))))
-    (node (car res)
-          :name :mvn
-          :link (link (to tril ($mul! (apply #'dlog-mvn/dtril (cdr res)) gv))))))
+    (when res
+      (node (car res)
+            :name :mvn
+            :link (link (to tril ($mul! (apply #'dlog-mvn/dtril (cdr res)) gv)))))))
 
 (defmethod score/mvn ((data tensor) (mean node) (tril node))
   (let ((res (log-mvn data ($data mean) ($data tril))))
-    (node (car res)
-          :name :mvn
-          :link (link
-                  (to mean ($mul! (apply #'dlog-mvn/dmean (cdr res)) gv))
-                  (to tril ($mul! (apply #'dlog-mvn/dtril (cdr res)) gv))))))
+    (when res
+      (node (car res)
+            :name :mvn
+            :link (link
+                    (to mean ($mul! (apply #'dlog-mvn/dmean (cdr res)) gv))
+                    (to tril ($mul! (apply #'dlog-mvn/dtril (cdr res)) gv)))))))
 
 (defmethod score/mvn ((data node) (mean tensor) (tril tensor))
   (let ((res (log-mvn ($data data) mean tril)))
-    (node (car res)
-          :name :mvn
-          :link (link (to data ($mul! (apply #'dlog-mvn/ddata (cdr res)) gv))))))
+    (when res
+      (node (car res)
+            :name :mvn
+            :link (link (to data ($mul! (apply #'dlog-mvn/ddata (cdr res)) gv)))))))
 
 (defmethod score/mvn ((data node) (mean node) (tril tensor))
   (let ((res (log-mvn ($data data) ($data mean) tril)))
-    (node (car res)
-          :name :mvn
-          :link (link
-                  (to data ($mul! (apply #'dlog-mvn/ddata (cdr res)) gv))
-                  (to mean ($mul! (apply #'dlog-mvn/dmean (cdr res)) gv))))))
+    (when res
+      (node (car res)
+            :name :mvn
+            :link (link
+                    (to data ($mul! (apply #'dlog-mvn/ddata (cdr res)) gv))
+                    (to mean ($mul! (apply #'dlog-mvn/dmean (cdr res)) gv)))))))
 
 (defmethod score/mvn ((data node) (mean tensor) (tril node))
   (let ((res (log-mvn data mean ($data tril))))
-    (node (car res)
-          :name :mvn
-          :link (link
-                  (to data ($mul! (apply #'dlog-mvn/ddata (cdr res)) gv))
-                  (to tril ($mul! (apply #'dlog-mvn/dtril (cdr res)) gv))))))
+    (when res
+      (node (car res)
+            :name :mvn
+            :link (link
+                    (to data ($mul! (apply #'dlog-mvn/ddata (cdr res)) gv))
+                    (to tril ($mul! (apply #'dlog-mvn/dtril (cdr res)) gv)))))))
 
 (defmethod score/mvn ((data node) (mean node) (tril node))
   (let ((res (log-mvn data ($data mean) ($data tril))))
-    (node (car res)
-          :name :mvn
-          :link (link
-                  (to data ($mul! (apply #'dlog-mvn/ddata (cdr res)) gv))
-                  (to mean ($mul! (apply #'dlog-mvn/dmean (cdr res)) gv))
-                  (to tril ($mul! (apply #'dlog-mvn/dtril (cdr res)) gv))))))
+    (when res
+      (node (car res)
+            :name :mvn
+            :link (link
+                    (to data ($mul! (apply #'dlog-mvn/ddata (cdr res)) gv))
+                    (to mean ($mul! (apply #'dlog-mvn/dmean (cdr res)) gv))
+                    (to tril ($mul! (apply #'dlog-mvn/dtril (cdr res)) gv)))))))
 
 (defmethod sample/mvn ((mean tensor) (tril tensor) &optional (n 1))
   (let ((rn ($reshape! ($normal! (tensor (* n ($size mean 0))) 0 1) n ($size mean 0))))

@@ -8,109 +8,120 @@
 
 (defun of-gaussian-p (sd) (of-plusp sd))
 
-(defmethod score/gaussian ((data number) (mean number) (sd number))
+(defun log-gaussian (data mean sd)
   (when (of-gaussian-p sd)
-    (let ((c (- (log (sqrt (* 2 pi)))))
-          (var2 (* 2 ($square sd)))
-          (lsd (log sd))
-          (z (- data mean)))
-      (- c lsd (/ ($square z) var2)))))
+    (if ($tensorp data)
+        (let ((n ($count data))
+              (z ($sub data mean)))
+          (list (- (- (* n (+ (log sd) (* 0.5 (log (* 2 pi))))))
+                   (* (/ 1 (* 2 sd sd)) ($sum ($square z))))
+                z))
+        (let ((z (- data mean)))
+          (list (- (- (+ (log sd) (* 0.5 (log (* 2 pi)))))
+                   (* (/ 1 (* 2 sd sd)) ($square z)))
+                z)))))
+
+(defun dlog-gaussian/dmean (z sd)
+  (if ($tensorp z)
+      (* (/ 1 (* sd sd)) ($sum z))
+      (* (/ 1 (* sd sd)) z)))
+
+(defun dlog-gaussian/ddata (z sd)
+  (if ($tensorp z)
+      (* (/ -1 (* sd sd)) ($sum z))
+      (* (/ -1 (* sd sd)) z)))
+
+(defun dlog-gaussian/dsd (z sd)
+  (if ($tensorp z)
+      (* (- (/ 1 sd)) (- ($count z) (/ ($sum ($square z)) (* sd sd))))
+      (* (- (/ 1 sd)) (- 1 (/ ($square z) (* sd sd))))))
+
+(defmethod score/gaussian ((data number) (mean number) (sd number))
+  (car (log-gaussian data mean sd)))
 
 (defmethod score/gaussian ((data number) (mean node) (sd number))
-  (when (of-gaussian-p sd)
-    (let ((c (- (log (sqrt (* 2 pi)))))
-          (var2 (* 2 ($square sd)))
-          (lsd (log sd))
-          (z ($sub data mean)))
-      ($sub (- c lsd) ($div ($square z) var2)))))
+  (let ((res (log-gaussian data ($data mean) sd)))
+    (when res
+      (node (car res)
+            :name :gaussian
+            :link (link (to mean ($mul (dlog-gaussian/dmean (cadr res) sd) gv)))))))
 
 (defmethod score/gaussian ((data number) (mean number) (sd node))
-  (when (of-gaussian-p ($data sd))
-    (let ((c (- (log (sqrt (* 2 pi)))))
-          (var2 ($mul 2 ($square sd)))
-          (lsd ($log sd))
-          (z (- data mean)))
-      ($sub ($sub c lsd) ($div ($square z) var2)))))
+  (let ((res (log-gaussian data mean ($data sd))))
+    (when res
+      (node (car res)
+            :name :gaussian
+            :link (link (to sd ($mul (dlog-gaussian/dsd (cadr res) ($data sd)) gv)))))))
 
 (defmethod score/gaussian ((data number) (mean node) (sd node))
-  (when (of-gaussian-p ($data sd))
-    (let ((c (- (log (sqrt (* 2 pi)))))
-          (var2 ($mul 2 ($square sd)))
-          (lsd ($log sd))
-          (z ($sub data mean)))
-      ($sub ($sub c lsd) ($div ($square z) var2)))))
+  (let ((res (log-gaussian data ($data mean) ($data sd))))
+    (when res
+      (node (car res)
+            :name :gaussian
+            :link (link
+                    (to mean ($mul (dlog-gaussian/dmean (cadr res) ($data sd)) gv))
+                    (to sd ($mul (dlog-gaussian/dsd (cadr res) ($data sd)) gv)))))))
 
 (defmethod score/gaussian ((data tensor) (mean number) (sd number))
-  (when (of-gaussian-p sd)
-    (let ((c (- (log (sqrt (* 2 pi)))))
-          (var2 (* 2 ($square sd)))
-          (lsd (log sd))
-          (z ($sub data mean))
-          (n ($count data)))
-      ($sub (* n (- c lsd)) ($div ($sum ($square z)) var2)))))
+  (car (log-gaussian data mean sd)))
 
 (defmethod score/gaussian ((data tensor) (mean node) (sd number))
-  (when (of-gaussian-p sd)
-    (let ((c (- (log (sqrt (* 2 pi)))))
-          (var2 (* 2 ($square sd)))
-          (lsd (log sd))
-          (z ($sub data mean))
-          (n ($count data )))
-      ($sub (* n (- c lsd)) ($div ($sum ($square z)) var2)))))
+  (let ((res (log-gaussian data ($data mean) sd)))
+    (when res
+      (node (car res)
+            :name :gaussian
+            :link (link (to mean ($mul (dlog-gaussian/dmean (cadr res) sd) gv)))))))
 
 (defmethod score/gaussian ((data tensor) (mean number) (sd node))
-  (when (of-gaussian-p ($data sd))
-    (let ((c (- (log (sqrt (* 2 pi)))))
-          (var2 ($mul 2 ($square sd)))
-          (lsd ($log sd))
-          (z ($sub data mean))
-          (n ($count data)))
-      ($sub ($mul n ($sub c lsd)) ($div ($sum ($square z)) var2)))))
+  (let ((res (log-gaussian data mean ($data sd))))
+    (when res
+      (node (car res)
+            :name :gaussian
+            :link (link (to sd ($mul (dlog-gaussian/dsd (cadr res) ($data sd)) gv)))))))
 
 (defmethod score/gaussian ((data tensor) (mean node) (sd node))
-  (when (of-gaussian-p ($data sd))
-    (let ((c (- (log (sqrt (* 2 pi)))))
-          (var2 ($mul 2 ($square sd)))
-          (lsd ($log sd))
-          (z ($sub data mean))
-          (n ($count data)))
-      ($sub ($mul n ($sub c lsd)) ($div ($sum ($square z)) var2)))))
+  (let ((res (log-gaussian data ($data mean) ($data sd))))
+    (when res
+      (node (car res)
+            :name :gaussian
+            :link (link
+                    (to mean ($mul (dlog-gaussian/dmean (cadr res) ($data sd)) gv))
+                    (to sd ($mul (dlog-gaussian/dsd (cadr res) ($data sd)) gv)))))))
 
 (defmethod score/gaussian ((data node) (mean number) (sd number))
-  (when (of-gaussian-p sd)
-    (let ((c (- (log (sqrt (* 2 pi)))))
-          (var2 (* 2 ($square sd)))
-          (lsd (log sd))
-          (z ($sub data mean))
-          (n (if ($tensorp data) ($count data) 1)))
-      ($sub (* n (- c lsd)) ($div ($sum ($square z)) var2)))))
+  (let ((res (log-gaussian ($data data) mean sd)))
+    (when res
+      (node (car res)
+            :name :gaussian
+            :link (link (to data ($mul (dlog-gaussian/ddata (cadr res) sd) gv)))))))
 
 (defmethod score/gaussian ((data node) (mean node) (sd number))
-  (when (of-gaussian-p sd)
-    (let ((c (- (log (sqrt (* 2 pi)))))
-          (var2 (* 2 ($square sd)))
-          (lsd (log sd))
-          (z ($sub data mean))
-          (n (if ($tensorp data) ($count data) 1)))
-      ($sub (* n (- c lsd)) ($div ($sum ($square z)) var2)))))
+  (let ((res (log-gaussian ($data data) ($data mean) sd)))
+    (when res
+      (node (car res)
+            :name :gaussian
+            :link (link
+                    (to data ($mul (dlog-gaussian/ddata (cadr res) sd) gv))
+                    (to mean ($mul (dlog-gaussian/dmean (cadr res) sd) gv)))))))
 
 (defmethod score/gaussian ((data node) (mean number) (sd node))
-  (when (of-gaussian-p ($data sd))
-    (let ((c (- (log (sqrt (* 2 pi)))))
-          (var2 ($mul 2 ($square sd)))
-          (lsd ($log sd))
-          (z ($sub data mean))
-          (n (if ($tensorp data) ($count data) 1)))
-      ($sub ($mul n ($sub c lsd)) ($div ($sum ($square z)) var2)))))
+  (let ((res (log-gaussian ($data data) mean ($data sd))))
+    (when res
+      (node (car res)
+            :name :gaussian
+            :link (link
+                    (to data ($mul (dlog-gaussian/ddata (cadr res) ($data sd)) gv))
+                    (to sd ($mul (dlog-gaussian/dsd (cadr res) ($data sd)) gv)))))))
 
 (defmethod score/gaussian ((data node) (mean node) (sd node))
-  (when (of-gaussian-p ($data sd))
-    (let ((c (- (log (sqrt (* 2 pi)))))
-          (var2 ($mul 2 ($square sd)))
-          (lsd ($log sd))
-          (z ($sub data mean))
-          (n (if ($tensorp data) ($count data) 1)))
-      ($sub ($mul n ($sub c lsd)) ($div ($sum ($square z)) var2)))))
+  (let ((res (log-gaussian ($data data) ($data mean) ($data sd))))
+    (when res
+      (node (car res)
+            :name :gaussian
+            :link (link
+                    (to data ($mul (dlog-gaussian/ddata (cadr res) ($data sd)) gv))
+                    (to mean ($mul (dlog-gaussian/dmean (cadr res) ($data sd)) gv))
+                    (to sd ($mul (dlog-gaussian/dsd (cadr res) ($data sd)) gv)))))))
 
 (defmethod sample/gaussian ((mean number) (sd number) &optional (n 1))
   (cond ((= n 1) (random/normal mean sd))

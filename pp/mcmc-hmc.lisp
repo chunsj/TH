@@ -33,20 +33,6 @@
         :for i :from 0
         :do ($decf ($ momentums i) ($* step-size g))))
 
-(defun leapfrog-old (candidates momentums potential path-length step-size)
-  (let ((half-step-size (/ step-size 2))
-        (cs (mapcar #'$clone candidates))
-        (nr (max 0 (1- (round (/ path-length step-size))))))
-    (update-momentums! momentums (hmc/dvdq potential cs) half-step-size)
-    (loop :repeat nr
-          :do (progn
-                (update-parameters! cs momentums step-size)
-                (update-momentums! momentums (hmc/dvdq potential cs) step-size)))
-    (update-parameters! cs momentums step-size)
-    (update-momentums! momentums (hmc/dvdq potential cs) half-step-size)
-    (loop :for m :in momentums :do ($neg! m))
-    (list (funcall potential (mapcar #'$data cs)) cs momentums)))
-
 (defun leapfrog (candidates momentums potential path-length step-size)
   (let ((half-step-size (/ step-size 2))
         (cs (mapcar #'$clone candidates))
@@ -68,13 +54,11 @@
                               (if ($parameterp p)
                                   ($gradient p)
                                   ($zero p)))))))
-      (update-momentums! momentums (dvdq cs) half-step-size)
       (loop :repeat nr
             :do (progn
+                  (update-momentums! momentums (dvdq cs) half-step-size)
                   (update-parameters! cs momentums step-size)
-                  (update-momentums! momentums (dvdq cs) step-size)))
-      (update-parameters! cs momentums step-size)
-      (update-momentums! momentums (dvdq cs) half-step-size)
+                  (update-momentums! momentums (dvdq cs) half-step-size)))
       (loop :for m :in momentums :do ($neg! m))
       (list (funcall potential (mapcar #'$data cs)) cs momentums))))
 
@@ -107,7 +91,7 @@
   (with-slots (mu target-ratio gamma l kappa errsum lavgstep) sizer
     (let ((logstep nil)
           (eta nil)
-          (min-step 0.01))
+          (min-step 0.02))
       (incf errsum (- target-ratio paccept))
       (setf logstep (- mu (/ errsum (* (sqrt l) gamma))))
       (setf eta (expt l (- kappa)))
