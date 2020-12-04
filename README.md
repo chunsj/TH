@@ -1,9 +1,10 @@
 # My Deep Learning Library for Common Lisp using libTH/libTHNN
 
-## NEWS (2020-11-25)
-  Crude, preliminary probabilistic programming examples added. HMC does not work well.
+## NEWS (2020-12-04)
+  MH and HMC works well with simple examples.
 
 ## OLD NEWS
+  * 20201125: Metropolis-Hastings and Hamiltonian Monte Carlo.
   * 20200927: Want to build a probabilistic programming support.
   * 20200823: Done with Grokking Deep Reinforcement Learning Book.
   * 20200430: New simple foreign memory management. (trigger gc, tested with SBCL)
