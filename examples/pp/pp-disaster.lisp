@@ -58,8 +58,7 @@
        (r/early-mean (r/variable *mean*))
        (r/late-mean (r/variable *mean*)))
    (let ((traces (mcmc/hmc (list r/switch-point r/early-mean r/late-mean)
-                           #'disaster-posterior
-                           :iterations 2000)))
+                           #'disaster-posterior)))
      (loop :for trc :in traces
            :for lbl :in '(:switch-point :early-mean :late-mean)
            :do (prn lbl trc)))))

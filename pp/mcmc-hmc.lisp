@@ -41,7 +41,7 @@
                   (update-momentums! momentums (dvdq cs) half-step-size)
                   (update-parameters! cs momentums step-size)
                   (update-momentums! momentums (dvdq cs) half-step-size)))
-      (loop :for m :in momentums :do ($neg! m))
+      ;;(loop :for m :in momentums :do ($neg! m))
       (list (funcall posterior (mapcar #'$data cs)) cs momentums))))
 
 (defun hmc/accepted (l k nl nk)
