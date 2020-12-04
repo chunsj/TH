@@ -16,15 +16,14 @@
         :for i :from 0
         :do ($incf ($ momentums i) ($* step-size g))))
 
-(defun leapfrog (candidates momentums posterior path-length step-size)
+(defun leapfrog (candidates momentums posterior steps step-size)
   (let ((half-step-size (/ step-size 2))
         (cs (mapcar #'$clone candidates))
         (ps (->> candidates
                  (mapcar (lambda (c)
                            (if (r/continuousp c)
                                ($parameter ($data c))
-                               ($data c))))))
-        (nr (max 0 (1- (round (/ path-length step-size))))))
+                               ($data c)))))))
     (labels ((dvdq (cs)
                (loop :for c :in cs
                      :for p :in ps
@@ -37,7 +36,7 @@
                               (if ($parameterp p)
                                   ($gradient p)
                                   ($zero p)))))))
-      (loop :repeat nr
+      (loop :repeat steps
             :do (progn
                   (update-momentums! momentums (dvdq cs) half-step-size)
                   (update-parameters! cs momentums step-size)
@@ -87,7 +86,7 @@
         :summing ($* 0.5 ($dot momentum momentum))))
 
 (defun mcmc/hmc (parameters posterior-function
-                 &key (iterations 8000) (tune-steps 100) (burn-in 1000) (thin 1))
+                 &key (iterations 2000) (tune-steps 100) (burn-in 1000) (thin 1))
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
     (let ((nsize (+ burn-in iterations))
@@ -95,7 +94,7 @@
           (np ($count parameters))
           (m 0)
           (sd 1)
-          (path-length 1)
+          (steps 10)
           (step-size 0.1))
       (when l
         (let ((proposals (mapcar #'r/proposal parameters))
@@ -119,7 +118,7 @@
                 :for tuneable = (zerop (rem iter tune-steps))
                 :for ms = (mapcar (lambda (c) (hmc/momentum c m sd)) cs)
                 :for k = (hmc/kinetic ms)
-                :for (nl ncs nms) = (leapfrog cs ms #'posterior path-length step)
+                :for (nl ncs nms) = (leapfrog cs ms #'posterior steps step)
                 :for nk = (hmc/kinetic nms)
                 :while (not failed)
                 :do (let ((accept (hmc/accepted l k nl nk))
