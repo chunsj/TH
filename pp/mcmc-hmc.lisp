@@ -5,23 +5,6 @@
     (cond (($tensorp v) ($resize! (sample/normal m sd ($count v)) v))
           (T (sample/gaussian m sd)))))
 
-(defun hmc/momentum-score (ms m sd)
-  (loop :for momentum :in ms
-        :summing (score/gaussian momentum m sd)))
-
-(defun hmc/dvdq (potential parameters)
-  (let ((ps (->> parameters
-                 (mapcar (lambda (p)
-                           (if (r/continuousp p)
-                               ($parameter ($data p))
-                               ($data p)))))))
-    (funcall potential ps)
-    (->> ps
-         (mapcar (lambda (p)
-                   (if ($parameterp p)
-                       ($gradient p)
-                       ($zero p)))))))
-
 (defun update-parameters! (parameters momentums step-size)
   (loop :for p :in parameters
         :for m :in momentums
@@ -31,9 +14,9 @@
 (defun update-momentums! (momentums gradients step-size)
   (loop :for g :in gradients
         :for i :from 0
-        :do ($decf ($ momentums i) ($* step-size g))))
+        :do ($incf ($ momentums i) ($* step-size g))))
 
-(defun leapfrog (candidates momentums potential path-length step-size)
+(defun leapfrog (candidates momentums posterior path-length step-size)
   (let ((half-step-size (/ step-size 2))
         (cs (mapcar #'$clone candidates))
         (ps (->> candidates
@@ -48,7 +31,7 @@
                      :do (when (r/continuousp c)
                            ($cg! p)
                            (setf ($data p) ($data c))))
-               (funcall potential ps)
+               (funcall posterior ps)
                (->> ps
                     (mapcar (lambda (p)
                               (if ($parameterp p)
@@ -60,11 +43,11 @@
                   (update-parameters! cs momentums step-size)
                   (update-momentums! momentums (dvdq cs) half-step-size)))
       (loop :for m :in momentums :do ($neg! m))
-      (list (funcall potential (mapcar #'$data cs)) cs momentums))))
+      (list (funcall posterior (mapcar #'$data cs)) cs momentums))))
 
-(defun hmc/accepted (h sm nh nsm)
-  (when (and h sm nh nsm)
-    (< (log (random 1D0)) (- (- h sm) (- nh nsm)))))
+(defun hmc/accepted (l k nl nk)
+  (when (and l k nl nk)
+    (< (log (random 1.0)) (- (- nl nk) (- l k)))))
 
 (defclass hmc/step-sizer ()
   ((mu :initform nil)
@@ -91,7 +74,7 @@
   (with-slots (mu target-ratio gamma l kappa errsum lavgstep) sizer
     (let ((logstep nil)
           (eta nil)
-          (min-step 0.02))
+          (min-step 0.01))
       (incf errsum (- target-ratio paccept))
       (setf logstep (- mu (/ errsum (* (sqrt l) gamma))))
       (setf eta (expt l (- kappa)))
@@ -99,25 +82,26 @@
       (incf l)
       (list (max min-step (exp logstep)) (max min-step (exp lavgstep))))))
 
+(defun hmc/kinetic (ms)
+  (loop :for momentum :in ms
+        :summing ($* 0.5 ($dot momentum momentum))))
+
 (defun mcmc/hmc (parameters posterior-function
-                 &key (iterations 2000) (tune-steps 100) (burn-in 1000) (thin 1))
-  (labels ((potential (vs)
-             (let ((p (apply posterior-function vs)))
-               (when p ($neg p))))
-           (posterior (vs) (apply posterior-function vs))
+                 &key (iterations 8000) (tune-steps 100) (burn-in 1000) (thin 1))
+  (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
     (let ((nsize (+ burn-in iterations))
-          (h (potential (vals parameters)))
+          (l (posterior (vals parameters)))
           (np ($count parameters))
           (m 0)
           (sd 1)
-          (path-length 1D0)
-          (step-size 0.1D0))
-      (when h
+          (path-length 1)
+          (step-size 0.1))
+      (when l
         (let ((proposals (mapcar #'r/proposal parameters))
               (cs (mapcar #'$clone parameters))
               (traces (mcmc/traces np :burn-in burn-in :thin thin))
-              (maxprob ($neg h))
+              (maxprob l)
               (naccepted 0)
               (nrejected 0)
               (step step-size)
@@ -133,13 +117,12 @@
                 :for iter :from 1
                 :for burning = (<= iter burn-in)
                 :for tuneable = (zerop (rem iter tune-steps))
-                :for ms = (->> cs
-                               (mapcar (lambda (c) (hmc/momentum c m sd))))
-                :for sm = (hmc/momentum-score ms m sd)
-                :for (nh ncs nms) = (leapfrog cs ms #'potential path-length step)
-                :for nsm = (hmc/momentum-score nms m sd)
+                :for ms = (mapcar (lambda (c) (hmc/momentum c m sd)) cs)
+                :for k = (hmc/kinetic ms)
+                :for (nl ncs nms) = (leapfrog cs ms #'posterior path-length step)
+                :for nk = (hmc/kinetic nms)
                 :while (not failed)
-                :do (let ((accept (hmc/accepted h sm nh nsm))
+                :do (let ((accept (hmc/accepted l k nl nk))
                           (tune (and (> iter 1) burning tuneable)))
                       (when tune
                         (loop :for proposal :in proposals :do (proposal/tune! proposal)))
@@ -165,9 +148,9 @@
                               :do (when (r/continuousp c)
                                     (trace/push! ($data c) tr)))
                         (setf cs ncs)
-                        (setf h nh)
-                        (when (> ($neg h) maxprob)
-                          (setf maxprob ($neg h))
+                        (setf l nl)
+                        (when (> l maxprob)
+                          (setf maxprob l)
                           (loop :for trace :in traces
                                 :for candidate :in cs
                                 :do (when (r/continuousp candidate)
@@ -184,11 +167,11 @@
                             :do (when (r/discretep candidate)
                                   (let* ((lhr (r/propose! candidate proposal))
                                          (nprob (posterior (vals cs)))
-                                         (accepted (mh/accepted ($neg h) nprob lhr)))
+                                         (accepted (mh/accepted l nprob lhr)))
                                     (r/accept! candidate proposal accepted)
                                     (trace/push! ($data candidate) trace)
                                     (when accepted
-                                      (setf h ($neg nprob))
+                                      (setf l nprob)
                                       (when (> nprob maxprob)
                                         (setf maxprob nprob)
                                         (trace/map! trace ($data candidate)))))))))

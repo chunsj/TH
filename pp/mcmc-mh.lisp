@@ -89,7 +89,7 @@
   (finish-output *standard-output*))
 
 (defun mcmc/mh (parameters posterior-function
-                &key (iterations 4000) (tune-steps 100) (burn-in 1000) (thin 1))
+                &key (iterations 8000) (tune-steps 100) (burn-in 1000) (thin 1))
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
     (let ((prob (posterior (vals parameters)))

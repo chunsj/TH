@@ -37,9 +37,9 @@
         :for loss = ($sum ($square ($sub ($+ b0 ($* b1 *xs*)) *ys*)))
         :do ($amgd! (list b0 b1)))
   (let ((loss ($sum ($square ($sub ($+ b0 ($* b1 *xs*)) *ys*)))))
-    (prn (list ($data b0) ($data b1) ($sqrt ($/ ($data loss) ($count *xs*)))))))
-
-;; HMC WITH PROPER INITIAL POINTS - WORKS
-(let ((traces (mcmc/hmc (list (r/variable 0.84) (r/variable 1.89) (r/variable 0.93))
-                        #'lr-posterior)))
-  (prn traces))
+    (prn (list ($data b0) ($data b1) ($sqrt ($/ ($data loss) ($count *xs*)))))
+    ;; HMC WITH PROPER INITIAL POINTS - WORKS
+    (let ((traces (mcmc/hmc (list (r/variable ($data b0)) (r/variable ($data b1))
+                                  (r/variable ($sqrt ($/ ($data loss) ($count *xs*)))))
+                            #'lr-posterior)))
+      (prn traces))))
