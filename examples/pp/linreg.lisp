@@ -24,9 +24,11 @@
                        #'lr-posterior)))
   (prn traces))
 
-;; HMC - DOES NOT WORK WITHOUT PROPER INITIAL POINTS
-(let ((traces (mcmc/hmc (list (r/variable 0) (r/variable 0) (r/variable 0.5))
-                        #'lr-posterior)))
+;; HMC - PROPER INITIAL POINTS
+(let ((traces (mcmc/hmc (list (r/variable 0) (r/variable 1) (r/variable 1))
+                        #'lr-posterior
+                        :iterations 4000
+                        :burn-in 2000)))
   (prn traces))
 
 ;; FIND PROPER INITIAL POINTS
