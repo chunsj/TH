@@ -6,7 +6,7 @@
 
 (in-package :linear-regression)
 
-(defparameter *xs* (tensor (loop :for i :from 1 :to 20 :collect i)))
+(defparameter *xs* (tensor (loop :for i :from 1 :to 200 :collect i)))
 (defparameter *ys* ($+ ($normal (tensor ($count *xs*)) 0 1) ($* 2 *xs*)))
 
 (defun lr-posterior (b0 b1 s)
