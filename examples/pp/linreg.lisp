@@ -6,8 +6,8 @@
 
 (in-package :linear-regression)
 
-(defvar *xs* (tensor '(1 2 3 4 5 6 7 8 9 10)))
-(defvar *ys* ($+ ($normal (tensor ($count *xs*)) 0 1) ($* 2 *xs*)))
+(defparameter *xs* (tensor (loop :for i :from 1 :to 20 :collect i)))
+(defparameter *ys* ($+ ($normal (tensor ($count *xs*)) 0 1) ($* 2 *xs*)))
 
 (defun lr-posterior (b0 b1 s)
   (let ((prior-b0 (score/normal b0 0 1))
@@ -24,8 +24,8 @@
                        #'lr-posterior)))
   (prn traces))
 
-;; HMC - PROPER INITIAL POINTS
-(let ((traces (mcmc/hmc (list (r/variable 0) (r/variable 1) (r/variable 1))
+;; HMC - REQUIRES PROPER INITIAL POINTS
+(let ((traces (mcmc/hmc (list (r/variable 0) (r/variable 2) (r/variable 1))
                         #'lr-posterior)))
   (prn traces))
 
@@ -44,6 +44,7 @@
                             #'lr-posterior)))
       (prn traces))))
 
-(let ((traces (mcmc/nuts (list (r/variable 0) (r/variable 0.1) (r/variable 1))
+;; NUTS - REQUIRES PROPER INITIAL POINTS
+(let ((traces (mcmc/nuts (list (r/variable 0) (r/variable 2) (r/variable 1))
                          #'lr-posterior)))
   (prn traces))
