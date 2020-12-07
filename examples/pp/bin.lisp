@@ -22,3 +22,7 @@
 (let ((r/theta (r/variable 0.5)))
   (let ((traces (mcmc/hmc (list r/theta) #'binomial-posterior)))
     (prn traces)))
+
+(let ((r/theta (r/variable 0.5)))
+  (let ((traces (mcmc/nuts (list r/theta) #'binomial-posterior)))
+    (prn traces)))

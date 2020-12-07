@@ -43,3 +43,7 @@
                                   (r/variable ($sqrt ($/ ($data loss) ($count *xs*)))))
                             #'lr-posterior)))
       (prn traces))))
+
+(let ((traces (mcmc/nuts (list (r/variable 0) (r/variable 0.1) (r/variable 1))
+                         #'lr-posterior)))
+  (prn traces))

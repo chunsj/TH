@@ -72,4 +72,5 @@
                                         (:file "rv")
                                         (:file "mcmc")
                                         (:file "mcmc-mh")
-                                        (:file "mcmc-hmc")))))
+                                        (:file "mcmc-hmc")
+                                        (:file "mcmc-nuts")))))
