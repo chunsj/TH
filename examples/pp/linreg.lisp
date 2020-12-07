@@ -48,3 +48,18 @@
 (let ((traces (mcmc/nuts (list (r/variable 0) (r/variable 2) (r/variable 1))
                          #'lr-posterior)))
   (prn traces))
+
+;; FIND PROPER INITIAL POINTS
+(let ((b0 ($parameter 0))
+      (b1 ($parameter 1)))
+  (loop :repeat 10000
+        :for iter :from 1
+        :for loss = ($sum ($square ($sub ($+ b0 ($* b1 *xs*)) *ys*)))
+        :do ($amgd! (list b0 b1)))
+  (let ((loss ($sum ($square ($sub ($+ b0 ($* b1 *xs*)) *ys*)))))
+    (prn (list ($data b0) ($data b1) ($sqrt ($/ ($data loss) ($count *xs*)))))
+    ;; HMC WITH PROPER INITIAL POINTS - WORKS
+    (let ((traces (mcmc/nuts (list (r/variable ($data b0)) (r/variable ($data b1))
+                                   (r/variable ($sqrt ($/ ($data loss) ($count *xs*)))))
+                             #'lr-posterior)))
+      (prn traces))))
