@@ -5,7 +5,7 @@
 (defgeneric score/mvn (data mean tril))
 (defgeneric sample/mvn (mean tril &optional n))
 
-(defun mvn/det (tril) ($square ($prd ($diag tril))))
+(defun mvn/det (tril) ($prd ($diag tril)))
 (defun mvn/inverse (tril)
   (let ((inv ($inverse tril)))
     ($mm ($transpose inv) inv)))
