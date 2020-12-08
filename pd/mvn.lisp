@@ -8,7 +8,7 @@
 (defun mvn/det (tril) ($square ($prd ($diag tril))))
 (defun mvn/inverse (tril)
   (let ((inv ($inverse tril)))
-    ($@ ($transpose inv) inv)))
+    ($mm ($transpose inv) inv)))
 
 (defun of-mvn-p (det) (of-plusp det))
 
