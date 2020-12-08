@@ -7,15 +7,15 @@
 (in-package :pp-disaster)
 
 ;; mining disaster problem
-(defvar *disasters* '(4 5 4 0 1 4 3 4 0 6 3 3 4 0 2 6
-                      3 3 5 4 5 3 1 4 4 1 5 5 3 4 2 5
-                      2 2 3 4 2 1 3 2 2 1 1 1 1 3 0 0
-                      1 0 1 1 0 0 3 1 0 3 2 2 0 1 1 1
-                      0 1 0 1 0 0 0 2 1 0 0 0 1 1 0 2
-                      3 3 1 1 2 1 1 1 1 2 4 2 0 0 1 4
-                      0 0 0 1 0 0 0 0 0 1 0 0 1 0 1))
-(defvar *mean* ($mean *disasters*))
-(defvar *rate* (/ 1D0 *mean*))
+(defparameter *disasters* '(4 5 4 0 1 4 3 4 0 6 3 3 4 0 2 6
+                            3 3 5 4 5 3 1 4 4 1 5 5 3 4 2 5
+                            2 2 3 4 2 1 3 2 2 1 1 1 1 3 0 0
+                            1 0 1 1 0 0 3 1 0 3 2 2 0 1 1 1
+                            0 1 0 1 0 0 0 2 1 0 0 0 1 1 0 2
+                            3 3 1 1 2 1 1 1 1 2 4 2 0 0 1 4
+                            0 0 0 1 0 0 0 0 0 1 0 0 1 0 1))
+(defparameter *mean* ($mean *disasters*))
+(defparameter *rate* (/ 1D0 *mean*))
 
 ;; for SMS problem
 (setf *disasters* (->> (slurp "./data/sms.txt")
