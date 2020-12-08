@@ -2,7 +2,7 @@
 
 (defun nuts/build-base (posterior cs ms u v step)
   (let* ((dmax 1000)
-         (lfres (leapfrog cs ms posterior 1 (* v step)))
+         (lfres (hmc/leapfrog cs ms posterior 1 (* v step)))
          (ncs ($0 lfres))
          (nms ($1 lfres))
          (ne (let ((l (funcall posterior (mapcar #'$data ncs)))

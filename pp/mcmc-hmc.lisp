@@ -5,18 +5,18 @@
     (cond (($tensorp v) ($resize! (sample/normal m sd ($count v)) v))
           (T (sample/gaussian m sd)))))
 
-(defun update-parameters! (parameters momentums step-size)
+(defun hmc/update-parameters! (parameters momentums step-size)
   (loop :for p :in parameters
         :for m :in momentums
         :do (when (r/continuousp p)
               ($incf ($data p) ($* step-size m)))))
 
-(defun update-momentums! (momentums gradients step-size)
+(defun hmc/update-momentums! (momentums gradients step-size)
   (loop :for g :in gradients
         :for i :from 0
         :do ($incf ($ momentums i) ($* step-size g))))
 
-(defun leapfrog (candidates momentums posterior steps step-size)
+(defun hmc/leapfrog (candidates momentums posterior steps step-size)
   (let ((half-step-size (/ step-size 2))
         (cs (mapcar #'$clone candidates))
         (ps (->> candidates
@@ -38,9 +38,9 @@
                                   ($zero p)))))))
       (loop :repeat steps
             :do (progn
-                  (update-momentums! momentums (dvdq cs) half-step-size)
-                  (update-parameters! cs momentums step-size)
-                  (update-momentums! momentums (dvdq cs) half-step-size)))
+                  (hmc/update-momentums! momentums (dvdq cs) half-step-size)
+                  (hmc/update-parameters! cs momentums step-size)
+                  (hmc/update-momentums! momentums (dvdq cs) half-step-size)))
       (list cs momentums))))
 
 (defun hmc/accepted (l k nl nk)
@@ -117,7 +117,7 @@
                 :for tuneable = (zerop (rem iter tune-steps))
                 :for ms = (mapcar (lambda (c) (hmc/momentum c m sd)) cs)
                 :for k = (hmc/kinetic ms)
-                :for (ncs nms) = (leapfrog cs ms #'posterior steps step)
+                :for (ncs nms) = (hmc/leapfrog cs ms #'posterior steps step)
                 :for nl = (posterior (vals ncs))
                 :for nk = (hmc/kinetic nms)
                 :while (not failed)
