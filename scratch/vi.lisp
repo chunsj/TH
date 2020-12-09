@@ -88,20 +88,6 @@
       :for loss = ($neg (elbo ypred *y* mu lv))
       :do ($amgd! *vi*))
 
-(defun quantiles (ys)
-  (let* ((nr ($size ys 0))
-         (nc ($size ys 1))
-         (i/5 (ceiling (* 0.05 nc)))
-         (i/50 (ceiling (* 0.5 nc)))
-         (i/95 (min nc (ceiling (* 0.95 nc)))))
-    (loop :for i :from 0 :below nr
-          :for y = ($list ($ ys i))
-          :for vs = (sort y #'<)
-          :for k = (prn ($min y) ($max y))
-          :collect (list ($ vs i/5)
-                         ($ vs i/50)
-                         ($ vs i/95)))))
-
 (let* ((ys (-> (loop :repeat 1000
                      :for (y m lv) = (vi *x* :trainp nil)
                      :collect y)
