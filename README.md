@@ -83,6 +83,7 @@
   27. Simple Metropolis-Hastings: [27](examples/pp/mcmc-simple.lisp)
   28. A Simple Example of Hamiltonian Monte Carlo: [28](examples/pp/hmc-work.lisp)
   29. Mining Diaster Example with MCMC/MH and MCMC/HMC: [29](examples/pp/pp-disaster.lisp)
+  30. Variational Inference Examples: [30](examples/pp/vi.lisp)
 
 ## Pretrained Models
   Though there's currently 5 models, VGG16, VGG19, ResNet50, DenseNet161 and SqueezeNet1.1 are
