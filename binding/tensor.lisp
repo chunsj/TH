@@ -407,6 +407,7 @@
 (defmethod $pointer ((tensor tensor)) (tensor-data tensor))
 
 (defmethod $clone ((tensor tensor)) (tensor-clone tensor))
+(defmethod $clone ((l list)) (mapcar #'$clone l))
 (defmethod $clone ((v T)) v)
 
 (defmethod $contiguous! ((tensor tensor))
