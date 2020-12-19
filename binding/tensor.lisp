@@ -2253,6 +2253,9 @@
 (defmethod $mean ((xs list) &optional (dimension -1))
   ($mean (tensor xs) dimension))
 
+(defmethod $var ((xs list) &optional (dimension -1) biased)
+  ($var (tensor xs) dimension biased))
+
 (defmethod $sd ((xs list) &optional (dimension -1) biased)
   ($sd (tensor xs) dimension biased))
 
