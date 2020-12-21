@@ -84,10 +84,6 @@
     (let ((alpha (+ (- nprob prob) log-hastings-ratio)))
       (> alpha (log (random 1D0))))))
 
-(defun prns (s)
-  (format *standard-output* "~A" s)
-  (finish-output *standard-output*))
-
 (defun mcmc/mh (parameters posterior-function
                 &key (iterations 4000) (tune-steps 100) (burn-in 1000) (thin 1))
   (labels ((posterior (vs) (apply posterior-function vs))
@@ -99,10 +95,11 @@
               (traces (mcmc/traces np :burn-in burn-in :thin thin))
               (candidates (mapcar #'$clone parameters))
               (nsize (+ iterations burn-in))
+              (pstep (round (/ iterations 20)))
               (maxprob prob)
               (naccepted 0)
               (tuning-done-reported nil))
-          (prn (format nil "[MCMC/MH: TUNING..."))
+          (prn (format nil "[MCMC/MH: TUNING"))
           (loop :for trace :in traces
                 :for candidate :in candidates
                 :do (trace/map! trace ($data candidate)))
@@ -112,11 +109,14 @@
                 :for tuneable = (zerop (rem iter tune-steps))
                 :do (let ((tune (and (> iter 1) burning tuneable)))
                       (when tune
+                        (prns ".")
                         (loop :for proposal :in proposals :do (proposal/tune! proposal)))
                       (unless burning
                         (unless tuning-done-reported
-                          (prns (format nil " DONE. SAMPLING..."))
+                          (prns (format nil " DONE. SAMPLING"))
                           (setf tuning-done-reported T)))
+                      (when (and (not burning) (zerop (rem (- iter burn-in) pstep)))
+                        (prns "."))
                       (loop :for proposal :in proposals
                             :for candidate :in candidates
                             :for trace :in traces
@@ -133,5 +133,5 @@
                                       (trace/map! trace ($data candidate))))))))
           (if (zerop naccepted)
               (prns (format nil " FAILED]~%"))
-              (prns (format nil " FINISHED]~%")))
+              (prns (format nil " DONE]~%")))
           traces)))))
