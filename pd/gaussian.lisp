@@ -13,9 +13,14 @@
     (if ($tensorp data)
         (let ((n ($count data))
               (z ($sub data mean)))
-          (list (- (- (* n (+ (log sd) (* 0.5 (log (* 2 pi))))))
-                   (* (/ 1 (* 2 sd sd)) ($sum ($square z))))
-                z))
+          (if ($tensorp mean)
+              (let ((zsqr ($square z)))
+                (list ($neg ($sum ($add ($add ($log sd) (* 0.5 (log (* 2 pi))))
+                                        ($div zsqr ($mul 2 ($square sd))))))
+                      z))
+              (list (- (- (* n (+ (log sd) (* 0.5 (log (* 2 pi))))))
+                       (* (/ 1 (* 2 sd sd)) ($sum ($square z))))
+                    z)))
         (let ((z (- data mean)))
           (list (- (- (+ (log sd) (* 0.5 (log (* 2 pi)))))
                    (* (/ 1 (* 2 sd sd)) ($square z)))
@@ -63,6 +68,9 @@
                     (to sd ($mul (dlog-gaussian/dsd (cadr res) ($data sd)) gv)))))))
 
 (defmethod score/gaussian ((data tensor) (mean number) (sd number))
+  (car (log-gaussian data mean sd)))
+
+(defmethod score/gaussian ((data tensor) (mean tensor) (sd number))
   (car (log-gaussian data mean sd)))
 
 (defmethod score/gaussian ((data tensor) (mean node) (sd number))
