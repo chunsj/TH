@@ -101,7 +101,7 @@
               (nsize (+ iterations burn-in))
               (maxprob prob)
               (naccepted 0)
-              (tuning-done nil))
+              (tuning-done-reported nil))
           (prn (format nil "[MCMC/MH: TUNING..."))
           (loop :for trace :in traces
                 :for candidate :in candidates
@@ -114,9 +114,9 @@
                       (when tune
                         (loop :for proposal :in proposals :do (proposal/tune! proposal)))
                       (unless burning
-                        (unless tuning-done
+                        (unless tuning-done-reported
                           (prns (format nil " DONE. SAMPLING..."))
-                          (setf tuning-done T)))
+                          (setf tuning-done-reported T)))
                       (loop :for proposal :in proposals
                             :for candidate :in candidates
                             :for trace :in traces
