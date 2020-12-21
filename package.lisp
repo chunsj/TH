@@ -484,7 +484,6 @@
            #:score/gaussian
            #:score/normal
            #:score/uniform
-           #:score/mvn
            #:sample/bernoulli
            #:sample/binomial
            #:sample/categorical
@@ -496,5 +495,4 @@
            #:sample/gaussian
            #:sample/normal
            #:sample/uniform
-           #:sample/mvn
            #:with-max-heap))
