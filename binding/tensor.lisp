@@ -1257,6 +1257,11 @@
   (tensor-clamp x x min max)
   x)
 
+(defmethod $clamp ((x number) (min number) (max number))
+  (cond ((< x min) min)
+        ((> x max) max)
+        (T x)))
+
 (defmethod $axpy ((α number) (x tensor) (y tensor))
   (let ((result ($empty y)))
     (tensor-cadd result y α x)

@@ -71,6 +71,4 @@
                (:module pp :components ((:file "pp")
                                         (:file "rv")
                                         (:file "mcmc")
-                                        (:file "mcmc-mh")
-                                        (:file "mcmc-hmc")
-                                        (:file "mcmc-nuts")))))
+                                        (:file "mcmc-mh")))))

@@ -10,26 +10,24 @@
 (defparameter *ys* ($+ ($normal (tensor ($count *xs*)) 0 1) ($* 2 *xs*)))
 
 (defun lr-posterior (b0 b1 s)
-  (let ((prior-b0 (score/normal b0 1 1))
+  (let ((prior-b0 (score/normal b0 0 1))
         (prior-b1 (score/normal b1 1 1))
-        (prior-s (score/uniform s 0.001 5)))
+        (prior-s (score/normal s 0 1)))
     (when (and prior-b0 prior-b1 prior-s)
-      (let ((m ($* s (eye ($count *xs*)))))
-        (let ((likelihood-ys (score/mvn *ys* ($+ ($* b1 *xs*) b0) m)))
-          (when likelihood-ys
-            ($+ prior-b0 prior-b1 prior-s likelihood-ys)))))))
+      (let ((ms ($add b0 ($mul b1 *xs*)))
+            (ll-failed nil))
+        (let ((lls (loop :for i :from 0 :below ($count *xs*)
+                         :for m = ($ ms i)
+                         :for y = ($ *ys* i)
+                         :for ll = (score/gaussian y m ($exp s))
+                         :collect (progn
+                                    (when (null ll)
+                                      (setf ll-failed T))
+                                    ll))))
+          (unless ll-failed
+            (let ((likelihood-ys (reduce #'$add lls)))
+              ($+ ($+ prior-b0 prior-b1 prior-s likelihood-ys)))))))))
 
-;; MH - WORKS
-(let ((traces (mcmc/mh (list (r/variable 0) (r/variable 0) (r/variable 0.5))
+(let ((traces (mcmc/mh (list (r/variable 0) (r/variable 1) (r/variable 0))
                        #'lr-posterior)))
-  (prn traces))
-
-;; HMC
-(let ((traces (mcmc/hmc (list (r/variable 0) (r/variable 0) (r/variable 1))
-                        #'lr-posterior)))
-  (prn traces))
-
-;; NUTS
-(let ((traces (mcmc/nuts (list (r/variable 0) (r/variable 0) (r/variable 0.5))
-                         #'lr-posterior)))
   (prn traces))

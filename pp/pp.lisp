@@ -4,8 +4,6 @@
         #:th)
   (:export #:r/variable
            #:mcmc/mh
-           #:mcmc/hmc
-           #:mcmc/nuts
            #:trace/map
            #:trace/values
            #:trace/mean
