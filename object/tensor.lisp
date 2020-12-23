@@ -85,7 +85,7 @@
   "Creates a identity matrix."
   ($eye! (tensor) m n))
 
-(defun linspace (a b &optional (n 100))
+(defun linspace (a b &optional (n 101))
   "Returns a one-dimensional tensor with equally spaced points between a and b."
   (tensor-linspace (tensor) a b n))
 
