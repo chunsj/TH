@@ -52,23 +52,3 @@
      (loop :for trc :in traces
            :for lbl :in '(:switch-point :early-mean :late-mean)
            :do (prn lbl trc)))))
-
-(time
- (let ((r/switch-point (r/variable (round (* 0.5 ($count *disasters*))) :discrete))
-       (r/early-mean (r/variable *mean*))
-       (r/late-mean (r/variable *mean*)))
-   (let ((traces (mcmc/hmc (list r/switch-point r/early-mean r/late-mean)
-                           #'disaster-posterior)))
-     (loop :for trc :in traces
-           :for lbl :in '(:switch-point :early-mean :late-mean)
-           :do (prn lbl trc)))))
-
-(time
- (let ((r/switch-point (r/variable (round (* 0.5 ($count *disasters*))) :discrete))
-       (r/early-mean (r/variable *mean*))
-       (r/late-mean (r/variable *mean*)))
-   (let ((traces (mcmc/nuts (list r/switch-point r/early-mean r/late-mean)
-                            #'disaster-posterior)))
-     (loop :for trc :in traces
-           :for lbl :in '(:switch-point :early-mean :late-mean)
-           :do (prn lbl trc)))))

@@ -19,9 +19,8 @@
 (defgeneric allocate-tensor (tensor &optional dimensions))
 
 (defun mkdims (seqs)
-  (if (listp seqs)
-      (cons ($count seqs) (mkdims (car seqs)))
-      nil))
+  (when (and seqs (listp seqs))
+    (cons ($count seqs) (mkdims (car seqs)))))
 
 (defun setseqs (ts seqs dims)
   (let ((nd ($count dims)))

@@ -3,7 +3,7 @@
 (defgeneric score/exponential (data rate))
 (defgeneric sample/exponential (rate &optional n))
 
-(defun of-exponential-p (data rate) (and (of-plusp data) (of-plusp rate)))
+(defun of-exponential-p (data rate) (and (of-ge data 0) (of-plusp rate)))
 
 (defmethod score/exponential ((data number) (rate number))
   (when (of-exponential-p data rate)
