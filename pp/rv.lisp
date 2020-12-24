@@ -35,5 +35,6 @@
 (defun r/variable (value &optional (type :continuous))
   (let ((rv (cond ((eq type :continuous) (make-instance 'r/continuous))
                   ((eq type :discrete) (make-instance 'r/discrete)))))
-    (setf ($data rv) value)
-    rv))
+    (when rv
+      (setf ($data rv) value)
+      rv)))
