@@ -85,7 +85,7 @@
       (> alpha (log (random 1D0))))))
 
 (defun mcmc/mh (parameters posterior-function
-                &key (iterations 40000) (tune-steps 1000) (burn-in 10000) (thin 1))
+                &key (iterations 50000) (tune-steps 1000) (burn-in 10000) (thin 1))
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
     (let ((prob (posterior (vals parameters)))
