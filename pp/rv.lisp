@@ -7,7 +7,7 @@
   ((value :initform nil :accessor $data)))
 
 (defmethod print-object ((rv r/variable) stream)
-  (format stream "~A" ($data rv)))
+  (format stream "<~A>" ($data rv)))
 
 (defmethod $clone ((rv r/variable))
   (let ((n (make-instance (class-of rv))))
