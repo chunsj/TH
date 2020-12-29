@@ -8,20 +8,21 @@
    (mean :initform nil)
    (variance :initform nil)))
 
-(defun r/trace (n &key (burn-in 0) (thin 0))
+(defun r/trace (v &key (n 1) (burn-in 0) (thin 0))
   (let ((tr (make-instance 'r/trace))
         (nb burn-in)
         (nt thin))
-    (with-slots (collection burn-ins thin vals) tr
+    (with-slots (value collection burn-ins thin vals) tr
       (setf collection (zeros (+ n nb))
+            value v
             burn-ins nb
             thin nt
             vals (zeros (floor (/ n nt)))))
     tr))
 
-(defun r/traces (ntraces &key (n 1) (burn-in 0) (thin 0))
-  (loop :repeat ntraces
-        :collect (r/trace n :burn-in burn-in :thin thin)))
+(defun r/traces (vs &key (n 1) (burn-in 0) (thin 0))
+  (loop :for v :in vs
+        :collect (r/trace v :n n :burn-in burn-in :thin thin)))
 
 (defmethod $count ((trace r/trace))
   (with-slots (collection) trace

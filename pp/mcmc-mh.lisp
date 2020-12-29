@@ -126,11 +126,11 @@
                 &key (iterations 50000) (tune-steps 1000) (burn-in 10000) (thin 1))
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
-    (let ((prob (posterior (vals parameters)))
-          (np ($count parameters)))
+    (let ((prob (posterior (vals parameters))))
       (when prob
         (let ((proposals (mapcar #'r/proposal parameters))
-              (traces (r/traces np :n iterations :burn-in burn-in :thin thin))
+              (traces (r/traces (mapcar #'$clone (mapcar #'$data parameters))
+                                :n iterations :burn-in burn-in :thin thin))
               (candidates (mapcar #'$clone parameters))
               (nsize (+ iterations burn-in))
               (pstep (round (/ iterations 20)))
@@ -138,9 +138,6 @@
               (naccepted 0)
               (tuning-done-reported nil))
           (prn (format nil "[MCMC/MH: TUNING"))
-          (loop :for trace :in traces
-                :for candidate :in candidates
-                :do (setf ($data trace) ($clone ($data candidate))))
           (loop :repeat nsize
                 :for iter :from 1
                 :for burning = (<= iter burn-in)
@@ -178,11 +175,11 @@
                   &key (iterations 50000) (burn-in 10000) (thin 1))
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
-    (let ((prob (posterior (vals parameters)))
-          (np ($count parameters)))
+    (let ((prob (posterior (vals parameters))))
       (when prob
         (let ((proposals (mapcar #'r/proposal parameters))
-              (traces (r/traces np :n iterations :burn-in burn-in :thin thin))
+              (traces (r/traces (mapcar #'$clone (mapcar #'$data parameters))
+                                :n iterations :burn-in burn-in :thin thin))
               (candidates (mapcar #'$clone parameters))
               (rstats (loop :for p :in parameters :collect (rstat)))
               (nsize (+ iterations burn-in))
@@ -190,9 +187,6 @@
               (maxprob prob)
               (naccepted 0))
           (prn (format nil "[MCMC/MH: SAMPLING"))
-          (loop :for trace :in traces
-                :for candidate :in candidates
-                :do (setf ($data trace) ($clone ($data candidate))))
           (loop :repeat nsize
                 :for iter :from 1
                 :for burning = (<= iter burn-in)
@@ -228,20 +222,17 @@
                  &key (iterations 50000) (scale 1) (burn-in 10000) (thin 1))
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
-    (let ((prob (posterior (vals parameters)))
-          (np ($count parameters)))
+    (let ((prob (posterior (vals parameters))))
       (when prob
         (let ((proposals (mapcar #'r/proposal parameters))
-              (traces (r/traces np :n iterations :burn-in burn-in :thin thin))
+              (traces (r/traces (mapcar #'$clone (mapcar #'$data parameters))
+                                :n iterations :burn-in burn-in :thin thin))
               (candidates (mapcar #'$clone parameters))
               (nsize (+ iterations burn-in))
               (pstep (round (/ iterations 20)))
               (maxprob prob)
               (naccepted 0))
           (prn (format nil "[MCMC/MH0: SAMPLING"))
-          (loop :for trace :in traces
-                :for candidate :in candidates
-                :do (setf ($data trace) ($clone ($data candidate))))
           (loop :for proposal :in proposals
                 :for i :from 0
                 :do (proposal/scale! proposal (if (numberp scale) scale ($ scale i))))
@@ -273,20 +264,17 @@
                  &key (iterations 50000) (scale 1) (burn-in 10000) (thin 1))
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
-    (let ((prob (posterior (vals parameters)))
-          (np ($count parameters)))
+    (let ((prob (posterior (vals parameters))))
       (when prob
         (let ((proposals (mapcar #'r/proposal parameters))
-              (traces (r/traces np :n iterations :burn-in burn-in :thin thin))
+              (traces (r/traces (mapcar #'$clone (mapcar #'$data parameters))
+                                :n iterations :burn-in burn-in :thin thin))
               (candidates (mapcar #'$clone parameters))
               (nsize (+ iterations burn-in))
               (pstep (round (/ iterations 20)))
               (maxprob prob)
               (naccepted 0))
           (prn (format nil "[MCMC/MH0: SAMPLING"))
-          (loop :for trace :in traces
-                :for candidate :in candidates
-                :do (setf ($data trace) ($clone ($data candidate))))
           (loop :for proposal :in proposals
                 :for i :from 0
                 :do (proposal/scale! proposal (if (numberp scale) scale ($ scale i))))
@@ -327,11 +315,11 @@
                  &key (iterations 50000) (tune-steps 1000) (burn-in 10000) (thin 1))
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
-    (let ((prob (posterior (vals parameters)))
-          (np ($count parameters)))
+    (let ((prob (posterior (vals parameters))))
       (when prob
         (let ((proposals (mapcar #'r/proposal parameters))
-              (traces (r/traces np :n iterations :burn-in burn-in :thin thin))
+              (traces (r/traces (mapcar #'$clone (mapcar #'$data parameters))
+                                :n iterations :burn-in burn-in :thin thin))
               (candidates (mapcar #'$clone parameters))
               (nsize (+ iterations burn-in))
               (pstep (round (/ iterations 20)))
@@ -339,9 +327,6 @@
               (naccepted 0)
               (tuning-done-reported nil))
           (prn (format nil "[MCMC/MH: TUNING"))
-          (loop :for trace :in traces
-                :for candidate :in candidates
-                :do (setf ($data trace) ($clone ($data candidate))))
           (loop :repeat nsize
                 :for iter :from 1
                 :for burning = (<= iter burn-in)
@@ -388,11 +373,11 @@
                  &key (iterations 50000) (tune-steps 1000) (burn-in 10000) (thin 1))
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
-    (let ((prob (posterior (vals parameters)))
-          (np ($count parameters)))
+    (let ((prob (posterior (vals parameters))))
       (when prob
         (let ((proposals (mapcar #'r/proposal parameters))
-              (traces (r/traces np :n iterations :burn-in burn-in :thin thin))
+              (traces (r/traces (mapcar #'$clone (mapcar #'$data parameters))
+                                :n iterations :burn-in burn-in :thin thin))
               (candidates (mapcar #'$clone parameters))
               (rstats (loop :for p :in parameters :collect (rstat)))
               (nsize (+ iterations burn-in))
@@ -400,9 +385,6 @@
               (maxprob prob)
               (naccepted 0))
           (prn (format nil "[MCMC/MH: SAMPLING"))
-          (loop :for trace :in traces
-                :for candidate :in candidates
-                :do (setf ($data trace) ($clone ($data candidate))))
           (loop :for proposal :in proposals
                 :do (proposal/scale! proposal (* 5.0 5.0)))
           (loop :repeat nsize
@@ -448,11 +430,11 @@
                  &key (iterations 50000) (tune-steps 1000) (burn-in 10000) (thin 1))
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
-    (let ((prob (posterior (vals parameters)))
-          (np ($count parameters)))
+    (let ((prob (posterior (vals parameters))))
       (when prob
         (let ((proposals (mapcar #'r/proposal parameters))
-              (traces (r/traces np :n iterations :burn-in burn-in :thin thin))
+              (traces (r/traces (mapcar #'$clone (mapcar #'$data parameters))
+                                :n iterations :burn-in burn-in :thin thin))
               (candidates (mapcar #'$clone parameters))
               (rstats (loop :for p :in parameters :collect (rstat)))
               (nsize (+ iterations burn-in))
@@ -461,9 +443,6 @@
               (naccepted 0)
               (tuning-done-reported nil))
           (prn (format nil "[MCMC/MH: TUNING"))
-          (loop :for trace :in traces
-                :for candidate :in candidates
-                :do (setf ($data trace) ($clone ($data candidate))))
           (loop :repeat nsize
                 :for iter :from 1
                 :for burning = (<= iter burn-in)
