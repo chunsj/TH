@@ -9,6 +9,7 @@
    (variance :initform nil)))
 
 (defun r/trace (v &key (n 1) (burn-in 0) (thin 0))
+  ;; XXX use the shape of v.
   (let ((tr (make-instance 'r/trace))
         (nb burn-in)
         (nt thin))
