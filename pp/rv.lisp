@@ -7,7 +7,12 @@
   ((value :initform nil :accessor $data)))
 
 (defmethod print-object ((rv r/variable) stream)
-  (format stream "<~A>" ($data rv)))
+  (with-slots (value) rv
+    (cond ((integerp value) (format stream "<~A>" ($data rv)))
+          ((floatp value) (cond ((> (abs value) 10) (format stream "<~,2F>" ($data rv)))
+                                ((> (abs value) 1) (format stream "<~,4F>" ($data rv)))
+                                (T (format stream "<~,4E>" ($data rv)))))
+          (T (format stream "<~A>" ($data rv))))))
 
 (defmethod $clone ((rv r/variable))
   (let ((n (make-instance (class-of rv))))

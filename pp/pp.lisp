@@ -4,14 +4,13 @@
         #:th)
   (:export #:r/variable
            #:mcmc/mh
-           #:trace/map
            #:trace/values
            #:trace/mean
            #:trace/sd
            #:trace/quantiles
            #:trace/error
            #:trace/hpd
-           #:trace/autocorrelation
+           #:trace/acr
            #:trace/geweke
            #:trace/summary
-           #:trace/sample))
+           #:traces/sample))

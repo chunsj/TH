@@ -454,6 +454,8 @@
            #:$diagflat
            #:$incf
            #:$decf
+           #:$acv
+           #:$acr
            #:random-normals
            #:$rnn
            #:$lstm

@@ -640,3 +640,22 @@
 
 (defmethod $diagflat ((x list))
   ($diagflat (tensor x)))
+
+(defgeneric $acv (tensor &optional lag divnk) (:documentation "Returns autocovariance."))
+(defgeneric $acr (tensor &optional lag) (:documentation "Returns autocorrelation."))
+
+(defmethod $acv ((tensor tensor) &optional (lag 1) divnk)
+  (let ((n ($count tensor))
+        (zb ($mean tensor)))
+    (/ ($sum ($mul ($sub ($subview tensor 0 (- n lag)) zb)
+                   ($sub ($subview tensor lag (- n lag)) zb)))
+       (if divnk (- n lag) n))))
+
+(defmethod $acv ((series list) &optional (lag 1) divnk)
+  ($acv (tensor series) lag divnk))
+
+(defmethod $acr ((tensor tensor) &optional (lag 1))
+  (/ ($acv tensor lag) ($acv tensor 0)))
+
+(defmethod $acr ((series list) &optional (lag 1))
+  ($acr (tensor series) lag))
