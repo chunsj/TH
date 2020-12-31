@@ -81,8 +81,35 @@
   (with-slots (scale factor) proposal
     (cons (round (sample/gaussian value (max 1 (* factor scale)))) 0D0)))
 
-(defmethod r/proposal ((rv r/discrete)) (proposal/discrete-gaussian))
-(defmethod r/proposal ((rv r/continuous)) (proposal/gaussian))
+(defclass proposal/poisson (mcmc/proposal)
+  ((scale :initform 1D0)))
+
+(defun proposal/poisson (&optional (scale 1D0))
+  (let ((n (make-instance 'proposal/poisson))
+        (s scale))
+    (with-slots (scale) n
+      (setf scale s))
+    n))
+
+(defmethod proposal/propose ((proposal proposal/poisson) value)
+  (with-slots (scale factor) proposal
+    (cons (+ value (* (sample/poisson (* factor scale))
+                      (if (= 1 (random 2)) -1 1)))
+          0D0)))
+
+(defmethod r/proposal ((rv r/discrete))
+  (let ((p (proposal/discrete-gaussian)))
+    (unless (zerop ($data rv))
+      (with-slots (scale) p
+        (setf scale (* scale (abs ($data rv))))))
+    p))
+
+(defmethod r/proposal ((rv r/continuous))
+  (let ((p (proposal/gaussian)))
+    (unless (zerop ($data rv))
+      (with-slots (scale) p
+        (setf scale (* scale (abs ($data rv))))))
+    p))
 
 (defclass rstat ()
   ((n :initform 0.0)
@@ -206,7 +233,7 @@
                                   (rstat/push! rs ($data candidate))
                                   (when tuneable
                                     (let ((g (* (* 2.4 2.4) (+ (rstat/variance rs) 0.05))))
-                                      (proposal/scale! proposal (max 1.0 g))))
+                                      (proposal/scale! proposal (max 1.0 (sqrt g)))))
                                   (when accepted
                                     (incf naccepted)
                                     (setf prob nprob)
@@ -386,7 +413,7 @@
               (naccepted 0))
           (prn (format nil "[MCMC/MH: SAMPLING"))
           (loop :for proposal :in proposals
-                :do (proposal/scale! proposal (* 5.0 5.0)))
+                :do (proposal/scale! proposal 5.0))
           (loop :repeat nsize
                 :for iter :from 1
                 :for burning = (<= iter burn-in)
@@ -412,7 +439,62 @@
                                     (rstat/push! rstat ($data candidate))
                                     (when (and tuneable (>= iter 11))
                                       (let ((g (* (* 2.4 2.4) (+ (rstat/variance rstat) 0.05))))
-                                        (proposal/scale! proposal (max 1.0 g))))))
+                                        (proposal/scale! proposal (max 1.0 (sqrt g)))))))
+                        (when accepted
+                          (incf naccepted)
+                          (setf prob nprob)
+                          (when (> prob maxprob)
+                            (setf maxprob prob)
+                            (loop :for candidate :in candidates
+                                  :for trace :in traces
+                                  :do (setf ($data trace) ($clone ($data candidate)))))))))
+          (if (zerop naccepted)
+              (prns (format nil " FAILED]~%"))
+              (prns (format nil " DONE]~%")))
+          traces)))))
+
+(defun mcmc/mh31 (parameters posterior-function
+                  &key (iterations 50000) (tune-steps 1000) (burn-in 10000) (thin 1))
+  (labels ((posterior (vs) (apply posterior-function vs))
+           (vals (parameters) (mapcar #'$data parameters)))
+    (let ((prob (posterior (vals parameters))))
+      (when prob
+        (let ((proposals (mapcar #'r/proposal parameters))
+              (traces (r/traces (mapcar #'$clone (mapcar #'$data parameters))
+                                :n iterations :burn-in burn-in :thin thin))
+              (candidates (mapcar #'$clone parameters))
+              (rstats (loop :for p :in parameters :collect (rstat)))
+              (nsize (+ iterations burn-in))
+              (pstep (round (/ iterations 20.0)))
+              (maxprob prob)
+              (naccepted 0))
+          (prn (format nil "[MCMC/MH: SAMPLING"))
+          (loop :repeat nsize
+                :for iter :from 1
+                :for burning = (<= iter burn-in)
+                :for tuneable = (and (not burning) (zerop (/ iter tune-steps)))
+                :do (let ((lhrs nil)
+                          (lhr nil)
+                          (nprob nil))
+                      (when (and (not burning) (zerop (rem (- iter burn-in) pstep)))
+                        (prns "."))
+                      (setf lhrs (loop :for proposal :in proposals
+                                       :for candidate :in candidates
+                                       :collect (r/propose! candidate proposal)))
+                      (setf lhr (reduce (lambda (s p) (when (and s p) (+ s p))) lhrs))
+                      (setf nprob (posterior (vals candidates)))
+                      (let ((accepted (and lhr nprob (mh/accepted prob nprob lhr))))
+                        (loop :for proposal :in proposals
+                              :for candidate :in candidates
+                              :for trace :in traces
+                              :for rstat :in rstats
+                              :do (progn
+                                    (r/accept! candidate proposal accepted)
+                                    (setf ($ trace (1- iter)) ($clone ($data candidate)))
+                                    (rstat/push! rstat ($data candidate))
+                                    (when (and tuneable (>= iter 11))
+                                      (let ((g (* (* 2.4 2.4) (+ (rstat/variance rstat) 0.05))))
+                                        (proposal/scale! proposal (sqrt g))))))
                         (when accepted
                           (incf naccepted)
                           (setf prob nprob)
@@ -477,7 +559,7 @@
                                       (rstat/push! rstat ($data candidate))
                                       (when (>= iter (+ burn-in 11))
                                         (let ((g (* (* 2.4 2.4) (+ (rstat/variance rstat) 0.05))))
-                                          (proposal/scale! proposal g))))))
+                                          (proposal/scale! proposal (sqrt g)))))))
                         (when accepted
                           (incf naccepted)
                           (setf prob nprob)

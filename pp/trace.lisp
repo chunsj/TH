@@ -1,7 +1,7 @@
 (in-package :th.pp)
 
 (defclass r/trace (r/variable)
-  ((collection :initform nil)
+  ((collection :initform nil :reader trace/collection)
    (burn-ins :initform 0)
    (thin :initform 0)
    (vals :initform nil :accessor trace/values)
@@ -69,7 +69,8 @@
 
 (defun trace/acr (trace &key (maxlag 100))
   (let ((vals (trace/values trace)))
-    (loop :for k :from 0 :to (min maxlag (1- ($count vals))))))
+    (loop :for k :from 0 :to (min maxlag (1- ($count vals)))
+          :collect ($acr vals k))))
 
 (defun trace/quantiles (trace)
   (let* ((trcvs (trace/values trace))
