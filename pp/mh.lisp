@@ -192,9 +192,9 @@
     (let ((alpha (+ (- nprob prob) log-hastings-ratio)))
       (> alpha (log (random 1.0))))))
 
-(defun mcmc/mh-default (parameters posterior-function
-                        &key (iterations 50000) (burn-in 10000) (thin 1) (tune-steps 1000)
-                          deviances)
+(defun mcmc/mh-emam (parameters posterior-function
+                     &key (iterations 50000) (burn-in 10000) (thin 1) (tune-steps 1000)
+                       deviances)
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
     (let ((prob (posterior (vals parameters)))
@@ -213,7 +213,7 @@
             (loop :for s :in deviances
                   :for pd :in proposals
                   :do (proposal/scale! pd s)))
-          (prn (format nil "[MH/DFLT: BURNING"))
+          (prn (format nil "[MH/EMAM: BURNING"))
           (loop :repeat nsize
                 :for iter :from 1
                 :for burning = (<= iter burn-in)
@@ -325,13 +325,13 @@
                        (T (r/cvar p)))))))
 
 (defun mcmc/mh (parameters posterior-function
-                &key (iterations 30000) (burn-in 10000) (thin 1) tune-steps (type :default)
+                &key (iterations 30000) (burn-in 10000) (thin 1) tune-steps (type :scam)
                   deviances)
   (let ((parameters (wrap-parameters parameters)))
-    (cond ((eq type :default) (mcmc/mh-default parameters posterior-function
-                                               :iterations iterations :burn-in burn-in
-                                               :thin thin :tune-steps tune-steps
-                                               :deviances deviances))
+    (cond ((eq type :emam) (mcmc/mh-emam parameters posterior-function
+                                         :iterations iterations :burn-in burn-in
+                                         :thin thin :tune-steps tune-steps
+                                         :deviances deviances))
           ((eq type :scam) (mcmc/mh-scam parameters posterior-function
                                          :iterations iterations :burn-in burn-in
                                          :thin thin :tune-steps tune-steps
