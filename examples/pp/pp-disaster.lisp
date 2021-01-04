@@ -18,14 +18,6 @@
 (defparameter *mean* ($mean *disasters*))
 (defparameter *rate* (/ 1D0 *mean*))
 
-;; for SMS problem
-(setf *disasters* (->> (slurp "./data/sms.txt")
-                       (mapcar #'parse-float)
-                       (mapcar #'round)
-                       (tensor)))
-(setf *mean* ($mean *disasters*))
-(setf *rate* (/ 1D0 ($mean *disasters*)))
-
 (defun disaster-posterior (switch-point early-mean late-mean)
   (let ((prior-switch-point (score/discrete-uniform switch-point 1 (- ($count *disasters*) 2)))
         (prior-early-mean (score/exponential early-mean *rate*))
