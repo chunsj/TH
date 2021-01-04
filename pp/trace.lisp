@@ -85,7 +85,7 @@
                          (when (> i (1- n)) n)
                          (cons q ($ vs i))))))))
 
-(defun trace/hpd (trace alpha)
+(defun trace/hpd (trace &optional (alpha 0.05))
   (labels ((min-interval (vs alpha)
              (let* ((mn nil)
                     (mx nil)

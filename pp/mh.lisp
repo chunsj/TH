@@ -154,7 +154,8 @@
                         &key (iterations 50000) (burn-in 10000) (thin 1) (tune-steps 1000))
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
-    (let ((prob (posterior (vals parameters))))
+    (let ((prob (posterior (vals parameters)))
+          (tune-steps (or tune-steps 1000)))
       (when prob
         (let ((proposals (mapcar #'r/proposal parameters))
               (traces (r/traces (mapcar #'$clone (mapcar #'$data parameters))
@@ -207,7 +208,8 @@
                      &key (iterations 50000) (burn-in 10000) (thin 1) (tune-steps 1))
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
-    (let ((prob (posterior (vals parameters))))
+    (let ((prob (posterior (vals parameters)))
+          (tune-steps (or tune-steps 1)))
       (when prob
         (let ((proposals (mapcar #'r/proposal parameters))
               (traces (r/traces (mapcar #'$clone (mapcar #'$data parameters))
