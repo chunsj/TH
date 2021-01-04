@@ -167,7 +167,7 @@
               (maxprob prob)
               (naccepted 0)
               (tuning-done-reported nil))
-          (prn (format nil "[MCMC/MH: BURNING"))
+          (prn (format nil "[MH/DFLT: BURNING"))
           (loop :repeat nsize
                 :for iter :from 1
                 :for burning = (<= iter burn-in)
@@ -196,7 +196,9 @@
                                     (setf prob nprob)
                                     (when (> prob maxprob)
                                       (setf maxprob prob)
-                                      (setf ($data trace) ($clone ($data candidate)))))
+                                      (loop :for tr :in traces
+                                            :for c :in candidates
+                                            :do (setf ($data tr) ($clone ($data c))))))
                                   (when tuneable
                                     (proposal/tune! proposal))))))
           (if (zerop naccepted)
@@ -222,7 +224,7 @@
               (maxprob prob)
               (naccepted 0)
               (tuning-done-reported nil))
-          (prn (format nil "[MCMC/MH: BURNING"))
+          (prn (format nil "[MH/SCAM: BURNING"))
           (loop :repeat nsize
                 :for iter :from 1
                 :for burning = (<= iter burn-in)
@@ -254,14 +256,16 @@
                                     (setf prob nprob)
                                     (when (> prob maxprob)
                                       (setf maxprob prob)
-                                      (setf ($data trace) ($clone ($data candidate)))))))))
+                                      (loop :for tr :in traces
+                                            :for c :in candidates
+                                            :do (setf ($data tr) ($clone ($data c))))))))))
           (if (zerop naccepted)
               (prns (format nil " FAILED]~%"))
               (prns (format nil " DONE]~%")))
           traces)))))
 
 (defun mcmc/mh (parameters posterior-function
-                &key (iterations 50000) (burn-in 10000) (thin 1) tune-steps (type :default))
+                &key (iterations 30000) (burn-in 10000) (thin 1) tune-steps (type :default))
   (cond ((eq type :default) (mcmc/mh-default parameters posterior-function
                                              :iterations iterations :burn-in burn-in
                                              :thin thin :tune-steps tune-steps))

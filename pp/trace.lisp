@@ -68,9 +68,10 @@
     (when (>= n 1) (/ sd (sqrt n)))))
 
 (defun trace/acr (trace &key (maxlag 100))
-  (let ((vals (trace/values trace)))
-    (loop :for k :from 0 :to (min maxlag (1- ($count vals)))
-          :collect ($acr vals k))))
+  (when (> (trace/sd trace) 1E-7)
+    (let ((vals (trace/values trace)))
+      (loop :for k :from 0 :to (min maxlag (1- ($count vals)))
+            :collect ($acr vals k)))))
 
 (defun trace/quantiles (trace)
   (let* ((trcvs (trace/values trace))
@@ -110,7 +111,7 @@
         (min-interval vs alpha)))))
 
 (defun trace/geweke (trace &key (first 0.1) (last 0.5) (intervals 20))
-  (when (< (+ first last))
+  (when (and (< (+ first last)) (> (trace/sd trace) 1E-7))
     (labels ((interval-zscores (vs a b &optional (intervals 20))
                (let* ((end (1- ($count vs)))
                       (hend (/ end 2))
@@ -136,17 +137,16 @@
         (m (trace/mean trace))
         (err (trace/error trace))
         (hpd (trace/hpd trace 0.05))
-        (acr ($mean (subseq (trace/acr trace) 1)))
-        (geweke (let ((gvs (mapcar #'cdr (trace/geweke trace))))
-                  (cons (apply #'min gvs) (apply #'max gvs)))))
+        (acr (trace/acr trace))
+        (gvs (mapcar #'cdr (trace/geweke trace))))
     (list :count n
           :mean m
           :sd sd
           :error err
           :hpd-95 hpd
           :quantiles quantiles
-          :acmean acr
-          :gwkrng geweke)))
+          :acmean (when acr ($mean (subseq acr 1)))
+          :gwkrng (when gvs (cons (apply #'min gvs) (apply #'max gvs))))))
 
 (defun traces/sample (traces &key (n 1) transform)
   (let ((trcs (loop :for trace :in traces :collect (trace/values trace))))
