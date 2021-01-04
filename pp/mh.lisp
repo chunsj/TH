@@ -204,8 +204,7 @@
               (bstep (round (/ burn-in 10)))
               (pstep (round (/ iterations 10)))
               (maxprob prob)
-              (naccepted 0)
-              (tuning-done-reported nil))
+              (naccepted 0))
           (when deviances
             (loop :for s :in deviances
                   :for pd :in proposals
@@ -215,15 +214,11 @@
                 :for iter :from 1
                 :for burning = (<= iter burn-in)
                 :for tuneable = (zerop (rem iter tune-steps))
-                :do (let ((tune (and (> iter 1) burning tuneable)))
+                :do (progn
                       (when (and burning (zerop (rem iter bstep)))
                         (prns "."))
-                      (when tune
-                        (loop :for proposal :in proposals :do (proposal/tune! proposal)))
-                      (unless burning
-                        (unless tuning-done-reported
-                          (prns (format nil " DONE. SAMPLING"))
-                          (setf tuning-done-reported T)))
+                      (when (= burn-in iter)
+                        (prns (format nil " DONE. SAMPLING")))
                       (when (and (not burning) (zerop (rem (- iter burn-in) pstep)))
                         (prns "."))
                       (loop :for proposal :in proposals
@@ -266,8 +261,7 @@
               (bstep (round (/ burn-in 10)))
               (pstep (round (/ iterations 10)))
               (maxprob prob)
-              (naccepted 0)
-              (tuning-done-reported nil))
+              (naccepted 0))
           (when deviances
             (loop :for s :in deviances
                   :for pd :in proposals
@@ -282,10 +276,8 @@
                         (prns "."))
                       (when (and (not burning) (zerop (rem (- iter burn-in) pstep)))
                         (prns "."))
-                      (unless burning
-                        (unless tuning-done-reported
-                          (prns (format nil " DONE. SAMPLING"))
-                          (setf tuning-done-reported T)))
+                      (when (= burn-in iter)
+                        (prns (format nil " DONE. SAMPLING")))
                       (loop :for proposal :in proposals
                             :for candidate :in candidates
                             :for trace :in traces
