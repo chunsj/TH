@@ -18,6 +18,5 @@
         (when ll
           ($+ ($+ prior-b0 prior-b1 prior-s ll)))))))
 
-(let ((traces (mcmc/mh (list (r/variable 0) (r/variable 1) (r/variable 0))
-                       #'lr-posterior)))
+(let ((traces (mcmc/mh '(0.0 1.0 0.0) #'lr-posterior)))
   (prn traces))

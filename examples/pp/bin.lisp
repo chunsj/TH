@@ -15,6 +15,5 @@
         (when likelihood-flips
           ($+ prior-theta likelihood-flips))))))
 
-(let ((r/theta (r/variable 0.5)))
-  (let ((traces (mcmc/mh (list r/theta) #'binomial-posterior)))
-    (prn traces)))
+(let ((traces (mcmc/mh '(0.5) #'binomial-posterior)))
+  (prn traces))

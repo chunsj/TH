@@ -39,22 +39,13 @@
                 likelihood-late-mean)))))))
 
 (time
- (let ((r/switch-point (r/variable (round (* 0.5 ($count *disasters*))) :discrete))
-       (r/early-mean (r/variable *mean*))
-       (r/late-mean (r/variable *mean*)))
-   (let ((traces (mcmc/mh (list r/switch-point r/early-mean r/late-mean)
-                          #'disaster-posterior)))
-     (loop :for trc :in traces
-           :for lbl :in '(:switch-point :early-mean :late-mean)
-           :do (prn lbl trc)))))
+ (let ((traces (mcmc/mh '(50 2.0 2.0) #'disaster-posterior)))
+   (loop :for trc :in traces
+         :for lbl :in '(:switch-point :early-mean :late-mean)
+         :do (prn lbl trc))))
 
 (time
- (let ((r/switch-point (r/dvar (round (* 0.5 ($count *disasters*))) 35))
-       (r/early-mean (r/cvar *mean* 3))
-       (r/late-mean (r/cvar *mean* 3)))
-   (let ((traces (mcmc/mh (list r/switch-point r/early-mean r/late-mean)
-                          #'disaster-posterior
-                          :type :scam)))
-     (loop :for trc :in traces
-           :for lbl :in '(:switch-point :early-mean :late-mean)
-           :do (prn lbl trc)))))
+ (let ((traces (mcmc/mh '(50 2.0 2.0) #'disaster-posterior :type :scam)))
+   (loop :for trc :in traces
+         :for lbl :in '(:switch-point :early-mean :late-mean)
+         :do (prn lbl trc))))

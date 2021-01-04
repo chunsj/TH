@@ -2,10 +2,7 @@
   (:use #:common-lisp
         #:mu
         #:th)
-  (:export #:r/variable
-           #:r/cvar
-           #:r/dvar
-           #:mcmc/mh
+  (:export #:mcmc/mh
            #:trace/values
            #:trace/mean
            #:trace/sd

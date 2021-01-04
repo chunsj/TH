@@ -1,5 +1,7 @@
 (in-package :th.pp)
 
+(defgeneric r/variablep (rv))
+
 (defgeneric r/continuousp (rv))
 (defgeneric r/discretep (rv))
 
@@ -44,3 +46,6 @@
     (when rv
       (setf ($data rv) value)
       rv)))
+
+(defmethod r/variablep ((rv r/variable)) T)
+(defmethod r/variablep ((rv T)) nil)

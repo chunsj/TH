@@ -69,49 +69,25 @@
                     likelihood-late-mean)))))))))
 
 (time
- (let ((r/switch-point (r/dvar (round (* 0.5 ($count *sms*))) 37))
-       (r/early-mean (r/cvar *mean* 20))
-       (r/late-mean (r/cvar *mean* 20)))
-   (let ((traces (mcmc/mh (list r/switch-point r/early-mean r/late-mean)
-                          #'sms-posterior)))
-     (loop :for trc :in traces
-           :for lbl :in '(:switch-point :early-mean :late-mean)
-           :do (prn lbl trc (trace/mean trc) (trace/hpd trc))))))
+ (let ((traces (mcmc/mh '(37 20.0 20.0) #'sms-posterior)))
+   (loop :for trc :in traces
+         :for lbl :in '(:switch-point :early-mean :late-mean)
+         :do (prn lbl trc (trace/hpd trc)))))
 
 (time
- (let ((r/switch-point (r/dvar (round (* 0.5 ($count *sms*))) 37))
-       (r/early-mean (r/cvar *mean* 20))
-       (r/late-mean (r/cvar *mean* 20)))
-   (let ((traces (mcmc/mh (list r/switch-point r/early-mean r/late-mean)
-                          #'sms-posterior
-                          :type :scam)))
-     (loop :for trc :in traces
-           :for lbl :in '(:switch-point :early-mean :late-mean)
-           :do (prn lbl trc (trace/mean trc) (trace/hpd trc))))))
+ (let ((traces (mcmc/mh '(37 20.0 20.0) #'sms-posterior :type :scam)))
+   (loop :for trc :in traces
+         :for lbl :in '(:switch-point :early-mean :late-mean)
+         :do (prn lbl trc (trace/hpd trc)))))
 
 (time
- (let ((r/switch-point1 (r/dvar (round (* 0.33 ($count *sms*))) 37))
-       (r/switch-point2 (r/dvar (round (* 0.66 ($count *sms*))) 37))
-       (r/early-mean (r/cvar *mean* 20))
-       (r/mid-mean (r/cvar *mean* 20))
-       (r/late-mean (r/cvar *mean* 20)))
-   (let ((traces (mcmc/mh (list r/switch-point1 r/switch-point2
-                                r/early-mean r/mid-mean r/late-mean)
-                          #'sms-posterior2)))
-     (loop :for trc :in traces
-           :for lbl :in '(:switch-point1 :switch-point2 :early-mean :mid-mean :late-mean)
-           :do (prn lbl trc (trace/mean trc) (trace/hpd trc))))))
+ (let ((traces (mcmc/mh '(40 50 20.0 20.0 20.0) #'sms-posterior2)))
+   (loop :for trc :in traces
+         :for lbl :in '(:switch-point1 :switch-point2 :early-mean :mid-mean :late-mean)
+         :do (prn lbl trc (trace/hpd trc)))))
 
 (time
- (let ((r/switch-point1 (r/dvar (round (* 0.33 ($count *sms*))) 37))
-       (r/switch-point2 (r/dvar (round (* 0.66 ($count *sms*))) 37))
-       (r/early-mean (r/cvar *mean* 20))
-       (r/mid-mean (r/cvar *mean* 20))
-       (r/late-mean (r/cvar *mean* 20)))
-   (let ((traces (mcmc/mh (list r/switch-point1 r/switch-point2
-                                r/early-mean r/mid-mean r/late-mean)
-                          #'sms-posterior2
-                          :type :scam)))
-     (loop :for trc :in traces
-           :for lbl :in '(:switch-point1 :switch-point2 :early-mean :mid-mean :late-mean)
-           :do (prn lbl trc (trace/mean trc) (trace/hpd trc))))))
+ (let ((traces (mcmc/mh '((40 5) (50 5) 20.0 20.0 20.0) #'sms-posterior2 :type :scam)))
+   (loop :for trc :in traces
+         :for lbl :in '(:switch-point1 :switch-point2 :early-mean :mid-mean :late-mean)
+         :do (prn lbl trc (trace/hpd trc)))))

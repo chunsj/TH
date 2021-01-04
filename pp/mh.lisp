@@ -39,7 +39,7 @@
 (defgeneric proposal/accepted! (proposal acceptedp))
 (defgeneric proposal/propose (proposal value))
 
-(defgeneric r/proposal (rv))
+(defgeneric r/proposal (rv &optional dev))
 (defgeneric r/propose! (rv proposal))
 (defgeneric r/accept! (rv proposal acceptedp))
 
@@ -130,24 +130,28 @@
                       (if (= 1 (random 2)) -1 1)))
           0.0)))
 
-(defmethod r/proposal ((rv r/discrete))
+(defmethod r/proposal ((rv r/discrete) &optional dev)
   (let ((p (proposal/poisson)))
     (unless (zerop ($data rv))
       (with-slots (scale) p
-        (if (r/deviance rv)
-            (setf scale (if (zerop (r/deviance rv)) 1 (r/deviance rv)))
-            (let ((absv ($abs ($data rv))))
-              (setf scale (* scale (if (zerop absv) 1 absv)))))))
+        (if dev
+            (setf scale dev)
+            (if (r/deviance rv)
+                (setf scale (if (zerop (r/deviance rv)) 1 (r/deviance rv)))
+                (let ((absv ($abs ($data rv))))
+                  (setf scale (* scale (if (zerop absv) 1 absv))))))))
     p))
 
-(defmethod r/proposal ((rv r/continuous))
+(defmethod r/proposal ((rv r/continuous) &optional dev)
   (let ((p (proposal/gaussian)))
     (unless (zerop ($data rv))
       (with-slots (scale) p
-        (if (r/deviance rv)
-            (setf scale (if (zerop (r/deviance rv)) 1 (r/deviance rv)))
-            (let ((absv ($abs ($data rv))))
-              (setf scale (* scale (if (zerop absv) 1 absv)))))))
+        (if dev
+            (setf scale dev)
+            (if (r/deviance rv)
+                (setf scale (if (zerop (r/deviance rv)) 1 (r/deviance rv)))
+                (let ((absv ($abs ($data rv))))
+                  (setf scale (* scale (if (zerop absv) 1 absv))))))))
     p))
 
 (defclass rstat ()
@@ -252,7 +256,11 @@
     (let ((prob (posterior (vals parameters)))
           (tune-steps (or tune-steps 1)))
       (when prob
-        (let ((proposals (mapcar #'r/proposal parameters))
+        (let ((proposals (mapcar (lambda (p)
+                                   (if (r/deviance p)
+                                       (r/proposal p)
+                                       (r/proposal p 5.0)))
+                                 parameters))
               (traces (r/traces (mapcar #'$clone (mapcar #'$data parameters))
                                 :n iterations :burn-in burn-in :thin thin))
               (candidates (mapcar #'$clone parameters))
@@ -261,7 +269,8 @@
               (bstep (round (/ burn-in 10)))
               (pstep (round (/ iterations 10)))
               (maxprob prob)
-              (naccepted 0))
+              (naccepted 0)
+              (cf (* 2.4 2.4)))
           (when deviances
             (loop :for s :in deviances
                   :for pd :in proposals
@@ -289,7 +298,7 @@
                                   (setf ($ trace (1- iter)) ($clone ($data candidate)))
                                   (rstat/push! rs ($data candidate))
                                   (when tuneable
-                                    (let ((g (* (* 2.4 2.4) (+ (rstat/variance rs) 0.05))))
+                                    (let ((g (* cf (+ (rstat/variance rs) 0.05))))
                                       (proposal/scale! proposal (sqrt g))))
                                   (when accepted
                                     (incf naccepted)
@@ -304,14 +313,26 @@
               (prns (format nil " DONE]~%")))
           traces)))))
 
+(defun wrap-parameters (parameters)
+  (->> parameters
+       (mapcar (lambda (p)
+                 (cond ((r/variablep p) p)
+                       ((integerp p) (r/dvar p))
+                       ((floatp p) (r/cvar p))
+                       ((listp p) (cond ((integerp (car p)) (r/dvar (car p) (cadr p)))
+                                        ((floatp (car p)) (r/cvar (car p) (cadr p)))
+                                        (T (r/cvar (car p) (cadr p)))))
+                       (T (r/cvar p)))))))
+
 (defun mcmc/mh (parameters posterior-function
                 &key (iterations 30000) (burn-in 10000) (thin 1) tune-steps (type :default)
                   deviances)
-  (cond ((eq type :default) (mcmc/mh-default parameters posterior-function
-                                             :iterations iterations :burn-in burn-in
-                                             :thin thin :tune-steps tune-steps
-                                             :deviances deviances))
-        ((eq type :scam) (mcmc/mh-scam parameters posterior-function
-                                       :iterations iterations :burn-in burn-in
-                                       :thin thin :tune-steps tune-steps
-                                       :deviances deviances))))
+  (let ((parameters (wrap-parameters parameters)))
+    (cond ((eq type :default) (mcmc/mh-default parameters posterior-function
+                                               :iterations iterations :burn-in burn-in
+                                               :thin thin :tune-steps tune-steps
+                                               :deviances deviances))
+          ((eq type :scam) (mcmc/mh-scam parameters posterior-function
+                                         :iterations iterations :burn-in burn-in
+                                         :thin thin :tune-steps tune-steps
+                                         :deviances deviances)))))
