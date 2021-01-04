@@ -193,7 +193,7 @@
       (> alpha (log (random 1.0))))))
 
 (defun mcmc/mh-emam (parameters posterior-function
-                     &key (iterations 50000) (burn-in 10000) (thin 1) (tune-steps 1000)
+                     &key (iterations 40000) (burn-in 10000) (thin 1) (tune-steps 1000)
                        deviances)
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
@@ -249,7 +249,7 @@
           traces)))))
 
 (defun mcmc/mh-scam (parameters posterior-function
-                     &key (iterations 50000) (burn-in 10000) (thin 1) (tune-steps 1)
+                     &key (iterations 40000) (burn-in 10000) (thin 1) (tune-steps 1)
                        deviances)
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
@@ -325,7 +325,7 @@
                        (T (r/cvar p)))))))
 
 (defun mcmc/mh (parameters posterior-function
-                &key (iterations 30000) (burn-in 10000) (thin 1) tune-steps (type :scam)
+                &key (iterations 40000) (burn-in 10000) (thin 1) tune-steps (type :scam)
                   deviances)
   (let ((parameters (wrap-parameters parameters)))
     (cond ((eq type :emam) (mcmc/mh-emam parameters posterior-function
