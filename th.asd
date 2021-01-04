@@ -69,6 +69,5 @@
                                        (:file "squeezenet11")))
                (:module pp :components ((:file "pp")
                                         (:file "rv")
-                                        (:file "mcmc")
                                         (:file "trace")
-                                        (:file "mcmc-mh")))))
+                                        (:file "mh")))))

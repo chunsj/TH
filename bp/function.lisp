@@ -184,7 +184,7 @@
             :link (link (to x (* 2 ($data x) gv))))))
 
 (defmethod $gammaf ((x number))
-  (let ((xt (tensor.double (list x))))
+  (let ((xt (tensor.float (list x))))
     ($scalar ($gammaf xt))))
 
 (defmethod $gammaf ((x node))
@@ -193,7 +193,7 @@
         :link (link (to x ($mul! ($mul dv ($polygamma ($data x) 0)) gv)))))
 
 (defmethod $lgammaf ((x number))
-  (let ((xt (tensor.double (list x))))
+  (let ((xt (tensor.float (list x))))
     ($scalar ($lgammaf xt))))
 
 (defmethod $lgammaf ((x node))
