@@ -9,8 +9,9 @@
 (defmethod print-object ((rv r/variable) stream)
   (with-slots (value) rv
     (cond ((integerp value) (format stream "<~A>" ($data rv)))
-          ((floatp value) (cond ((> (abs value) 10) (format stream "<~,2F>" ($data rv)))
-                                ((> (abs value) 1) (format stream "<~,4F>" ($data rv)))
+          ((floatp value) (cond ((> (abs value) 100) (format stream "<~,1F>" ($data rv)))
+                                ((> (abs value) 1) (format stream "<~,2F>" ($data rv)))
+                                ((> (abs value) 0.01) (format stream "<~,4F>" ($data rv)))
                                 (T (format stream "<~,4E>" ($data rv)))))
           (T (format stream "<~A>" ($data rv))))))
 

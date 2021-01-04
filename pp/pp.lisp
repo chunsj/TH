@@ -3,6 +3,8 @@
         #:mu
         #:th)
   (:export #:r/variable
+           #:r/cvar
+           #:r/dvar
            #:mcmc/mh
            #:trace/values
            #:trace/mean

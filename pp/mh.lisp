@@ -1,5 +1,39 @@
 (in-package :th.pp)
 
+(defgeneric r/deviance (rv))
+
+(defclass r/cvar (r/continuous)
+  ((deviance :initform nil)))
+
+(defclass r/dvar (r/discrete)
+  ((deviance :initform nil)))
+
+(defun r/cvar (value &optional deviance)
+  (let ((rv (make-instance 'r/cvar))
+        (dev deviance))
+    (with-slots (deviance) rv
+      (setf ($data rv) value)
+      (when dev (setf deviance dev)))
+    rv))
+
+(defun r/dvar (value &optional deviance)
+  (let ((rv (make-instance 'r/dvar))
+        (dev deviance))
+    (with-slots (deviance) rv
+      (setf ($data rv) value)
+      (when dev (setf deviance dev)))
+    rv))
+
+(defmethod r/deviance ((rv r/variable)))
+
+(defmethod r/deviance ((rv r/cvar))
+  (with-slots (deviance) rv
+    deviance))
+
+(defmethod r/deviance ((rv r/dvar))
+  (with-slots (deviance) rv
+    deviance))
+
 (defgeneric proposal/scale! (proposal s))
 (defgeneric proposal/tune! (proposal))
 (defgeneric proposal/accepted! (proposal acceptedp))
@@ -12,13 +46,13 @@
 (defclass r/proposal ()
   ((accepted :initform 0)
    (rejected :initform 0)
-   (factor :initform 1D0)
-   (scale :initform 1D0)
+   (factor :initform 1.0)
+   (scale :initform 1.0)
    (pvalue :initform nil :accessor $data)))
 
 (defmethod proposal/scale! ((proposal r/proposal) s)
   (with-slots (factor scale) proposal
-    (setf factor 1D0
+    (setf factor 1.0
           scale s)))
 
 (defmethod proposal/tune! ((proposal r/proposal))
@@ -57,7 +91,7 @@
 
 (defclass proposal/gaussian (r/proposal) ())
 
-(defun proposal/gaussian (&optional (scale 1D0))
+(defun proposal/gaussian (&optional (scale 1.0))
   (let ((n (make-instance 'proposal/gaussian))
         (s scale))
     (with-slots (scale) n
@@ -66,11 +100,11 @@
 
 (defmethod proposal/propose ((proposal proposal/gaussian) value)
   (with-slots (scale factor) proposal
-    (cons (sample/gaussian value (max 1E-7 (* factor scale))) 0D0)))
+    (cons (sample/gaussian value (max 1E-7 (* factor scale))) 0.0)))
 
 (defclass proposal/discrete-gaussian (r/proposal) ())
 
-(defun proposal/discrete-gaussian (&optional (scale 2D0))
+(defun proposal/discrete-gaussian (&optional (scale 2.0))
   (let ((n (make-instance 'proposal/discrete-gaussian))
         (s scale))
     (with-slots (scale) n
@@ -79,11 +113,11 @@
 
 (defmethod proposal/propose ((proposal proposal/discrete-gaussian) value)
   (with-slots (scale factor) proposal
-    (cons (round (sample/gaussian value (max 1 (* factor scale)))) 0D0)))
+    (cons (round (sample/gaussian value (max 1E-7 (* factor scale)))) 0.0)))
 
 (defclass proposal/poisson (r/proposal) ())
 
-(defun proposal/poisson (&optional (scale 1D0))
+(defun proposal/poisson (&optional (scale 1.0))
   (let ((n (make-instance 'proposal/poisson))
         (s scale))
     (with-slots (scale) n
@@ -92,24 +126,28 @@
 
 (defmethod proposal/propose ((proposal proposal/poisson) value)
   (with-slots (scale factor) proposal
-    (cons (+ value (* (sample/poisson (* factor scale))
+    (cons (+ value (* (sample/poisson (max 1E-7 (* factor scale)))
                       (if (= 1 (random 2)) -1 1)))
-          0D0)))
+          0.0)))
 
 (defmethod r/proposal ((rv r/discrete))
   (let ((p (proposal/poisson)))
     (unless (zerop ($data rv))
       (with-slots (scale) p
-        (let ((absv ($abs ($data rv))))
-          (setf scale (* scale (if (zerop absv) 1 absv))))))
+        (if (r/deviance rv)
+            (setf scale (if (zerop (r/deviance rv)) 1 (r/deviance rv)))
+            (let ((absv ($abs ($data rv))))
+              (setf scale (* scale (if (zerop absv) 1 absv)))))))
     p))
 
 (defmethod r/proposal ((rv r/continuous))
   (let ((p (proposal/gaussian)))
     (unless (zerop ($data rv))
       (with-slots (scale) p
-        (let ((absv ($abs ($data rv))))
-          (setf scale (* scale (if (zerop absv) 1 absv))))))
+        (if (r/deviance rv)
+            (setf scale (if (zerop (r/deviance rv)) 1 (r/deviance rv)))
+            (let ((absv ($abs ($data rv))))
+              (setf scale (* scale (if (zerop absv) 1 absv)))))))
     p))
 
 (defclass rstat ()
@@ -148,10 +186,11 @@
 (defun mh/accepted (prob nprob log-hastings-ratio)
   (when (and prob nprob log-hastings-ratio)
     (let ((alpha (+ (- nprob prob) log-hastings-ratio)))
-      (> alpha (log (random 1D0))))))
+      (> alpha (log (random 1.0))))))
 
 (defun mcmc/mh-default (parameters posterior-function
-                        &key (iterations 50000) (burn-in 10000) (thin 1) (tune-steps 1000))
+                        &key (iterations 50000) (burn-in 10000) (thin 1) (tune-steps 1000)
+                          deviances)
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
     (let ((prob (posterior (vals parameters)))
@@ -167,6 +206,10 @@
               (maxprob prob)
               (naccepted 0)
               (tuning-done-reported nil))
+          (when deviances
+            (loop :for s :in deviances
+                  :for pd :in proposals
+                  :do (proposal/scale! pd s)))
           (prn (format nil "[MH/DFLT: BURNING"))
           (loop :repeat nsize
                 :for iter :from 1
@@ -207,7 +250,8 @@
           traces)))))
 
 (defun mcmc/mh-scam (parameters posterior-function
-                     &key (iterations 50000) (burn-in 10000) (thin 1) (tune-steps 1))
+                     &key (iterations 50000) (burn-in 10000) (thin 1) (tune-steps 1)
+                       deviances)
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
     (let ((prob (posterior (vals parameters)))
@@ -224,6 +268,10 @@
               (maxprob prob)
               (naccepted 0)
               (tuning-done-reported nil))
+          (when deviances
+            (loop :for s :in deviances
+                  :for pd :in proposals
+                  :do (proposal/scale! pd s)))
           (prn (format nil "[MH/SCAM: BURNING"))
           (loop :repeat nsize
                 :for iter :from 1
@@ -265,10 +313,13 @@
           traces)))))
 
 (defun mcmc/mh (parameters posterior-function
-                &key (iterations 30000) (burn-in 10000) (thin 1) tune-steps (type :default))
+                &key (iterations 30000) (burn-in 10000) (thin 1) tune-steps (type :default)
+                  deviances)
   (cond ((eq type :default) (mcmc/mh-default parameters posterior-function
                                              :iterations iterations :burn-in burn-in
-                                             :thin thin :tune-steps tune-steps))
+                                             :thin thin :tune-steps tune-steps
+                                             :deviances deviances))
         ((eq type :scam) (mcmc/mh-scam parameters posterior-function
                                        :iterations iterations :burn-in burn-in
-                                       :thin thin :tune-steps tune-steps))))
+                                       :thin thin :tune-steps tune-steps
+                                       :deviances deviances))))
