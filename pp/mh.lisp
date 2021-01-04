@@ -35,7 +35,7 @@
     deviance))
 
 (defgeneric proposal/scale! (proposal s))
-(defgeneric proposal/tune! (proposal))
+(defgeneric proposal/rescale! (proposal))
 (defgeneric proposal/accepted! (proposal acceptedp))
 (defgeneric proposal/propose (proposal value))
 
@@ -55,7 +55,7 @@
     (setf factor 1.0
           scale s)))
 
-(defmethod proposal/tune! ((proposal r/proposal))
+(defmethod proposal/rescale! ((proposal r/proposal))
   (with-slots (accepted rejected factor) proposal
     (let ((total (+ accepted rejected)))
       (when (> total 0)
@@ -238,7 +238,7 @@
                                             :for c :in candidates
                                             :do (setf ($data tr) ($clone ($data c))))))
                                   (when tuneable
-                                    (proposal/tune! proposal))))))
+                                    (proposal/rescale! proposal))))))
           (if (zerop naccepted)
               (prns (format nil " FAILED]~%"))
               (prns (format nil " DONE]~%")))
