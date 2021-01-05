@@ -102,6 +102,27 @@
   (with-slots (scale factor) proposal
     (cons (sample/gaussian value (max 1E-7 (* factor scale))) 0.0)))
 
+(defclass proposal/discrete (r/proposal) ())
+
+(defun proposal/discrete (&optional (scale 1))
+  (let ((n (make-instance 'proposal/discrete))
+        (s scale))
+    (with-slots (scale) n
+      (setf scale s))
+    n))
+
+(defun rwalk ()
+  (let ((r (random 5)))
+    (cond ((= r 0) -1)
+          ((= r 1) 1)
+          ((= r 2) 0)
+          ((= r 3) -2)
+          ((= r 4) 2))))
+
+(defmethod proposal/propose ((proposal proposal/discrete) value)
+  (with-slots (scale factor) proposal
+    (cons (+ value (rwalk)) 0.0)))
+
 (defclass proposal/discrete-gaussian (r/proposal) ())
 
 (defun proposal/discrete-gaussian (&optional (scale 2.0))
@@ -194,15 +215,22 @@
     (let ((alpha (+ (- nprob prob) log-hastings-ratio)))
       (> alpha (log (random 1.0))))))
 
-(defun mcmc/mh-emam (parameters posterior-function
-                     &key (iterations 40000) (burn-in 10000) (thin 1) tune-steps
-                       deviances)
+(defun mcmc/mh-em (parameters posterior-function
+                   &key (iterations 40000) (burn-in 10000) (thin 1) tune-steps
+                     deviances)
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
     (let ((prob (posterior (vals parameters)))
           (tune-steps (or tune-steps 1000)))
       (when prob
-        (let ((proposals (mapcar #'r/proposal parameters))
+        (let (;;(proposals (mapcar #'r/proposal parameters))
+              (proposals (mapcar (lambda (p)
+                                   (if (r/deviance p)
+                                       (r/proposal p)
+                                       (if (r/continuousp p)
+                                           (r/proposal p)
+                                           (proposal/discrete 1))))
+                                 parameters))
               (traces (r/traces (mapcar #'$clone (mapcar #'$data parameters))
                                 :n iterations :burn-in burn-in :thin thin))
               (candidates (mapcar #'$clone parameters))
@@ -215,7 +243,7 @@
             (loop :for s :in deviances
                   :for pd :in proposals
                   :do (proposal/scale! pd s)))
-          (prn (format nil "[MH/EMAM: BURNING"))
+          (prn (format nil "[MH/EM: BURNING"))
           (loop :repeat nsize
                 :for iter :from 1
                 :for burning = (<= iter burn-in)
@@ -251,9 +279,78 @@
               (prns (format nil " DONE]~%")))
           traces)))))
 
-(defun mcmc/mh-scam (parameters posterior-function
-                     &key (iterations 40000) (burn-in 10000) (thin 1) tune-steps
-                       deviances)
+(defun mcmc/mh-ae (parameters posterior-function
+                   &key (iterations 40000) (burn-in 10000) (thin 1) tune-steps
+                     deviances)
+  (labels ((posterior (vs) (apply posterior-function vs))
+           (vals (parameters) (mapcar #'$data parameters)))
+    (let ((prob (posterior (vals parameters)))
+          (tune-steps (or tune-steps 1000)))
+      (when prob
+        (let (;;(proposals (mapcar #'r/proposal parameters))
+              (proposals (mapcar (lambda (p)
+                                   (if (r/deviance p)
+                                       (r/proposal p)
+                                       (if (r/continuousp p)
+                                           (r/proposal p)
+                                           (proposal/discrete 1))))
+                                 parameters))
+              (traces (r/traces (mapcar #'$clone (mapcar #'$data parameters))
+                                :n iterations :burn-in burn-in :thin thin))
+              (candidates (mapcar #'$clone parameters))
+              (nsize (+ iterations burn-in))
+              (bstep (round (/ burn-in 10)))
+              (pstep (round (/ iterations 10)))
+              (maxprob prob)
+              (naccepted 0))
+          (when deviances
+            (loop :for s :in deviances
+                  :for pd :in proposals
+                  :do (proposal/scale! pd s)))
+          (prn (format nil "[MH/AE: BURNING"))
+          (loop :repeat nsize
+                :for iter :from 1
+                :for burning = (<= iter burn-in)
+                :for tuneable = (zerop (rem iter tune-steps))
+                :do (progn
+                      (when (and burning (zerop (rem iter bstep)))
+                        (prns "."))
+                      (when (= burn-in iter)
+                        (prns (format nil " DONE. SAMPLING")))
+                      (when (and (not burning) (zerop (rem (- iter burn-in) pstep)))
+                        (prns "."))
+                      (let ((lhr (loop :for proposal :in proposals
+                                       :for candidate :in candidates
+                                       :for lhr = (r/propose! candidate proposal)
+                                       :summing lhr)))
+                        (let ((nprob (posterior (vals candidates))))
+                          (let ((accepted (mh/accepted prob nprob lhr)))
+                            (loop :for candidate :in candidates
+                                  :for proposal :in proposals
+                                  :for trace :in traces
+                                  :do (progn
+                                        (r/accept! candidate proposal accepted)
+                                        (setf ($ trace (1- iter)) ($clone ($data candidate)))
+                                        (trace/accepted! trace accepted)))
+                            (when accepted
+                              (incf naccepted)
+                              (setf prob nprob)
+                              (when (> prob maxprob)
+                                (setf maxprob prob)
+                                (loop :for tr :in traces
+                                      :for c :in candidates
+                                      :do (setf ($data tr) ($clone ($data c)))))))
+                          (when tuneable
+                            (loop :for proposal :in proposals
+                                  :do (proposal/rescale! proposal)))))))
+          (if (zerop naccepted)
+              (prns (format nil " FAILED]~%"))
+              (prns (format nil " DONE]~%")))
+          traces)))))
+
+(defun mcmc/mh-sc (parameters posterior-function
+                   &key (iterations 40000) (burn-in 10000) (thin 1) tune-steps
+                     deviances)
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
     (let ((prob (posterior (vals parameters)))
@@ -262,7 +359,9 @@
         (let ((proposals (mapcar (lambda (p)
                                    (if (r/deviance p)
                                        (r/proposal p)
-                                       (r/proposal p 5.0)))
+                                       (if (r/continuousp p)
+                                           (r/proposal p 1.0)
+                                           (proposal/discrete 1))))
                                  parameters))
               (traces (r/traces (mapcar #'$clone (mapcar #'$data parameters))
                                 :n iterations :burn-in burn-in :thin thin))
@@ -282,7 +381,7 @@
             (loop :for s :in deviances
                   :for pd :in proposals
                   :do (proposal/scale! pd s)))
-          (prn (format nil "[MH/SCAM: BURNING"))
+          (prn (format nil "[MH/SC: BURNING"))
           (loop :repeat nsize
                 :for iter :from 1
                 :for burning = (<= iter burn-in)
@@ -308,7 +407,7 @@
                                       (when accepted (rstat/push! rs ($data candidate)))
                                       (rstat/push! rs ($data candidate)))
                                   (when tuneable
-                                    (let ((g (* cf (+ (rstat/variance rs) 0.05))))
+                                    (let ((g (* cf (+ (rstat/variance rs) 0.01))))
                                       (proposal/scale! proposal (sqrt g))))
                                   (when accepted
                                     (incf naccepted)
@@ -318,6 +417,85 @@
                                       (loop :for tr :in traces
                                             :for c :in candidates
                                             :do (setf ($data tr) ($clone ($data c))))))))))
+          (if (zerop naccepted)
+              (prns (format nil " FAILED]~%"))
+              (prns (format nil " DONE]~%")))
+          traces)))))
+
+(defun mcmc/mh-am (parameters posterior-function
+                   &key (iterations 40000) (burn-in 10000) (thin 1) tune-steps
+                     deviances)
+  (labels ((posterior (vs) (apply posterior-function vs))
+           (vals (parameters) (mapcar #'$data parameters)))
+    (let ((prob (posterior (vals parameters)))
+          (tune-steps (or tune-steps 1))
+          (cf ($square (/ 2.38 ($count parameters))))
+          (bd ($square (/ 0.1 ($count parameters)))))
+      (when prob
+        (let ((proposals (mapcar (lambda (p)
+                                   (if (r/deviance p)
+                                       (r/proposal p)
+                                       (if (r/continuousp p)
+                                           (r/proposal p 1.0)
+                                           (proposal/discrete 1))))
+                                 parameters))
+              (traces (r/traces (mapcar #'$clone (mapcar #'$data parameters))
+                                :n iterations :burn-in burn-in :thin thin))
+              (candidates (mapcar #'$clone parameters))
+              (rstats (loop :for p :in parameters :collect (rstat)))
+              (nsize (+ iterations burn-in))
+              (bstep (round (/ burn-in 10)))
+              (pstep (round (/ iterations 10)))
+              (maxprob prob)
+              (naccepted 0)
+              (greedy nil))
+          (when (< tune-steps 0)
+            (setf tune-steps (abs tune-steps)
+                  greedy T))
+          (when deviances
+            (loop :for s :in deviances
+                  :for pd :in proposals
+                  :do (proposal/scale! pd s)))
+          (prn (format nil "[MH/AM: BURNING"))
+          (loop :repeat nsize
+                :for iter :from 1
+                :for burning = (<= iter burn-in)
+                :for tuneable = (and (>= iter 11) (zerop (rem iter tune-steps)))
+                :do (progn
+                      (when (and burning (zerop (rem iter bstep)))
+                        (prns "."))
+                      (when (and (not burning) (zerop (rem (- iter burn-in) pstep)))
+                        (prns "."))
+                      (when (= burn-in iter)
+                        (prns (format nil " DONE. SAMPLING")))
+                      (let* ((lhr (loop :for proposal :in proposals
+                                        :for candidate :in candidates
+                                        :for lhr = (r/propose! candidate proposal)
+                                        :summing lhr))
+                             (nprob (posterior (vals candidates)))
+                             (accepted (mh/accepted prob nprob lhr)))
+                        (loop :for proposal :in proposals
+                              :for candidate :in candidates
+                              :for trace :in traces
+                              :for rs :in rstats
+                              :do (progn
+                                    (r/accept! candidate proposal accepted)
+                                    (setf ($ trace (1- iter)) ($clone ($data candidate)))
+                                    (trace/accepted! trace accepted)
+                                    (if greedy
+                                        (when accepted (rstat/push! rs ($data candidate)))
+                                        (rstat/push! rs ($data candidate)))
+                                    (when tuneable
+                                      (let ((g (+ (* cf (rstat/variance rs)) bd)))
+                                        (proposal/scale! proposal (sqrt g))))))
+                        (when accepted
+                          (incf naccepted)
+                          (setf prob nprob)
+                          (when (> prob maxprob)
+                            (setf maxprob prob)
+                            (loop :for tr :in traces
+                                  :for c :in candidates
+                                  :do (setf ($data tr) ($clone ($data c)))))))))
           (if (zerop naccepted)
               (prns (format nil " FAILED]~%"))
               (prns (format nil " DONE]~%")))
@@ -335,14 +513,22 @@
                        (T (r/cvar p)))))))
 
 (defun mcmc/mh (parameters posterior-function
-                &key (iterations 40000) (burn-in 10000) (thin 1) tune-steps (type :scam)
+                &key (iterations 40000) (burn-in 10000) (thin 1) tune-steps (type :am)
                   deviances)
   (let ((parameters (wrap-parameters parameters)))
-    (cond ((eq type :emam) (mcmc/mh-emam parameters posterior-function
-                                         :iterations iterations :burn-in burn-in
-                                         :thin thin :tune-steps tune-steps
-                                         :deviances deviances))
-          ((eq type :scam) (mcmc/mh-scam parameters posterior-function
-                                         :iterations iterations :burn-in burn-in
-                                         :thin thin :tune-steps tune-steps
-                                         :deviances deviances)))))
+    (cond ((eq type :em) (mcmc/mh-em parameters posterior-function
+                                     :iterations iterations :burn-in burn-in
+                                     :thin thin :tune-steps tune-steps
+                                     :deviances deviances))
+          ((eq type :ae) (mcmc/mh-ae parameters posterior-function
+                                     :iterations iterations :burn-in burn-in
+                                     :thin thin :tune-steps tune-steps
+                                     :deviances deviances))
+          ((eq type :sc) (mcmc/mh-sc parameters posterior-function
+                                     :iterations iterations :burn-in burn-in
+                                     :thin thin :tune-steps tune-steps
+                                     :deviances deviances))
+          ((eq type :am) (mcmc/mh-am parameters posterior-function
+                                     :iterations iterations :burn-in burn-in
+                                     :thin thin :tune-steps tune-steps
+                                     :deviances deviances)))))

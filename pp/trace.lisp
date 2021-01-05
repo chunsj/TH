@@ -57,6 +57,7 @@
 
 (defun trace/act (trace)
   (with-slots (naccepted nrejected) trace
+    (prn naccepted nrejected)
     (if (zerop (+ naccepted nrejected))
         0
         (round (/ (* 100 naccepted) (+ naccepted nrejected))))))
