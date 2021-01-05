@@ -1,9 +1,10 @@
 # My Deep Learning Library for Common Lisp using libTH/libTHNN
 
-## NEWS (2020-12-21)
-  Removed (hopely temporariliy) HMC and NUTS implementations.
+## NEWS (2021-01-04)
+  Metropolis-Hastings implementation seems work reasonably.
 
 ## OLD NEWS
+  * 20201221: HMC and NUTS implementations are removed. (not work well)
   * 20201213: MH and HMC works well with simple examples.
   * 20201125: Metropolis-Hastings and Hamiltonian Monte Carlo.
   * 20200927: Want to build a probabilistic programming support.
