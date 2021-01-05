@@ -22,8 +22,8 @@
       (when (and prior-switch-point
                  prior-early-mean
                  prior-late-mean)
-        (let ((sms-early ($ data (list 0 switch-point)))
-              (sms-late ($ data (list switch-point (- ($count data) switch-point)))))
+        (let ((sms-early ($slice data 0 switch-point))
+              (sms-late ($slice data switch-point)))
           (let ((likelihood-early-mean (score/poisson sms-early early-mean))
                 (likelihood-late-mean (score/poisson sms-late late-mean)))
             (when (and likelihood-early-mean
