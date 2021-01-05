@@ -25,9 +25,8 @@
     (when (and prior-switch-point
                prior-early-mean
                prior-late-mean)
-      (let ((disasters-early ($ *disasters* (list 0 switch-point)))
-            (disasters-late ($ *disasters*
-                              (list switch-point (- ($count *disasters*) switch-point)))))
+      (let ((disasters-early ($slice *disasters* 0 switch-point))
+            (disasters-late ($slice *disasters* switch-point)))
         (let ((likelihood-early-mean (score/poisson disasters-early early-mean))
               (likelihood-late-mean (score/poisson disasters-late late-mean)))
           (when (and likelihood-early-mean
@@ -40,12 +39,6 @@
 
 (time
  (let ((traces (mcmc/mh '(50 2.0 2.0) #'disaster-posterior)))
-   (loop :for trc :in traces
-         :for lbl :in '(:switch-point :early-mean :late-mean)
-         :do (prn lbl trc))))
-
-(time
- (let ((traces (mcmc/mh '(50 2.0 2.0) #'disaster-posterior :type :emam)))
    (loop :for trc :in traces
          :for lbl :in '(:switch-point :early-mean :late-mean)
          :do (prn lbl trc))))
