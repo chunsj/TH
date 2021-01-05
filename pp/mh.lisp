@@ -184,7 +184,9 @@
 (defun rstat/variance (rstat)
   (with-slots (n ns) rstat
     (if (> n 1)
-        (/ ns n)
+        (if (> n 2)
+            (/ ns (1- n))
+            (/ ns n))
         0.0)))
 
 (defun mh/accepted (prob nprob log-hastings-ratio)
@@ -193,7 +195,7 @@
       (> alpha (log (random 1.0))))))
 
 (defun mcmc/mh-emam (parameters posterior-function
-                     &key (iterations 40000) (burn-in 10000) (thin 1) (tune-steps 1000)
+                     &key (iterations 40000) (burn-in 10000) (thin 1) tune-steps
                        deviances)
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
@@ -250,7 +252,7 @@
           traces)))))
 
 (defun mcmc/mh-scam (parameters posterior-function
-                     &key (iterations 40000) (burn-in 10000) (thin 1) (tune-steps 1)
+                     &key (iterations 40000) (burn-in 10000) (thin 1) tune-steps
                        deviances)
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
@@ -271,7 +273,11 @@
               (pstep (round (/ iterations 10)))
               (maxprob prob)
               (naccepted 0)
+              (greedy nil)
               (cf (* 2.4 2.4)))
+          (when (< tune-steps 0)
+            (setf tune-steps (abs tune-steps)
+                  greedy T))
           (when deviances
             (loop :for s :in deviances
                   :for pd :in proposals
@@ -298,7 +304,9 @@
                                   (r/accept! candidate proposal accepted)
                                   (setf ($ trace (1- iter)) ($clone ($data candidate)))
                                   (trace/accepted! trace accepted)
-                                  (rstat/push! rs ($data candidate))
+                                  (if greedy
+                                      (when accepted (rstat/push! rs ($data candidate)))
+                                      (rstat/push! rs ($data candidate)))
                                   (when tuneable
                                     (let ((g (* cf (+ (rstat/variance rs) 0.05))))
                                       (proposal/scale! proposal (sqrt g))))

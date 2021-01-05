@@ -59,7 +59,7 @@
   (with-slots (naccepted nrejected) trace
     (if (zerop (+ naccepted nrejected))
         0
-        (round (* 100.0 (/ naccepted (+ naccepted nrejected)))))))
+        (round (/ (* 100 naccepted) (+ naccepted nrejected))))))
 
 (defun trace/mean (trace)
   (with-slots (mean) trace
