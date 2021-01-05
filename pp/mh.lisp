@@ -233,6 +233,7 @@
                             :do (let ((accepted (mh/accepted prob nprob lhr)))
                                   (r/accept! candidate proposal accepted)
                                   (setf ($ trace (1- iter)) ($clone ($data candidate)))
+                                  (trace/accepted! trace accepted)
                                   (when accepted
                                     (incf naccepted)
                                     (setf prob nprob)
@@ -296,6 +297,7 @@
                             :do (let ((accepted (mh/accepted prob nprob lhr)))
                                   (r/accept! candidate proposal accepted)
                                   (setf ($ trace (1- iter)) ($clone ($data candidate)))
+                                  (trace/accepted! trace accepted)
                                   (rstat/push! rs ($data candidate))
                                   (when tuneable
                                     (let ((g (* cf (+ (rstat/variance rs) 0.05))))

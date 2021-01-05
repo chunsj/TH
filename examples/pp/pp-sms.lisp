@@ -72,22 +72,22 @@
  (let ((traces (mcmc/mh '((37 5) 20.0 20.0) #'sms-posterior)))
    (loop :for trc :in traces
          :for lbl :in '(:switch-point :early-mean :late-mean)
-         :do (prn lbl trc (trace/hpd trc)))))
+         :do (prn lbl trc (trace/hpd trc) (trace/act trc)))))
 
 (time
  (let ((traces (mcmc/mh '(37 20.0 20.0) #'sms-posterior :type :emam)))
    (loop :for trc :in traces
          :for lbl :in '(:switch-point :early-mean :late-mean)
-         :do (prn lbl trc (trace/hpd trc)))))
+         :do (prn lbl trc (trace/hpd trc) (trace/act trc)))))
 
 (time
  (let ((traces (mcmc/mh '(40 50 20.0 20.0 20.0) #'sms-posterior2)))
    (loop :for trc :in traces
          :for lbl :in '(:switch-point1 :switch-point2 :early-mean :mid-mean :late-mean)
-         :do (prn lbl trc (trace/hpd trc)))))
+         :do (prn lbl trc (trace/hpd trc) (trace/act trc)))))
 
 (time
  (let ((traces (mcmc/mh '(40 50 20.0 20.0 20.0) #'sms-posterior2 :type :emam)))
    (loop :for trc :in traces
          :for lbl :in '(:switch-point1 :switch-point2 :early-mean :mid-mean :late-mean)
-         :do (prn lbl trc (trace/hpd trc)))))
+         :do (prn lbl trc (trace/hpd trc) (trace/act trc)))))

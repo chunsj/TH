@@ -6,7 +6,9 @@
    (thin :initform 0)
    (vals :initform nil :accessor trace/values)
    (mean :initform nil)
-   (variance :initform nil)))
+   (variance :initform nil)
+   (naccepted :initform 0)
+   (nrejected :initform 0)))
 
 (defun r/trace (v &key (n 1) (burn-in 0) (thin 0))
   ;; XXX use the shape of v.
@@ -43,6 +45,21 @@
         (when (zerop (rem i thin))
           (setf ($ vals i) value))))
     value))
+
+(defun trace/accepted! (trace acceptedp)
+  (with-slots (naccepted nrejected) trace
+    (if acceptedp
+        (incf naccepted)
+        (incf nrejected))))
+
+(defun trace/rejected! (trace acceptedp)
+  (trace/rejected! trace acceptedp))
+
+(defun trace/act (trace)
+  (with-slots (naccepted nrejected) trace
+    (if (zerop (+ naccepted nrejected))
+        0
+        (round (* 100.0 (/ naccepted (+ naccepted nrejected)))))))
 
 (defun trace/mean (trace)
   (with-slots (mean) trace
