@@ -45,7 +45,7 @@
          :do (prn lbl trc))))
 
 (time
- (let ((traces (mcmc/mh '(50 2.0 2.0) #'disaster-posterior :type :scam)))
+ (let ((traces (mcmc/mh '(50 2.0 2.0) #'disaster-posterior :type :emam)))
    (loop :for trc :in traces
          :for lbl :in '(:switch-point :early-mean :late-mean)
          :do (prn lbl trc))))
