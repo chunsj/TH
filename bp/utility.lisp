@@ -32,6 +32,8 @@
 
 (defgeneric $diagflat (x) (:documentation "Diagonal matrix with flattening."))
 
+(defgeneric $slice (x start &optional end) (:documentation "Returns subview of 1D tensor."))
+
 (defun addmul (x1 w1 x2 w2) ($addmul! ($mul x1 w1) x2 w2))
 
 (defmethod $addm2 ((x1 node) (w1 node) (x2 node) (w2 node))
@@ -659,3 +661,12 @@
 
 (defmethod $acr ((series list) &optional (lag 1))
   ($acr (tensor series) lag))
+
+(defmethod $slice ((series list) start &optional end)
+  (subseq series start end))
+
+(defmethod $slice ((series tensor) start &optional end)
+  (let ((n ($count series)))
+    (if end
+        ($ series (list start (- end start)))
+        ($ series (list start (- n start))))))

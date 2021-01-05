@@ -456,6 +456,7 @@
            #:$decf
            #:$acv
            #:$acr
+           #:$slice
            #:random-normals
            #:$rnn
            #:$lstm
