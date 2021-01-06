@@ -377,9 +377,6 @@
               (maxprob prob)
               (naccepted 0)
               (cf (* 2.4 2.4)))
-          (loop :for pd :in proposals
-                :do (with-slots (factor scale) pd
-                      (prn (* factor scale))))
           (prn (format nil "[MH/SC: BURNING"))
           (loop :repeat nsize
                 :for iter :from 1
