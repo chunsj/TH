@@ -670,3 +670,14 @@
     (if end
         ($ series (list start (- end start)))
         ($ series (list start (- n start))))))
+
+(defmethod (setf $slice) (value (series list) start &optional end)
+  (let ((n (or end ($count series))))
+    (loop :for i :from start :below n
+          :do (setf ($ series i) value))))
+
+(defmethod (setf $slice) (value (series tensor) start &optional end)
+  (let ((n ($count series)))
+    (if end
+        (setf ($ series (list start (- end start))) value)
+        (setf ($ series (list start (- n start))) value))))

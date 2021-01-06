@@ -20,6 +20,11 @@
     (let ((lfac ($lgammaf ($add 1 data))))
       ($sum ($sub ($mul data (log rate)) ($add rate lfac))))))
 
+(defmethod score/poisson ((data tensor) (rate tensor))
+  (when (of-poisson-p data rate)
+    (let ((lfac ($lgammaf ($add 1 data))))
+      ($sum ($sub ($mul data ($log rate)) ($add rate lfac))))))
+
 (defmethod score/poisson ((data tensor) (rate node))
   (when (of-poisson-p data ($data rate))
     (let ((lfac ($lgammaf ($add 1 data))))

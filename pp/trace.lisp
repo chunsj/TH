@@ -2,6 +2,7 @@
 
 (defclass r/trace (r/variable)
   ((collection :initform nil :reader trace/collection)
+   (proposals :initform nil :accessor trace/proposals)
    (burn-ins :initform 0)
    (thin :initform 0)
    (vals :initform nil :accessor trace/values)
@@ -15,8 +16,9 @@
   (let ((tr (make-instance 'r/trace))
         (nb burn-in)
         (nt thin))
-    (with-slots (value collection burn-ins thin vals) tr
+    (with-slots (value collection proposals burn-ins thin vals) tr
       (setf collection (zeros (+ n nb))
+            proposals (zeros (+ n nb))
             value v
             burn-ins nb
             thin nt
@@ -57,7 +59,6 @@
 
 (defun trace/act (trace)
   (with-slots (naccepted nrejected) trace
-    (prn naccepted nrejected)
     (if (zerop (+ naccepted nrejected))
         0
         (round (/ (* 100 naccepted) (+ naccepted nrejected))))))
