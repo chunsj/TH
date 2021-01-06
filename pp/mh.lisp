@@ -350,14 +350,14 @@
                  (if (r/deviance p)
                      (if (r/continuousp p)
                          (r/proposal p)
-                         (proposal/discrete (r/deviance p)))
+                         (proposal/discrete-gaussian (r/deviance p)))
                      (if (r/continuousp p)
                          (r/proposal p (if (zerop ($data p))
                                            1.0
                                            (round ($abs ($data p)))))
-                         (proposal/discrete (if (zerop ($data p))
-                                                1
-                                                (round ($abs ($data p)))))))))))
+                         (proposal/discrete-gaussian (if (zerop ($data p))
+                                                         1
+                                                         (round ($abs ($data p)))))))))))
 
 (defun mcmc/mh-sc (parameters posterior-function
                    &key (iterations 40000) (burn-in 10000) (thin 1) tune-steps)
@@ -421,6 +421,21 @@
               (prns (format nil " DONE]~%")))
           traces)))))
 
+(defun am-proposals (parameters)
+  (->> parameters
+       (mapcar (lambda (p)
+                 (if (r/deviance p)
+                     (if (r/continuousp p)
+                         (r/proposal p)
+                         (proposal/discrete-gaussian (r/deviance p)))
+                     (if (r/continuousp p)
+                         (r/proposal p (if (zerop ($data p))
+                                           1.0
+                                           (round ($abs ($data p)))))
+                         (proposal/discrete-gaussian (if (zerop ($data p))
+                                                         1
+                                                         (round ($abs ($data p)))))))))))
+
 (defun mcmc/mh-am (parameters posterior-function
                    &key (iterations 40000) (burn-in 10000) (thin 1) tune-steps)
   (labels ((posterior (vs) (apply posterior-function vs))
@@ -430,7 +445,7 @@
           (cf (/ (* 2.38 2.38) ($count parameters)))
           (bd (/ (* 0.1 0.1) ($count parameters))))
       (when prob
-        (let ((proposals (sc-proposals parameters))
+        (let ((proposals (am-proposals parameters))
               (traces (r/traces (mapcar #'$clone (mapcar #'$data parameters))
                                 :n iterations :burn-in burn-in :thin thin))
               (candidates (mapcar #'$clone parameters))
@@ -463,6 +478,9 @@
                               :do (progn
                                     (setf ($ (trace/proposals trace) (1- iter))
                                           ($clone ($data candidate)))
+                                    (setf ($ (trace/psds trace) (1- iter))
+                                          (with-slots (factor scale) proposal
+                                            (* factor scale)))
                                     (r/accept! candidate proposal accepted)
                                     (setf ($ trace (1- iter)) ($clone ($data candidate)))
                                     (trace/accepted! trace accepted)
