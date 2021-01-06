@@ -216,6 +216,21 @@
     (let ((alpha (+ (- nprob prob) log-hastings-ratio)))
       (> alpha (log (+ (random 1.0) 1E-7))))))
 
+(defun em-proposals (parameters)
+  (->> parameters
+       (mapcar (lambda (p)
+                 (if (r/deviance p)
+                     (if (r/continuousp p)
+                         (r/proposal p)
+                         (proposal/poisson (r/deviance p)))
+                     (if (r/continuousp p)
+                         (r/proposal p (if (zerop ($data p))
+                                           1.0
+                                           (round ($mul 0.5 ($abs ($data p))))))
+                         (proposal/poisson (if (zerop ($data p))
+                                               1
+                                               (round ($mul 0.5 ($abs ($data p))))))))))))
+
 (defun mcmc/mh-em (parameters posterior-function
                    &key (iterations 40000) (burn-in 10000) (thin 1) tune-steps)
   (labels ((posterior (vs) (apply posterior-function vs))
@@ -223,14 +238,7 @@
     (let ((prob (posterior (vals parameters)))
           (tune-steps (or tune-steps 1000)))
       (when prob
-        (let (;;(proposals (mapcar #'r/proposal parameters))
-              (proposals (mapcar (lambda (p)
-                                   (if (r/deviance p)
-                                       (r/proposal p)
-                                       (if (r/continuousp p)
-                                           (r/proposal p)
-                                           (proposal/discrete 1))))
-                                 parameters))
+        (let ((proposals (em-proposals parameters))
               (traces (r/traces (mapcar #'$clone (mapcar #'$data parameters))
                                 :n iterations :burn-in burn-in :thin thin))
               (candidates (mapcar #'$clone parameters))
@@ -284,14 +292,7 @@
     (let ((prob (posterior (vals parameters)))
           (tune-steps (or tune-steps 1000)))
       (when prob
-        (let (;;(proposals (mapcar #'r/proposal parameters))
-              (proposals (mapcar (lambda (p)
-                                   (if (r/deviance p)
-                                       (r/proposal p)
-                                       (if (r/continuousp p)
-                                           (r/proposal p)
-                                           (proposal/discrete 1))))
-                                 parameters))
+        (let ((proposals (em-proposals parameters))
               (traces (r/traces (mapcar #'$clone (mapcar #'$data parameters))
                                 :n iterations :burn-in burn-in :thin thin))
               (candidates (mapcar #'$clone parameters))
@@ -353,10 +354,10 @@
                      (if (r/continuousp p)
                          (r/proposal p (if (zerop ($data p))
                                            1.0
-                                           ($abs ($data p))))
+                                           (round ($abs ($data p)))))
                          (proposal/discrete (if (zerop ($data p))
                                                 1
-                                                ($abs ($data p))))))))))
+                                                (round ($abs ($data p)))))))))))
 
 (defun mcmc/mh-sc (parameters posterior-function
                    &key (iterations 40000) (burn-in 10000) (thin 1) tune-steps)
@@ -376,6 +377,9 @@
               (maxprob prob)
               (naccepted 0)
               (cf (* 2.4 2.4)))
+          (loop :for pd :in proposals
+                :do (with-slots (factor scale) pd
+                      (prn (* factor scale))))
           (prn (format nil "[MH/SC: BURNING"))
           (loop :repeat nsize
                 :for iter :from 1
@@ -466,11 +470,13 @@
                                     (setf ($ trace (1- iter)) ($clone ($data candidate)))
                                     (trace/accepted! trace accepted)
                                     (rstat/push! rs ($data candidate))
-                                    (when adaptable
-                                      (let ((g (+ (* cf (rstat/variance rs)) bd)))
-                                        (proposal/scale! proposal (sqrt g))))
-                                    (when tuneable
-                                      (proposal/rescale! proposal))))
+                                    (when (r/continuousp candidate)
+                                      (when adaptable
+                                        (let ((g (+ (* cf (rstat/variance rs)) bd)))
+                                          (proposal/scale! proposal (sqrt g)))))
+                                    (when (r/discretep candidate)
+                                      (when tuneable
+                                        (proposal/rescale! proposal)))))
                         (when accepted
                           (incf naccepted)
                           (setf prob nprob)
