@@ -226,10 +226,10 @@
                      (if (r/continuousp p)
                          (r/proposal p (if (zerop ($data p))
                                            1.0
-                                           (round ($mul 0.5 ($abs ($data p))))))
+                                           (round ($abs ($data p)))))
                          (proposal/poisson (if (zerop ($data p))
                                                1
-                                               (round ($mul 0.5 ($abs ($data p))))))))))))
+                                               (round ($abs ($data p)))))))))))
 
 (defun mcmc/mh-em (parameters posterior-function
                    &key (iterations 40000) (burn-in 10000) (thin 1) tune-steps)
