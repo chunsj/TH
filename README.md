@@ -86,6 +86,8 @@
   28. Mining Diaster Example with MCMC/MH(removed MCMC/HMC): [28](examples/pp/pp-disaster.lisp)
   29. Linear Regression with MCMC/MH: [29](examples/pp/linreg.lisp)
   30. Variational Inference Examples: [30](examples/pp/vi.lisp)
+  31. Examples from Bayesian Methods for Hackers: [31-1](examples/pp/pp-sms.lisp) [31-2](examples/pp/chal.lisp)
+  32. More Estimation Problems [32](examples/pp/em-exam.lisp)
 
 ## Pretrained Models
   Though there's currently 5 models, VGG16, VGG19, ResNet50, DenseNet161 and SqueezeNet1.1 are
