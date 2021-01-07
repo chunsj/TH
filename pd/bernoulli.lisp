@@ -21,6 +21,10 @@
   (when (of-bernoulli-p data p)
     ($sum ($add ($mul data (log p)) ($mul ($sub 1 data) (log (- 1 p)))))))
 
+(defmethod score/bernoulli ((data tensor) (p tensor))
+  (when (of-bernoulli-p data p)
+    ($sum ($add ($mul data ($log p)) ($mul ($sub 1 data) ($log ($sub 1 p)))))))
+
 (defmethod score/bernoulli ((data tensor) (p node))
   (when (of-bernoulli-p data ($data p))
     ($sum ($add ($mul data ($log p)) ($mul ($sub 1 data) ($log ($sub 1 p)))))))

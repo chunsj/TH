@@ -7,7 +7,7 @@
 (defgeneric $mse (input target) (:documentation "Mean squared error loss function."))
 (defgeneric $cee (input target) (:documentation "Cross entropy loss with softmax input."))
 (defgeneric $cnll (input target) (:documentation "Class negative log likelihood loss."))
-(defgeneric $cec (input target) (:documentation "Corss entropy loss with plain input."))
+(defgeneric $cec (input target) (:documentation "Cross entropy loss with plain input."))
 
 ;; bce wants probability (like sigmoid) input
 ;; bce* wants raw scrores
