@@ -12,22 +12,6 @@
    (naccepted :initform 0)
    (nrejected :initform 0)))
 
-(defmethod print-object ((rv r/trace) stream)
-  (with-slots (value mean) rv
-    (if mean
-        (cond ((integerp value) (format stream "<~A>" mean))
-              ((floatp value) (cond ((> (abs mean) 100) (format stream "<~,1F>" mean))
-                                    ((> (abs mean) 1) (format stream "<~,2F>" mean))
-                                    ((> (abs mean) 0.01) (format stream "<~,4F>" mean))
-                                    (T (format stream "<~,4E>" mean))))
-              (T (format stream "<~A>" ($data rv))))
-        (cond ((integerp value) (format stream "<~A>" value))
-              ((floatp value) (cond ((> (abs value) 100) (format stream "<~,1F>" value))
-                                    ((> (abs value) 1) (format stream "<~,2F>" value))
-                                    ((> (abs value) 0.01) (format stream "<~,4F>" value))
-                                    (T (format stream "<~,4E>" value))))
-              (T (format stream "<~A>" ($data rv)))))))
-
 (defun r/trace (v &key (n 1) (burn-in 0) (thin 0))
   ;; XXX use the shape of v.
   (let ((tr (make-instance 'r/trace))
