@@ -29,6 +29,10 @@
         (when l
           ($+ prior-alpha prior-beta l))))))
 
+;; though with above posterior function, my code emits proper results.
+;; however, the book, Bayesian Methods for Hackers uses fitting first.
+;; and with thr fitting result as the starting point, samples again.
+
 ;; MAP - to fit alpha beta properly
 (let ((alpha ($parameter 0.0))
       (beta ($parameter 0.0)))
@@ -52,4 +56,4 @@
   (prn traces))
 
 (prn (trace/summary ($0 *ts*)))
-(prn (trace/summary ($0 *ts*)))
+(prn (trace/summary ($1 *ts*)))
