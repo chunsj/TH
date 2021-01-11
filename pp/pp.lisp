@@ -1,7 +1,8 @@
 (defpackage :th.pp
   (:use #:common-lisp
         #:mu
-        #:th)
+        #:th
+        #:mopt)
   (:export #:mcmc/mh
            #:trace/act
            #:trace/values
@@ -13,4 +14,5 @@
            #:trace/acr
            #:trace/geweke
            #:trace/summary
-           #:traces/sample))
+           #:traces/sample
+           #:map/fit))

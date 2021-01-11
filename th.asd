@@ -1,13 +1,14 @@
 (defsystem th
   :name "th"
   :author "Sungjin Chun <chunsj@gmail.com>"
-  :version "1.73"
+  :version "1.74"
   :maintainer "Sungjin Chun <chunsj@gmail.com>"
   :license "GPL3"
   :description "common lisp tensor and deep learning library"
   :long-description "common lisp tensor and deep learning library built on TH and THNN"
   :depends-on ("cffi"
-               "mu")
+               "mu"
+               "mopt")
   :components ((:file "package")
                (:module ffi :components ((:file "macros")
                                          (:file "libs")
@@ -70,4 +71,5 @@
                (:module pp :components ((:file "pp")
                                         (:file "rv")
                                         (:file "trace")
-                                        (:file "mh")))))
+                                        (:file "mh")
+                                        (:file "opt")))))
