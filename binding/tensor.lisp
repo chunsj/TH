@@ -554,7 +554,8 @@
     ($copy! x value)
     value))
 
-(defmethod $list ((tensor tensor)) ($list ($storage tensor)))
+(defmethod $list ((tensor tensor))
+  (loop :for i :from 0 :below ($count tensor) :collect ($ tensor i)))
 
 (defmethod $compare (spec (a tensor) (b tensor))
   (let ((result (tensor.byte)))

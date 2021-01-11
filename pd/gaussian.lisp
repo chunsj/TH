@@ -66,6 +66,9 @@
 (defmethod score/gaussian ((data tensor) (mean tensor) (sd number))
   (car (log-gaussian data mean sd)))
 
+(defmethod score/gaussian ((data tensor) (mean tensor) (sd tensor))
+  (car (log-gaussian data mean sd)))
+
 (defmethod score/gaussian ((data tensor) (mean node) (sd number))
   (let ((res (log-gaussian data ($data mean) sd)))
     (when res
