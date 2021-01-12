@@ -33,3 +33,5 @@
 (let ((traces (mcmc/mh '(0.5 50.0 50.0 120.0 190.0) #'posterior)))
   (loop :for trace :in traces
         :do (prn trace (trace/hpd trace))))
+
+(map/fit #'posterior '(0.5 50.0 50.0 120.0 190.0))
