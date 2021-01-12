@@ -3,6 +3,7 @@
         #:mu
         #:th)
   (:export #:mcmc/mh
+           #:trace/thin
            #:trace/act
            #:trace/values
            #:trace/mean

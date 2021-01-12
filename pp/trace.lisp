@@ -28,6 +28,15 @@
   (loop :for v :in vs
         :collect (r/trace v :n n :burn-in burn-in)))
 
+(defun trace/thin (trace thin)
+  (let* ((vs (trace/values trace))
+         (n0 ($count vs))
+         (nt (make-instance 'r/trace)))
+    (with-slots (value vals) nt
+      (setf value ($clone ($data trace))
+            vals (tensor (loop :for i :from 0 :below n0 :by thin :collect ($clone ($ vs i)))))
+      nt)))
+
 (defmethod $count ((trace r/trace))
   (with-slots (collection) trace
     ($count collection)))

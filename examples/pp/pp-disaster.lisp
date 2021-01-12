@@ -37,8 +37,21 @@
                 likelihood-early-mean
                 likelihood-late-mean)))))))
 
+(defparameter *ts* nil)
+
 (time
  (let ((traces (mcmc/mh '(50 2.0 2.0) #'disaster-posterior)))
+   (setf *ts* traces)
    (loop :for trc :in traces
          :for lbl :in '(:switch-point :early-mean :late-mean)
          :do (prn lbl trc))))
+
+;; fitting
+(prn (map/fit #'disaster-posterior '(50 2.0 2.0)))
+
+;; checking autocorrelation
+(prn ($slice (trace/acr ($0 *ts*)) 0 20))
+
+;; thinning
+(let ((nt (trace/thin ($0 *ts*) 13)))
+  (prn ($slice (trace/acr nt) 0 10)))
