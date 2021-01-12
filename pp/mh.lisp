@@ -232,7 +232,7 @@
                                                (round ($abs ($data p)))))))))))
 
 (defun mcmc/mh-em (parameters posterior-function
-                   &key (iterations 40000) (burn-in 10000) (thin 1) tune-steps)
+                   &key (iterations 40000) (burn-in 10000) tune-steps)
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
     (let ((prob (posterior (vals parameters)))
@@ -240,7 +240,7 @@
       (when prob
         (let ((proposals (em-proposals parameters))
               (traces (r/traces (mapcar #'$clone (mapcar #'$data parameters))
-                                :n iterations :burn-in burn-in :thin thin))
+                                :n iterations :burn-in burn-in))
               (candidates (mapcar #'$clone parameters))
               (nsize (+ iterations burn-in))
               (bstep (round (/ burn-in 10)))
@@ -286,7 +286,7 @@
           traces)))))
 
 (defun mcmc/mh-ae (parameters posterior-function
-                   &key (iterations 40000) (burn-in 10000) (thin 1) tune-steps)
+                   &key (iterations 40000) (burn-in 10000) tune-steps)
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
     (let ((prob (posterior (vals parameters)))
@@ -294,7 +294,7 @@
       (when prob
         (let ((proposals (em-proposals parameters))
               (traces (r/traces (mapcar #'$clone (mapcar #'$data parameters))
-                                :n iterations :burn-in burn-in :thin thin))
+                                :n iterations :burn-in burn-in))
               (candidates (mapcar #'$clone parameters))
               (nsize (+ iterations burn-in))
               (bstep (round (/ burn-in 10)))
@@ -360,7 +360,7 @@
                                                          (round ($abs ($data p)))))))))))
 
 (defun mcmc/mh-sc (parameters posterior-function
-                   &key (iterations 40000) (burn-in 10000) (thin 1) tune-steps)
+                   &key (iterations 40000) (burn-in 10000) tune-steps)
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
     (let ((prob (posterior (vals parameters)))
@@ -368,7 +368,7 @@
       (when prob
         (let ((proposals (sc-proposals parameters))
               (traces (r/traces (mapcar #'$clone (mapcar #'$data parameters))
-                                :n iterations :burn-in burn-in :thin thin))
+                                :n iterations :burn-in burn-in))
               (candidates (mapcar #'$clone parameters))
               (rstats (loop :for p :in parameters :collect (rstat)))
               (nsize (+ iterations burn-in))
@@ -437,7 +437,7 @@
                                                          (round ($abs ($data p)))))))))))
 
 (defun mcmc/mh-am (parameters posterior-function
-                   &key (iterations 40000) (burn-in 10000) (thin 1) tune-steps)
+                   &key (iterations 40000) (burn-in 10000) tune-steps)
   (labels ((posterior (vs) (apply posterior-function vs))
            (vals (parameters) (mapcar #'$data parameters)))
     (let ((prob (posterior (vals parameters)))
@@ -447,7 +447,7 @@
       (when prob
         (let ((proposals (am-proposals parameters))
               (traces (r/traces (mapcar #'$clone (mapcar #'$data parameters))
-                                :n iterations :burn-in burn-in :thin thin))
+                                :n iterations :burn-in burn-in))
               (candidates (mapcar #'$clone parameters))
               (rstats (loop :for p :in parameters :collect (rstat)))
               (nsize (+ iterations burn-in))
@@ -517,17 +517,17 @@
                        (T (r/cvar p)))))))
 
 (defun mcmc/mh (parameters posterior-function
-                &key (iterations 40000) (burn-in 10000) (thin 1) (tune-steps 1000) (type :am))
+                &key (iterations 40000) (burn-in 10000) (tune-steps 1000) (type :am))
   (let ((parameters (wrap-parameters parameters)))
     (cond ((eq type :em) (mcmc/mh-em parameters posterior-function
                                      :iterations iterations :burn-in burn-in
-                                     :thin thin :tune-steps tune-steps))
+                                     :tune-steps tune-steps))
           ((eq type :ae) (mcmc/mh-ae parameters posterior-function
                                      :iterations iterations :burn-in burn-in
-                                     :thin thin :tune-steps tune-steps))
+                                     :tune-steps tune-steps))
           ((eq type :sc) (mcmc/mh-sc parameters posterior-function
                                      :iterations iterations :burn-in burn-in
-                                     :thin thin :tune-steps tune-steps))
+                                     :tune-steps tune-steps))
           ((eq type :am) (mcmc/mh-am parameters posterior-function
                                      :iterations iterations :burn-in burn-in
-                                     :thin thin :tune-steps tune-steps)))))
+                                     :tune-steps tune-steps)))))

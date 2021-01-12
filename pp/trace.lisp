@@ -5,31 +5,28 @@
    (proposals :initform nil :accessor trace/proposals)
    (psds :initform nil :accessor trace/psds)
    (burn-ins :initform 0)
-   (thin :initform 0)
    (vals :initform nil :accessor trace/values)
    (mean :initform nil)
    (variance :initform nil)
    (naccepted :initform 0)
    (nrejected :initform 0)))
 
-(defun r/trace (v &key (n 1) (burn-in 0) (thin 0))
+(defun r/trace (v &key (n 1) (burn-in 0))
   ;; XXX use the shape of v.
   (let ((tr (make-instance 'r/trace))
-        (nb burn-in)
-        (nt thin))
-    (with-slots (value collection proposals psds burn-ins thin vals) tr
+        (nb burn-in))
+    (with-slots (value collection proposals psds burn-ins vals) tr
       (setf collection (zeros (+ n nb))
             proposals (zeros (+ n nb))
             psds (zeros (+ n nb))
             value v
             burn-ins nb
-            thin nt
-            vals (zeros (floor (/ n nt)))))
+            vals (zeros n)))
     tr))
 
-(defun r/traces (vs &key (n 1) (burn-in 0) (thin 0))
+(defun r/traces (vs &key (n 1) (burn-in 0))
   (loop :for v :in vs
-        :collect (r/trace v :n n :burn-in burn-in :thin thin)))
+        :collect (r/trace v :n n :burn-in burn-in)))
 
 (defmethod $count ((trace r/trace))
   (with-slots (collection) trace
@@ -42,12 +39,11 @@
 
 (defmethod (setf $) (value (trace r/trace) index &rest others)
   (declare (ignore others))
-  (with-slots (collection burn-ins vals thin) trace
+  (with-slots (collection burn-ins vals) trace
     (setf ($ collection index) value)
     (when (>= index burn-ins)
       (let ((i (- index burn-ins)))
-        (when (zerop (rem i thin))
-          (setf ($ vals i) value))))
+        (setf ($ vals i) value)))
     value))
 
 (defun trace/accepted! (trace acceptedp)

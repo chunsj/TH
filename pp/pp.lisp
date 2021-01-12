@@ -1,8 +1,7 @@
 (defpackage :th.pp
   (:use #:common-lisp
         #:mu
-        #:th
-        #:mopt)
+        #:th)
   (:export #:mcmc/mh
            #:trace/act
            #:trace/values

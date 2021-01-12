@@ -1,17 +1,22 @@
 (in-package :th.pp)
 
 (defun objective-function (posterior initial-values)
-  (lambda (va)
+  (lambda (&rest args)
     (let ((p (apply posterior
                     (map 'list (lambda (v v0)
                                  (if (integerp v0)
                                      (round v)
                                      v))
-                         va initial-values))))
+                         args initial-values))))
       (if p
           ($neg p)
           most-positive-double-float))))
 
 (defun map/fit (posterior initial-values)
-  (let ((vs (grnm/minimize (objective-function posterior initial-values) initial-values)))
-    (coerce vs 'list)))
+  (let ((vs (nelder-mead (objective-function posterior initial-values) initial-values)))
+    (loop :for k :from 0 :below ($count vs)
+          :for v = ($ vs k)
+          :for i :in initial-values
+          :collect (if (integerp i)
+                       (round v)
+                       v))))
