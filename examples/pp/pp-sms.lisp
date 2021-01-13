@@ -60,6 +60,8 @@
                     prior-late-mean
                     likelihood-mean)))))))))
 
+(prn (map/fit #'sms-posterior '(37 20.0 20.0)))
+
 (time
  (let ((traces (mcmc/mh '(37 20.0 20.0) #'sms-posterior)))
    (loop :for trc :in traces
@@ -83,6 +85,8 @@
    (loop :for trc :in traces
          :for lbl :in '(:switch-point :early-mean :late-mean)
          :do (prn lbl trc (trace/hpd trc) (trace/act trc)))))
+
+(prn (map/fit #'sms-posterior2 '(37 10 20.0 20.0 20.0)))
 
 (time
  (let ((traces (mcmc/mh '(37 10 20.0 20.0 20.0) #'sms-posterior2)))
