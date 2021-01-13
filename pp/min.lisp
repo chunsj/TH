@@ -20,8 +20,6 @@
 (defun nm/maxfsimdiff (fsim) ($max ($abs ($sub fsim ($ fsim 0)))))
 
 (defun nm/convergedp (sim fsim xts xatol fatol)
-  (prn sim (nm/maxsimdiff sim xts))
-  (prn fsim (nm/maxfsimdiff fsim))
   (and (<= (nm/maxsimdiff sim xts) xatol) (<= (nm/maxfsimdiff fsim) fatol)))
 
 (defun nm/order (tensor ind)
