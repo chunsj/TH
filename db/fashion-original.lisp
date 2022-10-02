@@ -4,7 +4,7 @@
   (:use #:common-lisp
         #:mu
         #:th)
-  (:export #:read-fasion-train-images
+  (:export #:read-fashion-train-images
            #:read-fashion-train-labes
            #:read-fashion-t10k-images
            #:read-fashion-t10k-labels
